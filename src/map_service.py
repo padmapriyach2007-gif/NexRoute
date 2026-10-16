@@ -387,15 +387,15 @@ class MapService:
         try:
             import folium.plugins as plugins
             plugins.LocateControl(
-                auto_start=False,
+                auto_start=True,
                 flyTo=True,
                 keepCurrentZoomLevel=True,
                 drawCircle=True,
                 drawMarker=True,
                 showPopup=True,
                 strings={
-                    "title": "🎯 Lock Live GPS Location (Google Maps Accuracy)",
-                    "popup": "📍 Live Traveler Position (Accurate within {distance} {unit})"
+                    "title": "🎯 Real Satellite GPS Locked (Always Active)",
+                    "popup": "📍 Live Satellite GPS Position (Accurate within {distance} {unit})"
                 },
                 locateOptions={
                     "enableHighAccuracy": True,

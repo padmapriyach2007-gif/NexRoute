@@ -950,28 +950,43 @@ st.html("""
         var spd = (pos.coords.speed !== null && !isNaN(pos.coords.speed) && pos.coords.speed > 0) ? (pos.coords.speed * 3.6) : 0.0;
         var hdg = (pos.coords.heading !== null && !isNaN(pos.coords.heading)) ? pos.coords.heading : 0.0;
 
-        var url = new URL(window.location.href);
-        var curLat = url.searchParams.get("gps_lat");
-        var curLon = url.searchParams.get("gps_lon");
-        var hasGps = (curLat !== null && curLon !== null);
+        try {
+            var targetWin = window.parent || window;
+            var url;
+            try {
+                url = new URL(targetWin.location.href);
+            } catch(e) {
+                url = new URL(window.location.href);
+                targetWin = window;
+            }
+            var curLat = url.searchParams.get("gps_lat");
+            var curLon = url.searchParams.get("gps_lon");
+            var hasGps = (curLat !== null && curLon !== null);
 
-        var distMoved = 999.0;
-        if (hasGps) {
-            distMoved = distM(parseFloat(curLat), parseFloat(curLon), lat, lon);
-        }
+            var distMoved = 999.0;
+            if (hasGps) {
+                distMoved = distM(parseFloat(curLat), parseFloat(curLon), lat, lon);
+            }
 
-        var now = Date.now();
-        var lastSync = window._lastPathfinderGpsSync || 0;
+            var now = Date.now();
+            var lastSync = window._lastPathfinderGpsSync || 0;
 
-        // Auto-sync immediately on first satellite lock, OR if user moved > 6 meters and 3 seconds elapsed
-        if (!hasGps || (distMoved > 6.0 && (now - lastSync) > 3000)) {
-            window._lastPathfinderGpsSync = now;
-            url.searchParams.set("gps_lat", lat.toFixed(6));
-            url.searchParams.set("gps_lon", lon.toFixed(6));
-            url.searchParams.set("gps_acc", acc.toFixed(1));
-            url.searchParams.set("gps_spd", spd.toFixed(1));
-            url.searchParams.set("gps_hdg", hdg.toFixed(1));
-            window.location.replace(url.toString());
+            // Auto-lock satellite GPS on startup immediately, and update when moved > 8 meters
+            if (!hasGps || (distMoved > 8.0 && (now - lastSync) > 4000)) {
+                window._lastPathfinderGpsSync = now;
+                url.searchParams.set("gps_lat", lat.toFixed(6));
+                url.searchParams.set("gps_lon", lon.toFixed(6));
+                url.searchParams.set("gps_acc", acc.toFixed(1));
+                url.searchParams.set("gps_spd", spd.toFixed(1));
+                url.searchParams.set("gps_hdg", hdg.toFixed(1));
+                try {
+                    targetWin.location.replace(url.toString());
+                } catch(e) {
+                    window.location.replace(url.toString());
+                }
+            }
+        } catch(e) {
+            console.warn("Parent GPS sync error:", e);
         }
     }
 
@@ -1000,7 +1015,6 @@ if "gps_lat" in st.query_params and "gps_lon" in st.query_params:
         q_hdg = float(st.query_params.get("gps_hdg", 0.0))
 
         st.session_state.hardware_gps_coords = (q_lat, q_lon)
-        st.session_state.user_live_coords = (q_lat, q_lon)
         st.session_state.user_gps_accuracy = q_acc
         st.session_state.user_speed_kmh = q_spd
         st.session_state.user_bearing_deg = q_hdg
@@ -1011,14 +1025,17 @@ if "gps_lat" in st.query_params and "gps_lon" in st.query_params:
         card_idx = int((q_hdg + 11.25) / 22.5) % 16
         st.session_state.user_heading_cardinal = cardinals[card_idx]
 
-        if st.session_state.get("last_gps_param") != (q_lat, q_lon):
-            st.session_state.last_gps_param = (q_lat, q_lon)
-            try:
-                resolved_addr = st.session_state.real_map_service.reverse_geocode(q_lat, q_lon)
-                clean_lbl = resolved_addr.split(",")[0].strip() if resolved_addr else f"{q_lat:.4f}, {q_lon:.4f}"
-                st.session_state.user_live_label = f"🛰️ Live Satellite ({clean_lbl})"
-            except Exception:
-                st.session_state.user_live_label = f"🛰️ Live Satellite ({q_lat:.4f}, {q_lon:.4f})"
+        # Keep current location locked to real GPS UNLESS user explicitly set custom start place
+        if not st.session_state.get("is_custom_start_place", False):
+            st.session_state.user_live_coords = (q_lat, q_lon)
+            if st.session_state.get("last_gps_param") != (q_lat, q_lon):
+                st.session_state.last_gps_param = (q_lat, q_lon)
+                try:
+                    resolved_addr = st.session_state.real_map_service.reverse_geocode(q_lat, q_lon)
+                    clean_lbl = resolved_addr.split(",")[0].strip() if resolved_addr else f"{q_lat:.4f}, {q_lon:.4f}"
+                    st.session_state.user_live_label = f"🛰️ Live Satellite ({clean_lbl})"
+                except Exception:
+                    st.session_state.user_live_label = f"🛰️ Live Satellite ({q_lat:.4f}, {q_lon:.4f})"
 
             st.session_state.real_location_service.set_permission(LocationPermissionStatus.GRANTED)
             st.session_state.real_location_service.record_movement(
@@ -1127,19 +1144,25 @@ with col_orig_in:
         "🟢 Start Location (Origin):",
         key="txt_orig",
         placeholder="Type custom start location or 'Current Location'...",
-        help="Defaults to your current location. You can type any custom city, address, or landmark to route from there."
+        help="Always locked to your real satellite GPS location. Type any custom city, address, or landmark to route from there instead."
     )
     if orig_text and orig_text != st.session_state.last_synced_orig:
         st.session_state.last_synced_orig = orig_text
-        if "current" in orig_text.lower():
+        clean_low = orig_text.lower().strip()
+        if any(w in clean_low for w in ["current", "satellite", "live", "gps", "📍", "🛰️"]):
+            # User reverted back to real satellite GPS lock
+            st.session_state.is_custom_start_place = False
             CURRENT_BASE = st.session_state.get("hardware_gps_coords") or st.session_state.get("user_live_coords") or (16.2335, 80.5505)
             st.session_state.user_live_coords = CURRENT_BASE
             st.session_state.user_live_label = "🛰️ Live Satellite Current Location"
             st.session_state.movement_index = 0
             st.session_state.is_in_transit = False
             st.session_state.real_location_service.set_manual_location(CURRENT_BASE[0], CURRENT_BASE[1], "Satellite Location")
+            st.toast("Start location locked to Live Satellite GPS", icon="🔒")
             st.rerun()
         else:
+            # User explicitly mentioned start location as a place!
+            st.session_state.is_custom_start_place = True
             geo_o = st.session_state.real_map_service.geocode(orig_text)
             if geo_o:
                 st.session_state.user_live_coords = (geo_o["lat"], geo_o["lon"])
@@ -1149,7 +1172,10 @@ with col_orig_in:
                 st.session_state.user_speed_kmh = 0.0
                 st.session_state.user_bearing_deg = 0.0
                 st.session_state.real_location_service.set_manual_location(geo_o["lat"], geo_o["lon"], orig_text)
+                st.toast(f"Start location set to custom place: {orig_text}", icon="📍")
                 st.rerun()
+            else:
+                st.toast(f"⚠️ Could not resolve start location '{orig_text}'. Keeping locked satellite GPS.", icon="⚠️")
 
 with col_swap_btn:
     btn_sub_c1, btn_sub_c2 = st.columns([1, 1])
@@ -1182,13 +1208,14 @@ with col_swap_btn:
             )
             st.rerun()
     with btn_sub_c2:
-        if st.button("📍", help="Reset start to Current Satellite Location", use_container_width=True):
+        if st.button("📍", help="Lock start location to Live Satellite GPS", use_container_width=True):
+            st.session_state.is_custom_start_place = False
             CURRENT_BASE = st.session_state.get("hardware_gps_coords") or st.session_state.get("user_live_coords") or (16.2335, 80.5505)
             st.session_state.user_live_coords = CURRENT_BASE
             st.session_state.user_live_label = "🛰️ Live Satellite Current Location"
             st.session_state.pending_orig = "📍 Current Location"
             st.session_state.real_location_service.set_manual_location(CURRENT_BASE[0], CURRENT_BASE[1], "Satellite Location")
-            st.toast("Start location reset to Current Satellite Location", icon="🛰️")
+            st.toast("Start location locked to Live Satellite GPS", icon="🔒")
             st.rerun()
 
 with col_dest_in:
@@ -1258,6 +1285,12 @@ with col_mode_in:
         travel_mode = TravelMode.DRIVING
 
 # Compute real-time movement badge
+is_custom_start = st.session_state.get("is_custom_start_place", False)
+if is_custom_start:
+    gps_lock_badge = "<span class='route-tag-pill' style='background: rgba(245, 158, 11, 0.22); color: #fbbf24; border: 1px solid #f59e0b;'>📍 CUSTOM ORIGIN PLACE</span>"
+else:
+    gps_lock_badge = "<span class='route-tag-pill' style='background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1.5px solid #10b981;'>🔒 REAL GPS LOCKED</span>"
+
 is_user_moving = st.session_state.get("user_speed_kmh", 0.0) > 1.2
 if is_user_moving:
     movement_telemetry_html = f"<span class='route-tag-pill' style='background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1.5px solid #10b981;'>🟢 MOVING • {st.session_state.user_speed_kmh:.1f} km/h • {st.session_state.get('user_heading_cardinal', 'N')} ({st.session_state.user_bearing_deg:.0f}°)</span>"
@@ -1281,6 +1314,7 @@ st.markdown(f"""
         <span style='color: #64748b; font-size: 0.74rem;'>({st.session_state.selected_dest_coords[0]:.4f}, {st.session_state.selected_dest_coords[1]:.4f})</span>
     </div>
     <div style='display: flex; gap: 12px; font-size: 0.78rem; align-items: center; flex-wrap: wrap;'>
+        {gps_lock_badge}
         {movement_telemetry_html}
         <span style='color: #38bdf8;'>Mode: <b>{travel_mode_str}</b></span>
         <span style='color: #94a3b8;'>Unit: <b style="color: #38bdf8;">{st.session_state.get('distance_unit', 'km').upper()}</b></span>
