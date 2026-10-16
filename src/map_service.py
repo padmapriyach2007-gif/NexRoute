@@ -1133,48 +1133,162 @@ class MapService:
                             }}
                         }};
 
-                        // Live Physical GPS Synchronization
-                        let isGps = false;
-                        document.getElementById('satGpsBtn').onclick = function() {{
-                            if (isGps) {{
-                                isGps = false;
-                                if (gpsWatch) navigator.geolocation.clearWatch(gpsWatch);
-                                this.innerText = '📡 GPS Sync';
-                                this.style.background = 'rgba(255,255,255,0.15)';
+                        // Automatic Live Satellite GPS Tracking & Movement Detection Engine
+                        let isGps = true;
+                        let liveSatMarker = null;
+                        let liveSatCircle = null;
+                        let liveTrailPoly = L.polyline([], {{
+                            color: '#06b6d4',
+                            weight: 3.5,
+                            opacity: 0.8,
+                            dashArray: '5, 8'
+                        }}).addTo(leafletMap);
+                        let prevGpsLat = null, prevGpsLon = null, prevGpsTime = 0;
+
+                        function handleGpsPosition(pos) {{
+                            const uLat = pos.coords.latitude;
+                            const uLon = pos.coords.longitude;
+                            const acc = pos.coords.accuracy || 8.0;
+                            const now = Date.now();
+
+                            // Instantaneous speed calculation (km/h)
+                            let speedKmh = 0.0;
+                            if (pos.coords.speed !== null && !isNaN(pos.coords.speed) && pos.coords.speed > 0) {{
+                                speedKmh = pos.coords.speed * 3.6;
+                            }} else if (prevGpsLat !== null && prevGpsTime > 0) {{
+                                const dt = (now - prevGpsTime) / 1000.0;
+                                if (dt > 0.4) {{
+                                    const dm = calcDistM([prevGpsLat, prevGpsLon], [uLat, uLon]);
+                                    speedKmh = (dm / dt) * 3.6;
+                                }}
+                            }}
+
+                            // Heading / Bearing calculation
+                            let liveBrng = pos.coords.heading;
+                            if (liveBrng === null || isNaN(liveBrng) || liveBrng === 0) {{
+                                if (prevGpsLat !== null) {{
+                                    liveBrng = calcBearing([prevGpsLat, prevGpsLon], [uLat, uLon]);
+                                }} else {{
+                                    liveBrng = 0.0;
+                                }}
+                            }}
+
+                            prevGpsLat = uLat;
+                            prevGpsLon = uLon;
+                            prevGpsTime = now;
+
+                            // Update live movement trail on map
+                            liveTrailPoly.addLatLng([uLat, uLon]);
+
+                            // Satellite GPS pulsating pin & accuracy halo
+                            const satPinHtml = `
+                                <div style="position:relative; width:34px; height:34px; display:flex; align-items:center; justify-content:center;">
+                                    <div style="position:absolute; width:32px; height:32px; border-radius:50%; background:rgba(6,182,212,0.45); animation:foliumRadar 1.5s infinite ease-out;"></div>
+                                    <div style="width:14px; height:14px; border-radius:50%; background:#06b6d4; border:2.5px solid #ffffff; box-shadow:0 0 12px #06b6d4;"></div>
+                                </div>
+                            `;
+
+                            if (!liveSatMarker) {{
+                                liveSatMarker = L.marker([uLat, uLon], {{
+                                    icon: L.divIcon({{ html: satPinHtml, iconSize: [34, 34], iconAnchor: [17, 17] }}),
+                                    zIndexOffset: 3500
+                                }}).addTo(leafletMap);
+
+                                liveSatCircle = L.circle([uLat, uLon], {{
+                                    radius: acc,
+                                    color: '#06b6d4',
+                                    fillColor: '#06b6d4',
+                                    fillOpacity: 0.12,
+                                    weight: 1.5
+                                }}).addTo(leafletMap);
                             }} else {{
-                                if (!navigator.geolocation) {{
-                                    alert('GPS not supported in browser');
-                                    return;
+                                liveSatMarker.setLatLng([uLat, uLon]);
+                                liveSatCircle.setLatLng([uLat, uLon]);
+                                liveSatCircle.setRadius(acc);
+                            }}
+
+                            // Nearest corridor snapping & off-corridor detection
+                            let minD = Infinity;
+                            let snapPt = routePts[0];
+                            let bestSeg = 0;
+                            for (let i = 0; i < routePts.length - 1; i++) {{
+                                const d = calcDistM([uLat, uLon], routePts[i]);
+                                if (d < minD) {{
+                                    minD = d;
+                                    snapPt = routePts[i];
+                                    bestSeg = i;
                                 }}
-                                isGps = true;
-                                this.innerText = '📡 Following GPS';
-                                this.style.background = '#0284c7';
-                                if (isNavigating) {{
-                                    isNavigating = false;
-                                    document.getElementById('satPlayBtn').innerText = '▶️ Move';
+                            }}
+
+                            const routeSegBrng = calcBearing(routePts[bestSeg], routePts[Math.min(bestSeg + 1, routePts.length - 1)]);
+                            const effectiveBrng = (speedKmh > 1.2 && liveBrng) ? liveBrng : routeSegBrng;
+
+                            // Update moving avatar position & bearing
+                            updateVehicle(minD < 50 ? snapPt : [uLat, uLon], effectiveBrng);
+
+                            // Smooth satellite map auto-panning to follow user
+                            leafletMap.panTo([uLat, uLon], {{ animate: true, duration: 0.6 }});
+
+                            // Real-time Motion Detection
+                            const isMoving = speedKmh > 1.2;
+                            const turnDesc = document.getElementById('satTurnDesc');
+                            const turnRoad = document.getElementById('satTurnRoad');
+                            const etaBadge = document.getElementById('satEtaBadge');
+                            const gpsBtn = document.getElementById('satGpsBtn');
+
+                            if (gpsBtn) {{
+                                gpsBtn.innerHTML = isMoving ? '🟢 Moving (Live)' : '🛰️ Satellite Active';
+                                gpsBtn.style.background = isMoving ? '#059669' : '#0284c7';
+                                gpsBtn.style.borderColor = isMoving ? '#10b981' : '#38bdf8';
+                            }}
+
+                            if (turnDesc) {{
+                                if (isMoving) {{
+                                    turnDesc.innerHTML = `<span style="color:#34d399; font-weight:800;">🟢 LIVE MOVEMENT DETECTED</span> • Speed: <b>${{speedKmh.toFixed(1)}} km/h</b> • Bearing: <b>${{Math.round(effectiveBrng)}}°</b>`;
+                                }} else {{
+                                    turnDesc.innerHTML = `<span style="color:#60a5fa; font-weight:700;">📡 SATELLITE LOCKED</span> • Stationary • Precision: <b>±${{Math.round(acc)}}m</b>`;
                                 }}
-                                speak('Live GPS tracking synchronized. Moving vehicle parallel with your location.');
-                                gpsWatch = navigator.geolocation.watchPosition(function(pos) {{
-                                    const uLat = pos.coords.latitude;
-                                    const uLon = pos.coords.longitude;
-                                    let minD = Infinity;
-                                    let snapPt = routePts[0];
-                                    let bestSeg = 0;
-                                    for (let i = 0; i < routePts.length - 1; i++) {{
-                                        const d = calcDistM([uLat, uLon], routePts[i]);
-                                        if (d < minD) {{
-                                            minD = d;
-                                            snapPt = routePts[i];
-                                            bestSeg = i;
-                                        }}
-                                    }}
-                                    const brng = calcBearing(routePts[bestSeg], routePts[Math.min(bestSeg + 1, routePts.length - 1)]);
-                                    updateVehicle(snapPt, brng);
-                                    leafletMap.panTo(snapPt, {{ animate: true, duration: 0.5 }});
-                                    document.getElementById('satTurnDesc').innerText = `Live GPS Tracked: ${{minD.toFixed(0)}}m from corridor`;
-                                }}, function(err) {{
-                                    console.warn('GPS error:', err);
-                                }}, {{ enableHighAccuracy: true, maximumAge: 1500, timeout: 10000 }});
+                            }}
+
+                            if (turnRoad) {{
+                                turnRoad.innerText = minD < 45 ? 'On Recommended Safe Corridor' : `Corridor Distance: ${{Math.round(minD)}}m`;
+                            }}
+
+                            if (etaBadge) {{
+                                etaBadge.innerHTML = isMoving ? `● Moving at ${{speedKmh.toFixed(1)}} km/h` : `● Live Satellite Tracking`;
+                                etaBadge.style.color = isMoving ? '#34d399' : '#38bdf8';
+                            }}
+                        }}
+
+                        function startLiveSatelliteGps() {{
+                            if (!navigator.geolocation) {{
+                                console.warn('Satellite GPS: Geolocation not supported in browser');
+                                const turnDesc = document.getElementById('satTurnDesc');
+                                if (turnDesc) turnDesc.innerText = 'GPS not supported in browser';
+                                return;
+                            }}
+
+                            // Automatic initial fix
+                            navigator.geolocation.getCurrentPosition(handleGpsPosition, function(err) {{
+                                console.warn('Satellite initial fix warning:', err.message);
+                            }}, {{ enableHighAccuracy: true, timeout: 8000, maximumAge: 2000 }});
+
+                            // Continuous live position & movement watcher
+                            gpsWatch = navigator.geolocation.watchPosition(handleGpsPosition, function(err) {{
+                                console.warn('Satellite live watch warning:', err.message);
+                            }}, {{ enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 }});
+                        }}
+
+                        // Connect to Satellite Location automatically on startup
+                        startLiveSatelliteGps();
+
+                        // Interactive Satellite GPS button toggles or re-centers
+                        document.getElementById('satGpsBtn').onclick = function() {{
+                            if (prevGpsLat !== null && prevGpsLon !== null) {{
+                                leafletMap.panTo([prevGpsLat, prevGpsLon], {{ animate: true, duration: 0.5 }});
+                                leafletMap.setZoom(16);
+                            }} else {{
+                                startLiveSatelliteGps();
                             }}
                         }};
                     }}

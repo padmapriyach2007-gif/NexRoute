@@ -923,23 +923,109 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# Automatic Browser Satellite Geolocation Autopilot Script
+st.html("""
+<script>
+(function() {
+    if (!navigator.geolocation) {
+        console.warn("Satellite GPS: navigator.geolocation not supported.");
+        return;
+    }
+
+    function distM(lat1, lon1, lat2, lon2) {
+        var R = 6371000;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+                Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180) *
+                Math.sin(dLon/2)*Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function onGpsPosition(pos) {
+        var lat = pos.coords.latitude;
+        var lon = pos.coords.longitude;
+        var acc = pos.coords.accuracy || 6.0;
+        var spd = (pos.coords.speed !== null && !isNaN(pos.coords.speed) && pos.coords.speed > 0) ? (pos.coords.speed * 3.6) : 0.0;
+        var hdg = (pos.coords.heading !== null && !isNaN(pos.coords.heading)) ? pos.coords.heading : 0.0;
+
+        var url = new URL(window.location.href);
+        var curLat = url.searchParams.get("gps_lat");
+        var curLon = url.searchParams.get("gps_lon");
+        var hasGps = (curLat !== null && curLon !== null);
+
+        var distMoved = 999.0;
+        if (hasGps) {
+            distMoved = distM(parseFloat(curLat), parseFloat(curLon), lat, lon);
+        }
+
+        var now = Date.now();
+        var lastSync = window._lastPathfinderGpsSync || 0;
+
+        // Auto-sync immediately on first satellite lock, OR if user moved > 6 meters and 3 seconds elapsed
+        if (!hasGps || (distMoved > 6.0 && (now - lastSync) > 3000)) {
+            window._lastPathfinderGpsSync = now;
+            url.searchParams.set("gps_lat", lat.toFixed(6));
+            url.searchParams.set("gps_lon", lon.toFixed(6));
+            url.searchParams.set("gps_acc", acc.toFixed(1));
+            url.searchParams.set("gps_spd", spd.toFixed(1));
+            url.searchParams.set("gps_hdg", hdg.toFixed(1));
+            window.location.replace(url.toString());
+        }
+    }
+
+    if (!window._pathfinderGpsWatchId) {
+        // Immediate satellite fix
+        navigator.geolocation.getCurrentPosition(onGpsPosition, function(err) {
+            console.warn("Satellite GPS initial fix:", err.message);
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 2000 });
+
+        // Continuous high-precision satellite tracker for real-time movement detection
+        window._pathfinderGpsWatchId = navigator.geolocation.watchPosition(onGpsPosition, function(err) {
+            console.warn("Satellite GPS live watch:", err.message);
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 1000 });
+    }
+})();
+</script>
+""")
+
 # Check if real hardware device GPS was passed via URL query params
 if "gps_lat" in st.query_params and "gps_lon" in st.query_params:
     try:
         q_lat = float(st.query_params["gps_lat"])
         q_lon = float(st.query_params["gps_lon"])
-        q_acc = float(st.query_params.get("gps_acc", 8.0))
+        q_acc = float(st.query_params.get("gps_acc", 6.0))
+        q_spd = float(st.query_params.get("gps_spd", 0.0))
+        q_hdg = float(st.query_params.get("gps_hdg", 0.0))
+
+        st.session_state.hardware_gps_coords = (q_lat, q_lon)
+        st.session_state.user_live_coords = (q_lat, q_lon)
+        st.session_state.user_gps_accuracy = q_acc
+        st.session_state.user_speed_kmh = q_spd
+        st.session_state.user_bearing_deg = q_hdg
+        st.session_state.is_in_transit = (q_spd > 1.2)
+
+        # Compute cardinal heading
+        cardinals = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+        card_idx = int((q_hdg + 11.25) / 22.5) % 16
+        st.session_state.user_heading_cardinal = cardinals[card_idx]
+
         if st.session_state.get("last_gps_param") != (q_lat, q_lon):
             st.session_state.last_gps_param = (q_lat, q_lon)
-            st.session_state.user_live_coords = (q_lat, q_lon)
-            st.session_state.user_live_label = "📍 Device Hardware GPS (Live)"
-            st.session_state.user_gps_accuracy = q_acc
-            st.session_state.user_speed_kmh = 0.0
-            st.session_state.user_bearing_deg = 0.0
-            st.session_state.movement_index = 0
-            st.session_state.is_in_transit = False
+            try:
+                resolved_addr = st.session_state.real_map_service.reverse_geocode(q_lat, q_lon)
+                clean_lbl = resolved_addr.split(",")[0].strip() if resolved_addr else f"{q_lat:.4f}, {q_lon:.4f}"
+                st.session_state.user_live_label = f"🛰️ Live Satellite ({clean_lbl})"
+            except Exception:
+                st.session_state.user_live_label = f"🛰️ Live Satellite ({q_lat:.4f}, {q_lon:.4f})"
+
             st.session_state.real_location_service.set_permission(LocationPermissionStatus.GRANTED)
-            st.session_state.real_location_service.record_movement(q_lat, q_lon, accuracy_m=q_acc, label="Hardware GPS")
+            st.session_state.real_location_service.record_movement(
+                q_lat, q_lon,
+                accuracy_m=q_acc,
+                speed_mps=(q_spd / 3.6),
+                label="Satellite GPS"
+            )
     except Exception:
         pass
 
@@ -954,7 +1040,7 @@ st.caption("Predictive Adaptive Transit & Hazard-Free Intelligent Navigation Dir
 # Initialize Live Position Tracking & Movement Kinematics
 if "user_live_coords" not in st.session_state:
     st.session_state.user_live_coords = (16.2335, 80.5505)
-    st.session_state.user_live_label = "📍 My Current Location (Vignan Campus)"
+    st.session_state.user_live_label = "🛰️ Connecting to Live Satellite GPS..."
 if "user_speed_kmh" not in st.session_state:
     st.session_state.user_speed_kmh = 0.0
 if "user_bearing_deg" not in st.session_state:
@@ -962,7 +1048,7 @@ if "user_bearing_deg" not in st.session_state:
 if "user_heading_cardinal" not in st.session_state:
     st.session_state.user_heading_cardinal = "N"
 if "user_gps_accuracy" not in st.session_state:
-    st.session_state.user_gps_accuracy = 8.0
+    st.session_state.user_gps_accuracy = 6.0
 if "movement_index" not in st.session_state:
     st.session_state.movement_index = 0
 if "is_in_transit" not in st.session_state:
@@ -1045,12 +1131,12 @@ with col_orig_in:
     if orig_text and orig_text != st.session_state.last_synced_orig:
         st.session_state.last_synced_orig = orig_text
         if "current" in orig_text.lower():
-            CURRENT_BASE = (16.2335, 80.5505)
+            CURRENT_BASE = st.session_state.get("hardware_gps_coords") or st.session_state.get("user_live_coords") or (16.2335, 80.5505)
             st.session_state.user_live_coords = CURRENT_BASE
-            st.session_state.user_live_label = "📍 Current Location"
+            st.session_state.user_live_label = "🛰️ Live Satellite Current Location"
             st.session_state.movement_index = 0
             st.session_state.is_in_transit = False
-            st.session_state.real_location_service.set_manual_location(CURRENT_BASE[0], CURRENT_BASE[1], "Current Location")
+            st.session_state.real_location_service.set_manual_location(CURRENT_BASE[0], CURRENT_BASE[1], "Satellite Location")
             st.rerun()
         else:
             geo_o = st.session_state.real_map_service.geocode(orig_text)
@@ -1095,13 +1181,13 @@ with col_swap_btn:
             )
             st.rerun()
     with btn_sub_c2:
-        if st.button("📍", help="Reset start to Current Location", use_container_width=True):
-            CURRENT_BASE = (16.2335, 80.5505)
+        if st.button("📍", help="Reset start to Current Satellite Location", use_container_width=True):
+            CURRENT_BASE = st.session_state.get("hardware_gps_coords") or st.session_state.get("user_live_coords") or (16.2335, 80.5505)
             st.session_state.user_live_coords = CURRENT_BASE
-            st.session_state.user_live_label = "📍 Current Location"
+            st.session_state.user_live_label = "🛰️ Live Satellite Current Location"
             st.session_state.pending_orig = "📍 Current Location"
-            st.session_state.real_location_service.set_manual_location(CURRENT_BASE[0], CURRENT_BASE[1], "Current Location")
-            st.toast("Start location reset to Current Location", icon="📍")
+            st.session_state.real_location_service.set_manual_location(CURRENT_BASE[0], CURRENT_BASE[1], "Satellite Location")
+            st.toast("Start location reset to Current Satellite Location", icon="🛰️")
             st.rerun()
 
 with col_dest_in:
@@ -1114,9 +1200,9 @@ with col_dest_in:
     if dest_text and dest_text != st.session_state.last_synced_dest:
         st.session_state.last_synced_dest = dest_text
         if "current" in dest_text.lower():
-            CURRENT_BASE = (16.2335, 80.5505)
+            CURRENT_BASE = st.session_state.get("hardware_gps_coords") or st.session_state.get("user_live_coords") or (16.2335, 80.5505)
             st.session_state.selected_dest_coords = CURRENT_BASE
-            st.session_state.selected_dest_label = "📍 Current Location"
+            st.session_state.selected_dest_label = "🛰️ Live Satellite Current Location"
             st.rerun()
         else:
             geo_d = st.session_state.real_map_service.geocode(dest_text)
@@ -1160,6 +1246,13 @@ with col_mode_in:
     else:
         travel_mode = TravelMode.DRIVING
 
+# Compute real-time movement badge
+is_user_moving = st.session_state.get("user_speed_kmh", 0.0) > 1.2
+if is_user_moving:
+    movement_telemetry_html = f"<span class='route-tag-pill' style='background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1.5px solid #10b981;'>🟢 MOVING • {st.session_state.user_speed_kmh:.1f} km/h • {st.session_state.get('user_heading_cardinal', 'N')} ({st.session_state.user_bearing_deg:.0f}°)</span>"
+else:
+    movement_telemetry_html = f"<span class='route-tag-pill' style='background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);'>🛰️ SATELLITE LOCKED • ±{st.session_state.get('user_gps_accuracy', 6.0):.1f}m</span>"
+
 # Display Sleek In-Dash Telemetry Ribbon
 st.markdown(f"""
 <div class='route-ribbon-bar'>
@@ -1176,7 +1269,8 @@ st.markdown(f"""
         <span style='color: #f1f5f9; font-weight: 600; font-size: 0.86rem;'>{st.session_state.selected_dest_label}</span>
         <span style='color: #64748b; font-size: 0.74rem;'>({st.session_state.selected_dest_coords[0]:.4f}, {st.session_state.selected_dest_coords[1]:.4f})</span>
     </div>
-    <div style='display: flex; gap: 12px; font-size: 0.78rem; align-items: center;'>
+    <div style='display: flex; gap: 12px; font-size: 0.78rem; align-items: center; flex-wrap: wrap;'>
+        {movement_telemetry_html}
         <span style='color: #38bdf8;'>Mode: <b>{travel_mode_str}</b></span>
         <span style='color: #94a3b8;'>Unit: <b style="color: #38bdf8;">{st.session_state.get('distance_unit', 'km').upper()}</b></span>
         <span style='background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>🛡️ Global Transit Evasion Active</span>
