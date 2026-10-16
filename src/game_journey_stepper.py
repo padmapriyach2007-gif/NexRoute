@@ -113,14 +113,25 @@ def extract_journey_game_milestones(
 
             road_name = s.get("road", "").strip()
             # Filter out non-descriptive road names
-            if not road_name or road_name.lower() in ["local corridor", "road", "unnamed road"]:
+            generic_roads = [
+                "local corridor", "road", "unnamed road", "connected road",
+                "connecting road", "service road", "corridor", "link road", "link"
+            ]
+            if not road_name or road_name.lower() in generic_roads:
                 # Try to extract from instruction
                 instr = s.get("instruction", "")
                 m = re.search(r'(?:onto|on|towards)\s+([A-Za-z0-9\s\-]+)', instr, re.IGNORECASE)
                 if m:
-                    road_name = m.group(1).strip()
+                    cand_name = m.group(1).strip()
+                    if cand_name.lower() not in generic_roads:
+                        road_name = cand_name
 
-            clean_road = re.sub(r'^(onto|on)\s+', '', road_name, flags=re.IGNORECASE).strip()
+            clean_road = re.sub(r'^(onto|on|turn onto|turn right onto|turn left onto)\s+', '', road_name, flags=re.IGNORECASE).strip()
+            if not clean_road or clean_road.lower() in generic_roads:
+                clean_road = f"Waypoint Corridor {len(extracted_stops) + 1}"
+            else:
+                clean_road = clean_road.title()
+
             road_key = clean_road.lower()
 
             # Identify prominent road/place transition
@@ -132,21 +143,21 @@ def extract_journey_game_milestones(
                 # If road has hyphen (e.g. Tenali - Narakoduru Road), extract intermediate town
                 if "-" in clean_road:
                     parts = clean_road.split("-")
-                    second_part = parts[1].replace("Road", "").replace("Bypass", "").strip()
+                    second_part = parts[1].replace("Road", "").replace("Bypass", "").replace("Highway", "").strip()
                     if second_part:
-                        stop_display = second_part
+                        stop_display = second_part.title()
 
                 extracted_stops.append({
-                    "name": stop_display,
+                    "name": stop_display.title(),
                     "road": clean_road,
                     "dist_km": cum_dist,
                     "leg_km": s_dist_km
                 })
 
     # If steps didn't yield enough unique stops (e.g. short route or simple highway), sample from polyline
-    if len(extracted_stops) < 2 and p_count >= 6:
-        num_intermediate = 3
-        step_stride = p_count // (num_intermediate + 1)
+    if len(extracted_stops) < 2 and p_count >= 3:
+        num_intermediate = min(3, max(1, p_count - 2))
+        step_stride = max(1, p_count // (num_intermediate + 1))
         for i in range(1, num_intermediate + 1):
             idx = min(i * step_stride, p_count - 2)
             frac = i / (num_intermediate + 1)
@@ -231,11 +242,76 @@ def extract_journey_game_milestones(
     return milestones
 
 
+def detect_crossed_milestones(
+    user_coords: Tuple[float, float],
+    current_step: int,
+    milestones: List[JourneyMilestone],
+    polyline: Optional[List[Tuple[float, float]]] = None
+) -> Tuple[int, Optional[JourneyMilestone], str]:
+    """
+    Evaluates real-time live satellite GPS coordinates against the journey milestones.
+    Detects:
+    1. At what place the user currently is located.
+    2. Whether the user has crossed any milestone stops.
+    Returns:
+    (new_step_idx, newly_crossed_milestone, current_place_summary)
+    """
+    if not milestones:
+        return (0, None, "Starting Point")
+
+    u_lat, u_lon = user_coords
+    current_step = max(0, min(current_step, len(milestones) - 1))
+
+    # Calculate user distance along polyline
+    traveled_km = 0.0
+    if polyline and len(polyline) >= 2:
+        min_d = float('inf')
+        closest_idx = 0
+        for idx, pt in enumerate(polyline):
+            d = haversine_distance_km((u_lat, u_lon), pt)
+            if d < min_d:
+                min_d = d
+                closest_idx = idx
+
+        for i in range(closest_idx):
+            traveled_km += haversine_distance_km(polyline[i], polyline[i+1])
+    else:
+        traveled_km = haversine_distance_km((milestones[0].lat, milestones[0].lon), (u_lat, u_lon))
+
+    highest_reached_idx = current_step
+    newly_crossed = None
+
+    for idx, m in enumerate(milestones):
+        if idx <= current_step:
+            continue
+        direct_dist_km = haversine_distance_km((u_lat, u_lon), (m.lat, m.lon))
+        dist_threshold_km = max(0.0, m.distance_from_start_km - 0.20)
+
+        # Has user crossed or arrived at this milestone?
+        if (direct_dist_km <= 0.35) or (traveled_km >= dist_threshold_km and direct_dist_km <= 2.0):
+            highest_reached_idx = idx
+            newly_crossed = m
+
+    cur_m = milestones[highest_reached_idx]
+    if highest_reached_idx == 0:
+        place_summary = f"At {cur_m.label} (Starting Point)"
+    elif highest_reached_idx >= len(milestones) - 1:
+        place_summary = f"Arrived at Destination: {cur_m.label}"
+    else:
+        next_m = milestones[min(highest_reached_idx + 1, len(milestones) - 1)]
+        place_summary = f"Crossed {cur_m.label} • Heading towards {next_m.label}"
+
+    return (highest_reached_idx, newly_crossed, place_summary)
+
+
 def build_game_journey_html(
     milestones: List[JourneyMilestone],
     current_step: int,
     traveler_avatar: str = "boy",
-    auto_voice: bool = True
+    auto_voice: bool = True,
+    detected_place: str = "",
+    is_moving: bool = False,
+    user_speed_kmh: float = 0.0
 ) -> str:
     """
     Renders an interactive, visually stunning Game Journey Stepper HUD with:
@@ -243,6 +319,7 @@ def build_game_journey_html(
     - Character jump / hop CSS animation on active node
     - Real-time speech utterance execution on step transitions
     - Level progress meter and victory banner on arrival
+    - Real-time satellite motion & place detection badge
     """
     if not milestones:
         return ""
@@ -405,6 +482,19 @@ def build_game_journey_html(
                 <button onclick="speakGameStep()" style='background: #10b981; color: #ffffff; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(16,185,129,0.4);'>
                     🔊 Speak
                 </button>
+            </div>
+        </div>
+
+        <!-- Real-Time Satellite Motion & Place Detection Banner -->
+        <div style='background: rgba(16, 185, 129, 0.10); border: 1px solid rgba(16, 185, 129, 0.28); border-radius: 8px; padding: 6px 12px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;'>
+            <div style='display: flex; align-items: center; gap: 8px;'>
+                <span style='font-size: 0.95rem;'>🛰️</span>
+                <span style='color: #a7f3d0; font-size: 0.76rem; font-weight: 700;'>
+                    Live Satellite Position Detection: <b style='color: #ffffff;'>{detected_place or active_m.label}</b>
+                </span>
+            </div>
+            <div style='font-size: 0.72rem; color: #38bdf8; font-weight: 700; display: flex; align-items: center; gap: 6px;'>
+                <span style='color: #34d399;'>{("🟢 MOVING (" + f"{user_speed_kmh:.1f}" + " km/h)") if is_moving else "📡 CHECKPOINT LOCKED"}</span>
             </div>
         </div>
 

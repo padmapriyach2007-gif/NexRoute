@@ -18,7 +18,7 @@ from src.safety_monitor import SystemSafetyState
 import streamlit.components.v1 as components
 from src.voice_guidance import generate_simple_spoken_narrative, build_voice_assistant_html
 from src.google_maps_voice_navigator import prepare_google_maps_voice_data, render_google_maps_voice_navigator_html
-from src.game_journey_stepper import extract_journey_game_milestones, build_game_journey_html
+from src.game_journey_stepper import extract_journey_game_milestones, build_game_journey_html, detect_crossed_milestones
 
 # Page configuration
 st.set_page_config(
@@ -1929,17 +1929,38 @@ if ranked_routes:
 
             cur_game_idx = st.session_state[route_game_key]
             cur_game_idx = max(0, min(cur_game_idx, len(journey_milestones) - 1))
+
+            # Automatic Satellite Motion & Milestone Crossing Detection
+            user_current_pt = coords_orig if coords_orig else (16.2335, 80.5505)
+            auto_step_idx, newly_crossed_m, detected_place_summary = detect_crossed_milestones(
+                user_coords=user_current_pt,
+                current_step=cur_game_idx,
+                milestones=journey_milestones,
+                polyline=route_coords
+            )
+
+            # Automatically advance checkpoint if user crossed any stop during travel!
+            if auto_step_idx > cur_game_idx:
+                cur_game_idx = auto_step_idx
+                st.session_state[route_game_key] = auto_step_idx
+                if newly_crossed_m:
+                    st.session_state[f"auto_speak_game_{active_route_item.route.route_id}"] = newly_crossed_m.voice_announcement
+                    st.toast(f"🏃 Satellite GPS: Crossed {newly_crossed_m.label}! Character hopped forward.", icon="🎯")
+
             st.session_state[route_game_key] = cur_game_idx
 
-            # Render Game Journey HUD
+            # Render Game Journey HUD with live detected place & motion
             game_avatar = "boy" if "walk" in travel_mode_str.lower() else travel_mode_str.lower()
             game_html = build_game_journey_html(
                 milestones=journey_milestones,
                 current_step=cur_game_idx,
                 traveler_avatar=game_avatar,
-                auto_voice=False
+                auto_voice=False,
+                detected_place=detected_place_summary,
+                is_moving=is_user_moving,
+                user_speed_kmh=st.session_state.get("user_speed_kmh", 0.0)
             )
-            components.html(game_html, height=240)
+            components.html(game_html, height=275)
 
             # Interactive Game Jump Controls & Voice Assist
             g_col1, g_col2, g_col3, g_col4 = st.columns([3.2, 2.6, 2.2, 2.0])
