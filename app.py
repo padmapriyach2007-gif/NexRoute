@@ -18,6 +18,7 @@ from src.safety_monitor import SystemSafetyState
 import streamlit.components.v1 as components
 from src.voice_guidance import generate_simple_spoken_narrative, build_voice_assistant_html
 from src.google_maps_voice_navigator import prepare_google_maps_voice_data, render_google_maps_voice_navigator_html
+from src.game_journey_stepper import extract_journey_game_milestones, build_game_journey_html
 
 # Page configuration
 st.set_page_config(
@@ -1220,28 +1221,38 @@ with col_dest_in:
 with col_mode_in:
     mode_options = [
         "🚗 Car",
-        "🏍️ Bike / Scooter",
+        "🏍️ Bike",
         "🚜 Tractor",
         "🚚 Truck",
-        "🚶 Walking",
-        "🚴 Bicycling"
+        "🚶 Walk",
+        "🚴 Bike"
     ]
-    prev_mode_idx = 0
-    if "last_selected_mode" in st.session_state and st.session_state.last_selected_mode in mode_options:
-        prev_mode_idx = mode_options.index(st.session_state.last_selected_mode)
+    cur_m = st.session_state.get("last_selected_mode", "🚗 Car")
+    if "Walk" in cur_m:
+        default_mode = "🚶 Walk"
+    elif "Tractor" in cur_m:
+        default_mode = "🚜 Tractor"
+    elif "Truck" in cur_m:
+        default_mode = "🚚 Truck"
+    elif "Bicycl" in cur_m:
+        default_mode = "🚴 Bike"
+    elif "Bike" in cur_m:
+        default_mode = "🏍️ Bike"
+    else:
+        default_mode = "🚗 Car"
 
-    travel_mode_str = st.selectbox("Travel Mode:", mode_options, index=prev_mode_idx)
+    travel_mode_str = st.pills("Mode:", mode_options, default=default_mode, key="pills_nav_mode") or default_mode
     st.session_state.last_selected_mode = travel_mode_str
 
-    if "Bike" in travel_mode_str or "Scooter" in travel_mode_str:
+    if "Bike" in travel_mode_str and "🚴" not in travel_mode_str:
         travel_mode = TravelMode.MOTORCYCLE
     elif "Tractor" in travel_mode_str:
         travel_mode = TravelMode.TRACTOR
     elif "Truck" in travel_mode_str:
         travel_mode = TravelMode.TRUCK
-    elif "Walking" in travel_mode_str:
+    elif "Walk" in travel_mode_str:
         travel_mode = TravelMode.WALKING
-    elif "Bicycling" in travel_mode_str:
+    elif "🚴" in travel_mode_str:
         travel_mode = TravelMode.BICYCLING
     else:
         travel_mode = TravelMode.DRIVING
@@ -1718,14 +1729,15 @@ if ranked_routes:
     if active_route_item:
         is_focused = (cur_focus != "ALL")
         with st.expander(f"🧭 **Turn-by-Turn Navigation Manifest & AI Voice Guidance** — {active_route_item.route.name}", expanded=True):
-            timing_col1, timing_col2, timing_col3 = st.columns([2.5, 2.5, 3.0])
+            timing_col1, timing_col2, timing_col3 = st.columns([3.5, 2.5, 2.5])
             with timing_col1:
-                dep_offset = st.selectbox(
-                    "🕒 Departure Schedule",
+                dep_offset = st.pills(
+                    "🕒 Departure:",
                     options=[0, 15, 30, 60],
-                    format_func=lambda x: "Leave Now" if x == 0 else f"Depart in +{x} mins",
-                    key="nav_departure_offset"
-                )
+                    format_func=lambda x: "⚡ Now" if x == 0 else f"+{x}m",
+                    default=0,
+                    key="pills_nav_departure_offset"
+                ) or 0
             import datetime
             now_time = datetime.datetime.now()
             dep_time = now_time + datetime.timedelta(minutes=dep_offset)
@@ -1858,6 +1870,107 @@ if ranked_routes:
                     {"step_num": 2, "icon": "🏁", "instruction": "Arrive at destination safe terminal", "road": roads_list[-1], "distance_m": 0}
                 ]
 
+            # =========================================================================
+            # GAME JOURNEY STEPPER: INTERACTIVE JUMPING CHECKPOINT PROGRESSION
+            # =========================================================================
+            route_coords = getattr(active_route_item.route, "polyline", []) or getattr(active_route_item.route, "coordinates", [])
+            route_total_dist_km = getattr(active_route_item.route, "distance_km", 0.0) or (getattr(active_route_item.route, "distance_meters", 0.0) / 1000.0)
+
+            origin_display = st.session_state.get("user_live_label", "Starting Point")
+            dest_display = st.session_state.get("selected_dest_label", "Destination")
+
+            # Dynamically extract milestones for ANY global coordinates
+            journey_milestones = extract_journey_game_milestones(
+                origin_label=origin_display,
+                dest_label=dest_display,
+                polyline=route_coords,
+                steps=steps,
+                total_distance_km=route_total_dist_km
+            )
+
+            # Manage step state keyed to active route
+            route_game_key = f"game_step_{active_route_item.route.route_id}"
+            if route_game_key not in st.session_state:
+                st.session_state[route_game_key] = 0
+
+            cur_game_idx = st.session_state[route_game_key]
+            cur_game_idx = max(0, min(cur_game_idx, len(journey_milestones) - 1))
+            st.session_state[route_game_key] = cur_game_idx
+
+            # Render Game Journey HUD
+            game_avatar = "boy" if "walk" in travel_mode_str.lower() else travel_mode_str.lower()
+            game_html = build_game_journey_html(
+                milestones=journey_milestones,
+                current_step=cur_game_idx,
+                traveler_avatar=game_avatar,
+                auto_voice=False
+            )
+            components.html(game_html, height=240)
+
+            # Interactive Game Jump Controls & Voice Assist
+            g_col1, g_col2, g_col3, g_col4 = st.columns([3.2, 2.6, 2.2, 2.0])
+            with g_col1:
+                if cur_game_idx < len(journey_milestones) - 1:
+                    next_m = journey_milestones[cur_game_idx + 1]
+                    btn_hop_label = f"🏃‍♂️ Jump: {next_m.action_title.split()[0]} {next_m.label[:14]}"
+                    if st.button(btn_hop_label, key=f"btn_hop_{active_route_item.route.route_id}", use_container_width=True, type="primary"):
+                        st.session_state[route_game_key] = cur_game_idx + 1
+                        st.session_state[f"auto_speak_game_{active_route_item.route.route_id}"] = next_m.voice_announcement
+                        st.toast(f"🏃 Traveler hopped to: {next_m.action_title}!", icon="🎯")
+                        st.rerun()
+                else:
+                    st.success("🏆 Destination Reached!", icon="✅")
+            with g_col2:
+                if cur_game_idx > 0:
+                    prev_m = journey_milestones[cur_game_idx - 1]
+                    if st.button("⏮️ Previous Checkpoint", key=f"btn_prev_hop_{active_route_item.route.route_id}", use_container_width=True):
+                        st.session_state[route_game_key] = max(0, cur_game_idx - 1)
+                        st.session_state[f"auto_speak_game_{active_route_item.route.route_id}"] = prev_m.voice_announcement
+                        st.rerun()
+                else:
+                    st.button("⏮️ Route Start Point", disabled=True, use_container_width=True)
+            with g_col3:
+                curr_milestone = journey_milestones[cur_game_idx]
+                curr_speech_json = json.dumps(curr_milestone.voice_announcement)
+                if st.button("🔊 Voice Checkpoint", key=f"btn_voice_m_{active_route_item.route.route_id}", use_container_width=True):
+                    components.html(f"""
+                    <script>
+                    (function() {{
+                        if (!('speechSynthesis' in window)) return;
+                        window.speechSynthesis.cancel();
+                        const utt = new SpeechSynthesisUtterance({curr_speech_json});
+                        utt.rate = 0.95;
+                        utt.pitch = 1.05;
+                        utt.lang = 'en-US';
+                        window.speechSynthesis.speak(utt);
+                    }})();
+                    </script>
+                    """, height=0, width=0)
+                    st.toast(f"Announcing: {curr_milestone.action_title}", icon="🔊")
+            with g_col4:
+                if st.button("🔁 Reset Start", key=f"btn_reset_hop_{active_route_item.route.route_id}", use_container_width=True):
+                    st.session_state[route_game_key] = 0
+                    st.session_state[f"auto_speak_game_{active_route_item.route.route_id}"] = journey_milestones[0].voice_announcement
+                    st.rerun()
+
+            # Trigger speech if auto_speak was scheduled on jump
+            auto_speak_msg = st.session_state.pop(f"auto_speak_game_{active_route_item.route.route_id}", None)
+            if auto_speak_msg:
+                msg_json = json.dumps(auto_speak_msg)
+                components.html(f"""
+                <script>
+                (function() {{
+                    if (!('speechSynthesis' in window)) return;
+                    window.speechSynthesis.cancel();
+                    const utt = new SpeechSynthesisUtterance({msg_json});
+                    utt.rate = 0.95;
+                    utt.pitch = 1.05;
+                    utt.lang = 'en-US';
+                    window.speechSynthesis.speak(utt);
+                }})();
+                </script>
+                """, height=0, width=0)
+
             st.markdown("<div style='margin-top: 14px; margin-bottom: 6px; font-weight: 700; font-size: 0.82rem; color: #38bdf8;'>🧭 STEP-BY-STEP MANEUVERS (SYNCHRONIZED WITH VOICE GUIDANCE)</div>", unsafe_allow_html=True)
             for s in steps:
                 s_dist_km = s.get("distance_m", 0.0) / 1000.0
@@ -1907,21 +2020,22 @@ if ranked_routes:
             user_current_lon = coords_orig[1] if coords_orig else 80.5505
             nat_emergency = get_national_emergency_contacts(user_current_lat, user_current_lon)
 
-            # Category filter buttons / selection
-            em_filter_col1, em_filter_col2 = st.columns([3.5, 6.5])
+            # Category filter buttons / selection (Modern sleek pills)
+            em_filter_col1, em_filter_col2 = st.columns([5.5, 4.5])
             with em_filter_col1:
-                em_category_sel = st.selectbox(
+                em_category_sel = st.pills(
                     "Filter Facilities:",
                     options=["ALL", "MEDICAL", "SHELTER", "ASSISTANCE", "TRAVEL"],
                     format_func=lambda x: {
-                        "ALL": "🌐 All Facilities Along Route",
-                        "MEDICAL": "🏥 Hospitals & Emergency Units",
-                        "SHELTER": "⛺ Designated Evacuation Shelters",
-                        "ASSISTANCE": "👮 Police & Fire Rescue",
-                        "TRAVEL": "⛽ Fuel & Fast EV Charging"
+                        "ALL": "🌐 All Facilities",
+                        "MEDICAL": "🏥 Hospitals",
+                        "SHELTER": "⛺ Shelters",
+                        "ASSISTANCE": "👮 Police/Rescue",
+                        "TRAVEL": "⛽ Fuel/Charging"
                     }[x],
+                    default="ALL",
                     key="sel_emergency_filter"
-                )
+                ) or "ALL"
 
             # Filter facilities
             filtered_facs = []
@@ -1970,6 +2084,52 @@ if ranked_routes:
                     </script>
                     """, height=0, width=0)
                     st.toast("🎙️ Speaking real route safety amenities summary...", icon="🔊")
+
+            # =========================================================================
+            # SECURITY & ASSISTANCE: CALL REDIRECTION VERIFICATION PROTOCOL
+            # =========================================================================
+            if st.session_state.get("pending_call_verification"):
+                pending = st.session_state.pending_call_verification
+                call_phone_clean = re.sub(r'[^0-9+]', '', str(pending.get("phone", "")))
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, rgba(220, 38, 38, 0.3) 0%, rgba(15, 23, 42, 0.95) 100%);
+                            border: 2px solid #ef4444; border-radius: 12px; padding: 16px 20px; margin: 14px 0;
+                            box-shadow: 0 0 30px rgba(239, 68, 68, 0.45);'>
+                    <div style='display: flex; align-items: flex-start; gap: 12px;'>
+                        <span style='font-size: 1.8rem;'>⚠️</span>
+                        <div style='flex: 1;'>
+                            <div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;'>
+                                <b style='color: #f87171; font-size: 1.02rem; letter-spacing: 0.02em;'>
+                                    ASSISTANCE CALL VERIFICATION & SECURITY CONFIRMATION
+                                </b>
+                                <span style='background: rgba(239, 68, 68, 0.25); color: #fca5a5; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid #ef4444;'>
+                                    SECURITY CHECK ACTIVE
+                                </span>
+                            </div>
+                            <div style='color: #f1f5f9; font-size: 0.88rem; margin-top: 6px; line-height: 1.4;'>
+                                Are you sure you want to redirect and initiate a telephone call to <b>{pending.get("name")}</b>?
+                            </div>
+                            <div style='background: rgba(0, 0, 0, 0.4); border-radius: 8px; padding: 8px 12px; margin-top: 8px; font-size: 0.82rem; color: #94a3b8; display: flex; gap: 16px; flex-wrap: wrap;'>
+                                <span>📞 Target Number: <b style='color: #38bdf8; font-size: 0.95rem;'>{pending.get("phone")}</b></span>
+                                <span>🏷️ Type: <b style='color: #cbd5e1;'>{pending.get("type")}</b></span>
+                                <span>📍 Details: <b style='color: #a7f3d0;'>{pending.get("info", "")}</b></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                v_col1, v_col2 = st.columns([1, 1])
+                with v_col1:
+                    st.markdown(f"""
+                    <a href="tel:{call_phone_clean}" target="_blank" onclick="window.location.href='tel:{call_phone_clean}';" style='display: block; text-align: center; background: #10b981; color: #ffffff; padding: 10px; border-radius: 8px; font-weight: 800; font-size: 0.90rem; text-decoration: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);'>
+                        ✅ YES, CONFIRM & PLACE CALL NOW ({pending.get("phone")})
+                    </a>
+                    """, unsafe_allow_html=True)
+                with v_col2:
+                    if st.button("❌ Cancel / Do Not Call", key="btn_cancel_call_verification", use_container_width=True):
+                        st.session_state.pending_call_verification = None
+                        st.toast("Call request canceled.", icon="ℹ️")
+                        st.rerun()
 
             # Render Facility Cards
             if not filtered_facs:
@@ -2023,8 +2183,14 @@ if ranked_routes:
                                 st.rerun()
                         with btn_c2:
                             if fac.contact_phone:
-                                phone_clean = re.sub(r'[^0-9+]', '', fac.contact_phone)
-                                st.markdown(f"<a href='tel:{phone_clean}' style='display: block; text-align: center; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 6px; padding: 5px; font-size: 0.72rem; font-weight: 700; text-decoration: none;'>📞 Call</a>", unsafe_allow_html=True)
+                                if st.button("📞 Call", key=f"btn_trigger_call_{fac.facility_id}", use_container_width=True):
+                                    st.session_state.pending_call_verification = {
+                                        "name": fac.name,
+                                        "phone": fac.contact_phone,
+                                        "type": fac.facility_type,
+                                        "info": f"Corridor: {fac.distance_from_route_km:.1f} km • ~{fac.road_distance_km:.1f} km drive"
+                                    }
+                                    st.rerun()
 
             # =========================================================================
             # EMERGENCY & STRANDED USER ASSISTANCE (SOS DIRECT DISPATCH)
@@ -2039,12 +2205,18 @@ if ranked_routes:
                                 Country: <b>{nat_emergency['country']}</b> • Official Emergency Response Service: <b>{nat_emergency['agency_name']}</b>
                             </div>
                         </div>
-                        <a href="tel:{nat_emergency['primary_sos']}" style='background: #ef4444; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 0.82rem; text-decoration: none; box-shadow: 0 0 12px rgba(239,68,68,0.5);'>
-                            📞 Dial {nat_emergency['primary_sos']} ({nat_emergency['country']})
-                        </a>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+                if st.button(f"🚨 Dial {nat_emergency['primary_sos']} ({nat_emergency['country']}) - Official Emergency Line", key="btn_sos_direct_call", use_container_width=True):
+                    st.session_state.pending_call_verification = {
+                        "name": f"Official National Emergency Service ({nat_emergency['agency_name']})",
+                        "phone": nat_emergency['primary_sos'],
+                        "type": "Immediate Life Safety / SOS Dispatch",
+                        "info": f"Country: {nat_emergency['country']}"
+                    }
+                    st.rerun()
 
                 sos_c1, sos_c2, sos_c3, sos_c4 = st.columns(4)
                 with sos_c1:
@@ -2107,11 +2279,14 @@ if ranked_routes:
                                 st.rerun()
                         with action_c2:
                             call_num = briefing.get("emergency_phone", nat_emergency["primary_sos"])
-                            st.markdown(f"""
-                            <a href="tel:{call_num}" style='display: block; text-align: center; background: #dc2626; color: #ffffff; padding: 9px; border-radius: 6px; font-weight: 800; font-size: 0.84rem; text-decoration: none;'>
-                                📞 Confirm & Call {call_num}
-                            </a>
-                            """, unsafe_allow_html=True)
+                            if st.button(f"📞 Verify & Call {call_num}", key="btn_trigger_briefing_call", use_container_width=True):
+                                st.session_state.pending_call_verification = {
+                                    "name": fac['name'] if fac else "Emergency Response Dispatch",
+                                    "phone": call_num,
+                                    "type": f"{st_type} Emergency Support",
+                                    "info": "AI Emergency Guidance Dispatch"
+                                }
+                                st.rerun()
 
 # =========================================================================
 # FLOATING CIRCULAR CHATBOT: A.U.R.A. (Adaptive User Route Assistant)
