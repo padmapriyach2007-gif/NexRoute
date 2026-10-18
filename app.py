@@ -39,7 +39,9 @@ from PIL import Image
 try:
     from src.pipeline import CampusSpherePipeline as CampusAegisPipeline
 except (ImportError, ModuleNotFoundError):
-    from pipeline import CampusSpherePipeline as CampusAegisPipeline
+    import importlib
+    CampusAegisPipeline = importlib.import_module("pipeline").CampusSpherePipeline
+
 
 from src.visualizer import create_3d_building_figure, create_2d_campus_map
 from src.planning_agent import EvacuationPlanningCSP, EvacuationGroup
