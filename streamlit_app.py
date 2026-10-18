@@ -2,21 +2,45 @@
 Streamlit Community Cloud Entry Point
 CampusAegis / P.A.T.H.F.I.N.D.E.R. • Real-Time Adaptive Navigation System
 
-Ensures working directory is correctly set to project root and delegates execution to app.py.
+Ensures working directory and sys.path are correctly configured for both local
+and Streamlit Community Cloud environments (/mount/src/<repo>).
 """
 
 import sys
 import os
-import runpy
+import types
 from pathlib import Path
+import runpy
 
-# Ensure workspace root is in sys.path and set working directory to root
+# Determine absolute path to the project root and src directory
 ROOT_DIR = Path(__file__).resolve().parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
+SRC_DIR = ROOT_DIR / "src"
 
-# Ensure current working directory is always the project root
+# Prepend project root and src to sys.path
+for p in [str(ROOT_DIR), str(SRC_DIR)]:
+    while p in sys.path:
+        sys.path.remove(p)
+    sys.path.insert(0, p)
+
+# Fix for Streamlit Cloud (/mount/src/<repo>):
+# If Python imports or creates a namespace package for /mount/src,
+# ensure 'src' always resolves to this repository's src package.
+if "src" in sys.modules:
+    src_mod = sys.modules["src"]
+    if not hasattr(src_mod, "__file__") or src_mod.__file__ is None:
+        if hasattr(src_mod, "__path__"):
+            src_mod.__path__.insert(0, str(SRC_DIR))
+else:
+    # Pre-register src package pointing directly to SRC_DIR
+    src_pkg = types.ModuleType("src")
+    src_pkg.__file__ = str(SRC_DIR / "__init__.py")
+    src_pkg.__path__ = [str(SRC_DIR)]
+    src_pkg.__package__ = "src"
+    sys.modules["src"] = src_pkg
+
+# Ensure working directory is project root
 os.chdir(str(ROOT_DIR))
 
-# Execute primary application entrypoint
+# Execute main application entrypoint
 runpy.run_path(str(ROOT_DIR / "app.py"), run_name="__main__")
+

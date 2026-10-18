@@ -798,7 +798,7 @@ def render_google_maps_voice_navigator_html(nav_data: Dict[str, Any], height: in
 
       <!-- Spoken text subtitle caption -->
       <div class="spoken-caption" id="spokenCaption">
-        AI Voice Assistant ready. Tap Start Navigation or Follow Live GPS to guide step-by-step.
+        Navigation ready. Tap Start Navigation or Follow Live GPS to guide step-by-step.
       </div>
     </div>
 
@@ -822,7 +822,7 @@ def render_google_maps_voice_navigator_html(nav_data: Dict[str, Any], height: in
   let currentStepIdx = 0;
   let progressRatio = 0.0;
   let simSpeedMultiplier = 1;
-  let isVoiceMuted = false;
+  let isVoiceMuted = true;
   let currentSpeechUtterance = null;
   let animFrameId = null;
 
@@ -1220,34 +1220,13 @@ def render_google_maps_voice_navigator_html(nav_data: Dict[str, Any], height: in
   }}
 
   function speakAIVoice(text) {{
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-    utterance.lang = 'en-US';
-
-    const voices = window.speechSynthesis.getVoices();
-    const naturalVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
-    if (naturalVoice) utterance.voice = naturalVoice;
-
-    currentSpeechUtterance = utterance;
-
+    // Silenced: AI voice assistant removed per user request
+    if ('speechSynthesis' in window) {{
+      try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
+    }}
     const captionEl = document.getElementById('spokenCaption');
     if (captionEl) captionEl.innerText = text;
-
-    utterance.onstart = () => {{
-      document.getElementById('voiceEq').classList.add('speaking');
-    }};
-    utterance.onend = () => {{
-      document.getElementById('voiceEq').classList.remove('speaking');
-    }};
-    utterance.onerror = () => {{
-      document.getElementById('voiceEq').classList.remove('speaking');
-    }};
-
-    window.speechSynthesis.speak(utterance);
+    return;
   }}
 
   function toggleMute() {{

@@ -576,47 +576,13 @@ def build_voice_assistant_html(
         }}
 
         function speakText(text, onComplete) {{
-            if (!('speechSynthesis' in window)) {{
-                alert('Speech synthesis is not supported in this browser. Please use Chrome, Edge, or Safari.');
-                return;
+            // Silenced: AI voice assistant removed per user request
+            if ('speechSynthesis' in window) {{
+                try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
             }}
-            window.speechSynthesis.cancel();
-            isPaused = false;
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = speechRate;
-            utterance.pitch = 1.0;
-            utterance.lang = 'en-US';
-
-            // Select natural voice if available
-            const voices = window.speechSynthesis.getVoices();
-            const preferred = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
-            if (preferred) utterance.voice = preferred;
-
             setCaption(text);
-
-            utterance.onstart = () => {{
-                isSpeaking = true;
-                updateUIStatus('SPEAKING...', true);
-                const pauseLbl = document.getElementById('pauseLabel');
-                if (pauseLbl) pauseLbl.innerText = '⏸️ Pause';
-            }};
-
-            utterance.onend = () => {{
-                isSpeaking = false;
-                isPaused = false;
-                updateUIStatus('READY', false);
-                if (onComplete) onComplete();
-            }};
-
-            utterance.onerror = (e) => {{
-                console.warn('Speech error:', e);
-                isSpeaking = false;
-                isPaused = false;
-                updateUIStatus('READY', false);
-            }};
-
-            window.speechSynthesis.speak(utterance);
+            if (onComplete) onComplete();
+            return;
         }}
 
         function playCurrentStep() {{

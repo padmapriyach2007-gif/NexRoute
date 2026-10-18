@@ -1,17 +1,33 @@
 """
-FastAPI REST API Server for CampusAegis / PROJECT AI
-Provides backend endpoints for Android app and dashboard:
-- GET  /api/health
-- POST /api/geocode
-- POST /api/route
-- GET  /api/hazards
-- POST /api/simulate-emergency
-- POST /api/register-device
-- GET  /api/notifications
+FastAPI REST API Server for CampusAegis / P.A.T.H.F.I.N.D.E.R.
+Provides:
+1. Legacy v1 Endpoints (Android client & Dashboard backward compatibility):
+   - GET  /api/health
+   - POST /api/geocode
+   - POST /api/route
+   - GET  /api/hazards
+   - POST /api/simulate-emergency
+   - POST /api/register-device
+   - GET  /api/notifications
+2. Production-Ready Next-Generation Maps v2 Endpoints (/api/v2/*):
+   - Auth, JWT, Roles, Preferences (/api/v2/auth/*)
+   - Advanced Multi-Criteria Routing, Dynamic Reroute, Costs (/api/v2/routes/*)
+   - Real-Time Road Intelligence, Community Reports, Scoring (/api/v2/road-conditions/*)
+   - Place Discovery, Explainable Ranking, Comparisons (/api/v2/places/*)
+   - Real-World Arrival, Entrances, Parking, Last 300m (/api/v2/arrival/*)
+   - Multimodal Public Transit & Ride-Hail Itineraries (/api/v2/multimodal/*)
+   - Vehicle Constraints & EV Supercharging Planner (/api/v2/vehicles/*)
+   - Weather-Aware Routing & Hazard Alerts (/api/v2/weather/*)
+   - Collaborative Maps, Stops, Voting, Audit Logs (/api/v2/collaborative/*)
+   - Camera-Assisted Visual Navigation & Landmarks (/api/v2/visual-nav/*)
+   - Tool-Driven AI Trip-Planning Agent (/api/v2/ai-planner/*)
+   - Offline Map Packages, Checksums, Manifests (/api/v2/offline/*)
+   - Data Ingestion & Digital Twin Sync (/api/v2/ingestion/*)
 """
 
 from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.map_service import MapService
@@ -20,13 +36,36 @@ from src.route_engine import RealWorldRouteEngine, TravelMode
 from src.safety_route_filter import SafetyRouteFilter
 from src.notification_service import NotificationService, NotificationPriority
 
+# Next-Gen Backend Modules
+from src.backend.database.migrations import run_migrations
+from src.backend.database.seed_data import seed_database
+from src.backend.api.v2_router import v2_router
+
 app = FastAPI(
-    title="CampusAegis Real-World Emergency Navigation API",
-    version="2.0.0",
-    description="Autonomous emergency-aware routing and alert dispatch backend."
+    title="P.A.T.H.F.I.N.D.E.R. Next-Generation Maps & Real-World Navigation Backend",
+    version="2.5.0",
+    description="Autonomous emergency-aware routing, digital twin road intelligence, multi-entrance arrival, multimodal itineraries, and AI trip planning."
 )
 
-# Global singleton services
+# CORS middleware for mobile and web clients
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Startup lifecycle to run database migrations and seed baseline records
+@app.on_event("startup")
+def on_startup():
+    run_migrations()
+    seed_database()
+
+# Mount Next-Gen v2 APIRouter
+app.include_router(v2_router)
+
+# Global singleton services (v1 compatibility)
 map_service = MapService()
 hazard_map = HazardMap()
 route_engine = RealWorldRouteEngine()
@@ -67,8 +106,32 @@ class RegisterDeviceRequest(BaseModel):
 def health_check():
     return {
         "status": "HEALTHY",
-        "system": "CampusAegis Decision Support Prototype",
+        "system": "CampusAegis / P.A.T.H.F.I.N.D.E.R. Dual-Core Engine",
+        "version": "2.5.0",
         "active_hazards": len(hazard_map.get_active_hazards())
+    }
+
+
+@app.get("/api/v2/system/status")
+def system_v2_status():
+    return {
+        "status": "OPERATIONAL",
+        "version": "2.5.0",
+        "features": {
+            "advanced_routing": True,
+            "realtime_road_intelligence": True,
+            "multi_entrance_arrival": True,
+            "ai_place_discovery": True,
+            "multimodal_transit_planner": True,
+            "accessibility_constraints": True,
+            "vehicle_aware_ev_planner": True,
+            "weather_aware_routing": True,
+            "collaborative_maps": True,
+            "camera_visual_navigation": True,
+            "ai_trip_planning_agent": True,
+            "offline_map_packages": True,
+            "data_ingestion_framework": True
+        }
     }
 
 

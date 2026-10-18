@@ -139,3 +139,12 @@ def test_notification_delivery_lifecycle():
     ack_res = notif_srv.acknowledge_notification(payload.notification_id)
     assert ack_res is True
     assert payload.status == NotificationDeliveryStatus.USER_ACKNOWLEDGED
+
+
+def test_bus_travel_mode_routing():
+    engine = RealWorldRouteEngine()
+    routes = engine.calculate_routes(16.2335, 80.5505, 16.3067, 80.4365, mode=TravelMode.BUS)
+    assert len(routes) >= 1
+    assert all(r.mode == TravelMode.BUS for r in routes)
+    assert all(r.distance_km > 0 for r in routes)
+    assert all(r.duration_minutes > 0 for r in routes)

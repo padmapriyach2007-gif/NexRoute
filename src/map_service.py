@@ -105,6 +105,8 @@ OFFLINE_GEOCODE_CACHE = {
     "pinapadu": {"lat": 16.2490, "lon": 80.6290, "name": "Pinapadu, Tenali"},
     "tenali railway station": {"lat": 16.2395, "lon": 80.6465, "name": "Tenali Junction Railway Station"},
     "tenali": {"lat": 16.2430, "lon": 80.6400, "name": "Tenali Town, Guntur District"},
+    "bsr enclave": {"lat": 16.23454, "lon": 80.65197, "name": "BSR Enclave, Sarojini Naidu Street, Tenali", "display_name": "BSR Enclave, Sarojini Naidu Street, Tenali, Andhra Pradesh"},
+    "sarojini naidu street": {"lat": 16.23454, "lon": 80.65180, "name": "Sarojini Naidu Street, Tenali", "display_name": "Sarojini Naidu Street, Tenali, Andhra Pradesh"},
 
     # Major Regional Cities
     "vijayawada": {"lat": 16.5062, "lon": 80.6480, "name": "Vijayawada Junction, Andhra Pradesh"},
@@ -127,6 +129,20 @@ class MapService:
         self.base_url = (base_url or os.environ.get("NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org")).rstrip("/")
         self.timeout_sec = timeout_sec
         self.cache: Dict[str, Dict[str, Any]] = dict(OFFLINE_GEOCODE_CACHE)
+        try:
+            from src.google_maps_platform import load_and_georeference_saved_locations
+            for loc in load_and_georeference_saved_locations():
+                name_k = loc["name"].lower().strip()
+                self.cache[name_k] = {
+                    "lat": loc["latitude"],
+                    "lon": loc["longitude"],
+                    "name": loc["name"],
+                    "display_name": f"{loc['name']}, {loc['section']}, Vignan University",
+                    "country": "India",
+                    "state": "Andhra Pradesh"
+                }
+        except Exception:
+            pass
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": self.user_agent})
         self._last_request_time = 0.0
@@ -193,10 +209,9 @@ class MapService:
 
         # Handle 'current location' keyword
         if "current" in q_norm:
-            c_base = OFFLINE_GEOCODE_CACHE["vignan university"]
             return [{
-                "lat": c_base["lat"],
-                "lon": c_base["lon"],
+                "lat": 16.23454,
+                "lon": 80.65197,
                 "display_name": "📍 Current Location",
                 "country": "India",
                 "state": "Andhra Pradesh",
@@ -206,22 +221,50 @@ class MapService:
             }]
 
         # ---------------------------------------------------------
-        # TIER 2: Exact Match in Pre-cached Directory (Instant response)
+        # TIER 2: Exact & Predictive Matches in Directory (Instant response)
         # ---------------------------------------------------------
-        if q_norm in self.cache:
-            v = self.cache[q_norm]
-            return [{
-                "lat": v["lat"],
-                "lon": v["lon"],
-                "display_name": v.get("display_name", v.get("name", q_raw)),
-                "country": v.get("country", "Local / Cached"),
-                "state": v.get("state", ""),
-                "type": "cached_place",
-                "importance": 0.95,
-                "source": "OFFLINE_CACHE"
-            }]
+        matched_keys = [k for k in self.cache if k == q_norm]
+        matched_keys += [k for k in self.cache if k != q_norm and (k.startswith(q_norm) or (len(q_norm) >= 3 and q_norm in k))]
+
+        if matched_keys:
+            cached_results = []
+            for k in matched_keys[:limit]:
+                v = self.cache[k]
+                cached_results.append({
+                    "lat": v["lat"],
+                    "lon": v["lon"],
+                    "display_name": v.get("display_name", v.get("name", k.title())),
+                    "country": v.get("country", "Local / Cached"),
+                    "state": v.get("state", ""),
+                    "type": "cached_place",
+                    "importance": 1.0 if k == q_norm else 0.90,
+                    "source": "OFFLINE_CACHE"
+                })
+            if matched_keys[0] == q_norm or len(cached_results) >= limit:
+                return cached_results
 
         candidates: List[Dict[str, Any]] = []
+
+        # ---------------------------------------------------------
+        # TIER 2.5: Official Google Maps Geocoding API (when key is configured)
+        # ---------------------------------------------------------
+        try:
+            from src.google_maps_platform import geocode_with_google_api, is_google_maps_key_configured
+            if is_google_maps_key_configured():
+                g_res = geocode_with_google_api(q_raw)
+                if g_res:
+                    return [{
+                        "lat": g_res["lat"],
+                        "lon": g_res["lon"],
+                        "display_name": g_res.get("formatted_address", q_raw),
+                        "country": "",
+                        "state": "",
+                        "type": "google_places_geocoded",
+                        "importance": 0.99,
+                        "source": "GOOGLE_MAPS_PLATFORM"
+                    }]
+        except Exception:
+            pass
 
         # ---------------------------------------------------------
         # TIER 3: Worldwide Geocoding Provider (OpenStreetMap Nominatim / Photon)
@@ -315,10 +358,16 @@ class MapService:
 
     def reverse_geocode(self, lat: float, lon: float) -> str:
         """Translates lat/lon into human-readable landmark or address worldwide."""
-        # Check proximity to known cached landmarks (< 300 meters)
+        # Check proximity to known cached landmarks (< 350 meters) - find closest
+        best_match = None
+        min_dist_sq = 0.0035 ** 2
         for k, v in self.cache.items():
-            if abs(v["lat"] - lat) < 0.003 and abs(v["lon"] - lon) < 0.003:
-                return v.get("display_name", v.get("name", "Known Landmark"))
+            dist_sq = (v["lat"] - lat) ** 2 + (v["lon"] - lon) ** 2
+            if dist_sq < min_dist_sq:
+                min_dist_sq = dist_sq
+                best_match = v.get("display_name", v.get("name", "Known Landmark"))
+        if best_match:
+            return best_match
 
         try:
             self._respect_rate_limit()
@@ -352,7 +401,8 @@ class MapService:
         map_style: str = "satellite_hybrid",
         auto_fit_bounds: bool = False,
         traveler_avatar: str = "boy",
-        emergency_facilities: Optional[List[Dict[str, Any]]] = None
+        emergency_facilities: Optional[List[Dict[str, Any]]] = None,
+        is_custom_origin: bool = False
     ) -> folium.Map:
         """
         Creates a rich, multi-layered interactive Folium Leaflet Map with:
@@ -371,17 +421,57 @@ class MapService:
             tiles=None,
             control_scale=True,
             attribution_control=False,
-            zoom_control=False
+            zoom_control=True,
+            scrollWheelZoom=False
         )
 
-        # Sole Basemap: High-Resolution Satellite View (Satellite Imagery + Street Labels)
+        # Real Google Maps Roadmap, Satellite Hybrid, Terrain, and Live Traffic
+        # Official Google Maps tile streams matching Google Maps @16.2463744,80.6617088,14z
+        is_satellite = str(map_style).lower() in ("satellite_hybrid", "satellite", "google_satellite", "tactical_satellite")
+        is_terrain = "terrain" in str(map_style).lower()
+
+        # 1. Google Maps Roadmap (Clean, high-contrast city & highway view)
+        folium.TileLayer(
+            tiles="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+            attr="Google Maps",
+            name="🗺️ Google Maps Roadmap",
+            overlay=False,
+            control=True,
+            show=(not is_satellite and not is_terrain)
+        ).add_to(m)
+
+        # 2. Google Satellite Hybrid (High-resolution aerial satellite with road overlays & place labels)
         folium.TileLayer(
             tiles="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
             attr="Google Satellite",
-            name="🛰️ Satellite View",
+            name="🛰️ Google Satellite Hybrid",
             overlay=False,
-            control=False
+            control=True,
+            show=is_satellite
         ).add_to(m)
+
+        # 3. Google Terrain (Physical contours, elevation and regional topography)
+        folium.TileLayer(
+            tiles="https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}",
+            attr="Google Terrain",
+            name="🏔️ Google Terrain",
+            overlay=False,
+            control=True,
+            show=is_terrain
+        ).add_to(m)
+
+        # 4. Live Real-Time Traffic Congestion Layer (Official Google traffic stream: Green/Orange/Red)
+        folium.TileLayer(
+            tiles="https://mt1.google.com/vt/lyrs=h,traffic&x={x}&y={y}&z={z}",
+            attr="Google Traffic",
+            name="🚦 Live Traffic Congestion",
+            overlay=True,
+            control=True,
+            show=True
+        ).add_to(m)
+
+        # Interactive Google Maps Layer Switcher
+        folium.LayerControl(position="topright", collapsed=True).add_to(m)
 
         # High-Accuracy Real-Time GPS Tracking Plugin (Google Maps style)
         try:
@@ -394,7 +484,7 @@ class MapService:
                 drawMarker=True,
                 showPopup=True,
                 strings={
-                    "title": "🎯 Real Satellite GPS Locked (Always Active)",
+                    "title": "🎯 Locate Me on Satellite View",
                     "popup": "📍 Live Satellite GPS Position (Accurate within {distance} {unit})"
                 },
                 locateOptions={
@@ -406,46 +496,224 @@ class MapService:
         except Exception:
             pass
 
+        # Real-time bridge: When map detects the start location (blue circle),
+        # take that blue circle as the start location until user enters custom start location
+        map_var_name = m.get_name()
+        gps_bridge_html = f"""
+        <script>
+        (function() {{
+            var isCustomOrigin = {json.dumps(bool(is_custom_origin))};
+
+            function syncDetectedStartLocation(lat, lon, acc) {{
+                if (isCustomOrigin) {{
+                    console.log("[PATHFINDER] Custom start location is active; preserving custom origin.");
+                    return;
+                }}
+                try {{
+                    if (window.parent && window.parent !== window) {{
+                        window.parent.postMessage({{
+                            type: 'PATHFINDER_GPS_DETECTED',
+                            lat: lat,
+                            lon: lon,
+                            acc: (acc || 6.0)
+                        }}, '*');
+                    }}
+                }} catch(e) {{}}
+                try {{
+                    var targetWin = window.parent || window;
+                    var url;
+                    try {{
+                        url = new URL(targetWin.location.href);
+                    }} catch(e) {{
+                        url = new URL(window.location.href);
+                        targetWin = window;
+                    }}
+
+                    var curLat = url.searchParams.get("gps_lat");
+                    var curLon = url.searchParams.get("gps_lon");
+
+                    var shouldUpdate = false;
+                    if (!curLat || !curLon) {{
+                        shouldUpdate = true;
+                    }} else {{
+                        var dLat = Math.abs(parseFloat(curLat) - lat);
+                        var dLon = Math.abs(parseFloat(curLon) - lon);
+                        if (dLat > 0.0003 || dLon > 0.0003) {{
+                            shouldUpdate = true;
+                        }}
+                    }}
+
+                    if (shouldUpdate) {{
+                        console.log("[PATHFINDER] Map detected blue circle GPS at:", lat, lon, "Taking as start location.");
+                        url.searchParams.set("gps_lat", lat.toFixed(6));
+                        url.searchParams.set("gps_lon", lon.toFixed(6));
+                        url.searchParams.set("gps_acc", (acc || 6.0).toFixed(1));
+                        targetWin.location.replace(url.toString());
+                    }}
+                }} catch(err) {{
+                    console.warn("[PATHFINDER] Could not sync detected start location to parent window:", err);
+                }}
+            }}
+
+            function initMapLocationBridge() {{
+                var leafletMap = window["{map_var_name}"];
+                if (!leafletMap) {{
+                    var mapEls = document.querySelectorAll('.folium-map');
+                    if (mapEls && mapEls.length > 0 && window[mapEls[0].id]) {{
+                        leafletMap = window[mapEls[0].id];
+                    }}
+                }}
+
+                if (leafletMap) {{
+                    leafletMap.on('locationfound', function(e) {{
+                        var lat = e.latlng.lat;
+                        var lon = e.latlng.lng;
+                        var acc = e.accuracy || 6.0;
+                        syncDetectedStartLocation(lat, lon, acc);
+                    }});
+                }} else {{
+                    setTimeout(initMapLocationBridge, 120);
+                }}
+            }}
+
+            var movingRunnerMarker = null;
+
+            function updateMovingRunnerPosition(lat, lon, label, avatarIcon, avatarLabel, speedKmh, isReturning) {{
+                var leafletMap = window["{map_var_name}"];
+                if (!leafletMap) {{
+                    var mapEls = document.querySelectorAll('.folium-map');
+                    if (mapEls && mapEls.length > 0 && window[mapEls[0].id]) {{
+                        leafletMap = window[mapEls[0].id];
+                    }}
+                }}
+                if (!leafletMap) return;
+
+                var iconSym = avatarIcon || "🏃‍♂️";
+                var speedText = (speedKmh ? (" • " + speedKmh + " km/h") : "");
+                var badgeText = isReturning ? ("🔄 Returning: " + (label || "Start")) : (iconSym + " " + (avatarLabel || "Virtual Companion") + speedText);
+                var badgeBg = isReturning ? "#0284c7" : "#059669";
+
+                var runnerHtml = '<div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 56px; height: 56px;">' +
+                      '<div id="folium-runner-label" style="position: absolute; top: -20px; background: ' + badgeBg + '; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 0 10px #38bdf8; border: 1.5px solid #38bdf8; z-index: 10;">' + badgeText + '</div>' +
+                      '<div style="position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(56, 189, 248, 0.4); border: 2.5px solid #38bdf8; box-shadow: 0 0 20px #38bdf8; animation: foliumRadar 1.4s infinite ease-out;"></div>' +
+                      '<div style="font-size: 30px; z-index: 5; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8));">' + iconSym + '</div>' +
+                      '</div>';
+
+                if (!movingRunnerMarker) {{
+                    var runnerIcon = L.divIcon({{
+                        className: 'live-virtual-runner-boy-icon',
+                        html: runnerHtml,
+                        iconSize: [56, 56],
+                        iconAnchor: [28, 28]
+                    }});
+                    movingRunnerMarker = L.marker([lat, lon], {{ icon: runnerIcon, zIndexOffset: 9999 }}).addTo(leafletMap);
+                }} else {{
+                    movingRunnerMarker.setLatLng([lat, lon]);
+                    var iconEl = movingRunnerMarker.getElement();
+                    if (iconEl) {{
+                        var lbl = iconEl.querySelector('#folium-runner-label');
+                        if (lbl) {{
+                            lbl.innerText = badgeText;
+                            lbl.style.background = badgeBg;
+                        }}
+                    }}
+                }}
+                leafletMap.panTo([lat, lon], {{ animate: true, duration: 0.8 }});
+            }}
+
+            window.updateMovingCarPosition = updateMovingRunnerPosition;
+
+            window.addEventListener('storage', function(e) {{
+                if (e.key === 'pathfinder_vehicle_state' && e.newValue) {{
+                    try {{
+                        var data = JSON.parse(e.newValue);
+                        if (data.lat && data.lon) {{
+                            updateMovingRunnerPosition(data.lat, data.lon, data.label, data.avatarIcon, data.avatarLabel, data.speedKmh, data.isReturning);
+                        }}
+                    }} catch(err) {{}}
+                }}
+            }});
+
+            window.addEventListener('message', function(e) {{
+                if (e.data && e.data.type === 'PATHFINDER_VEHICLE_UPDATE') {{
+                    var data = e.data;
+                    if (data.lat && data.lon) {{
+                        updateMovingRunnerPosition(data.lat, data.lon, data.label, data.avatarIcon, data.avatarLabel, data.speedKmh, data.isReturning);
+                    }}
+                }}
+            }});
+
+            if (document.readyState === "complete" || document.readyState === "interactive") {{
+                setTimeout(initMapLocationBridge, 150);
+            }} else {{
+                document.addEventListener("DOMContentLoaded", initMapLocationBridge);
+            }}
+        }})();
+        </script>
+        """
+        m.get_root().html.add_child(folium.Element(gps_bridge_html))
+
         # 1. Add Origin Marker with Small Boy / Driving Car Avatar & Pulsing Radar Wave
         if origin_coords:
+            # Snap start vehicle marker directly to the first drivable road waypoint of the route when routes exist
+            effective_origin = origin_coords
+            if routes and len(routes) > 0:
+                first_r = next((r for r in routes if r.get("rank") == 1 or r.get("is_eligible")), routes[0])
+                first_pts = first_r.get("polyline", [])
+                if first_pts and len(first_pts) > 0:
+                    effective_origin = (float(first_pts[0][0]), float(first_pts[0][1]))
+
             avatar_key = str(traveler_avatar).lower()
             if "tractor" in avatar_key:
                 avatar_sym = "🚜"
-                avatar_title = "🚜 Tractor (Agricultural & Rural Navigation)"
+                avatar_title = "🚜 Virtual Tractor (Standing at Start Point)"
+                badge_title = "🚜 Virtual Tractor (Start Point)"
                 halo_border = "#16a34a"
                 halo_bg = "rgba(22, 163, 74, 0.35)"
             elif "bike" in avatar_key or "motorcycle" in avatar_key:
                 avatar_sym = "🏍️"
-                avatar_title = "🏍️ Bike / Motorcycle"
+                avatar_title = "🏍️ Virtual Motorcyclist (Standing at Start Point)"
+                badge_title = "🏍️ Virtual Motorcyclist (Start Point)"
                 halo_border = "#0284c7"
                 halo_bg = "rgba(2, 132, 199, 0.35)"
             elif "truck" in avatar_key:
                 avatar_sym = "🚚"
-                avatar_title = "🚚 Truck / Heavy Vehicle"
+                avatar_title = "🚚 Virtual Truck (Standing at Start Point)"
+                badge_title = "🚚 Virtual Truck (Start Point)"
                 halo_border = "#f59e0b"
                 halo_bg = "rgba(245, 158, 11, 0.35)"
             elif "bicycle" in avatar_key:
                 avatar_sym = "🚴"
-                avatar_title = "🚴 Bicycle"
+                avatar_title = "🚴 Virtual Cyclist (Standing at Start Point)"
+                badge_title = "🚴 Virtual Cyclist (Start Point)"
                 halo_border = "#10b981"
                 halo_bg = "rgba(16, 185, 129, 0.35)"
             elif "walk" in avatar_key or avatar_key == "boy":
                 avatar_sym = "🚶‍♂️"
-                avatar_title = "🚶‍♂️ Small Boy Walking (Swiggy/Zomato Tracking)"
+                avatar_title = "🚶‍♂️ Virtual Boy Walking (Standing at Start Point)"
+                badge_title = "🚶‍♂️ Virtual Boy Walking (Start Point)"
+                halo_border = "#38bdf8"
+                halo_bg = "rgba(56, 189, 248, 0.35)"
+            elif "runner" in avatar_key or "run" in avatar_key:
+                avatar_sym = "🏃‍♂️"
+                avatar_title = "🏃‍♂️ Virtual Runner (Standing at Start Point)"
+                badge_title = "🏃‍♂️ Virtual Runner (Start Point)"
                 halo_border = "#38bdf8"
                 halo_bg = "rgba(56, 189, 248, 0.35)"
             else:
                 avatar_sym = "🚗"
-                avatar_title = "🚗 Driving Car (Google Maps GPS Vehicle)"
-                halo_border = "#10b981"
-                halo_bg = "rgba(16, 185, 129, 0.35)"
+                avatar_title = "🚗 Virtual Car Companion (Standing at Start Point)"
+                badge_title = "🚗 Virtual Car (Start Point)"
+                halo_border = "#0284c7"
+                halo_bg = "rgba(2, 132, 199, 0.35)"
 
             # Inject CSS animation styles into Folium map
             folium_css = """
             <style>
             @keyframes foliumRadar {
-                0% { transform: scale(0.4); opacity: 1; }
-                100% { transform: scale(1.6); opacity: 0; }
+                0% { transform: scale(0.5); opacity: 1; }
+                60% { transform: scale(1.6); opacity: 0.4; }
+                100% { transform: scale(2.2); opacity: 0; }
             }
             @keyframes foliumLegLeft {
                 0% { transform: rotate(-24deg); transform-origin: 28px 42px; }
@@ -473,9 +741,10 @@ class MapService:
 
             if "walk" in avatar_key or avatar_key == "boy":
                 avatar_html = f"""
-                <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; cursor: pointer;">
-                    <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: {halo_bg}; border: 2.5px solid {halo_border}; box-shadow: 0 0 16px {halo_border}; animation: foliumRadar 1.6s infinite ease-out;"></div>
-                    <div style="position: relative; z-index: 2; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8));">
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 60px; cursor: pointer;">
+                    <div style="position: absolute; bottom: 58px; background: #0284c7; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 0 10px #38bdf8; border: 1.5px solid #38bdf8; z-index: 20; pointer-events: none;">{badge_title}</div>
+                    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: {halo_bg}; border: 2.5px solid {halo_border}; box-shadow: 0 0 16px {halo_border}; animation: foliumRadar 1.6s infinite ease-out;"></div>
+                    <div style="position: relative; z-index: 10; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8));">
                         <svg width="44" height="44" viewBox="0 0 64 64" fill="none">
                             <rect x="12" y="24" width="12" height="18" rx="4" fill="#0284c7" stroke="#38bdf8" stroke-width="2"/>
                             <g class="folium-walking-leg-left">
@@ -506,21 +775,22 @@ class MapService:
                 """
             else:
                 avatar_html = f"""
-                <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; cursor: pointer;">
-                    <div style="position: absolute; width: 42px; height: 42px; border-radius: 50%; background: {halo_bg}; border: 2.5px solid {halo_border}; box-shadow: 0 0 16px {halo_border}; animation: foliumRadar 1.6s infinite ease-out;"></div>
-                    <div style="position: relative; z-index: 2; font-size: 26px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8));">{avatar_sym}</div>
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 60px; cursor: pointer;">
+                    <div style="position: absolute; bottom: 58px; background: #0284c7; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 0 10px #38bdf8; border: 1.5px solid #38bdf8; z-index: 20; pointer-events: none;">{badge_title}</div>
+                    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: {halo_bg}; border: 2.5px solid {halo_border}; box-shadow: 0 0 16px {halo_border}; animation: foliumRadar 1.6s infinite ease-out;"></div>
+                    <div style="position: relative; z-index: 10; font-size: 30px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8));">{avatar_sym}</div>
                 </div>
                 """
 
             folium.Marker(
-                location=origin_coords,
-                popup=folium.Popup(f"<b>{avatar_title}</b><br>Coords: {origin_coords[0]:.5f}, {origin_coords[1]:.5f}", max_width=260),
+                location=effective_origin,
+                popup=folium.Popup(f"<b>{avatar_title}</b><br>Coords: {effective_origin[0]:.5f}, {effective_origin[1]:.5f}", max_width=260),
                 tooltip=avatar_title,
-                icon=folium.DivIcon(html=avatar_html, icon_size=(48, 48), icon_anchor=(24, 24))
+                icon=folium.DivIcon(html=avatar_html, icon_size=(60, 60), icon_anchor=(30, 30))
             ).add_to(m)
 
             folium.Circle(
-                location=origin_coords,
+                location=effective_origin,
                 radius=35.0,
                 color=halo_border,
                 weight=2,
@@ -751,7 +1021,26 @@ class MapService:
                 f_has_ed = fac.get("has_emergency_department")
                 f_is_shelter = fac.get("is_officially_designated_shelter")
 
-                badge_border = "#ef4444" if f_icon in ["🏥", "🩺"] else ("#f59e0b" if f_icon == "⛺" else ("#0284c7" if f_icon in ["👮", "🚒"] else "#10b981"))
+                if f_icon == "🍽️":
+                    badge_border = "#f97316"
+                elif f_icon == "⛽":
+                    badge_border = "#38bdf8"
+                elif f_icon == "🏨":
+                    badge_border = "#a855f7"
+                elif f_icon in ["🚨", "🏥", "🩺"]:
+                    badge_border = "#ef4444"
+                elif f_icon == "🏧":
+                    badge_border = "#10b981"
+                elif f_icon == "🛍️":
+                    badge_border = "#ec4899"
+                elif f_icon == "🔍":
+                    badge_border = "#06b6d4"
+                elif f_icon == "⛺":
+                    badge_border = "#f59e0b"
+                elif f_icon in ["👮", "🚒"]:
+                    badge_border = "#0284c7"
+                else:
+                    badge_border = "#10b981"
                 badge_bg = "rgba(15, 23, 42, 0.92)"
 
                 fac_html = f"""
@@ -1015,42 +1304,42 @@ class MapService:
                         // Floating In-Dash Google Maps HUD atop the Satellite Map
                         const hud = document.createElement('div');
                         hud.style.cssText = 'position:absolute; top:12px; left:12px; right:12px; z-index:1000; background:linear-gradient(135deg,#065f46 0%,#047857 70%,#0f766e 100%); border:2px solid #10b981; border-radius:12px; padding:10px 14px; box-shadow:0 8px 24px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:space-between; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; color:#ffffff; user-select:none;';
+                        const hasHazardsOrClosures = Boolean({json.dumps(bool(hazards or road_closures))});
+                        const satHudDesc = hasHazardsOrClosures ? "Evading Verified Road Obstacles on Corridor" : "Satellite Verified: 100% Open Corridor • No Road Blockages";
                         hud.innerHTML = `
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <div id="satTurnIcon" style="width:42px; height:42px; background:rgba(255,255,255,0.2); border:2px solid #ffffff; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 0 10px rgba(255,255,255,0.3);">🟢</div>
                                 <div>
                                     <div id="satTurnDist" style="font-size:1.15rem; font-weight:900; line-height:1.1;">{route_title}</div>
                                     <div id="satTurnRoad" style="font-size:0.76rem; font-weight:700; color:#d1fae5;">Safe Corridor Navigation Active</div>
-                                    <div id="satTurnDesc" style="font-size:0.70rem; color:#a7f3d0; opacity:0.9;">Bypassing Chemical Spill & Road Blockages</div>
+                                    <div id="satTurnDesc" style="font-size:0.70rem; color:#a7f3d0; opacity:0.9;">${{satHudDesc}}</div>
                                 </div>
                             </div>
                             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
                                 <div style="display:flex; gap:6px;">
                                     <button id="satPlayBtn" style="background:#10b981; color:#ffffff; border:none; padding:6px 12px; border-radius:6px; font-weight:800; font-size:0.75rem; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.5);">▶️ Move Along Route</button>
                                     <button id="satGpsBtn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.75rem; cursor:pointer;">📡 GPS Sync</button>
-                                    <button id="satVoiceBtn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.75rem; cursor:pointer;">🔊 Voice</button>
                                 </div>
                                 <div id="satEtaBadge" style="font-size:0.70rem; background:rgba(0,0,0,0.35); padding:2px 8px; border-radius:4px; color:#cbd5e1; border:1px solid rgba(255,255,255,0.15);">● Google Maps Live Guidance</div>
                             </div>
                         `;
                         leafletMap.getContainer().appendChild(hud);
 
-                        // Spoken Voice Helper
-                        let voiceMuted = false;
+                        // Spoken Voice Helper (Silenced: AI voice assistant removed per user request)
+                        let voiceMuted = true;
                         function speak(txt) {{
-                            if (voiceMuted || !('speechSynthesis' in window)) return;
-                            window.speechSynthesis.cancel();
-                            const u = new SpeechSynthesisUtterance(txt);
-                            u.rate = 0.95;
-                            u.lang = 'en-US';
-                            window.speechSynthesis.speak(u);
+                            if ('speechSynthesis' in window) {{
+                                try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
+                            }}
+                            return;
                         }}
 
-                        document.getElementById('satVoiceBtn').onclick = function() {{
-                            voiceMuted = !voiceMuted;
-                            this.innerText = voiceMuted ? '🔇 Muted' : '🔊 Voice';
-                            if (voiceMuted) window.speechSynthesis.cancel();
-                        }};
+                        const satVoiceBtnEl = document.getElementById('satVoiceBtn');
+                        if (satVoiceBtnEl) {{
+                            satVoiceBtnEl.onclick = function() {{
+                                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                            }};
+                        }}
 
                         // Navigation State
                         let isNavigating = false;
@@ -1226,6 +1515,31 @@ class MapService:
                             // Update moving avatar position & bearing
                             updateVehicle(minD < 50 ? snapPt : [uLat, uLon], effectiveBrng);
 
+                            // Sync detected satellite GPS location back to application start location unless custom origin is active
+                            const isCustomStart = {json.dumps(bool(is_custom_origin))};
+                            if (!isCustomStart) {{
+                                try {{
+                                    var targetWin = window.parent || window;
+                                    var pUrl;
+                                    try {{
+                                        pUrl = new URL(targetWin.location.href);
+                                    }} catch(e) {{
+                                        pUrl = new URL(window.location.href);
+                                        targetWin = window;
+                                    }}
+                                    var curLat = pUrl.searchParams.get("gps_lat");
+                                    var curLon = pUrl.searchParams.get("gps_lon");
+                                    var dLat = curLat ? Math.abs(parseFloat(curLat) - uLat) : 999;
+                                    var dLon = curLon ? Math.abs(parseFloat(curLon) - uLon) : 999;
+                                    if (!curLat || !curLon || dLat > 0.0003 || dLon > 0.0003) {{
+                                        pUrl.searchParams.set("gps_lat", uLat.toFixed(6));
+                                        pUrl.searchParams.set("gps_lon", uLon.toFixed(6));
+                                        pUrl.searchParams.set("gps_acc", acc.toFixed(1));
+                                        targetWin.location.replace(pUrl.toString());
+                                    }}
+                                }} catch(e) {{}}
+                            }}
+
                             // Smooth satellite map auto-panning to follow user
                             leafletMap.panTo([uLat, uLon], {{ animate: true, duration: 0.6 }});
 
@@ -1319,7 +1633,8 @@ class MapService:
         map_style: str = "satellite_hybrid",
         auto_fit_bounds: bool = False,
         traveler_avatar: str = "boy",
-        emergency_facilities: Optional[List[Dict[str, Any]]] = None
+        emergency_facilities: Optional[List[Dict[str, Any]]] = None,
+        is_custom_origin: bool = False
     ) -> folium.Map:
         """Adapts route polylines, road restrictions, and breadcrumb trails for Folium map rendering."""
         routes_adapted = []
@@ -1346,7 +1661,8 @@ class MapService:
             map_style=map_style,
             auto_fit_bounds=auto_fit_bounds,
             traveler_avatar=traveler_avatar,
-            emergency_facilities=emergency_facilities
+            emergency_facilities=emergency_facilities,
+            is_custom_origin=is_custom_origin
         )
 
     def render_hazard_map(

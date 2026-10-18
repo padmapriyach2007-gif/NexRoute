@@ -26,6 +26,7 @@ from src.adaptive_algorithm_selector import SituationalAlgorithmSelector
 class TravelMode(Enum):
     DRIVING = "driving"
     MOTORCYCLE = "motorcycle"
+    BUS = "bus"
     TRACTOR = "tractor"
     TRUCK = "truck"
     WALKING = "walking"
@@ -428,7 +429,7 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
         coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
         url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=true&steps=true"
 
-        routes = self._fetch_osrm(url, mode, require_accessible)
+        routes = self._fetch_osrm(url, mode, require_accessible, origin_coords=(origin_lat, origin_lon), dest_coords=(dest_lat, dest_lon))
         if routes:
             # If only 1 route is returned and straight distance > 3 km, synthesize an alternative corridor
             # via a slight intermediate waypoint query if feasible
@@ -442,7 +443,7 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                 wp_lon = mid_lon + delta_lat * 0.08
                 alt_coords = f"{origin_lon:.6f},{origin_lat:.6f};{wp_lon:.6f},{wp_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
                 alt_url = f"{self.base_url}/route/v1/{profile}/{alt_coords}?overview=full&geometries=geojson&alternatives=false&steps=true"
-                alt_routes = self._fetch_osrm(alt_url, mode, require_accessible)
+                alt_routes = self._fetch_osrm(alt_url, mode, require_accessible, origin_coords=(origin_lat, origin_lon), dest_coords=(dest_lat, dest_lon))
                 if alt_routes:
                     alt_routes[0].name = "Alternative Corridor (Secondary Arterial)"
                     alt_routes[0].route_id = "OSRM_2"
@@ -452,7 +453,14 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
         return []
 
-    def _fetch_osrm(self, url: str, mode: TravelMode, require_accessible: bool) -> List[RouteOption]:
+    def _fetch_osrm(
+        self,
+        url: str,
+        mode: TravelMode,
+        require_accessible: bool,
+        origin_coords: Optional[Tuple[float, float]] = None,
+        dest_coords: Optional[Tuple[float, float]] = None
+    ) -> List[RouteOption]:
         try:
             req = urllib.request.Request(
                 url,
@@ -468,12 +476,23 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                         for idx, r in enumerate(data["routes"]):
                             geom = r.get("geometry", {}).get("coordinates", [])
                             lat_lon_poly = [(pt[1], pt[0]) for pt in geom]
+                            # Connect polyline seamlessly to exact user departure pin and destination flag
+                            if origin_coords and lat_lon_poly:
+                                d_start = haversine_distance_m(origin_coords[0], origin_coords[1], lat_lon_poly[0][0], lat_lon_poly[0][1])
+                                if d_start > 1.0:
+                                    lat_lon_poly.insert(0, (round(origin_coords[0], 6), round(origin_coords[1], 6)))
+                            if dest_coords and lat_lon_poly:
+                                d_end = haversine_distance_m(dest_coords[0], dest_coords[1], lat_lon_poly[-1][0], lat_lon_poly[-1][1])
+                                if d_end > 1.0:
+                                    lat_lon_poly.append((round(dest_coords[0], 6), round(dest_coords[1], 6)))
                             dist_m = float(r.get("distance", 0.0))
                             dur_s = float(r.get("duration", 0.0))
 
                             dur_multiplier = 1.0
                             if mode == TravelMode.TRACTOR:
                                 dur_multiplier = 2.2
+                            elif mode == TravelMode.BUS:
+                                dur_multiplier = 1.35
                             elif mode == TravelMode.TRUCK:
                                 dur_multiplier = 1.25
                             elif mode == TravelMode.MOTORCYCLE:
@@ -497,7 +516,7 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                                     # Map to clean directional icon and human-readable guidance
                                     if m_type == "depart":
                                         icon = "🟢"
-                                        instr = f"Head out on {name or 'route corridor'}"
+                                        instr = f"Head out on {name or 'main road'}"
                                     elif m_type == "arrive":
                                         icon = "🏁"
                                         instr = f"Arrive at destination ({name or 'terminal'})"
@@ -509,29 +528,29 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                                         instr = f"Turn {m_mod} onto {name or 'connected road'}"
                                     elif m_mod == "straight" or m_type in ["continue", "new name"]:
                                         icon = "⬆️"
-                                        instr = f"Continue straight on {name or 'corridor'}"
+                                        instr = f"Continue straight on {name or 'main road'}"
                                     elif "uturn" in m_mod:
                                         icon = "🔄"
-                                        instr = f"Make a U-turn on {name or 'corridor'}"
+                                        instr = f"Make a U-turn on {name or 'road'}"
                                     elif m_type == "roundabout":
                                         icon = "🔄"
                                         instr = f"Take roundabout onto {name or 'exit'}"
                                     else:
                                         icon = "⬆️"
-                                        instr = f"Follow {name or 'corridor'}"
+                                        instr = f"Follow {name or 'main road'}"
 
                                     parsed_steps.append({
                                         "step_num": s_idx + 1,
                                         "icon": icon,
                                         "instruction": instr,
-                                        "road": name or "Local Corridor",
+                                        "road": name or "Main Road",
                                         "distance_m": s_dist,
                                         "duration_s": s_dur,
                                         "type": m_type,
                                         "modifier": m_mod
                                     })
 
-                            r_name = names[idx] if idx < len(names) else f"Alternative Corridor {idx + 1}"
+                            r_name = names[idx] if idx < len(names) else f"Alternative Route {idx + 1}"
                             route_options.append(RouteOption(
                                 route_id=f"OSRM_{idx + 1}",
                                 name=r_name,
@@ -583,11 +602,15 @@ class RealWorldRouteEngine:
         mode: TravelMode = TravelMode.DRIVING,
         require_accessible: bool = False,
         is_in_transit: bool = False,
-        active_hazard_count: int = 0
+        active_hazard_count: int = 0,
+        avoid_tolls: bool = False,
+        avoid_highways: bool = False,
+        avoid_ferries: bool = False
     ) -> List[RouteOption]:
         """
         Calculates 2-3 viable alternative routes connecting origin and destination
         using backend situational algorithm selection and graph pathfinding.
+        Supports Google Maps avoidance options: avoid_tolls, avoid_highways, avoid_ferries.
         """
         self.last_failure_reason = None
         straight_dist_m = haversine_distance_m(origin_lat, origin_lon, dest_lat, dest_lon)
@@ -626,7 +649,10 @@ class RealWorldRouteEngine:
                 origin_lat, origin_lon, dest_lat, dest_lon,
                 mode=mode,
                 require_accessible=require_accessible,
-                preferred_algo=selected_primary_algo
+                preferred_algo=selected_primary_algo,
+                avoid_tolls=avoid_tolls,
+                avoid_highways=avoid_highways,
+                avoid_ferries=avoid_ferries
             )
             if live_routes and len(live_routes) == 1:
                 # Combine primary OSRM route with Yen's algorithm alternative bypasses
@@ -658,7 +684,10 @@ class RealWorldRouteEngine:
             origin_lat, origin_lon, dest_lat, dest_lon,
             mode=mode,
             require_accessible=require_accessible,
-            preferred_algo=selected_primary_algo
+            preferred_algo=selected_primary_algo,
+            avoid_tolls=avoid_tolls,
+            avoid_highways=avoid_highways,
+            avoid_ferries=avoid_ferries
         )
 
     def _calculate_graph_paths(
@@ -667,7 +696,10 @@ class RealWorldRouteEngine:
         dest_lat: float, dest_lon: float,
         mode: TravelMode,
         require_accessible: bool,
-        preferred_algo: str = "Bidirectional A*"
+        preferred_algo: str = "Bidirectional A*",
+        avoid_tolls: bool = False,
+        avoid_highways: bool = False,
+        avoid_ferries: bool = False
     ) -> List[RouteOption]:
         """
         Genuinely runs Yen's K-Shortest Paths algorithm over the regional road network graph
@@ -685,6 +717,8 @@ class RealWorldRouteEngine:
             speed_factor = 1.0
         elif mode == TravelMode.MOTORCYCLE:
             speed_factor = 1.05
+        elif mode == TravelMode.BUS:
+            speed_factor = 0.75
         elif mode == TravelMode.TRACTOR:
             speed_factor = 0.45
         elif mode == TravelMode.TRUCK:
@@ -764,6 +798,10 @@ class RealWorldRouteEngine:
                 accessibility_notes="Verified Regional Graph Segment" if is_acc else "Unverified or Contains Step Hazards"
             ))
 
+        # Prioritize non-highway corridors when avoid_highways is enabled
+        if avoid_highways and len(routes) > 1:
+            routes.sort(key=lambda r: 1 if any("expressway" in rd.lower() or "nh16" in rd.lower() or "highway" in rd.lower() for rd in r.summary_roads) else 0)
+
         # Fallback if start and goal map to identical node
         if not routes:
             straight_dist = haversine_distance_m(origin_lat, origin_lon, dest_lat, dest_lon)
@@ -771,6 +809,8 @@ class RealWorldRouteEngine:
                 speed_mps = 13.88
             elif mode == TravelMode.MOTORCYCLE:
                 speed_mps = 15.27
+            elif mode == TravelMode.BUS:
+                speed_mps = 10.5
             elif mode == TravelMode.TRACTOR:
                 speed_mps = 6.94
             elif mode == TravelMode.TRUCK:
