@@ -105,12 +105,123 @@ def slice_polyline_into_small_routes(
     return segments
 
 
-def build_spoken_instruction(step: Dict[str, Any], next_step: Optional[Dict[str, Any]], is_first: bool = False, is_last: bool = False) -> str:
-    """Creates clear, natural Google Maps spoken turn announcements."""
+def build_spoken_instruction(step: Dict[str, Any], next_step: Optional[Dict[str, Any]], is_first: bool = False, is_last: bool = False, language: str = "en") -> str:
+    """Creates clear, natural Google Maps spoken turn announcements in the user's selected language."""
     instr = step.get("instruction", "Proceed on route")
     road = step.get("road", "corridor")
     dist_m = float(step.get("distance_m", 0.0))
 
+    if language == "te":
+        dist_str = f"{dist_m / 1000.0:.1f} కిలోమీటర్లు" if dist_m >= 1000 else f"{int(round(dist_m))} మీటర్లు"
+        if "left" in instr.lower():
+            action = f"{road} వైపు ఎడమకు తిరగండి"
+        elif "right" in instr.lower():
+            action = f"{road} వైపు కుడికి తిరగండి"
+        elif "straight" in instr.lower() or "continue" in instr.lower():
+            action = f"{road} పై నేరుగా ముందుకు సాగండి"
+        else:
+            action = f"{road} వైపు వెళ్ళండి"
+
+        if is_first:
+            return f"ప్రయాణం ప్రారంభించండి: {action}. ఆపై {dist_str} ముందుకు సాగండి."
+        elif is_last:
+            return f"{dist_str} లో, మీరు మీ గమ్యస్థానాన్ని చేరుకుంటారు."
+        else:
+            return f"{dist_str} తర్వాత, {action}."
+    elif language == "hi":
+        dist_str = f"{dist_m / 1000.0:.1f} किलोमीटर" if dist_m >= 1000 else f"{int(round(dist_m))} मीटर"
+        if "left" in instr.lower():
+            action = f"{road} पर बाएं मुड़ें"
+        elif "right" in instr.lower():
+            action = f"{road} पर दाएं मुड़ें"
+        elif "straight" in instr.lower() or "continue" in instr.lower():
+            action = f"{road} पर सीधे चलें"
+        else:
+            action = f"{road} की ओर बढ़ें"
+
+        if is_first:
+            return f"यात्रा प्रारंभ करें: {action}। फिर {dist_str} आगे बढ़ें।"
+        elif is_last:
+            return f"{dist_str} में, आप अपने गंतव्य पर पहुंचेंगे।"
+        else:
+            return f"{dist_str} के बाद, {action}।"
+    elif language == "ta":
+        dist_str = f"{dist_m / 1000.0:.1f} கி.மீ" if dist_m >= 1000 else f"{int(round(dist_m))} மீட்டர்"
+        if "left" in instr.lower():
+            action = f"{road} மீது இடதுபுறம் திரும்பவும்"
+        elif "right" in instr.lower():
+            action = f"{road} மீது வலதுபுறம் திரும்பவும்"
+        else:
+            action = f"{road} வழியே தொடரவும்"
+
+        if is_first:
+            return f"பயணத்தைத் தொடங்குங்கள்: {action}. பின்னர் {dist_str} செல்லவும்."
+        elif is_last:
+            return f"{dist_str} தூரத்தில், உங்கள் சேருமிடம் வந்துவிடும்."
+        else:
+            return f"{dist_str} தூரத்திற்குப் பிறகு, {action}."
+    elif language == "kn":
+        dist_str = f"{dist_m / 1000.0:.1f} ಕಿ.ಮೀ" if dist_m >= 1000 else f"{int(round(dist_m))} ಮೀಟರ್"
+        if "left" in instr.lower():
+            action = f"{road} ಕಡೆಗೆ ಎಡಕ್ಕೆ ತಿರುಗಿ"
+        elif "right" in instr.lower():
+            action = f"{road} ಕಡೆಗೆ ಬಲಕ್ಕೆ ತಿರುಗಿ"
+        else:
+            action = f"{road} ನಲ್ಲಿ ಮುಂದುವರಿಯಿರಿ"
+
+        if is_first:
+            return f"ಪ್ರಯಾಣ ಪ್ರಾರಂಭಿಸಿ: {action}. ನಂತರ {dist_str} ಮುಂದುವರಿಯಿರಿ."
+        elif is_last:
+            return f"{dist_str} ನಲ್ಲಿ, ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ ತಲುಪುವಿರಿ."
+        else:
+            return f"{dist_str} ನಂತರ, {action}."
+    elif language == "ml":
+        dist_str = f"{dist_m / 1000.0:.1f} കി.മീ" if dist_m >= 1000 else f"{int(round(dist_m))} മീറ്റർ"
+        if "left" in instr.lower():
+            action = f"{road}-ലേക്ക് ഇടത്തോട്ട് തിരിയുക"
+        elif "right" in instr.lower():
+            action = f"{road}-ലേക്ക് വലത്തോട്ട് തിരിയുക"
+        else:
+            action = f"{road}-ലൂടെ തുടരുക"
+
+        if is_first:
+            return f"യാത്ര ആരംഭിക്കുക: {action}. തുടർന്ന് {dist_str} മുന്നോട്ട് പോവുക."
+        elif is_last:
+            return f"{dist_str}-ൽ നിങ്ങൾ ലക്ഷ്യസ്ഥാനത്ത് എത്തും."
+        else:
+            return f"{dist_str} കഴിഞ്ഞ്, {action}."
+    elif language == "bn":
+        dist_str = f"{dist_m / 1000.0:.1f} কিমি" if dist_m >= 1000 else f"{int(round(dist_m))} মিটার"
+        if "left" in instr.lower():
+            action = f"{road}-এ বাঁয়ে ঘুরুন"
+        elif "right" in instr.lower():
+            action = f"{road}-এ ডানে ঘুরুন"
+        else:
+            action = f"{road}-এ সোজা চলুন"
+
+        if is_first:
+            return f"যাত্রা শুরু করুন: {action}। তারপর {dist_str} এগিয়ে যান।"
+        elif is_last:
+            return f"{dist_str}-এর মধ্যে আপনি আপনার গন্তব্যে পৌঁছাবেন।"
+        else:
+            return f"{dist_str} পরে, {action}।"
+    elif language == "mr":
+        dist_str = f"{dist_m / 1000.0:.1f} किमी" if dist_m >= 1000 else f"{int(round(dist_m))} मीटर"
+        if "left" in instr.lower():
+            action = f"{road} वर डावीकडे वळा"
+        elif "right" in instr.lower():
+            action = f"{road} वर उजवीकडे वळा"
+        else:
+            action = f"{road} वर सरळ जा"
+
+        if is_first:
+            return f"प्रवास सुरू करा: {action}. नंतर {dist_str} पुढे जा."
+        elif is_last:
+            return f"{dist_str} मध्ये, तुम्ही तुमच्या गंतव्यस्थानी पोहोचाल."
+        else:
+            return f"{dist_str} नंतर, {action}."
+
+    # Default English
     if dist_m >= 1000:
         dist_str = f"{dist_m / 1000.0:.1f} kilometers"
     else:
@@ -136,9 +247,10 @@ def prepare_google_maps_voice_data(
     active_hazards: Optional[List[Any]] = None,
     active_restrictions: Optional[List[Any]] = None,
     unit: str = "km",
-    auto_start: bool = True
+    auto_start: bool = True,
+    language: str = "en"
 ) -> Dict[str, Any]:
-    """Prepares structured, JSON-serializable navigation data for the live simulator."""
+    """Prepares structured, JSON-serializable navigation data for the live simulator with language support."""
     route = getattr(active_route_item, "route", active_route_item)
     polyline = getattr(route, "polyline", [])
     raw_steps = getattr(route, "steps", [])
@@ -185,7 +297,7 @@ def prepare_google_maps_voice_data(
         is_first = (idx == 0)
         is_last = (idx == len(raw_steps) - 1)
 
-        spoken_text = build_spoken_instruction(s, next_s, is_first=is_first, is_last=is_last)
+        spoken_text = build_spoken_instruction(s, next_s, is_first=is_first, is_last=is_last, language=language)
         s_dist_m = float(s.get("distance_m", 0.0))
         cum_m += s_dist_m
         s_dist_km = s_dist_m / 1000.0
@@ -216,11 +328,31 @@ def prepare_google_maps_voice_data(
     time_phrase = f"{dur_round} minutes" if dur_round < 60 else f"{dur_round // 60} hours and {dur_round % 60} minutes"
     dist_phrase = f"{eff_dist_km:.1f} kilometers" if unit == "km" else f"{eff_dist_km * 0.621371:.1f} miles"
 
-    initial_spoken_briefing = (
-        f"Starting navigation in {transport_title} mode to {clean_dest} via {route_name.split('(')[0].strip()}. "
-        f"The route is {dist_phrase}, estimated at {time_phrase}. "
-        f"{parsed_steps[0]['spoken']}"
-    )
+    if language == "te":
+        initial_spoken_briefing = (
+            f"{clean_dest} వైపు నావిగేషన్ ప్రారంభమవుతోంది. "
+            f"మొత్తం దూరం {eff_dist_km:.1f} కిలోమీటర్లు, అంచనా సమయం {dur_round} నిమిషాలు. "
+            f"{parsed_steps[0]['spoken']}"
+        )
+    elif language == "hi":
+        initial_spoken_briefing = (
+            f"{clean_dest} की ओर नेविगेशन प्रारंभ हो रहा है। "
+            f"कुल दूरी {eff_dist_km:.1f} किलोमीटर, अनुमानित समय {dur_round} मिनट। "
+            f"{parsed_steps[0]['spoken']}"
+        )
+    else:
+        initial_spoken_briefing = (
+            f"Starting navigation in {transport_title} mode to {clean_dest} via {route_name.split('(')[0].strip()}. "
+            f"The route is {dist_phrase}, estimated at {time_phrase}. "
+            f"{parsed_steps[0]['spoken']}"
+        )
+
+    # Determine BCP-47 speech code
+    bcp47_map = {
+        "en": "en-IN", "te": "te-IN", "hi": "hi-IN", "ta": "ta-IN",
+        "kn": "kn-IN", "ml": "ml-IN", "bn": "bn-IN", "mr": "mr-IN"
+    }
+    bcp47_code = bcp47_map.get(language, "en-IN")
 
     return {
         "route_id": getattr(route, "route_id", "route_1"),
@@ -234,7 +366,9 @@ def prepare_google_maps_voice_data(
         "initial_spoken": initial_spoken_briefing,
         "default_avatar": default_avatar,
         "auto_start": auto_start,
-        "unit": unit
+        "unit": unit,
+        "language": language,
+        "lang_bcp47": bcp47_code
     }
 
 
@@ -1219,14 +1353,56 @@ def render_google_maps_voice_navigator_html(nav_data: Dict[str, Any], height: in
     }}
   }}
 
+  let lastSpokenUtterance = "";
   function speakAIVoice(text) {{
-    // Silenced: AI voice assistant removed per user request
-    if ('speechSynthesis' in window) {{
-      try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
-    }}
     const captionEl = document.getElementById('spokenCaption');
     if (captionEl) captionEl.innerText = text;
-    return;
+    if (isVoiceMuted || !text) return;
+    if (text === lastSpokenUtterance) return;
+    lastSpokenUtterance = text;
+
+    if (!('speechSynthesis' in window)) {{
+      return;
+    }}
+
+    try {{
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = (navData && navData.lang_bcp47) ? navData.lang_bcp47 : 'en-IN';
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      const targetPrefix = utter.lang.split('-')[0].toLowerCase();
+      let matched = null;
+      for (let i = 0; i < voices.length; i++) {{
+        const vLang = (voices[i].lang || '').toLowerCase().replace('_', '-');
+        if (vLang === utter.lang.toLowerCase() || vLang.startsWith(targetPrefix)) {{
+          matched = voices[i];
+          break;
+        }}
+      }}
+      if (matched) {{
+        utter.voice = matched;
+      }}
+
+      utter.onstart = function() {{
+        const eq = document.getElementById('voiceEq');
+        if (eq) eq.classList.add('speaking');
+      }};
+      utter.onend = function() {{
+        const eq = document.getElementById('voiceEq');
+        if (eq) eq.classList.remove('speaking');
+      }};
+      utter.onerror = function() {{
+        const eq = document.getElementById('voiceEq');
+        if (eq) eq.classList.remove('speaking');
+      }};
+
+      window.speechSynthesis.speak(utter);
+    }} catch(e) {{
+      console.warn("Speech synthesis error:", e);
+    }}
   }}
 
   function toggleMute() {{

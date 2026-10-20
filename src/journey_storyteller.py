@@ -594,15 +594,14 @@ def generate_friendly_virtual_guide_turns(
     steps: List[Dict[str, Any]],
     origin: str,
     destination: str,
-    travel_mode: str = "Car"
+    travel_mode: str = "Car",
+    language: str = "en"
 ) -> List[FriendlyTurnStep]:
     """
     Transforms raw technical GPS maneuvers into rich, creative, and easily
     understandable step-by-step guidance spoken by a friendly Virtual Man guide.
-    Designed so that ANY traveler, regardless of education level or local familiarity,
-    can easily navigate every turn with visual clues, simple speech, and landmarks.
-    Features comprehensive accessibility assistance (step-free ramps, tactile paving,
-    and pedestrian crossing guidance) for disabled and mobility-impaired individuals.
+    Supports complete multilingual localization across Telugu, Hindi, Tamil,
+    Kannada, Malayalam, Bengali, Marathi, and English.
     """
     clean_orig = re.sub(r'[📍🏁🧭🚗●🛰️]', '', origin).strip().split(",")[0].strip() or "Departure Point"
     if clean_orig.lower() in ["current location", "starting point", "live satellite"]:
@@ -750,6 +749,282 @@ def generate_friendly_virtual_guide_turns(
             spoken = f"Step {i + 1}: Follow {road_display} for {dist_human.lower()}."
             accessible_guidance = "Follow the smooth step-free pedestrian pathway with tactile edge markers."
             tactile_crossing_note = "Stay within the marked pedestrian corridor."
+
+        # Multilingual Turn Text Overrides for Indian Languages
+        lang_key = (language or "en").lower().strip()
+        if lang_key != "en":
+            loc_translations = {
+                "START": {
+                    "te": {
+                        "action": f"{clean_orig} నుండి ప్రారంభించండి",
+                        "speech": f"నమస్కారం! నేను మీ ప్రయాణ మార్గదర్శిని. {clean_orig} నుండి ప్రారంభించి, ముందున్న మార్గంలో {dist_human.lower()} వెళ్ళండి.",
+                        "spoken": f"దశ 1: {clean_orig} నుండి బయలుదేరి రోడ్డు వెంట ముందుకు వెళ్ళండి.",
+                        "look": "బయలుదేరే గేట్, వీధి మూల మరియు ప్రధాన రహదారి ప్రారంభాన్ని చూడండి."
+                    },
+                    "hi": {
+                        "action": f"{clean_orig} से यात्रा प्रारंभ करें",
+                        "speech": f"नमस्ते! मैं आपका यात्रा मार्गदर्शक हूँ। {clean_orig} से निकलकर आगे के मार्ग पर {dist_human.lower()} चलें।",
+                        "spoken": f"कदम 1: {clean_orig} से यात्रा शुरू करें।",
+                        "look": "प्रस्थान द्वार और मुख्य सड़क का मोड़ देखें।"
+                    },
+                    "ta": {
+                        "action": f"{clean_orig} இலிருந்து தொடங்கவும்",
+                        "speech": f"வணக்கம்! நான் உங்கள் பயண வழிகாட்டி. {clean_orig} இலிருந்து பயணத்தைத் தொடங்கி {dist_human.lower()} முன்னோக்கி செல்லவும்.",
+                        "spoken": f"படி 1: {clean_orig} இலிருந்து பயணத்தை தொடங்கவும்.",
+                        "look": "வெளியேறும் வாயில் மற்றும் சாலையின் தொடக்கத்தைக் கவனிக்கவும்."
+                    },
+                    "kn": {
+                        "action": f"{clean_orig} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ",
+                        "speech": f"ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಮಾರ್ಗದರ್ಶಿ. {clean_orig} ನಿಂದ ಹೊರಟು {dist_human.lower()} ಮುಂದಕ್ಕೆ ಚಲಿಸಿ.",
+                        "spoken": f"ಹಂತ 1: {clean_orig} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ ಮುಂದುವರಿಯಿರಿ.",
+                        "look": "ನಿರ್ಗಮನ ಗೇಟ್ ಮತ್ತು ರಸ್ತೆಯ ತಿರುವು ಗಮನಿಸಿ."
+                    },
+                    "ml": {
+                        "action": f"{clean_orig} ൽ നിന്ന് ആരംഭിക്കുക",
+                        "speech": f"നമസ്കാരം! ഞാൻ നിങ്ങളുടെ യാത്രാ സഹായി. {clean_orig} ൽ നിന്ന് ആരംഭിച്ച് {dist_human.lower()} മുന്നോട്ട് പോകുക.",
+                        "spoken": f"ഘട്ടം 1: {clean_orig} ൽ നിന്ന് യാത്ര ആരംഭിക്കുക.",
+                        "look": "പ്രധാന റോഡും കവലയും ശ്രദ്ധിക്കുക."
+                    },
+                    "bn": {
+                        "action": f"{clean_orig} থেকে যাত্রা শুরু করুন",
+                        "speech": f"নমস্কার! আমি আপনার যাত্রা নির্দেশক। {clean_orig} থেকে শুরু করে {dist_human.lower()} সামনের দিকে এগিয়ে যান।",
+                        "spoken": f"ধাপ ১: {clean_orig} থেকে যাত্রা শুরু করুন।",
+                        "look": "প্রস্থান গেট এবং রাস্তার মোড় লক্ষ করুন।"
+                    },
+                    "mr": {
+                        "action": f"{clean_orig} येथून सुरुवात करा",
+                        "speech": f"नमस्कार! मी तुमचा मार्गदर्शक आहे. {clean_orig} येथून निघून {dist_human.lower()} पुढे जा.",
+                        "spoken": f"पायरी १: {clean_orig} येथून प्रवास सुरू करा.",
+                        "look": "निर्गमन गेट आणि रस्त्याचे वळण पहा."
+                    }
+                },
+                "ARRIVE": {
+                    "te": {
+                        "action": f"{clean_dest} చేరుకున్నారు",
+                        "speech": f"అభినందనలు! మీరు సురక్షితంగా {clean_dest} చేరుకున్నారు. మీ ప్రయాణం విజయవంతంగా పూర్తయింది.",
+                        "spoken": f"అభినందనలు! మీరు సురక్షితంగా {clean_dest} చేరుకున్నారు.",
+                        "look": f"{clean_dest} ప్రధాన ప్రవేశ ద్వారం మరియు స్వాగత బోర్డు చూడండి."
+                    },
+                    "hi": {
+                        "action": f"{clean_dest} पहुँच गए",
+                        "speech": f"बधाई हो! आप सुरक्षित रूप से {clean_dest} पहुँच गए हैं। आपकी यात्रा पूरी हुई।",
+                        "spoken": f"बधाई हो! आप {clean_dest} पहुँच चुके हैं।",
+                        "look": f"{clean_dest} का मुख्य प्रवेश द्वार और स्वागत बोर्ड देखें।"
+                    },
+                    "ta": {
+                        "action": f"{clean_dest} அடைந்துவிட்டீர்கள்",
+                        "speech": f"வாழ்த்துகள்! நீங்கள் பாதுகாப்பாக {clean_dest} அடைந்துவிட்டீர்கள். உங்கள் பயணம் நிறைவடைந்தது.",
+                        "spoken": f"வாழ்த்துகள்! நீங்கள் {clean_dest} அடைந்துவிட்டீர்கள்.",
+                        "look": f"{clean_dest} நுழைவு வாயில் பலகையைக் கவனிக்கவும்."
+                    },
+                    "kn": {
+                        "action": f"{clean_dest} ತಲುಪಿದ್ದೀರಿ",
+                        "speech": f"ಅಭಿನಂದನೆಗಳು! ನೀವು ಸುರಕ್ಷಿತವಾಗಿ {clean_dest} ತಲುಪಿದ್ದೀರಿ. ನಿಮ್ಮ ಪ್ರಯಾಣ ಯಶಸ್ವಿಯಾಗಿದೆ.",
+                        "spoken": f"ಅಭಿನಂದನೆಗಳು! ನೀವು {clean_dest} ತಲುಪಿದ್ದೀರಿ.",
+                        "look": f"{clean_dest} ಮುಖ್ಯ ಪ್ರವೇಶ ದ್ವಾರ ಗಮನಿಸಿ."
+                    },
+                    "ml": {
+                        "action": f"{clean_dest} എത്തിച്ചേർന്നു",
+                        "speech": f"അഭിനന്ദനങ്ങൾ! നിങ്ങൾ സുരക്ഷിതമായി {clean_dest} എത്തിച്ചേർന്നു. യാത്ര പൂർത്തിയായി.",
+                        "spoken": f"അഭിനന്ദനങ്ങൾ! നിങ്ങൾ {clean_dest} എത്തിച്ചേർന്നു.",
+                        "look": f"{clean_dest} പ്രവേശന കവാടം ശ്രദ്ധിക്കുക."
+                    },
+                    "bn": {
+                        "action": f"{clean_dest} পৌঁছে গেছেন",
+                        "speech": f"অভিনন্দন! আপনি নিরাপদে {clean_dest} পৌঁছে গেছেন। আপনার যাত্রা সফলভাবে সম্পন্ন হলো।",
+                        "spoken": f"অভিনন্দন! আপনি {clean_dest} পৌঁছে গেছেন।",
+                        "look": f"{clean_dest} এর প্রধান প্রবেশদ্বার দেখুন।"
+                    },
+                    "mr": {
+                        "action": f"{clean_dest} येथे पोहोचलात",
+                        "speech": f"अभिनंदन! तुम्ही सुरक्षितपणे {clean_dest} येथे पोहोचला आहात. प्रवास पूर्ण झाला.",
+                        "spoken": f"अभिनंदन! तुम्ही {clean_dest} येथे पोहोचलात.",
+                        "look": f"{clean_dest} चे मुख्य प्रवेशद्वार पहा."
+                    }
+                },
+                "RIGHT": {
+                    "te": {
+                        "action": f"{road_display} వైపు కుడివైపు తిరగండి",
+                        "speech": f"కుడివైపు చూసి {road_display} పైకి తిరగండి మరియు {dist_human.lower()} ప్రయాణించండి.",
+                        "spoken": f"దశ {i + 1}: {road_display} వైపు కుడివైపు తిరగండి.",
+                        "look": "కుడివైపు మలుపు బోర్డులు మరియు రోడ్డు పక్కన ఉన్న దుకాణాలను చూడండి."
+                    },
+                    "hi": {
+                        "action": f"{road_display} पर दाएँ मुड़ें",
+                        "speech": f"दाएँ देखकर {road_display} पर मुड़ें और {dist_human.lower()} आगे बढ़ें।",
+                        "spoken": f"कदम {i + 1}: {road_display} पर दाएँ मुड़ें।",
+                        "look": "दाहिने कोने का मोड़ और दिशा सूचक बोर्ड देखें।"
+                    },
+                    "ta": {
+                        "action": f"{road_display} இல் வலதுபுறம் திரும்பவும்",
+                        "speech": f"வலதுபுறம் பார்த்து {road_display} இல் திரும்பி {dist_human.lower()} செல்லவும்.",
+                        "spoken": f"படி {i + 1}: {road_display} இல் வலதுபுறம் திரும்பவும்.",
+                        "look": "வலதுபுற சாலைப் பலகையைக் கவனிக்கவும்."
+                    },
+                    "kn": {
+                        "action": f"{road_display} ಕಡೆಗೆ ಬಲಕ್ಕೆ ತಿರುಗಿ",
+                        "speech": f"ಬಲಗಡೆ ನೋಡಿ {road_display} ಕಡೆಗೆ ತಿರುಗಿ {dist_human.lower()} ಮುಂದುವರಿಯಿರಿ.",
+                        "spoken": f"ಹಂತ {i + 1}: {road_display} ಕಡೆಗೆ ಬಲಕ್ಕೆ ತಿರುಗಿ.",
+                        "look": "ಬಲಗಡೆಯ ತಿರುವು ಮತ್ತು ಫಲಕಗಳನ್ನು ಗಮನಿಸಿ."
+                    },
+                    "ml": {
+                        "action": f"{road_display} ലേക്ക് വലത്തോട്ട് തിരിയുക",
+                        "speech": f"വലത്തോട്ട് നോക്കി {road_display} ലേക്ക് തിരിഞ്ഞ് {dist_human.lower()} മുന്നോട്ട് പോകുക.",
+                        "spoken": f"ഘട്ടം {i + 1}: {road_display} ലേക്ക് വലത്തോട്ട് തിരിയുക.",
+                        "look": "വലതുവശത്തെ സൈൻബോർഡ് ശ്രദ്ധിക്കുക."
+                    },
+                    "bn": {
+                        "action": f"{road_display} এ ডানদিকে ঘুরুন",
+                        "speech": f"ডানদিকে লক্ষ করে {road_display} এ মোড় নিয়ে {dist_human.lower()} এগিয়ে যান।",
+                        "spoken": f"ধাপ {i + 1}: {road_display} এ ডানদিকে ঘুরুন।",
+                        "look": "ডানপাশের মোড়ের সাইনবোর্ড লক্ষ করুন।"
+                    },
+                    "mr": {
+                        "action": f"{road_display} वर उजवीकडे वळा",
+                        "speech": f"उजवीकडे पाहून {road_display} वर वळा आणि {dist_human.lower()} पुढे जा.",
+                        "spoken": f"पायरी {i + 1}: {road_display} वर उजवीकडे वळा.",
+                        "look": "उजव्या बाजूचे वळण आणि फलक पहा."
+                    }
+                },
+                "LEFT": {
+                    "te": {
+                        "action": f"{road_display} వైపు ఎడమవైపు తిరగండి",
+                        "speech": f"ఎడమవైపు చూసి {road_display} పైకి తిరగండి మరియు {dist_human.lower()} ప్రయాణించండి.",
+                        "spoken": f"దశ {i + 1}: {road_display} వైపు ఎడమవైపు తిరగండి.",
+                        "look": "ఎడమవైపు మలుపు మరియు స్పష్టమైన రహదారి మార్గాన్ని చూడండి."
+                    },
+                    "hi": {
+                        "action": f"{road_display} पर बाएँ मुड़ें",
+                        "speech": f"बाएँ देखकर {road_display} पर मुड़ें और {dist_human.lower()} आगे बढ़ें।",
+                        "spoken": f"कदम {i + 1}: {road_display} पर बाएँ मुड़ें।",
+                        "look": "बाएँ कोने का मोड़ और सड़क मार्ग देखें।"
+                    },
+                    "ta": {
+                        "action": f"{road_display} இல் இடதுபுறம் திரும்பவும்",
+                        "speech": f"இடதுபுறம் பார்த்து {road_display} இல் திரும்பி {dist_human.lower()} செல்லவும்.",
+                        "spoken": f"படி {i + 1}: {road_display} இல் இடதுபுறம் திரும்பவும்.",
+                        "look": "இடதுபுற சாலையைக் கவனிக்கவும்."
+                    },
+                    "kn": {
+                        "action": f"{road_display} ಕಡೆಗೆ ಎಡಕ್ಕೆ ತಿರುಗಿ",
+                        "speech": f"ಎಡಗಡೆ ನೋಡಿ {road_display} ಕಡೆಗೆ ತಿರುಗಿ {dist_human.lower()} ಮುಂದುವರಿಯಿರಿ.",
+                        "spoken": f"ಹಂತ {i + 1}: {road_display} ಕಡೆಗೆ ಎಡಕ್ಕೆ ತಿರುಗಿ.",
+                        "look": "ಎಡಗಡೆಯ ತಿರುವನ್ನು ಗಮನಿಸಿ."
+                    },
+                    "ml": {
+                        "action": f"{road_display} ലേക്ക് ഇടത്തോട്ട് തിരിയുക",
+                        "speech": f"ഇടത്തോട്ട് നോക്കി {road_display} ലേക്ക് തിരിഞ്ഞ് {dist_human.lower()} മുന്നോട്ട് പോകുക.",
+                        "spoken": f"ഘട്ടം {i + 1}: {road_display} ലേക്ക് ഇടത്തോട്ട് തിരിയുക.",
+                        "look": "ഇടതുവശത്തെ കവല ശ്രദ്ധിക്കുക."
+                    },
+                    "bn": {
+                        "action": f"{road_display} এ বামদিকে ঘুরুন",
+                        "speech": f"বামদিকে লক্ষ করে {road_display} এ মোড় নিয়ে {dist_human.lower()} এগিয়ে যান।",
+                        "spoken": f"ধাপ {i + 1}: {road_display} এ বামদিকে ঘুরুন।",
+                        "look": "বামপাশের রাস্তা লক্ষ করুন।"
+                    },
+                    "mr": {
+                        "action": f"{road_display} वर डावीकडे वळा",
+                        "speech": f"डावीकडे पाहून {road_display} वर वळा आणि {dist_human.lower()} पुढे जा.",
+                        "spoken": f"पायरी {i + 1}: {road_display} वर डावीकडे वळा.",
+                        "look": "डाव्या बाजूचे वळण पहा."
+                    }
+                },
+                "STRAIGHT": {
+                    "te": {
+                        "action": f"{road_display} పై నేరుగా కొనసాగించండి",
+                        "speech": f"{road_display} పై {dist_human.lower()} నేరుగా ముందుకు వెళ్ళండి.",
+                        "spoken": f"దశ {i + 1}: {road_display} పై నేరుగా ముందుకు కొనసాగించండి.",
+                        "look": "రోడ్డు పక్కన చెట్లు మరియు కిలోమీటర్ మైలురాళ్లను చూడండి."
+                    },
+                    "hi": {
+                        "action": f"{road_display} पर सीधे चलें",
+                        "speech": f"{road_display} पर {dist_human.lower()} सीधे आगे बढ़ते रहें।",
+                        "spoken": f"कदम {i + 1}: {road_display} पर सीधे चलते रहें।",
+                        "look": "सड़क किनारे के पेड़ और दूरी के पत्थर देखें।"
+                    },
+                    "ta": {
+                        "action": f"{road_display} இல் நேராக செல்லவும்",
+                        "speech": f"{road_display} இல் {dist_human.lower()} நேராக தொடர்ந்து செல்லவும்.",
+                        "spoken": f"படி {i + 1}: {road_display} இல் நேராக தொடர்ந்து செல்லவும்.",
+                        "look": "சாலையோர மைல்கற்களைக் கவனிக்கவும்."
+                    },
+                    "kn": {
+                        "action": f"{road_display} ನಲ್ಲಿ ನೇರವಾಗಿ ಮುಂದುವರಿಯಿರಿ",
+                        "speech": f"{road_display} ನಲ್ಲಿ {dist_human.lower()} ನೇರವಾಗಿ ಮುಂದುವರಿಯಿರಿ.",
+                        "spoken": f"ಹಂತ {i + 1}: {road_display} ನಲ್ಲಿ ನೇರವಾಗಿ ಮುಂದುವರಿಯಿರಿ.",
+                        "look": "ಮೈಲಿಗಲ್ಲುಗಳನ್ನು ಗಮನಿಸಿ."
+                    },
+                    "ml": {
+                        "action": f"{road_display} ലൂടെ നേരെ പോകുക",
+                        "speech": f"{road_display} ലൂടെ {dist_human.lower()} നേരെ മുന്നോട്ട് പോകുക.",
+                        "spoken": f"ഘട്ടം {i + 1}: {road_display} ലൂടെ നേരെ മുന്നോട്ട് പോകുക.",
+                        "look": "മൈൽക്കുറ്റികൾ ശ്രദ്ധിക്കുക."
+                    },
+                    "bn": {
+                        "action": f"{road_display} ধরে সোজা এগিয়ে যান",
+                        "speech": f"{road_display} ধরে {dist_human.lower()} সোজা এগিয়ে চলুন।",
+                        "spoken": f"ধাপ {i + 1}: {road_display} ধরে সোজা এগিয়ে যান।",
+                        "look": "রাস্তার মাইলফলকগুলো লক্ষ করুন।"
+                    },
+                    "mr": {
+                        "action": f"{road_display} वर सरळ पुढे जा",
+                        "speech": f"{road_display} वर {dist_human.lower()} सरळ पुढे चालत राहा.",
+                        "spoken": f"पायरी {i + 1}: {road_display} वर सरळ पुढे जा.",
+                        "look": "रस्त्यावरील मैलाचे दगड पहा."
+                    }
+                },
+                "PROCEED": {
+                    "te": {
+                        "action": f"{road_display} మార్గాన్ని అనుసరించండి",
+                        "speech": f"{road_display} వెంట {dist_human.lower()} ముందుకు సాగండి.",
+                        "spoken": f"దశ {i + 1}: {road_display} మార్గాన్ని అనుసరించండి.",
+                        "look": "లేన్ గుర్తులు మరియు దిశా సూచికలను చూడండి."
+                    },
+                    "hi": {
+                        "action": f"{road_display} का अनुसरण करें",
+                        "speech": f"{road_display} पर {dist_human.lower()} आगे बढ़ते रहें।",
+                        "spoken": f"कदम {i + 1}: {road_display} का अनुसरण करें।",
+                        "look": "लेन मार्किंग और दिशा संकेत देखें।"
+                    },
+                    "ta": {
+                        "action": f"{road_display} வழியைப் பின்பற்றவும்",
+                        "speech": f"{road_display} வழியே {dist_human.lower()} செல்லவும்.",
+                        "spoken": f"படி {i + 1}: {road_display} வழியைப் பின்பற்றவும்.",
+                        "look": "வழித்தட பலகைகளைக் கவனிக்கவும்."
+                    },
+                    "kn": {
+                        "action": f"{road_display} ರಸ್ತೆಯನ್ನು ಅನುಸರಿಸಿ",
+                        "speech": f"{road_display} ರಸ್ತೆಯಲ್ಲಿ {dist_human.lower()} ಮುಂದುವರಿಯಿರಿ.",
+                        "spoken": f"ಹಂತ {i + 1}: {road_display} ರಸ್ತೆಯನ್ನು ಅನುಸರಿಸಿ.",
+                        "look": "ರಸ್ತೆ ಚಿಹ್ನೆಗಳನ್ನು ಗಮನಿಸಿ."
+                    },
+                    "ml": {
+                        "action": f"{road_display} പാത പിന്തുടരുക",
+                        "speech": f"{road_display} ലൂടെ {dist_human.lower()} മുന്നോട്ട് പോകുക.",
+                        "spoken": f"ഘട്ടം {i + 1}: {road_display} പാത പിന്തുടരുക.",
+                        "look": "റോഡ് അടയാളങ്ങൾ ശ്രദ്ധിക്കുക."
+                    },
+                    "bn": {
+                        "action": f"{road_display} অনুসরণ করুন",
+                        "speech": f"{road_display} ধরে {dist_human.lower()} সামনে এগিয়ে যান।",
+                        "spoken": f"ধাপ {i + 1}: {road_display} অনুসরণ করুন।",
+                        "look": "রাস্তার দিকনির্দেশক দেখুন।"
+                    },
+                    "mr": {
+                        "action": f"{road_display} चा पाठपुरावा करा",
+                        "speech": f"{road_display} वरून {dist_human.lower()} पुढे जा.",
+                        "spoken": f"पायरी {i + 1}: {road_display} चा पाठपुरावा करा.",
+                        "look": "रस्त्यावरील दिशादर्शक फलक पहा."
+                    }
+                }
+            }
+            target_dict = loc_translations.get(dir_type, {}).get(lang_key)
+            if target_dict:
+                action_headline = target_dict["action"]
+                guide_speech = target_dict["speech"]
+                spoken = target_dict["spoken"]
+                what_to_look_for = target_dict["look"]
 
         # Add location/regional landmark hints if recognizable
         combined_text = (road_display + " " + instr).lower()

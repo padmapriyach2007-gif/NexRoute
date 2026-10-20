@@ -131,6 +131,17 @@ from src.transit_kinematics import (
 )
 
 
+from src.i18n import (
+    t,
+    SUPPORTED_LANGUAGES,
+    get_current_language,
+    set_current_language,
+    get_bcp47_code,
+    get_language_native_name,
+    format_distance as i18n_format_distance,
+    format_duration as i18n_format_duration
+)
+
 # Page configuration
 st.set_page_config(
     page_title="P.A.T.H.F.I.N.D.E.R. • Predictive Adaptive Transit & Hazard-Free Routing",
@@ -139,17 +150,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Globally cancel and disable any browser speech synthesis / AI voice per user configuration
-components.html("""
+# Session State Language Initialization with query param / cookie / default support
+if "app_language" not in st.session_state:
+    try:
+        init_lang = st.query_params.get("lang", "en")
+    except Exception:
+        init_lang = "en"
+    if init_lang not in SUPPORTED_LANGUAGES:
+        init_lang = "en"
+    st.session_state.app_language = init_lang
+
+# Synchronize client-side localStorage language persistence
+components.html(f"""
 <script>
-(function() {
-    try {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak = function() {};
-        }
-    } catch(e) {}
-})();
+(function() {{
+    try {{
+        var curr = {json.dumps(st.session_state.app_language)};
+        if (curr) {{
+            localStorage.setItem('pathfinder_user_lang', curr);
+        }}
+    }} catch(e) {{}}
+}})();
 </script>
 """, height=0, width=0)
 
@@ -225,14 +246,14 @@ if bg_data_uri:
 # Custom Cyber-Dark Styling: High Contrast, Glassmorphism, Emergency HUD
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&family=Noto+Sans+Malayalam:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;600;700&display=swap');
 
     html {
         scroll-behavior: smooth;
     }
 
     html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Plus Jakarta Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Kannada', 'Noto Sans Malayalam', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     /* Sleek Translucent Input Controls & Containers */
@@ -1090,7 +1111,8 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             "active_objective_str": st.session_state.get("active_objective", OptimizationObjective.FASTEST).value,
             "ranked_routes": st.session_state.get("last_ranked_routes", []),
             "active_restrictions": st.session_state.road_condition_manager.get_active_restrictions() if "road_condition_manager" in st.session_state else [],
-            "active_hazards": st.session_state.real_hazard_map.get_active_hazards() if "real_hazard_map" in st.session_state else []
+            "active_hazards": st.session_state.real_hazard_map.get_active_hazards() if "real_hazard_map" in st.session_state else [],
+            "language": st.session_state.get("app_language", "en")
         }
         ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx)
         st.session_state.aura_chat_history.append({
@@ -1130,6 +1152,28 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 st.session_state.scroll_to_app_map = True
                 st.session_state.switch_to_nav_tab = True
                 st.toast(f"🧭 Route calculated: {act.get('origin')} to {act.get('destination')}!", icon="🎯")
+            elif act.get("type") == "update_preferences":
+                if "avoid_tolls" in act:
+                    st.session_state.chk_avoid_tolls = bool(act["avoid_tolls"])
+                if "avoid_highways" in act:
+                    st.session_state.chk_avoid_highways = bool(act["avoid_highways"])
+                if "avoid_ferries" in act:
+                    st.session_state.chk_avoid_ferries = bool(act["avoid_ferries"])
+                if "objective" in act and act["objective"]:
+                    obj_map = {
+                        "fastest": OptimizationObjective.FASTEST,
+                        "shortest": OptimizationObjective.SHORTEST,
+                        "balanced": OptimizationObjective.BALANCED,
+                        "accessible": OptimizationObjective.ACCESSIBLE
+                    }
+                    if act["objective"] in obj_map:
+                        st.session_state.active_objective = obj_map[act["objective"]]
+                st.session_state.pop("cached_candidate_routes", None)
+                st.session_state.auto_fit_bounds = True
+                st.toast("⚙️ Route preferences updated and recalculated!", icon="🛣️")
+            elif act.get("type") == "switch_tab":
+                st.session_state.switch_to_nav_tab = True
+                st.toast("🗂️ Switched tab view!", icon="🧭")
 
     if "pending_chat_prompt" in st.session_state and st.session_state.pending_chat_prompt:
         chip_q = st.session_state.pop("pending_chat_prompt")
@@ -1180,19 +1224,50 @@ with st.sidebar:
     
     st.markdown("<span class='badge-hud-ready'>🧭 ADAPTIVE NAVIGATION</span>", unsafe_allow_html=True)
     st.markdown("### **P.A.T.H.F.I.N.D.E.R.**")
-    st.caption("Predictive Adaptive Transit & Hazard-Free Intelligent Navigation Directed Evacuation Routing")
+    st.caption(t("app.subtitle"))
+
+    # -------------------------------------------------------------------------
+    # GLOBAL MULTILINGUAL LANGUAGE SELECTOR
+    # -------------------------------------------------------------------------
+    cur_lang = st.session_state.get("app_language", "en")
+    lang_codes = list(SUPPORTED_LANGUAGES.keys())
+    cur_lang_idx = lang_codes.index(cur_lang) if cur_lang in lang_codes else 0
+
+    st.markdown(f"""
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; margin-bottom: 4px;">
+        <span style="font-size: 0.74rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.06em;">
+            🌐 {t("app.language")}
+        </span>
+        <span style="font-size: 0.64rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+            {SUPPORTED_LANGUAGES[cur_lang]['native']}
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    chosen_lang = st.selectbox(
+        label=f"🌐 {t('app.language')}",
+        options=lang_codes,
+        index=cur_lang_idx,
+        format_func=lambda c: f"{SUPPORTED_LANGUAGES[c]['flag']} {SUPPORTED_LANGUAGES[c]['native']} ({SUPPORTED_LANGUAGES[c]['name']})",
+        key="global_sidebar_lang_selector",
+        label_visibility="collapsed"
+    )
+
+    if chosen_lang != cur_lang:
+        st.session_state.app_language = chosen_lang
+        st.rerun()
 
     st.markdown("---")
-    st.markdown("""
+    st.markdown(f"""
     <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; margin-bottom: 8px;">
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 1.1rem; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));">🎯</span>
             <span style="font-weight: 800; font-size: 0.86rem; letter-spacing: 0.06em; color: #f8fafc; text-transform: uppercase;">
-                Routing Objectives
+                {t("nav.objectives_title")}
             </span>
         </div>
         <span style="font-size: 0.64rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; letter-spacing: 0.05em;">
-            AI PREFERENCE
+            {t("nav.ai_preference")}
         </span>
     </div>
     """, unsafe_allow_html=True)
@@ -1202,13 +1277,13 @@ with st.sidebar:
 
     # 1. Default Option: 🌐 All Routes (Displays all routes connecting origin to destination)
     is_all_active = (cur_focus_mode == "ALL")
-    btn_all_label = "✓ 🌐 All Routes (Default)" if is_all_active else "🌐 All Routes (Default)"
+    btn_all_label = f"✓ {t('nav.all_routes')}" if is_all_active else t("nav.all_routes")
     if st.button(btn_all_label, key="btn_obj_all_routes", use_container_width=True, type="primary" if is_all_active else "secondary"):
         st.session_state.focused_route_id = "ALL"
         st.rerun()
     st.markdown(
         f"""<div style="font-size: 0.72rem; color: {'#f8fafc' if is_all_active else '#94a3b8'}; margin-top: -6px; margin-bottom: 8px; padding-left: 4px; line-height: 1.35;">
-            Displays all candidate routes simultaneously across the corridor
+            {t('nav.all_routes_desc')}
         </div>""",
         unsafe_allow_html=True
     )
@@ -1217,29 +1292,29 @@ with st.sidebar:
     obj_definitions = [
         (
             OptimizationObjective.FASTEST,
-            "⚡ Fastest Route",
-            "Minimizes transit duration & evades traffic",
+            t("nav.fastest"),
+            t("nav.fastest_desc"),
             "#38bdf8",
             "FASTEST"
         ),
         (
             OptimizationObjective.SHORTEST,
-            "📏 Shortest Route",
-            "Minimizes ground mileage & physical distance",
+            t("nav.shortest"),
+            t("nav.shortest_desc"),
             "#c084fc",
             "SHORTEST"
         ),
         (
             OptimizationObjective.BALANCED,
-            "⚖️ Balanced Route",
-            "Harmonized 50/50 time & distance balance",
+            t("nav.balanced"),
+            t("nav.balanced_desc"),
             "#34d399",
             "BALANCED"
         ),
         (
             OptimizationObjective.ACCESSIBLE,
-            "♿ Accessible Route",
-            "Prioritizes step-free paths & certified ramps",
+            t("nav.accessible"),
+            t("nav.accessible_desc"),
             "#fbbf24",
             "ACCESSIBLE"
         ),
@@ -1267,26 +1342,26 @@ with st.sidebar:
         )
 
     # Clear Navigation Distance Units
-    st.markdown("""
+    st.markdown(f"""
     <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #38bdf8; margin-top: 10px; margin-bottom: 6px;">
-        📏 Distance Units
+        📏 {t('app.distance_units')}
     </div>
     """, unsafe_allow_html=True)
     c_u1, c_u2 = st.columns(2)
     cur_unit = st.session_state.get("distance_unit", "km")
     with c_u1:
-        if st.button("Kilometers (km)", key="btn_unit_km", use_container_width=True, type="primary" if cur_unit == "km" else "secondary", help="Display all distances in Kilometres (km)"):
+        if st.button(t("app.metric_km"), key="btn_unit_km", use_container_width=True, type="primary" if cur_unit == "km" else "secondary", help="Display all distances in Kilometres (km)"):
             st.session_state.distance_unit = "km"
             st.rerun()
     with c_u2:
-        if st.button("Miles (mi)", key="btn_unit_mi", use_container_width=True, type="primary" if cur_unit == "miles" else "secondary", help="Display all distances in Miles (mi)"):
+        if st.button(t("app.imperial_mi"), key="btn_unit_mi", use_container_width=True, type="primary" if cur_unit == "miles" else "secondary", help="Display all distances in Miles (mi)"):
             st.session_state.distance_unit = "miles"
             st.rerun()
 
-    active_unit_label = "Metric (Kilometres)" if cur_unit == "km" else "Imperial (Miles)"
+    active_unit_label = t("app.metric_km") if cur_unit == "km" else t("app.imperial_mi")
     st.markdown(
         f"""<div style="font-size: 0.68rem; color: #38bdf8; font-weight: 700; margin-top: -4px; margin-bottom: 10px; padding: 2px 6px; background: rgba(56, 189, 248, 0.10); border-radius: 4px; text-align: center; border: 1px solid rgba(56, 189, 248, 0.2);">
-            Active Standard: <b>{active_unit_label}</b>
+            {t("app.active_standard")}: <b>{active_unit_label}</b>
         </div>""",
         unsafe_allow_html=True
     )
@@ -1960,10 +2035,10 @@ components.html(f"""
 """, height=0, width=0)
 
 tab_nav, tab_guide, tab_facilities, tab_places = st.tabs([
-    "🧭 Navigation",
-    "🚗 Virtual Guide",
-    "🏥 Facilities",
-    "🌟 Places"
+    f"🧭 {t('tab.navigation')}",
+    f"🚗 {t('tab.virtual_guide')}",
+    f"🏥 {t('tab.facilities')}",
+    f"🌟 {t('tab.places')}"
 ])
 
 with tab_nav:
@@ -2051,9 +2126,9 @@ with tab_nav:
 
     with col_orig_in:
         orig_text = st.text_input(
-            "🟢 Start Location",
+            f"🟢 {t('nav.starting_point')}",
             key="txt_orig",
-            placeholder="🛰️ Type city, village, address or landmark — or leave empty for GPS...",
+            placeholder=f"🛰️ {t('nav.search_location')} — {t('nav.my_location')}...",
             help="Leave blank to use your live GPS location. Type any custom city, village, address, landmark, or coordinates to route from there instead."
         )
         if orig_text and orig_text != st.session_state.last_synced_orig:
@@ -2234,9 +2309,9 @@ with tab_nav:
 
     with col_dest_in:
         dest_text = st.text_input(
-            "🏁 Destination",
+            f"🏁 {t('nav.destination')}",
             key="txt_dest",
-            placeholder="🗺️ Type destination city, village, landmark or address — or click map...",
+            placeholder=f"🗺️ {t('nav.search_location')}...",
             help="Type your destination city, village, address, landmark, or click anywhere on the interactive map to set it."
         )
         if dest_text and dest_text != st.session_state.last_synced_dest:
@@ -2670,7 +2745,26 @@ with tab_nav:
     </div>
     """, unsafe_allow_html=True)
 
-
+    # Route Avoidances & Exclusions (Avoid Tolls, Highways, Ferries)
+    c_av1, c_av2, c_av3 = st.columns(3)
+    with c_av1:
+        cur_tolls = st.session_state.get("avoid_tolls", False)
+        ch_tolls = st.checkbox(f"💳 {t('nav.avoid_tolls')}", value=cur_tolls, key="chk_avoid_tolls")
+        if ch_tolls != cur_tolls:
+            st.session_state.avoid_tolls = ch_tolls
+            st.rerun()
+    with c_av2:
+        cur_hw = st.session_state.get("avoid_highways", False)
+        ch_hw = st.checkbox(f"🛣️ {t('nav.avoid_highways')}", value=cur_hw, key="chk_avoid_highways")
+        if ch_hw != cur_hw:
+            st.session_state.avoid_highways = ch_hw
+            st.rerun()
+    with c_av3:
+        cur_ferry = st.session_state.get("avoid_ferries", False)
+        ch_ferry = st.checkbox(f"⛴️ {t('nav.avoid_ferries')}", value=cur_ferry, key="chk_avoid_ferries")
+        if ch_ferry != cur_ferry:
+            st.session_state.avoid_ferries = ch_ferry
+            st.rerun()
 
     coords_orig = st.session_state.user_live_coords
     coords_dest = st.session_state.selected_dest_coords
@@ -3811,11 +3905,11 @@ with tab_nav:
 
     obj_cols = st.columns(5)
     obj_buttons = [
-        ("ALL", "🌐 All Routes", "Displays all candidate road corridors simultaneously", "ALL", None),
-        ("FASTEST", "⚡ Fastest", "Minimizes travel duration based on speed limits", "FASTEST", OptimizationObjective.FASTEST),
-        ("SHORTEST", "📏 Shortest", "Minimizes physical ground road distance", "SHORTEST", OptimizationObjective.SHORTEST),
-        ("BALANCED", "⚖️ Balanced", "Optimal 50/50 balance between time and distance", "BALANCED", OptimizationObjective.BALANCED),
-        ("ACCESSIBLE", "♿ Accessible", "Prioritizes step-free paths and accessible corridors", "ACCESSIBLE", OptimizationObjective.ACCESSIBLE),
+        ("ALL", f"🌐 {t('nav.all_routes')}", "Displays all candidate road corridors simultaneously", "ALL", None),
+        ("FASTEST", f"⚡ {t('nav.fastest')}", "Minimizes travel duration based on speed limits", "FASTEST", OptimizationObjective.FASTEST),
+        ("SHORTEST", f"📏 {t('nav.shortest')}", "Minimizes physical ground road distance", "SHORTEST", OptimizationObjective.SHORTEST),
+        ("BALANCED", f"⚖️ {t('nav.balanced')}", "Optimal 50/50 balance between time and distance", "BALANCED", OptimizationObjective.BALANCED),
+        ("ACCESSIBLE", f"♿ {t('nav.accessible')}", "Prioritizes step-free paths and accessible corridors", "ACCESSIBLE", OptimizationObjective.ACCESSIBLE),
     ]
 
     for o_idx, (o_key, o_label, o_help, o_focus, o_enum) in enumerate(obj_buttons):
@@ -4299,7 +4393,8 @@ with tab_guide:
             steps=steps,
             origin=origin_display,
             destination=dest_display,
-            travel_mode=travel_mode_str
+            travel_mode=travel_mode_str,
+            language=st.session_state.get("app_language", "en")
         )
 
         # =========================================================================

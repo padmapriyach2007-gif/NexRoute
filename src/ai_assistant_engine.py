@@ -237,7 +237,8 @@ class LLMClient:
             self.last_error_category = "NOT_CONFIGURED"
             return None, "builtin"
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}"
+            # Primary model: gemini-2.0-flash, fallback: gemini-1.5-flash
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
             contents = []
             contents.append({"role": "user", "parts": [{"text": f"System Instructions: {system_prompt}"}]})
             contents.append({"role": "model", "parts": [{"text": "Understood. I will act strictly according to these instructions."}]})
@@ -253,11 +254,23 @@ class LLMClient:
                 },
                 timeout=self.timeout
             )
+            if resp.status_code == 404:
+                # Fallback to gemini-1.5-flash if 2.0-flash is not available in region
+                fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={key}"
+                resp = requests.post(
+                    fallback_url,
+                    json={
+                        "contents": contents,
+                        "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens}
+                    },
+                    timeout=self.timeout
+                )
+
             if resp.status_code == 200:
                 data = resp.json()
                 cand = data.get("candidates", [])[0]
                 text = cand.get("content", {}).get("parts", [])[0].get("text", "")
-                return text, "Google Gemini 2.5 Flash"
+                return text, "Google Gemini"
             else:
                 self.last_error_category = self._classify_error(resp.text, resp.status_code)
                 self.last_error = f"Gemini API status {resp.status_code} [{self.last_error_category}]"

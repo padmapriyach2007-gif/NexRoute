@@ -21,6 +21,7 @@ from src.ai_assistant_engine import (
     GroundingEngine,
     AURA_CORE_SYSTEM_PROMPT
 )
+from src.pathfinder_tools import PathfinderToolExecutor, TOOL_SCHEMAS
 
 logger = logging.getLogger("pathfinder.aura")
 
@@ -41,14 +42,22 @@ class PathfinderChatbot:
         self.emergency_manager = emergency_service_manager
         self.explanation_mode = "standard"  # simple, standard, advanced
         self.last_topic = None
+        self.last_destination = None
         self.llm_client = LLMClient()
         self.cognitive_engine = BuiltinCognitiveEngine()
         self.conv_manager = ConversationManager()
+        self.tool_executor = PathfinderToolExecutor(
+            pipeline=pipeline,
+            map_service=map_service,
+            road_condition_manager=road_condition_manager,
+            emergency_service_manager=emergency_service_manager
+        )
 
     def reset_conversation(self):
         """Resets active conversation context and history."""
         self.conv_manager.clear()
         self.last_topic = None
+        self.last_destination = None
         self.explanation_mode = "standard"
 
     def answer(self, user_query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -140,15 +149,35 @@ class PathfinderChatbot:
             }
 
         # ---------------------------------------------------------------------
-        # 3. MULTILINGUAL SUPPORT (TELUGU & HINDI)
+        # 3. LANGUAGE DETECTION & MULTILINGUAL SUPPORT
         # ---------------------------------------------------------------------
-        is_telugu = bool(re.search(r"[\u0c00-\u0c7f]", raw_query)) or any(w in q for w in ["namaskaram", "ela unnav", "dharilo", "margam", "telugu lo"])
-        if is_telugu and not any(w in q for w in ["translate to english"]):
-            return self._handle_telugu_query(raw_query, q, ctx)
+        app_lang = (ctx.get("language") or "en").lower().strip()
 
-        is_hindi = bool(re.search(r"[\u0900-\u097f]", raw_query)) or any(w in q for w in ["namaste", "kaise ho", "rasta", "hindi me"])
-        if is_hindi and not any(w in q for w in ["translate to english"]):
-            return self._handle_hindi_query(raw_query, q, ctx)
+        is_telugu = (app_lang == "te") or bool(re.search(r"[\u0c00-\u0c7f]", raw_query)) or any(w in q for w in ["namaskaram", "ela unnav", "dharilo", "margam", "telugu lo"])
+        is_hindi = (app_lang == "hi") or bool(re.search(r"[\u0900-\u097f]", raw_query) and not any(w in q for w in ["marathi", "marathit"])) or any(w in q for w in ["namaste", "kaise ho", "rasta", "hindi me"])
+        is_tamil = (app_lang == "ta") or bool(re.search(r"[\u0b80-\u0bff]", raw_query)) or any(w in q for w in ["vanakkam", "eppadi irukinga", "vazhi", "tamilil", "tamil"])
+        is_kannada = (app_lang == "kn") or bool(re.search(r"[\u0c80-\u0cff]", raw_query)) or any(w in q for w in ["namaskara", "hegidira", "daari", "kannadadalli", "kannada"])
+        is_malayalam = (app_lang == "ml") or bool(re.search(r"[\u0d00-\u0d7f]", raw_query)) or any(w in q for w in ["namaskaram", "sugamano", "vazhi", "malayalam"])
+        is_bengali = (app_lang == "bn") or bool(re.search(r"[\u0980-\u09ff]", raw_query)) or any(w in q for w in ["nomoshkar", "kemon acho", "rasta", "banglay", "bengali"])
+        is_marathi = (app_lang == "mr") or any(w in q for w in ["namaskar", "kasa kay", "rasta", "marathit", "marathi"])
+
+        active_lang = "en"
+        if is_telugu:
+            active_lang = "te"
+        elif is_hindi:
+            active_lang = "hi"
+        elif is_tamil:
+            active_lang = "ta"
+        elif is_kannada:
+            active_lang = "kn"
+        elif is_malayalam:
+            active_lang = "ml"
+        elif is_bengali:
+            active_lang = "bn"
+        elif is_marathi:
+            active_lang = "mr"
+        elif app_lang in ("te", "hi", "ta", "kn", "ml", "bn", "mr"):
+            active_lang = app_lang
 
         if "translate" in q:
             return self._handle_translation(raw_query, q)
@@ -161,24 +190,34 @@ class PathfinderChatbot:
             return em_res
 
         # ---------------------------------------------------------------------
-        # 5. NAVIGATION TOOL ACTIONS (DETERMINISTIC ROUTING & MAP SYNC)
+        # 5. NAVIGATION TOOL ACTIONS (DETERMINISTIC ROUTING & REAL APP ACTIONS)
         # ---------------------------------------------------------------------
-        # A) Explicit Route Calculation (Origin & Destination or Destination)
+        # A) Route Preferences (Avoid tolls, highways, ferries)
+        pref_res = self._handle_preferences(raw_query, q, ctx, language=active_lang)
+        if pref_res is not None:
+            return pref_res
+
+        # B) Explicit Route Calculation & Destination Targeting (Resolves "there")
         route_intent_res = self._handle_route_intent(raw_query, q, ctx)
         if route_intent_res is not None:
             return route_intent_res
 
-        # B) Map Camera & Route Focus Sync
+        # C) Map Camera & Route Focus Sync
         map_act = self._handle_map_action(raw_query, q, ctx)
         if map_act is not None:
             return map_act
 
-        # C) Route Comparison & Metrics Analysis (From context)
+        # D) Route Comparison & Metrics Analysis (From real context)
         route_comp = self._handle_route_comparison(raw_query, q, ctx)
         if route_comp is not None:
             return route_comp
 
-        # D) Grounding Tools: Nearby Places & Weather
+        # E) Journey Telemetry & Status
+        journey_res = self._handle_journey_status(raw_query, q, ctx, language=active_lang)
+        if journey_res is not None:
+            return journey_res
+
+        # F) Grounding Tools: Nearby Places & Real Weather
         places_res = self._handle_nearby_places(raw_query, q, ctx)
         if places_res is not None:
             return places_res
@@ -187,10 +226,34 @@ class PathfinderChatbot:
         if weather_res is not None:
             return weather_res
 
-        # E) Global Travel Inquiries (e.g. "How do I go to Tokyo?")
+        # G) Global Travel Inquiries (e.g. "How do I go to Tokyo?")
         global_res = self._handle_global_transit(raw_query, q, ctx)
         if global_res is not None:
             return global_res
+
+        # ---------------------------------------------------------------------
+        # 6. CONTEXTUAL MULTILINGUAL GREETINGS & RESPONSES
+        # ---------------------------------------------------------------------
+        if is_telugu and (any(w in raw_query for w in ["నమస్కారం", "హలో", "ఎలా ఉన్నావు", "సహాయపడగలరు", "నమస్తే", "మీరు ఎవరు"]) or any(w in q for w in ["namaskaram", "hello", "hi"]) or app_lang == "te"):
+            return self._handle_telugu_query(raw_query, q, ctx)
+
+        if is_hindi and (any(w in raw_query for w in ["नमस्ते", "हैलो", "कैसे हो", "प्रणाम", "आप कौन हैं"]) or any(w in q for w in ["namaste", "hello", "hi"]) or app_lang == "hi"):
+            return self._handle_hindi_query(raw_query, q, ctx)
+
+        if is_tamil and (any(w in raw_query for w in ["வணக்கம்", "ஹலோ", "யார்"]) or any(w in q for w in ["vanakkam", "hello", "hi"]) or app_lang == "ta"):
+            return self._handle_tamil_query(raw_query, q, ctx)
+
+        if is_kannada and (any(w in raw_query for w in ["ನಮಸ್ಕಾರ", "ಹಲೋ", "ಯಾರು"]) or any(w in q for w in ["namaskara", "hello", "hi"]) or app_lang == "kn"):
+            return self._handle_kannada_query(raw_query, q, ctx)
+
+        if is_malayalam and (any(w in raw_query for w in ["നമസ്കാരം", "ഹലോ", "ആരാണ്"]) or any(w in q for w in ["namaskaram", "hello", "hi"]) or app_lang == "ml"):
+            return self._handle_malayalam_query(raw_query, q, ctx)
+
+        if is_bengali and (any(w in raw_query for w in ["নমস্কার", "হ্যালো", "কে"]) or any(w in q for w in ["nomoshkar", "hello", "hi"]) or app_lang == "bn"):
+            return self._handle_bengali_query(raw_query, q, ctx)
+
+        if is_marathi and (any(w in raw_query for w in ["नमस्कार", "हॅलो", "कोण"]) or any(w in q for w in ["namaskar", "hello", "hi"]) or app_lang == "mr"):
+            return self._handle_marathi_query(raw_query, q, ctx)
 
         # ---------------------------------------------------------------------
         # 6. GENERAL-PURPOSE CONVERSATION & INTELLIGENCE (LLM OR COGNITIVE ENGINE)
@@ -222,8 +285,21 @@ class PathfinderChatbot:
 
         # Step 1: External LLM attempt if configured
         if self.llm_client.active_provider_name != "builtin":
+            lang_code = (ctx.get("language") or "en").lower().strip()
+            lang_prompts = {
+                "te": "The user's preferred language is Telugu (తెలుగు). Please reply naturally and fluently in Telugu script.",
+                "hi": "The user's preferred language is Hindi (हिन्दी). Please reply naturally and fluently in Devanagari Hindi script.",
+                "ta": "The user's preferred language is Tamil (தமிழ்). Please reply naturally and fluently in Tamil script.",
+                "kn": "The user's preferred language is Kannada (ಕನ್ನಡ). Please reply naturally and fluently in Kannada script.",
+                "ml": "The user's preferred language is Malayalam (മലയാളം). Please reply naturally and fluently in Malayalam script.",
+                "bn": "The user's preferred language is Bengali (বাংলা). Please reply naturally and fluently in Bengali script.",
+                "mr": "The user's preferred language is Marathi (मराठी). Please reply naturally and fluently in Marathi script."
+            }
+            system_prompt = AURA_CORE_SYSTEM_PROMPT
+            if lang_code in lang_prompts:
+                system_prompt += f"\n\nLANGUAGE INSTRUCTION: {lang_prompts[lang_code]}"
             llm_msgs = self.conv_manager.get_messages_for_llm() + [{"role": "user", "content": raw_query}]
-            llm_out, provider_label = self.llm_client.generate(llm_msgs, system_prompt=AURA_CORE_SYSTEM_PROMPT)
+            llm_out, provider_label = self.llm_client.generate(llm_msgs, system_prompt=system_prompt)
             if llm_out:
                 return {
                     "badge": f"⚡ A.U.R.A. • {provider_label.upper()}",
@@ -260,6 +336,40 @@ class PathfinderChatbot:
     # =========================================================================
     # TOOL HANDLERS
     # =========================================================================
+
+    def _handle_preferences(self, raw_query: str, q: str, ctx: Dict[str, Any], language: str = "en") -> Optional[Dict[str, Any]]:
+        """Handles route preference adjustments (tolls, highways, ferries)."""
+        has_pref = any(w in q for w in ["toll", "highway", "ferr", "expressway"]) and any(w in q for w in ["avoid", "no", "without", "skip", "prefer", "allow", "enable", "disable"])
+        if has_pref:
+            args = {}
+            if "toll" in q:
+                if any(w in q for w in ["avoid", "no", "without", "skip", "disable"]):
+                    args["avoid_tolls"] = True
+                elif any(w in q for w in ["allow", "prefer", "enable", "use"]):
+                    args["avoid_tolls"] = False
+
+            if "highway" in q or "expressway" in q:
+                if any(w in q for w in ["avoid", "no", "without", "skip", "disable"]):
+                    args["avoid_highways"] = True
+                elif any(w in q for w in ["allow", "prefer", "enable", "use"]):
+                    args["avoid_highways"] = False
+
+            if "ferr" in q:
+                if any(w in q for w in ["avoid", "no", "without", "skip", "disable"]):
+                    args["avoid_ferries"] = True
+                elif any(w in q for w in ["allow", "prefer", "enable", "use"]):
+                    args["avoid_ferries"] = False
+
+            if args:
+                return self.tool_executor.execute("update_route_preferences", args, ctx, language=language)
+        return None
+
+    def _handle_journey_status(self, raw_query: str, q: str, ctx: Dict[str, Any], language: str = "en") -> Optional[Dict[str, Any]]:
+        """Handles inquiries about journey progress, telemetry, ETA."""
+        status_words = ["where are we", "journey status", "how far have we", "how far to destination", "eta to destination", "current route status", "progress of journey", "trip status"]
+        if any(w in q for w in status_words):
+            return self.tool_executor.execute("get_current_journey_status", {}, ctx, language=language)
+        return None
 
     def _handle_route_intent(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Handles explicit route generation and destination selection."""
@@ -327,6 +437,7 @@ class PathfinderChatbot:
                     )
                 }
 
+            self.last_destination = dest_raw.title()
             self.conv_manager.last_destination = dest_raw.title()
             return {
                 "badge": "🧭 ROUTE CALCULATION",
@@ -379,6 +490,7 @@ class PathfinderChatbot:
                         )
                     }
 
+                self.last_destination = dest_raw.title()
                 self.conv_manager.last_destination = dest_raw.title()
                 return {
                     "badge": f"🧭 DESTINATION TARGET • {dest_raw.upper()[:16]}",
@@ -393,6 +505,76 @@ class PathfinderChatbot:
                         "coords": dest_coords
                     }
                 }
+
+        # Pattern 3: Follow-up reference to "there" / "that destination"
+        is_greeting_there = any(w in q for w in ["hello there", "hi there", "hey there", "help me navigate"])
+        if not is_greeting_there and any(w in q for w in ["there", "that destination", "that place"]) and any(w in q for w in ["navigate", "route", "directions", "go there", "take me there", "how do i get there", "how to get there", "path to there"]):
+            dest_raw = ctx.get("dest_label") or getattr(self.conv_manager, "last_destination", None) or self.last_destination
+            if dest_raw and dest_raw.lower() not in ["live location", "local area", "unknown", "destination", ""]:
+                dest_coords = None
+                if self.map_service:
+                    dest_res = self.map_service.geocode(dest_raw)
+                    dest_coords = self._extract_lat_lon(dest_res)
+                if dest_coords:
+                    self.last_destination = dest_raw.title()
+                    self.conv_manager.last_destination = dest_raw.title()
+                    return {
+                        "badge": f"🧭 DESTINATION TARGET • {dest_raw.upper()[:16]}",
+                        "response": (
+                            f"**Setting Destination to {dest_raw.title()}!**\n\n"
+                            f"• **Coordinates:** `{dest_coords[0]:.4f}, {dest_coords[1]:.4f}`\n"
+                            f"• Route calculation automatically triggered on the interactive map."
+                        ),
+                        "action": {
+                            "type": "set_destination",
+                            "destination_name": dest_raw.title(),
+                            "coords": dest_coords
+                        }
+                    }
+                else:
+                    return {
+                        "badge": "🧭 DESTINATION CLARIFICATION • A.U.R.A.",
+                        "response": f"I remembered your destination as **'{dest_raw}'**, but could not locate it via geocoding. Please specify the full landmark or city name."
+                    }
+            else:
+                return {
+                    "badge": "🧭 DESTINATION CLARIFICATION • A.U.R.A.",
+                    "response": "Could you clarify which destination you want to travel to? Please specify a place, landmark, or city name."
+                }
+
+        # Pattern 4: Multilingual Telugu Route Intent
+        if any(w in raw_query for w in ["దారి", "వెళ్ళాలి", "నుండి", "వరకు"]):
+            dest_raw = None
+            orig_raw = None
+            if "నుండి" in raw_query:
+                parts = raw_query.split("నుండి")
+                orig_raw = parts[0].strip()
+                dest_part = parts[1].replace("వరకు", "").replace("కి", "").replace("కు", "").replace("దారి", "").replace("చూపించు", "").strip()
+                if dest_part:
+                    dest_raw = dest_part
+            else:
+                m = re.search(r"(.+?)(?:కి|కు)?\s*(?:దారి|వెళ్ళాలి)", raw_query)
+                if m:
+                    dest_raw = m.group(1).replace("నాకు", "").replace("దయచేసి", "").strip()
+            if dest_raw:
+                return self.tool_executor.execute("calculate_route", {"destination": dest_raw, "origin": orig_raw}, ctx, language="te")
+
+        # Pattern 5: Multilingual Hindi Route Intent
+        if any(w in raw_query for w in ["रास्ता", "जाना है", "मार्ग"]):
+            dest_raw = None
+            orig_raw = None
+            if "से" in raw_query and ("तक" in raw_query or "का" in raw_query):
+                parts = raw_query.split("से")
+                orig_raw = parts[0].strip()
+                dest_part = parts[1].replace("तक", "").replace("का रास्ता", "").replace("का मार्ग", "").replace("जाना है", "").strip()
+                if dest_part:
+                    dest_raw = dest_part
+            else:
+                m = re.search(r"(.+?)(?:का\s+रास्ता|जाना\s+है)", raw_query)
+                if m:
+                    dest_raw = m.group(1).replace("मुझे", "").replace("कृपया", "").strip()
+            if dest_raw:
+                return self.tool_executor.execute("calculate_route", {"destination": dest_raw, "origin": orig_raw}, ctx, language="hi")
 
         return None
 
@@ -556,26 +738,62 @@ class PathfinderChatbot:
         return None
 
     def _handle_nearby_places(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Retrieves verified places, dining, fuel, or lodging around current destination."""
-        if any(w in q for w in ["restaurant", "food", "dining", "places to eat", "hotel nearby", "petrol pump", "fuel station", "atm nearby"]):
-            cat = None
+        """Retrieves verified places, dining, fuel, lodging, or medical care around destination or referenced place."""
+        facility_triggers = [
+            "restaurant", "food", "dining", "places to eat", "hotel nearby", "hotel", "lodge",
+            "petrol pump", "fuel station", "petrol", "fuel", "atm nearby", "atm",
+            "hospital", "clinic", "pharmacy", "medical store", "doctor"
+        ]
+        if any(w in q for w in facility_triggers):
+            cat = "Dining"
             if any(w in q for w in ["restaurant", "food", "dining", "eat", "cafe"]):
                 cat = "Dining"
-            elif any(w in q for w in ["hotel", "lodge"]):
+            elif any(w in q for w in ["hotel", "lodge", "resort"]):
                 cat = "Hotel"
-            elif any(w in q for w in ["petrol", "fuel"]):
+            elif any(w in q for w in ["petrol", "fuel", "gas station"]):
                 cat = "Fuel"
+            elif any(w in q for w in ["hospital", "clinic", "doctor"]):
+                cat = "Hospital"
+            elif any(w in q for w in ["atm", "bank", "cash"]):
+                cat = "ATM"
+            elif any(w in q for w in ["pharmacy", "chemist", "medical store"]):
+                cat = "Pharmacy"
 
             dest_coords = ctx.get("dest_coords") or ctx.get("current_coords") or (16.2335, 80.5505)
             dest_label = ctx.get("dest_label", "Local Area")
+
+            # Reference resolution: "there" / "that place"
+            if any(w in q for w in ["there", "that destination", "that place"]):
+                resolved_place = ctx.get("dest_label") or getattr(self.conv_manager, "last_destination", None) or self.last_destination
+                if resolved_place and resolved_place.lower() not in ["live location", "local area", "unknown", "destination", ""]:
+                    dest_label = resolved_place
+                    if self.map_service:
+                        geo = self.map_service.geocode(resolved_place)
+                        coords = self._extract_lat_lon(geo)
+                        if coords:
+                            dest_coords = coords
+
+            # Explicit location: "near Guntur" or "around Tenali"
+            near_match = re.search(r"(?:near|in|around)\s+([a-zA-Z0-9\s,\.\-]+)", q)
+            if near_match:
+                cand_loc = near_match.group(1).strip("?. ")
+                if cand_loc and cand_loc not in ["there", "here", "my location", "me", "the destination", "that place"]:
+                    if self.map_service:
+                        geo = self.map_service.geocode(cand_loc)
+                        coords = self._extract_lat_lon(geo)
+                        if coords:
+                            dest_coords = coords
+                            dest_label = cand_loc.title()
 
             places = GroundingEngine.get_nearby_places(dest_coords[0], dest_coords[1], dest_label, cat)
             if places:
                 p_lines = []
                 for p in places[:3]:
-                    stars = "⭐" * int(round(p.get("rating", 4.5)))
+                    r_val = p.get("rating")
+                    r_num = float(r_val) if r_val is not None else 4.5
+                    stars = "⭐" * int(round(r_num))
                     p_lines.append(
-                        f"• **{p.get('name')}** ({p.get('rating', 4.5)} {stars})<br>"
+                        f"• **{p.get('name')}** ({r_num:.1f} {stars})<br>"
                         f"&nbsp;&nbsp;{p.get('category')} • ~{p.get('dist_km', 1.0):.1f} km away • *{p.get('open_status', 'Open Daily')}*"
                     )
                 p_html = "<br>".join(p_lines)
@@ -592,9 +810,13 @@ class PathfinderChatbot:
 
     def _handle_live_weather(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Fetches live weather from Open-Meteo for any referenced place or current destination."""
-        if any(w in q for w in ["weather in", "temperature in", "forecast in", "is it raining in", "current weather", "what's the weather"]):
-            match_loc = re.search(r"(?:in|at|for)\s+([a-zA-Z\s]+)", q)
-            loc_query = match_loc.group(1).strip("?. ") if match_loc else ctx.get("dest_label", "Local Area")
+        weather_triggers = ["weather", "temperature", "forecast", "is it raining", "climate", "rainfall"]
+        if any(w in q for w in weather_triggers) and not any(w in q for w in ["under the weather", "weather the storm"]):
+            match_loc = re.search(r"(?:in|at|for|around)\s+([a-zA-Z\s]+)", q)
+            cand_raw = match_loc.group(1).strip("?. ") if match_loc else None
+            if not cand_raw or cand_raw.lower() in ["there", "that destination", "that place", "destination", "here", "my location"]:
+                cand_raw = ctx.get("dest_label") or getattr(self.conv_manager, "last_destination", None) or self.last_destination or "Local Area"
+            loc_query = cand_raw
             if self.map_service:
                 resolved = self.map_service.geocode(loc_query)
                 coords = self._extract_lat_lon(resolved)
@@ -663,7 +885,12 @@ class PathfinderChatbot:
                 )
             }
 
-        if any(w in q for w in ["fire", "earthquake", "chemical", "spill", "evacuate", "evacuation", "emergency protocol", "alarm"]):
+        hazmat_or_fire = (
+            any(w in q for w in ["earthquake", "evacuate", "evacuation", "emergency protocol", "fire alarm", "chemical spill", "chemical leak", "building fire", "gas leak"]) or
+            ("fire" in q and any(w in q for w in ["emergency", "alarm", "evacuate", "escape", "building", "smoke", "extinguish", "flames"])) or
+            ("chemical" in q and any(w in q for w in ["spill", "leak", "hazard", "toxic", "fume", "poison", "containment"]))
+        )
+        if hazmat_or_fire:
             if "earthquake" in q:
                 sop_title = "SEISMIC / EARTHQUAKE ACTION PROTOCOL"
                 sop_act = "DROP, COVER, AND HOLD ON. Move away from glass facades and overhead lighting."
@@ -743,6 +970,111 @@ class PathfinderChatbot:
             )
         }
 
+    def _handle_tamil_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Responds in natural Tamil."""
+        if any(w in q for w in ["வணக்கம்", "vanakkam", "ஹலோ", "hello"]):
+            return {
+                "badge": "⚡ A.U.R.A. தமிழ்",
+                "response": (
+                    "வணக்கம்! நான் **A.U.R.A.** (Adaptive User Route Assistant). "
+                    "P.A.T.H.F.I.N.D.E.R. இன் உங்கள் அறிவார்ந்த AI உதவியாளர்.\n\n"
+                    "பாதுகாப்பான வழிசெலுத்தல், வழிகள், பொது அறிவு, குறியீட்டு முறை அல்லது அறிவியல் பற்றி நீங்கள் கேட்கலாம். "
+                    "நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
+                )
+            }
+        return {
+            "badge": "⚡ A.U.R.A. தமிழ்",
+            "response": (
+                f"உங்கள் கேள்வி: **\"{raw_query}\"**.\n\n"
+                "நான் உங்களுக்கு துல்லியமான வழிகாட்டல் மற்றும் பாதுகாப்பான பயண தகவல்களை வழங்க தயாராக உள்ளேன். "
+                "உங்கள் தேவையை மேலும் விரிவாகக் குறிப்பிடவும்!"
+            )
+        }
+
+    def _handle_kannada_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Responds in natural Kannada."""
+        if any(w in q for w in ["ನಮಸ್ಕಾರ", "namaskara", "ಹಲೋ", "hello"]):
+            return {
+                "badge": "⚡ A.U.R.A. ಕನ್ನಡ",
+                "response": (
+                    "ನಮಸ್ಕಾರ! ನಾನು **A.U.R.A.** (Adaptive User Route Assistant). "
+                    "P.A.T.H.F.I.N.D.E.R. ನ ಬುದ್ಧಿವಂತ AI ಸಹಾಯಕ.\n\n"
+                    "ಸುರಕ್ಷಿತ ಸಂಚಾರ ಮಾರ್ಗಗಳು, ಸಾಮಾನ್ಯ ಜ್ಞಾನ, ಕೋಡಿಂಗ್ ಅಥವಾ ವಿಜ್ಞಾನದ ಬಗ್ಗೆ ನೀವು ಕೇಳಬಹುದು. "
+                    "ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+                )
+            }
+        return {
+            "badge": "⚡ A.U.R.A. ಕನ್ನಡ",
+            "response": (
+                f"ನಿಮ್ಮ ಪ್ರಶ್ನೆ: **\"{raw_query}\"**.\n\n"
+                "ನಿಮಗೆ ನಿಖರವಾದ ಮಾರ್ಗದರ್ಶನ ಮತ್ತು ಸುರಕ್ಷಿತ ಪ್ರಯಾಣದ ಮಾಹಿತಿಯನ್ನು ಒದಗಿಸಲು ನಾನು ಸಿದ್ಧನಿದ್ದೇನೆ. "
+                "ದಯವಿಟ್ಟು ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ತಿಳಿಸಿ!"
+            )
+        }
+
+    def _handle_malayalam_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Responds in natural Malayalam."""
+        if any(w in q for w in ["നമസ്കാരം", "namaskaram", "ഹലോ", "hello"]):
+            return {
+                "badge": "⚡ A.U.R.A. മലയാളം",
+                "response": (
+                    "നമസ്കാരം! ഞാൻ **A.U.R.A.** (Adaptive User Route Assistant). "
+                    "P.A.T.H.F.I.N.D.E.R. ൻ്റെ സ്മാർട്ട് AI സഹായി.\n\n"
+                    "സുരക്ഷിതമായ യാത്രാ റൂട്ടുകൾ, പൊതുവിജ്ഞാനം, കോഡിംഗ് അല്ലെങ്കിൽ ശാസ്ത്രം എന്നിവയെക്കുറിച്ച് നിങ്ങൾക്ക് എന്നോട് ചോദിക്കാം. "
+                    "ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കണം?"
+                )
+            }
+        return {
+            "badge": "⚡ A.U.R.A. മലയാളം",
+            "response": (
+                f"താങ്കളുടെ ചോദ്യം: **\"{raw_query}\"**.\n\n"
+                "നിങ്ങൾക്ക് കൃത്യമായ റൂട്ട് വിവരങ്ങളും സുരക്ഷിത യാത്രാ നിർദ്ദേശങ്ങളും നൽകാൻ ഞാൻ തയ്യാറാണ്. "
+                "ദയവായി കൂടുതൽ വിവരങ്ങൾ അറിയിക്കുക!"
+            )
+        }
+
+    def _handle_bengali_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Responds in natural Bengali."""
+        if any(w in q for w in ["নমস্কার", "nomoshkar", "হ্যালো", "hello"]):
+            return {
+                "badge": "⚡ A.U.R.A. বাংলা",
+                "response": (
+                    "নমস্কার! আমি **A.U.R.A.** (Adaptive User Route Assistant)। "
+                    "P.A.T.H.F.I.N.D.E.R.-এর আপনার বুদ্ধিমান AI সহকারী।\n\n"
+                    "নিরাপদ রুট, দিকনির্দেশনা, সাধারণ জ্ঞান, কোডিং বা বিজ্ঞান সম্পর্কিত যেকোনো প্রশ্ন আপনি আমাকে করতে পারেন। "
+                    "আমি আপনাকে কীভাবে সাহায্য করতে পারি?"
+                )
+            }
+        return {
+            "badge": "⚡ A.U.R.A. বাংলা",
+            "response": (
+                f"আপনার প্রশ্ন: **\"{raw_query}\"**।\n\n"
+                "আমি আপনাকে সঠিক পথনির্দেশ এবং নিরাপদ ভ্রমণের তথ্য দিতে প্রস্তুত। "
+                "অনুগ্রহ করে বিস্তারিত জানান!"
+            )
+        }
+
+    def _handle_marathi_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Responds in natural Marathi."""
+        if any(w in q for w in ["नमस्कार", "namaskar", "हॅलो", "hello"]):
+            return {
+                "badge": "⚡ A.U.R.A. मराठी",
+                "response": (
+                    "नमस्कार! मी **A.U.R.A.** (Adaptive User Route Assistant) आहे, "
+                    "P.A.T.H.F.I.N.D.E.R. चा बुद्धिमान AI सहाय्यक.\n\n"
+                    "तुम्ही मला सुरक्षित मार्ग, सामान्य ज्ञान, कोडिंग किंवा विज्ञानाबद्दल कोणतेही प्रश्न विचारू शकता. "
+                    "मी आपली काय मदत करू शकतो?"
+                )
+            }
+        return {
+            "badge": "⚡ A.U.R.A. मराठी",
+            "response": (
+                f"तुमचा प्रश्न: **\"{raw_query}\"**.\n\n"
+                "मी तुम्हाला अचूक दिशा आणि सुरक्षित प्रवासाची माहिती देण्यासाठी सज्ज आहे. "
+                "कृपया आपली आवश्यकता अधिक स्पष्टपणे सांगा!"
+            )
+        }
+
     def _handle_translation(self, raw_query: str, q: str) -> Dict[str, Any]:
         """Handles basic language translations."""
         if "to telugu" in q:
@@ -756,6 +1088,36 @@ class PathfinderChatbot:
             return {
                 "badge": "🌐 TRANSLATION • HINDI",
                 "response": f"**English:** {text_to_tr}\n**हिन्दी अनुवाद:** {text_to_tr} का अनुवाद।"
+            }
+        elif "to tamil" in q:
+            text_to_tr = raw_query.lower().split("to tamil")[0].replace("translate", "").strip(" '\"")
+            return {
+                "badge": "🌐 TRANSLATION • TAMIL",
+                "response": f"**English:** {text_to_tr}\n**தமிழ் மொழிபெயர்ப்பு:** {text_to_tr}."
+            }
+        elif "to kannada" in q:
+            text_to_tr = raw_query.lower().split("to kannada")[0].replace("translate", "").strip(" '\"")
+            return {
+                "badge": "🌐 TRANSLATION • KANNADA",
+                "response": f"**English:** {text_to_tr}\n**ಕನ್ನಡ ಅನುವಾದ:** {text_to_tr}."
+            }
+        elif "to malayalam" in q:
+            text_to_tr = raw_query.lower().split("to malayalam")[0].replace("translate", "").strip(" '\"")
+            return {
+                "badge": "🌐 TRANSLATION • MALAYALAM",
+                "response": f"**English:** {text_to_tr}\n**മലയാള തർജ്ജമ:** {text_to_tr}."
+            }
+        elif "to bengali" in q or "to bangla" in q:
+            text_to_tr = raw_query.lower().split("to bengali")[0].split("to bangla")[0].replace("translate", "").strip(" '\"")
+            return {
+                "badge": "🌐 TRANSLATION • BENGALI",
+                "response": f"**English:** {text_to_tr}\n**বাংলা অনুবাদ:** {text_to_tr}."
+            }
+        elif "to marathi" in q:
+            text_to_tr = raw_query.lower().split("to marathi")[0].replace("translate", "").strip(" '\"")
+            return {
+                "badge": "🌐 TRANSLATION • MARATHI",
+                "response": f"**English:** {text_to_tr}\n**मराठी अनुवाद:** {text_to_tr}."
             }
         else:
             return {
