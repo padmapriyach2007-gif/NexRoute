@@ -4398,7 +4398,7 @@ with tab_guide:
         )
 
         # =========================================================================
-        # SECTION 1 — VIRTUAL RUNNER & ROUTE PROCESS BANNER
+        # Section 1: Virtual Runner & Route Process Banner
         # =========================================================================
         st.markdown(f"#### 🏃 {t('guide.section1_title')}")
         game_avatar = st.session_state.get("selected_travel_mode", "WALK").lower()
@@ -4420,7 +4420,7 @@ with tab_guide:
         components.html(game_html, height=340)
 
         # =========================================================================
-        # SECTION 2 — VIRTUAL VEHICLE COMPANION (EXPANDED BY DEFAULT)
+        # Section 2: Virtual Vehicle Companion (Expanded by Default)
         # =========================================================================
         st.markdown(f"#### 🚗 {t('guide.section2_title')}")
         companion_hud = build_virtual_companion_hud_html(
@@ -4438,7 +4438,7 @@ with tab_guide:
         components.html(companion_hud, height=315)
 
         # =========================================================================
-        # SECTION 3 — VIRTUAL GUIDE & REALISTIC 3D SCENE
+        # Section 3: Virtual Human Guide & Realistic 3D Scenery
         # =========================================================================
         st.markdown(f"#### 🧑‍✈️ {t('guide.section3_title')}")
         always_visible_guide_tab_html = build_always_visible_virtual_guide_html(
@@ -4456,7 +4456,7 @@ with tab_guide:
         components.html(always_visible_guide_tab_html, height=460)
 
         # =========================================================================
-        # SECTION 4 — ADDITIONAL ROUTE DETAILS & MANEUVERS
+        # Section 4: Additional Route Details, Landmark Storybook & Maneuvers
         # =========================================================================
         with st.expander(f"📖 {t('guide.section4_title')}", expanded=False):
             turns_guide_html = build_virtual_guide_turns_html(
