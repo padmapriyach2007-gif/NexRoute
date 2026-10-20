@@ -1064,68 +1064,83 @@ def render_accessible_virtual_guide_avatar(
     road_name: str = ""
 ) -> str:
     """
-    Renders an animated Virtual Guide Man ('Virtual Navigator') demonstrating
-    turns and street crossings to assist disabled and mobility-challenged travelers.
+    Renders an animated, cute 3D Virtual Guide Man ('Virtual Navigator') demonstrating
+    realistic walk, run, turn, and jump actions and accessible street crossings.
     Features:
-    - High-visibility cyber emerald/cyan navigator with reflective safety vest & visor
+    - Cute 3D anime/Pixar avatar with soft peach skin, rosy blushing cheeks, sparkling sapphire eyes with catchlights
+    - Layered stylish chestnut bangs with ahoge tuft and chic navigator headset
+    - High-visibility cyber emerald/cyan athletic bomber jacket with neon zipper and safety trim
+    - Articulated limbs for fluid walk strides, athletic sprint runs, pivot turns, high vertical jumps, and victory cheers
     - High-contrast white pedestrian zebra crosswalk spanning the road
     - Yellow tactile warning blister paving tiles at curb ramps for visually impaired
     - Accessible drop-curb ramp with '♿ RAMP' indicator for wheelchairs
     - Audible pedestrian crossing signal pole with illuminated 'WALK' person
     - Wheelchair companion silhouette traveling safely alongside the virtual guide
-    - Dynamic arm and body postures demonstrating Left turns, Right turns, Crossings, and Arrival
     """
     dt = direction_type.upper()
     if dt == "LEFT" or "left" in headline.lower():
-        arms_and_arrows = """
-        <!-- Left arm pointing across the zebra crosswalk to the left turn -->
-        <path d="M 6 18 L -14 14 L -28 10" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
-        <circle cx="-28" cy="10" r="3" fill="#38bdf8"/>
+        arms_and_arrows_left = """
+        <!-- Left arm gracefully pointing across the zebra crosswalk to the left turn -->
+        <path d="M 6 22 L -14 16 L -28 11" fill="none" stroke="#0284c7" stroke-width="3.6" stroke-linecap="round"/>
+        <circle cx="-28" cy="11" r="2.8" fill="#38bdf8"/>
         <!-- Glowing Left Turn AR Arrow Beam -->
-        <path d="M -28 10 Q -42 6 -52 -4" fill="none" stroke="#00f2fe" stroke-width="3" stroke-dasharray="4,3" filter="url(#neonGlowCyan)"/>
-        <polygon points="-56,-8 -47,-1 -48,-7" fill="#00f2fe"/>
+        <path d="M -28 11 Q -42 7 -54 -3" fill="none" stroke="#00f2fe" stroke-width="3.2" stroke-dasharray="4,3" filter="url(#neonGlowCyan)"/>
+        <polygon points="-58,-7 -49,0 -50,-6" fill="#00f2fe"/>
+        """
+        arms_and_arrows_right = """
         <!-- Right Arm holding holographic navigator tablet -->
-        <path d="M 22 18 L 26 26" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
-        <rect x="23" y="24" width="8" height="11" rx="1.5" fill="#0284c7" stroke="#38bdf8" stroke-width="0.8"/>
+        <path d="M 22 22 L 27 30" fill="none" stroke="#0284c7" stroke-width="3.6" stroke-linecap="round"/>
+        <rect x="23" y="27" width="9" height="13" rx="2" fill="#0284c7" stroke="#38bdf8" stroke-width="0.9"/>
+        <circle cx="27.5" cy="33.5" r="2" fill="#10b981" filter="url(#neonGlowEmerald)"/>
         """
     elif dt == "RIGHT" or "right" in headline.lower():
-        arms_and_arrows = """
-        <!-- Right arm pointing across zebra crossing to right turn -->
-        <path d="M 22 18 L 42 14 L 56 10" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
-        <circle cx="56" cy="10" r="3" fill="#38bdf8"/>
-        <!-- Glowing Right Turn AR Arrow Beam -->
-        <path d="M 56 10 Q 70 6 80 -4" fill="none" stroke="#00f2fe" stroke-width="3" stroke-dasharray="4,3" filter="url(#neonGlowCyan)"/>
-        <polygon points="84,-8 75,-7 76,-1" fill="#00f2fe"/>
+        arms_and_arrows_left = """
         <!-- Left Arm holding holographic guide tablet -->
-        <path d="M 6 18 L 2 26" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
-        <rect x="-3" y="24" width="8" height="11" rx="1.5" fill="#0284c7" stroke="#38bdf8" stroke-width="0.8"/>
+        <path d="M 6 22 L 1 30" fill="none" stroke="#0284c7" stroke-width="3.6" stroke-linecap="round"/>
+        <rect x="-4" y="27" width="9" height="13" rx="2" fill="#0284c7" stroke="#38bdf8" stroke-width="0.9"/>
+        <circle cx="0.5" cy="33.5" r="2" fill="#10b981" filter="url(#neonGlowEmerald)"/>
+        """
+        arms_and_arrows_right = """
+        <!-- Right arm pointing across zebra crossing to right turn -->
+        <path d="M 22 22 L 42 16 L 56 11" fill="none" stroke="#0284c7" stroke-width="3.6" stroke-linecap="round"/>
+        <circle cx="56" cy="11" r="2.8" fill="#38bdf8"/>
+        <!-- Glowing Right Turn AR Arrow Beam -->
+        <path d="M 56 11 Q 70 7 82 -3" fill="none" stroke="#00f2fe" stroke-width="3.2" stroke-dasharray="4,3" filter="url(#neonGlowCyan)"/>
+        <polygon points="86,-7 77,-6 78,0" fill="#00f2fe"/>
         """
     elif dt == "ARRIVE" or "arrive" in headline.lower():
-        arms_and_arrows = """
-        <!-- Both arms raised in celebratory cheer -->
-        <path d="M 6 18 L -4 6 L -6 -6" fill="none" stroke="#10b981" stroke-width="3.2" stroke-linecap="round"/>
-        <path d="M 22 18 L 32 6 L 34 -6" fill="none" stroke="#10b981" stroke-width="3.2" stroke-linecap="round"/>
-        <circle cx="-6" cy="-7" r="2.8" fill="#fde047"/>
-        <circle cx="34" cy="-7" r="2.8" fill="#fde047"/>
+        arms_and_arrows_left = """
+        <!-- Left arm raised in celebratory cheer -->
+        <path d="M 6 22 L -6 8 L -8 -6" fill="none" stroke="#0284c7" stroke-width="3.4" stroke-linecap="round"/>
+        <circle cx="-8" cy="-6" r="2.8" fill="#fde047"/>
+        """
+        arms_and_arrows_right = """
+        <!-- Right arm raised in celebratory cheer -->
+        <path d="M 22 22 L 34 8 L 36 -6" fill="none" stroke="#0284c7" stroke-width="3.4" stroke-linecap="round"/>
+        <circle cx="36" cy="-6" r="2.8" fill="#fde047"/>
         <!-- Celebration Laurel / Ribbon -->
-        <path d="M -10 -12 Q 14 -20 38 -12" fill="none" stroke="#facc15" stroke-width="2" stroke-dasharray="4,2"/>
-        <text x="14" y="-18" text-anchor="middle" fill="#facc15" font-size="7" font-weight="900">SAFE DESTINATION 🏁</text>
+        <path d="M -12 -12 Q 14 -22 40 -12" fill="none" stroke="#facc15" stroke-width="2.2" stroke-dasharray="4,2"/>
+        <text x="14" y="-18" text-anchor="middle" fill="#facc15" font-size="7.5" font-weight="900" font-family="'Segoe UI', sans-serif">SAFE DESTINATION 🏁</text>
         """
     elif dt == "START" or "start" in headline.lower():
-        arms_and_arrows = """
-        <!-- Waving left hand welcoming traveler, right arm pointing to road -->
-        <path d="M 6 18 L -6 10 L -4 -2" fill="none" stroke="#10b981" stroke-width="3.2" stroke-linecap="round"/>
+        arms_and_arrows_left = """
+        <!-- Waving left hand welcoming traveler -->
+        <path d="M 6 22 L -6 12 L -4 -2" fill="none" stroke="#0284c7" stroke-width="3.4" stroke-linecap="round"/>
         <circle cx="-4" cy="-3" r="2.8" fill="#fde047"/>
-        <path d="M 22 18 L 34 26 L 44 26" fill="none" stroke="#10b981" stroke-width="3.2" stroke-linecap="round"/>
-        <polygon points="48,26 42,23 42,29" fill="#00f2fe"/>
+        """
+        arms_and_arrows_right = """
+        <!-- Right arm pointing forward along the road -->
+        <path d="M 22 22 L 35 28 L 46 28" fill="none" stroke="#0284c7" stroke-width="3.4" stroke-linecap="round"/>
+        <polygon points="50,28 44,25 44,31" fill="#00f2fe"/>
         """
     else:
-        arms_and_arrows = """
+        arms_and_arrows_left = """
         <!-- Both arms guiding forward along the corridor -->
-        <path d="M 6 18 L -4 10 L 4 0" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
-        <path d="M 22 18 L 32 10 L 24 0" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
-        <!-- Forward Guidance Floating Chevrons -->
+        <path d="M 6 22 L -4 12 L 4 2" fill="none" stroke="#0284c7" stroke-width="3.2" stroke-linecap="round"/>
         <polygon points="14,-6 8,0 11,2 14,-2 17,2 20,0" fill="#00f2fe" filter="url(#neonGlowCyan)"/>
+        """
+        arms_and_arrows_right = """
+        <path d="M 22 22 L 32 12 L 24 2" fill="none" stroke="#0284c7" stroke-width="3.2" stroke-linecap="round"/>
         <polygon points="14,-14 9,-8 11,-7 14,-10 17,-7 19,-8" fill="#38bdf8"/>
         """
 
@@ -1169,14 +1184,14 @@ def render_accessible_virtual_guide_avatar(
         <text x="6" y="38" text-anchor="middle" fill="#ffffff" font-size="5" font-weight="900" font-family="'Segoe UI', sans-serif">WALK 🟢</text>
     </g>
 
-    <!-- VIRTUAL GUIDE MAN & WHEELCHAIR COMPANION ACTOR GROUP -->
-    <g id="virtual-guide-actor" class="virtual-guide-man-avatar" transform="translate(340, 202)">
-        <!-- Pulsing Radar / Guidance Aura Ring -->
-        <ellipse cx="26" cy="68" rx="36" ry="10" fill="none" stroke="#10b981" stroke-width="2" filter="url(#neonGlowEmerald)" stroke-dasharray="8,5"/>
-        <ellipse cx="26" cy="68" rx="22" ry="6" fill="#38bdf8" opacity="0.25"/>
+    <!-- VIRTUAL GUIDE CUTE AVATAR & WHEELCHAIR COMPANION GROUP -->
+    <g id="virtual-guide-actor" class="virtual-guide-man-avatar action-walk" transform="translate(340, 195)">
+        <!-- Ground Shadow & Glowing Navigation Aura -->
+        <ellipse cx="20" cy="74" rx="30" ry="7" fill="rgba(0,0,0,0.5)" filter="url(#dropShadow)"/>
+        <ellipse cx="20" cy="74" rx="36" ry="9" fill="none" stroke="#10b981" stroke-width="1.8" filter="url(#neonGlowEmerald)" stroke-dasharray="6,4"/>
 
         <!-- Wheelchair Accessible Companion Silhouette (Right beside Virtual Guide) -->
-        <g class="wheelchair-companion" transform="translate(-32, 22)" filter="url(#dropShadow)">
+        <g class="wheelchair-companion" transform="translate(-32, 24)" filter="url(#dropShadow)">
             <circle cx="10" cy="8" r="4.5" fill="#38bdf8" filter="url(#neonGlowCyan)"/>
             <path d="M 10 13 L 10 26 L 18 26" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
             <circle cx="11" cy="30" r="9" fill="none" stroke="#38bdf8" stroke-width="2.2"/>
@@ -1187,34 +1202,126 @@ def render_accessible_virtual_guide_avatar(
             <text x="11" y="48.5" text-anchor="middle" fill="#ffffff" font-size="5" font-weight="900" font-family="'Segoe UI', sans-serif">♿ ACCESS</text>
         </g>
 
-        <!-- Virtual Guide Man Body -->
-        <g class="virtual-man-body" transform="translate(12, 0)" filter="url(#dropShadow)">
-            <rect x="-14" y="-14" width="56" height="12" rx="3" fill="#0f172a" stroke="#10b981" stroke-width="1.2"/>
-            <text x="14" y="-5" text-anchor="middle" fill="#34d399" font-size="6.5" font-weight="900" font-family="'Segoe UI', sans-serif">VIRTUAL GUIDE 👨‍✈️</text>
-
-            <ellipse cx="14" cy="5" rx="9" ry="4" fill="#0284c7"/>
-            <path d="M 6 5 Q 14 0 22 5 L 25 7 Q 14 3 3 7 Z" fill="#38bdf8" filter="url(#neonGlowCyan)"/>
-            <circle cx="14" cy="9" r="6.5" fill="#fde047" stroke="#0f172a" stroke-width="0.8"/>
-            <circle cx="12" cy="8" r="0.9" fill="#0f172a"/>
-            <circle cx="16" cy="8" r="0.9" fill="#0f172a"/>
-            <path d="M 12 11 Q 14 13 16 11" fill="none" stroke="#0f172a" stroke-width="0.8"/>
-
-            <!-- High-Vis Navigator Vest / Jacket -->
-            <path d="M 6 15 L 22 15 L 25 38 L 3 38 Z" fill="#10b981" stroke="#059669" stroke-width="1.2"/>
-            <line x1="8" y1="16" x2="20" y2="38" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
-            <line x1="20" y1="16" x2="8" y2="38" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
-            <circle cx="14" cy="27" r="2.8" fill="#38bdf8" filter="url(#neonGlowCyan)"/>
-
-            <!-- Walking Legs & Stride Boots -->
-            <g class="walking-legs">
-                <line x1="10" y1="38" x2="7" y2="58" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round"/>
-                <line x1="18" y1="38" x2="21" y2="58" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round"/>
-                <rect x="3" y="56" width="9" height="5" rx="1.5" fill="#38bdf8"/>
-                <rect x="18" y="56" width="9" height="5" rx="1.5" fill="#38bdf8"/>
+        <!-- Cute Virtual Man Character Body Group -->
+        <g class="virtual-man-body" transform="translate(6, 0)">
+            <!-- Floating Name HUD Badge -->
+            <g class="actor-badge" transform="translate(14, -14)">
+                <rect x="-26" y="0" width="52" height="12" rx="3" fill="#091322" stroke="#38bdf8" stroke-width="1.2" filter="url(#dropShadow)"/>
+                <text x="0" y="8.5" text-anchor="middle" fill="#38bdf8" font-size="6.5" font-weight="900" font-family="'Segoe UI', Roboto, sans-serif">VIRTUAL GUIDE 👨‍✈️</text>
             </g>
 
-            <!-- Dynamic Turn & Crossing Arms Gesture -->
-            {arms_and_arrows}
+            <!-- Dynamic Limbs: Left Leg -->
+            <g id="actor-left-leg" class="actor-limb-left-leg" style="transform-origin: 10px 42px;">
+                <!-- Thigh & Calf (Stylish Dark Joggers) -->
+                <path d="M 8 42 L 5 56 L 4 68" stroke="#1e293b" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M 8 42 L 5 56 L 4 68" stroke="#334155" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="5" cy="56" r="2.2" fill="#0f172a"/>
+                <!-- Cute High-top Sneaker -->
+                <g transform="translate(0, 65)">
+                    <path d="M 0 5 L 10 5 L 9 1 L 3 1 Z" fill="#38bdf8"/>
+                    <rect x="-1" y="5" width="12" height="3" rx="1.5" fill="#f8fafc"/>
+                    <line x1="3" y1="2" x2="7" y2="4" stroke="#ffffff" stroke-width="0.8"/>
+                </g>
+            </g>
+
+            <!-- Dynamic Limbs: Right Leg -->
+            <g id="actor-right-leg" class="actor-limb-right-leg" style="transform-origin: 18px 42px;">
+                <!-- Thigh & Calf (Stylish Dark Joggers) -->
+                <path d="M 18 42 L 21 56 L 22 68" stroke="#0f172a" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M 18 42 L 21 56 L 22 68" stroke="#1e293b" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="21" cy="56" r="2.2" fill="#0f172a"/>
+                <!-- Cute High-top Sneaker -->
+                <g transform="translate(16, 65)">
+                    <path d="M 0 5 L 10 5 L 9 1 L 3 1 Z" fill="#10b981"/>
+                    <rect x="-1" y="5" width="12" height="3" rx="1.5" fill="#f8fafc"/>
+                    <line x1="3" y1="2" x2="7" y2="4" stroke="#ffffff" stroke-width="0.8"/>
+                </g>
+            </g>
+
+            <!-- Torso & Cute Head Group (Bobs in rhythm during actions) -->
+            <g id="actor-torso-head" class="actor-torso-head">
+                <!-- Athletic Bomber Jacket / Torso -->
+                <path d="M 5 21 L 23 21 L 26 44 L 2 44 Z" fill="url(#cuteJacketGrad)" stroke="#0284c7" stroke-width="1.2" filter="url(#dropShadow)"/>
+                <!-- Neon Cyan Zipper & High Collar -->
+                <line x1="14" y1="18" x2="14" y2="44" stroke="#38bdf8" stroke-width="1.8" filter="url(#neonGlowCyan)"/>
+                <polygon points="12,18 16,18 14,24" fill="#ffffff"/>
+                <!-- High-Vis Navigator Shoulder Straps & Chest Crest -->
+                <path d="M 6 22 L 10 44" stroke="#10b981" stroke-width="2" opacity="0.9"/>
+                <path d="M 22 22 L 18 44" stroke="#10b981" stroke-width="2" opacity="0.9"/>
+                <circle cx="14" cy="30" r="3" fill="#0284c7" stroke="#38bdf8" stroke-width="1" filter="url(#neonGlowCyan)"/>
+                <text x="14" y="32" text-anchor="middle" fill="#ffffff" font-size="3" font-weight="900">🧭</text>
+
+                <!-- Cute Neck Base -->
+                <rect x="11.5" y="16" width="5" height="5" rx="1" fill="#fed7aa"/>
+
+                <!-- CUTE 3D ANIME/PIXAR HEAD -->
+                <g class="cute-head" transform="translate(14, 9)">
+                    <!-- Cute Rounded Head with Warm Peach Skin -->
+                    <ellipse cx="0" cy="0" rx="10" ry="10.5" fill="url(#cuteSkinGrad)" stroke="#fba088" stroke-width="0.6" filter="url(#dropShadow)"/>
+                    
+                    <!-- Cute Rosy Blushing Cheeks -->
+                    <ellipse cx="-5.8" cy="2.8" rx="3.2" ry="1.8" fill="#fb7185" opacity="0.55"/>
+                    <ellipse cx="5.8" cy="2.8" rx="3.2" ry="1.8" fill="#fb7185" opacity="0.55"/>
+
+                    <!-- Left Eye: Big, Cute, Sparkling Anime/Pixar Style -->
+                    <g class="cute-eye-left" transform="translate(-4.5, -0.5)">
+                        <ellipse cx="0" cy="0" rx="3" ry="3.5" fill="#ffffff"/>
+                        <ellipse cx="0.2" cy="0.3" rx="2.3" ry="2.7" fill="url(#cuteEyeIris)"/>
+                        <ellipse cx="0.2" cy="0.3" rx="1.3" ry="1.6" fill="#091322"/>
+                        <circle cx="-0.6" cy="-1.1" r="1.1" fill="#ffffff"/>
+                        <circle cx="0.8" cy="1.2" r="0.55" fill="#ffffff"/>
+                        <path d="M -3.2 -1.5 Q 0 -3.6 3.2 -1.2" fill="none" stroke="#1e293b" stroke-width="1.2" stroke-linecap="round"/>
+                        <path d="M -3.5 -4.5 Q 0 -5.6 2.8 -4" fill="none" stroke="#78350f" stroke-width="1.1" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- Right Eye: Big, Cute, Sparkling Anime/Pixar Style -->
+                    <g class="cute-eye-right" transform="translate(4.5, -0.5)">
+                        <ellipse cx="0" cy="0" rx="3" ry="3.5" fill="#ffffff"/>
+                        <ellipse cx="0.2" cy="0.3" rx="2.3" ry="2.7" fill="url(#cuteEyeIris)"/>
+                        <ellipse cx="0.2" cy="0.3" rx="1.3" ry="1.6" fill="#091322"/>
+                        <circle cx="-0.6" cy="-1.1" r="1.1" fill="#ffffff"/>
+                        <circle cx="0.8" cy="1.2" r="0.55" fill="#ffffff"/>
+                        <path d="M -3.2 -1.2 Q 0 -3.6 3.2 -1.5" fill="none" stroke="#1e293b" stroke-width="1.2" stroke-linecap="round"/>
+                        <path d="M -2.8 -4 Q 0 -5.6 3.5 -4.5" fill="none" stroke="#78350f" stroke-width="1.1" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- Cute Button Nose -->
+                    <ellipse cx="0" cy="1.8" rx="0.7" ry="0.5" fill="#f43f5e" opacity="0.6"/>
+
+                    <!-- Sweet Cute Smile -->
+                    <path d="M -2.8 4 Q 0 6.5 2.8 4" fill="none" stroke="#be123c" stroke-width="1.2" stroke-linecap="round"/>
+
+                    <!-- Stylish Layered Anime/Pixar Hair -->
+                    <g class="cute-hair">
+                        <!-- Hair Crown Base -->
+                        <path d="M -10 -2 C -10 -9 -6 -13 0 -13 C 6 -13 10 -9 10 -2 C 9 -4 6 -6 0 -6 C -6 -6 -9 -4 -10 -2 Z" fill="url(#cuteHairGrad)"/>
+                        <!-- Swept Front Bangs / Fringe -->
+                        <path d="M -9 -2 Q -4 -7 0 -3 Q 4 -7 9 -2 C 8 -5 4 -9 0 -9 C -4 -9 -8 -5 -9 -2 Z" fill="#78350f"/>
+                        <path d="M -6 -5 Q -2 0 1 -4" fill="none" stroke="#451a03" stroke-width="1.6" stroke-linecap="round"/>
+                        <path d="M 0 -4 Q 3 0 7 -4" fill="none" stroke="#451a03" stroke-width="1.6" stroke-linecap="round"/>
+                        <!-- Glossy Hair Highlight Shine Arc -->
+                        <path d="M -6 -10 Q 0 -12 6 -10" fill="none" stroke="#fde047" stroke-width="1.2" opacity="0.75" stroke-linecap="round"/>
+                        <!-- Playful Ahoge Tuft at Crown -->
+                        <path d="M 0 -12 Q -2 -17 2 -18 Q 4 -16 1 -13" fill="url(#cuteHairGrad)"/>
+                    </g>
+
+                    <!-- Chic Navigator Headset with Glowing Audio Ring -->
+                    <g class="navigator-headset" transform="translate(0, -3)">
+                        <path d="M -10 1 Q 0 -5 10 1" fill="none" stroke="#38bdf8" stroke-width="1.5" filter="url(#neonGlowCyan)"/>
+                        <circle cx="-10" cy="2" r="2.4" fill="#0284c7" stroke="#38bdf8" stroke-width="0.8"/>
+                        <circle cx="10" cy="2" r="2.4" fill="#0284c7" stroke="#38bdf8" stroke-width="0.8"/>
+                        <circle cx="10" cy="2" r="1.2" fill="#10b981" filter="url(#neonGlowEmerald)"/>
+                    </g>
+                </g>
+            </g>
+
+            <!-- Dynamic Segmented Arms (Left & Right) -->
+            <g id="actor-left-arm" class="actor-limb-left-arm" style="transform-origin: 6px 22px;">
+                {arms_and_arrows_left}
+            </g>
+            <g id="actor-right-arm" class="actor-limb-right-arm" style="transform-origin: 22px 22px;">
+                {arms_and_arrows_right}
+            </g>
         </g>
     </g>
     """
@@ -1248,26 +1355,69 @@ def get_turn_visual_svg(
 
     defs = """
     <defs>
+        <!-- Photorealistic Atmospheric Sky & Golden-Hour Twilight Gradients -->
         <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#050a14"/>
-            <stop offset="45%" stop-color="#0b182d"/>
-            <stop offset="85%" stop-color="#152b4b"/>
-            <stop offset="100%" stop-color="#1f3b64"/>
+            <stop offset="0%" stop-color="#0a192f"/>
+            <stop offset="30%" stop-color="#1e3a5f"/>
+            <stop offset="60%" stop-color="#2d6a9f"/>
+            <stop offset="82%" stop-color="#c25e1a"/>
+            <stop offset="94%" stop-color="#f59e0b"/>
+            <stop offset="100%" stop-color="#fef3c7"/>
+        </linearGradient>
+        <radialGradient id="sunFlareGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+            <stop offset="25%" stop-color="#fef08a" stop-opacity="0.9"/>
+            <stop offset="55%" stop-color="#f59e0b" stop-opacity="0.38"/>
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+            <stop offset="55%" stop-color="#fed7aa" stop-opacity="0.75"/>
+            <stop offset="100%" stop-color="#c084fc" stop-opacity="0.2"/>
         </linearGradient>
         <linearGradient id="horizonGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#0c192c" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#0d2e22" stop-opacity="0"/>
         </linearGradient>
         <linearGradient id="terrainGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#0a1815"/>
-            <stop offset="50%" stop-color="#0c231c"/>
-            <stop offset="100%" stop-color="#06120e"/>
+            <stop offset="0%" stop-color="#144331"/>
+            <stop offset="50%" stop-color="#0e3324"/>
+            <stop offset="100%" stop-color="#061912"/>
         </linearGradient>
         <linearGradient id="asphaltGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#1e293b"/>
-            <stop offset="50%" stop-color="#182234"/>
-            <stop offset="100%" stop-color="#0f172a"/>
+            <stop offset="0%" stop-color="#2a364a"/>
+            <stop offset="45%" stop-color="#1e2738"/>
+            <stop offset="100%" stop-color="#0f1523"/>
         </linearGradient>
+        <linearGradient id="yellowLineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#facc15"/>
+            <stop offset="100%" stop-color="#eab308"/>
+        </linearGradient>
+
+        <!-- Cute 3D Anime/Pixar Character Shading Gradients -->
+        <radialGradient id="cuteSkinGrad" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#fff1e8"/>
+            <stop offset="65%" stop-color="#fed7aa"/>
+            <stop offset="100%" stop-color="#fba088"/>
+        </radialGradient>
+        <radialGradient id="cuteEyeIris" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="45%" stop-color="#0284c7"/>
+            <stop offset="100%" stop-color="#082f49"/>
+        </radialGradient>
+        <linearGradient id="cuteHairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#9a3412"/>
+            <stop offset="40%" stop-color="#78350f"/>
+            <stop offset="100%" stop-color="#451a03"/>
+        </linearGradient>
+        <linearGradient id="cuteJacketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0284c7"/>
+            <stop offset="45%" stop-color="#0f766e"/>
+            <stop offset="100%" stop-color="#064e3b"/>
+        </linearGradient>
+
+        <!-- Augmented Reality Directional Chevrons & Headlights -->
         <linearGradient id="arCarpetLeft" x1="100%" y1="100%" x2="0%" y2="0%">
             <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.95"/>
             <stop offset="60%" stop-color="#10b981" stop-opacity="0.85"/>
@@ -1284,8 +1434,8 @@ def get_turn_visual_svg(
             <stop offset="100%" stop-color="#059669" stop-opacity="0.5"/>
         </linearGradient>
         <linearGradient id="headlightBeam" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
-            <stop offset="40%" stop-color="#38bdf8" stop-opacity="0.18"/>
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.38"/>
+            <stop offset="40%" stop-color="#fef08a" stop-opacity="0.2"/>
             <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
         </linearGradient>
         <linearGradient id="signGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -1311,13 +1461,6 @@ def get_turn_visual_svg(
                 <feMergeNode in="SourceGraphic"/>
             </feMerge>
         </filter>
-        <filter id="redLightGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="6" result="blur"/>
-            <feMerge>
-                <feMergeNode in="blur"/>
-                <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-        </filter>
         <filter id="amberBlinkerGlow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="5" result="blur"/>
             <feMerge>
@@ -1328,6 +1471,7 @@ def get_turn_visual_svg(
         <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
             <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.6"/>
         </filter>
+
         <style>
             @keyframes arChevronFloat {{
                 0% {{ opacity: 0.7; transform: translateY(0); }}
@@ -1337,26 +1481,145 @@ def get_turn_visual_svg(
             .animated-ar-chevrons {{
                 animation: arChevronFloat 1.25s ease-in-out infinite;
             }}
+
+            /* Real Walking Gait Keyframes (Natural Human Stride) */
+            @keyframes realWalkTorso {{
+                0%, 100% {{ transform: translateY(0); }}
+                50% {{ transform: translateY(-3.5px); }}
+            }}
+            @keyframes realWalkLeftLeg {{
+                0% {{ transform: rotate(-24deg); }}
+                50% {{ transform: rotate(20deg); }}
+                100% {{ transform: rotate(-24deg); }}
+            }}
+            @keyframes realWalkRightLeg {{
+                0% {{ transform: rotate(20deg); }}
+                50% {{ transform: rotate(-24deg); }}
+                100% {{ transform: rotate(20deg); }}
+            }}
+            @keyframes realWalkLeftArm {{
+                0% {{ transform: rotate(20deg); }}
+                50% {{ transform: rotate(-20deg); }}
+                100% {{ transform: rotate(20deg); }}
+            }}
+            @keyframes realWalkRightArm {{
+                0% {{ transform: rotate(-20deg); }}
+                50% {{ transform: rotate(20deg); }}
+                100% {{ transform: rotate(-20deg); }}
+            }}
+            .virtual-guide-man-avatar.action-walk .actor-torso-head {{
+                animation: realWalkTorso 0.85s ease-in-out infinite;
+            }}
+            .virtual-guide-man-avatar.action-walk .actor-limb-left-leg {{
+                animation: realWalkLeftLeg 0.85s ease-in-out infinite;
+            }}
+            .virtual-guide-man-avatar.action-walk .actor-limb-right-leg {{
+                animation: realWalkRightLeg 0.85s ease-in-out infinite;
+            }}
+            .virtual-guide-man-avatar.action-walk .actor-limb-left-arm {{
+                animation: realWalkLeftArm 0.85s ease-in-out infinite;
+            }}
+            .virtual-guide-man-avatar.action-walk .actor-limb-right-arm {{
+                animation: realWalkRightArm 0.85s ease-in-out infinite;
+            }}
+
+            /* Real Running Sprint Keyframes (Cadence 0.52s, Athletic Stride) */
+            @keyframes realRunBody {{
+                0%, 100% {{ transform: translate(340px, 192px) rotate(8deg); }}
+                50% {{ transform: translate(340px, 185px) rotate(11deg); }}
+            }}
+            @keyframes realRunLeftLeg {{
+                0% {{ transform: rotate(-48deg); }}
+                50% {{ transform: rotate(44deg); }}
+                100% {{ transform: rotate(-48deg); }}
+            }}
+            @keyframes realRunRightLeg {{
+                0% {{ transform: rotate(44deg); }}
+                50% {{ transform: rotate(-48deg); }}
+                100% {{ transform: rotate(44deg); }}
+            }}
+            @keyframes realRunLeftArm {{
+                0% {{ transform: rotate(42deg); }}
+                50% {{ transform: rotate(-40deg); }}
+                100% {{ transform: rotate(42deg); }}
+            }}
+            @keyframes realRunRightArm {{
+                0% {{ transform: rotate(-40deg); }}
+                50% {{ transform: rotate(42deg); }}
+                100% {{ transform: rotate(-40deg); }}
+            }}
+            .virtual-guide-man-avatar.action-run {{
+                animation: realRunBody 0.52s ease-in-out infinite !important;
+            }}
+            .virtual-guide-man-avatar.action-run .actor-limb-left-leg {{
+                animation: realRunLeftLeg 0.52s ease-in-out infinite;
+            }}
+            .virtual-guide-man-avatar.action-run .actor-limb-right-leg {{
+                animation: realRunRightLeg 0.52s ease-in-out infinite;
+            }}
+            .virtual-guide-man-avatar.action-run .actor-limb-left-arm {{
+                animation: realRunLeftArm 0.52s ease-in-out infinite;
+            }}
+            .virtual-guide-man-avatar.action-run .actor-limb-right-arm {{
+                animation: realRunRightArm 0.52s ease-in-out infinite;
+            }}
+
+            /* Real Turn Action Keyframes (Smooth Body Pivot & Guiding Point) */
+            @keyframes realTurnAction {{
+                0% {{ transform: translate(340px, 195px) rotate(0deg) scale(1); }}
+                30% {{ transform: translate(325px, 196px) rotate(-10deg) scale(1.02); }}
+                60% {{ transform: translate(310px, 193px) rotate(-16deg) scale(1.04); }}
+                100% {{ transform: translate(340px, 195px) rotate(0deg) scale(1); }}
+            }}
+            .virtual-guide-man-avatar.action-turn {{
+                animation: realTurnAction 2.8s ease-in-out infinite !important;
+            }}
+
+            /* Real Jump Action Keyframes (Anticipation Crouch -> Vertical Leap -> Cushioned Landing) */
+            @keyframes realJumpAction {{
+                0% {{ transform: translate(340px, 195px) scale(1, 1); }}
+                14% {{ transform: translate(340px, 204px) scale(1.08, 0.88); }}
+                42% {{ transform: translate(340px, 146px) scale(0.92, 1.14); }}
+                62% {{ transform: translate(340px, 142px) scale(0.96, 1.05); }}
+                82% {{ transform: translate(340px, 202px) scale(1.10, 0.86); }}
+                100% {{ transform: translate(340px, 195px) scale(1, 1); }}
+            }}
+            .virtual-guide-man-avatar.action-jump {{
+                animation: realJumpAction 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite !important;
+            }}
+
+            /* Real Cheer Action Keyframes (Joyful Victory Celebration Hop) */
+            @keyframes realCheerAction {{
+                0%, 100% {{ transform: translate(340px, 195px) rotate(0deg); }}
+                25% {{ transform: translate(340px, 175px) rotate(-4deg); }}
+                50% {{ transform: translate(340px, 192px) rotate(0deg); }}
+                75% {{ transform: translate(340px, 172px) rotate(4deg); }}
+            }}
+            .virtual-guide-man-avatar.action-cheer {{
+                animation: realCheerAction 1.4s ease-in-out infinite !important;
+            }}
+
+            /* Compatibility Demonstration Keyframes */
             @keyframes demoCrossLeft {{
-                0% {{ transform: translate(340px, 202px) scale(1); }}
-                25% {{ transform: translate(310px, 206px) scale(0.98); }}
-                60% {{ transform: translate(250px, 200px) rotate(-8deg) scale(0.95); }}
-                100% {{ transform: translate(195px, 192px) rotate(-16deg) scale(0.92); }}
+                0% {{ transform: translate(340px, 195px) scale(1); }}
+                25% {{ transform: translate(310px, 199px) scale(0.98); }}
+                60% {{ transform: translate(250px, 193px) rotate(-8deg) scale(0.95); }}
+                100% {{ transform: translate(195px, 185px) rotate(-16deg) scale(0.92); }}
             }}
             @keyframes demoCrossRight {{
-                0% {{ transform: translate(340px, 202px) scale(1); }}
-                25% {{ transform: translate(370px, 206px) scale(0.98); }}
-                60% {{ transform: translate(430px, 200px) rotate(8deg) scale(0.95); }}
-                100% {{ transform: translate(485px, 192px) rotate(16deg) scale(0.92); }}
+                0% {{ transform: translate(340px, 195px) scale(1); }}
+                25% {{ transform: translate(370px, 199px) scale(0.98); }}
+                60% {{ transform: translate(430px, 193px) rotate(8deg) scale(0.95); }}
+                100% {{ transform: translate(485px, 185px) rotate(16deg) scale(0.92); }}
             }}
             @keyframes demoCrossStraight {{
-                0% {{ transform: translate(340px, 202px) scale(1); }}
-                50% {{ transform: translate(340px, 180px) scale(0.92); }}
-                100% {{ transform: translate(340px, 155px) scale(0.82); }}
+                0% {{ transform: translate(340px, 195px) scale(1); }}
+                50% {{ transform: translate(340px, 175px) scale(0.92); }}
+                100% {{ transform: translate(340px, 150px) scale(0.82); }}
             }}
             @keyframes demoWaveGreeting {{
-                0%, 100% {{ transform: translate(340px, 202px) rotate(0deg); }}
-                50% {{ transform: translate(340px, 198px) rotate(3deg); }}
+                0%, 100% {{ transform: translate(340px, 195px) rotate(0deg); }}
+                50% {{ transform: translate(340px, 191px) rotate(3deg); }}
             }}
             .virtual-guide-man-avatar.animating-demo-left {{
                 animation: demoCrossLeft 3.5s ease-in-out infinite alternate !important;
@@ -1375,21 +1638,60 @@ def get_turn_visual_svg(
     """
 
     sky_and_horizon = """
-    <rect width="760" height="135" fill="url(#skyGrad)"/>
-    
-    <circle cx="85" cy="22" r="1" fill="#ffffff" opacity="0.65"/>
-    <circle cx="160" cy="38" r="1.2" fill="#bae6fd" opacity="0.8"/>
-    <circle cx="270" cy="18" r="0.8" fill="#ffffff" opacity="0.5"/>
-    <circle cx="430" cy="28" r="1.2" fill="#ffffff" opacity="0.7"/>
-    <circle cx="560" cy="15" r="1.5" fill="#bae6fd" opacity="0.85"/>
-    <circle cx="680" cy="32" r="1" fill="#ffffff" opacity="0.6"/>
-    <circle cx="720" cy="20" r="0.8" fill="#ffffff" opacity="0.5"/>
+    <!-- REAL ATMOSPHERIC SKY & GOLDEN-HOUR SUNSET HORIZON -->
+    <rect width="760" height="142" fill="url(#skyGrad)"/>
 
-    <polygon points="0,135 45,118 110,126 195,112 280,124 370,108 460,122 550,114 640,125 710,116 760,126 760,135 0,135" fill="#0c182b" opacity="0.85"/>
-    <polygon points="0,135 80,124 165,116 250,128 340,118 430,127 520,119 610,126 700,120 760,130 760,135 0,135" fill="#091322" opacity="0.95"/>
+    <!-- Radiant Sun & Twilight Rays -->
+    <g class="atmospheric-sun" transform="translate(490, 110)">
+        <circle cx="0" cy="0" r="44" fill="url(#sunFlareGrad)"/>
+        <circle cx="0" cy="0" r="14" fill="#ffffff" opacity="0.95"/>
+        <line x1="-55" y1="-25" x2="55" y2="25" stroke="#fde047" stroke-width="1.2" opacity="0.3"/>
+        <line x1="-25" y1="-50" x2="25" y2="50" stroke="#fde047" stroke-width="1.2" opacity="0.3"/>
+    </g>
 
-    <rect y="105" width="760" height="30" fill="url(#horizonGlow)"/>
+    <!-- Soft Volumetric 3D Clouds with Depth & Highlights -->
+    <g class="volumetric-clouds" opacity="0.92">
+        <path d="M 40 55 Q 60 35 90 42 Q 120 25 155 36 Q 190 28 220 45 Q 240 55 240 68 L 30 68 Q 20 62 40 55 Z" fill="url(#cloudGrad)" filter="url(#dropShadow)"/>
+        <path d="M 50 52 Q 90 32 140 38 Q 185 24 215 42" stroke="#ffffff" stroke-width="2.5" fill="none" opacity="0.6"/>
+        
+        <path d="M 360 48 Q 390 22 435 30 Q 480 18 525 32 Q 570 24 610 44 Q 630 58 620 68 L 340 68 Q 340 56 360 48 Z" fill="url(#cloudGrad)" filter="url(#dropShadow)"/>
+        <path d="M 370 44 Q 430 22 510 26 Q 565 18 600 40" stroke="#fef08a" stroke-width="2.5" fill="none" opacity="0.75"/>
+        
+        <path d="M 640 28 Q 675 14 715 22 Q 740 26 755 35 L 630 35 Z" fill="url(#cloudGrad)" opacity="0.7"/>
+    </g>
+
+    <!-- REALISTIC LAYERED MOUNTAIN RIDGES WITH ATMOSPHERIC PERSPECTIVE -->
+    <!-- Far Distant Misty Alpine Ridge (Soft Violet-Blue Silhouette) -->
+    <polygon points="0,135 35,102 75,114 120,95 165,110 215,88 265,108 315,92 375,105 435,84 490,98 545,82 605,102 660,86 715,104 760,94 760,135 0,135" fill="#1e2942" opacity="0.88"/>
+    <polygon points="120,95 135,112 110,112" fill="#3b4252" opacity="0.6"/>
+    <polygon points="215,88 235,108 200,108" fill="#3b4252" opacity="0.6"/>
+    <polygon points="435,84 455,100 420,100" fill="#4c566a" opacity="0.6"/>
+    <polygon points="545,82 568,102 530,102" fill="#4c566a" opacity="0.6"/>
+
+    <!-- Mid-Range Forested Mountain Ridge (Textured Green-Slate Valleys) -->
+    <polygon points="0,135 40,118 90,110 145,122 205,106 265,119 330,104 395,117 460,108 525,120 585,109 645,121 705,112 760,120 760,135 0,135" fill="#132e27" opacity="0.95"/>
+
+    <!-- Foreground Lush Rolling Foothills & Meadows -->
+    <polygon points="0,135 60,126 130,120 200,128 275,119 350,128 425,121 500,128 575,121 650,127 720,121 760,127 760,145 0,145" fill="#0d2e22"/>
+
+    <!-- Warm Golden Horizon Glow Strip -->
+    <rect y="126" width="760" height="16" fill="url(#horizonGlow)"/>
+
+    <!-- Roadside Real Green Verge & Highway Embankment Ground -->
     <rect y="135" width="760" height="165" fill="url(#terrainGrad)"/>
+
+    <!-- Realistic Roadside Clustered Trees (Pines and Lush Oaks) -->
+    <g class="roadside-nature-canopy" opacity="0.95">
+        <path d="M 25 142 C 10 120 35 110 50 118 C 70 105 95 125 90 142 Z" fill="#14532d"/>
+        <path d="M 60 144 C 50 125 75 115 85 124 C 105 112 125 130 118 144 Z" fill="#166534"/>
+        <polygon points="12,143 18,122 25,143" fill="#064e3b"/>
+        <polygon points="20,143 28,118 36,143" fill="#047857"/>
+
+        <path d="M 640 142 C 625 118 655 108 670 118 C 690 105 715 125 708 142 Z" fill="#14532d"/>
+        <path d="M 675 144 C 660 122 690 112 705 122 C 725 110 750 128 742 144 Z" fill="#166534"/>
+        <polygon points="720,143 728,120 736,143" fill="#064e3b"/>
+        <polygon points="730,143 738,116 746,143" fill="#047857"/>
+    </g>
     """
 
     def render_hud_telemetry(title: str, sub: str, icon: str = "⬅️", lane_type: str = "left"):
@@ -1730,7 +2032,55 @@ def build_virtual_guide_turns_html(
     5. Interactive carousel and checklist views with auto-sync to map progression.
     """
     if not friendly_turns:
-        return ""
+        clean_orig_name = re.sub(r'[📍🏁🧭🚗●🛰️]', '', origin).strip() or "Departure Point"
+        clean_dest_name = re.sub(r'[📍🏁🧭🚗●🛰️]', '', destination).strip() or "Arrival Plaza"
+        friendly_turns = [
+            FriendlyTurnStep(
+                step_num=1,
+                total_steps=3,
+                direction_type="START",
+                action_headline=f"Begin Journey at {clean_orig_name}",
+                road_name="Scenic Boulevard",
+                distance_human="500 m",
+                time_estimate="2 mins",
+                spoken_text=f"Welcome! Let's get moving from {clean_orig_name}. Your virtual guide is walking with you.",
+                virtual_guide_speech=f"Hello traveler! I am your cute 3D companion. I'll walk, run, and guide every turn with you to {clean_dest_name}!",
+                what_to_look_for="Panoramic mountain vista, illuminated navigation towers, and safety beacons.",
+                icon="🟢",
+                accessible_guidance="Level tactile paving with clear audio alerts and high-contrast signage.",
+                tactile_crossing_note="Wide pedestrian sidewalk with safety railing."
+            ),
+            FriendlyTurnStep(
+                step_num=2,
+                total_steps=3,
+                direction_type="STRAIGHT",
+                action_headline="Follow Scenic Mountain Ridge Parkway",
+                road_name="Highland Ridge Highway",
+                distance_human="2.4 km",
+                time_estimate="5 mins",
+                spoken_text="Continue straight along Highland Ridge Highway. Enjoy the alpine views as we progress safely.",
+                virtual_guide_speech="Cruise straight ahead. The road ahead is completely hazard-free and verified by satellite telemetry!",
+                what_to_look_for="Lush green roadside trees, guardrails, and sweeping alpine peaks.",
+                icon="⬆️",
+                accessible_guidance="Continuous pedestrian pathway with audio crosswalk beacons.",
+                tactile_crossing_note="Paved shoulder with reflective markers."
+            ),
+            FriendlyTurnStep(
+                step_num=3,
+                total_steps=3,
+                direction_type="ARRIVE",
+                action_headline=f"Arrive safely at {clean_dest_name}",
+                road_name="Destination Terminal Way",
+                distance_human="150 m",
+                time_estimate="1 min",
+                spoken_text=f"You have arrived safely at {clean_dest_name}. Excellent journey!",
+                virtual_guide_speech="Hooray! We made it! Thank you for traveling with Pathfinder. Click the buttons below to see me walk, run, or jump!",
+                what_to_look_for="Destination arrival plaza, welcome arch, and verified parking bay.",
+                icon="🏁",
+                accessible_guidance="Step-free ramp entrance directly into the destination plaza.",
+                tactile_crossing_note="Braille-guided entrance portal."
+            )
+        ]
 
     turns_data = [
         {
@@ -2221,6 +2571,36 @@ def build_virtual_guide_turns_html(
         color: #ffffff;
         box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
     }}
+    /* Interactive Avatar Action Pill Deck */
+    .guide-action-pill {{
+        background: rgba(15, 23, 42, 0.85);
+        border: 1.5px solid rgba(56, 189, 248, 0.35);
+        color: #e2e8f0;
+        padding: 5px 13px;
+        border-radius: 8px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }}
+    .guide-action-pill:hover {{
+        background: rgba(56, 189, 248, 0.22);
+        border-color: #38bdf8;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+    }}
+    .guide-action-pill.active {{
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        border-color: #38bdf8;
+        color: #ffffff;
+        box-shadow: 0 0 14px rgba(56, 189, 248, 0.65);
+        transform: scale(1.04);
+    }}
     </style>
 
     <div class='guide-hud-container'>
@@ -2290,6 +2670,33 @@ def build_virtual_guide_turns_html(
             <!-- The Visual Scene Picture Illustration -->
             <div id='showcase-visual-svg-container' style='box-shadow: 0 8px 24px rgba(0,0,0,0.5); border-radius: 12px; overflow: hidden; border: 1.5px solid rgba(56, 189, 248, 0.35);'>
                 {turns_data[0]["svg"]}
+            </div>
+
+            <!-- Interactive Avatar Action Controller Deck (Real Walk, Run, Turn, Jump, Cheer) -->
+            <div class='avatar-action-deck' style='background: linear-gradient(135deg, rgba(8, 22, 44, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 12px; padding: 10px 16px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 18px rgba(0,0,0,0.45);'>
+                <div style='display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
+                    <span style='font-size: 0.72rem; color: #38bdf8; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; display: flex; align-items: center; gap: 5px;'>
+                        <span>🎮</span> AVATAR REAL ACTIONS:
+                    </span>
+                    <button id='btn-act-walk' class='guide-action-pill active' onclick='triggerAvatarAction("walk")' title='Real Walking Stride with Arm & Leg Swing'>
+                        <span>🚶</span> Walk
+                    </button>
+                    <button id='btn-act-run' class='guide-action-pill' onclick='triggerAvatarAction("run")' title='Athletic Sprint with High Knee Lift & Pumping Arms'>
+                        <span>🏃</span> Run
+                    </button>
+                    <button id='btn-act-turn' class='guide-action-pill' onclick='triggerAvatarAction("turn")' title='Smooth Pivot & Guidance Pointing'>
+                        <span>🔄</span> Turn
+                    </button>
+                    <button id='btn-act-jump' class='guide-action-pill' onclick='triggerAvatarAction("jump")' title='High Vertical Leap with Cushioned Elastic Landing'>
+                        <span>⭐</span> Jump
+                    </button>
+                    <button id='btn-act-cheer' class='guide-action-pill' onclick='triggerAvatarAction("cheer")' title='Joyful Victory Celebration Hop & Waving Arms'>
+                        <span>🎉</span> Cheer
+                    </button>
+                </div>
+                <div id='action-status-pill' style='font-size: 0.72rem; font-weight: 800; color: #34d399; background: rgba(16, 185, 129, 0.16); border: 1px solid rgba(16, 185, 129, 0.4); padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;'>
+                    <span>🚶</span> <span>Walking naturally along route</span>
+                </div>
             </div>
 
             <!-- Real-Time Traveler Experience Telemetry Strip -->
@@ -2499,6 +2906,40 @@ def build_virtual_guide_turns_html(
             return `Step ${{t.num}} • ${{instr.split(' ')[0]}}`;
         }}
 
+        let currentAvatarAction = 'walk';
+        window.triggerAvatarAction = function(action) {{
+            currentAvatarAction = action;
+            const actor = document.getElementById('virtual-guide-actor');
+            const statusPill = document.getElementById('action-status-pill');
+            
+            ['walk', 'run', 'turn', 'jump', 'cheer'].forEach(a => {{
+                const btn = document.getElementById('btn-act-' + a);
+                if (btn) {{
+                    if (a === action) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }}
+            }});
+
+            if (actor) {{
+                actor.classList.remove('action-walk', 'action-run', 'action-turn', 'action-jump', 'action-cheer');
+                actor.classList.add('action-' + action);
+            }}
+
+            if (statusPill) {{
+                if (action === 'walk') {{
+                    statusPill.innerHTML = '<span>🚶</span> <span>Walking naturally along route</span>';
+                }} else if (action === 'run') {{
+                    statusPill.innerHTML = '<span>🏃</span> <span style="color: #38bdf8;">Running with energetic athletic sprint!</span>';
+                }} else if (action === 'turn') {{
+                    statusPill.innerHTML = '<span>🔄</span> <span style="color: #fbbf24;">Pivoting & pointing along corridor!</span>';
+                }} else if (action === 'jump') {{
+                    statusPill.innerHTML = '<span>⭐</span> <span style="color: #f43f5e;">High vertical leap & soft landing!</span>';
+                }} else if (action === 'cheer') {{
+                    statusPill.innerHTML = '<span>🎉</span> <span style="color: #a855f7;">Celebrating safe destination arrival!</span>';
+                }}
+            }}
+        }};
+
         let isAutoDriving = false;
         let driveTimer = null;
         let driveSpeedMultiplier = 1;
@@ -2613,6 +3054,7 @@ def build_virtual_guide_turns_html(
                 window.selectTurnStep(0, false);
             }}
             isAutoDriving = true;
+            window.triggerAvatarAction('run');
             updateDriveControlsUI();
             scheduleNextDriveStep();
         }};
@@ -2623,6 +3065,7 @@ def build_virtual_guide_turns_html(
                 clearTimeout(driveTimer);
                 driveTimer = null;
             }}
+            window.triggerAvatarAction('walk');
             updateDriveControlsUI();
         }};
 
@@ -2788,6 +3231,17 @@ def build_virtual_guide_turns_html(
             const tactileEl = document.getElementById('showcase-tactile-note');
             if (tactileEl && t.tactile_crossing_note) {{
                 tactileEl.innerText = t.tactile_crossing_note;
+            }}
+
+            // Dynamic Cute Avatar Action per step
+            if (t.type === "ARRIVE") {{
+                window.triggerAvatarAction('cheer');
+            }} else if (t.type === "LEFT" || t.type === "RIGHT") {{
+                window.triggerAvatarAction('turn');
+            }} else if (isAutoDriving) {{
+                window.triggerAvatarAction('run');
+            }} else {{
+                window.triggerAvatarAction(currentAvatarAction || 'walk');
             }}
 
             if (isDemonstratingMovement) {{

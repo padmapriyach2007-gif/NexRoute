@@ -102,6 +102,7 @@ from src.google_maps_features import (
 
 from src.facilities_service import (
     get_facilities_for_category,
+    get_facilities_around_journey,
     resolve_custom_search_facility,
     CATEGORY_CONFIG,
     FacilityCategory
@@ -118,8 +119,10 @@ from src.places_and_driving_modes import (
     compare_driving_travel_modes,
     render_place_details_card_html,
     render_driving_mode_cockpit_card_html,
-    render_cockpit_mode_functionality_hud,
     render_profile_calculation_details_html
+)
+from src.automotive_drive_selector import (
+    render_cockpit_mode_functionality_hud
 )
 from src.transit_kinematics import (
     calculate_transit_kinematics,
@@ -2781,21 +2784,21 @@ with tab_nav:
     c_av1, c_av2, c_av3 = st.columns(3)
     with c_av1:
         cur_tolls = st.session_state.get("avoid_tolls", False)
-        ch_tolls = st.checkbox(f"💳 {t('nav.avoid_tolls')}", value=cur_tolls, key="chk_avoid_tolls")
+        ch_tolls = st.checkbox(t('nav.avoid_tolls'), value=cur_tolls, key="chk_avoid_tolls")
         if ch_tolls != cur_tolls:
             st.session_state.avoid_tolls = ch_tolls
             st.session_state.chk_map_avoid_tolls = ch_tolls
             st.rerun()
     with c_av2:
         cur_hw = st.session_state.get("avoid_highways", False)
-        ch_hw = st.checkbox(f"🛣️ {t('nav.avoid_highways')}", value=cur_hw, key="chk_avoid_highways")
+        ch_hw = st.checkbox(t('nav.avoid_highways'), value=cur_hw, key="chk_avoid_highways")
         if ch_hw != cur_hw:
             st.session_state.avoid_highways = ch_hw
             st.session_state.chk_map_avoid_highways = ch_hw
             st.rerun()
     with c_av3:
         cur_ferry = st.session_state.get("avoid_ferries", False)
-        ch_ferry = st.checkbox(f"⛴️ {t('nav.avoid_ferries')}", value=cur_ferry, key="chk_avoid_ferries")
+        ch_ferry = st.checkbox(t('nav.avoid_ferries'), value=cur_ferry, key="chk_avoid_ferries")
         if ch_ferry != cur_ferry:
             st.session_state.avoid_ferries = ch_ferry
             st.session_state.chk_map_avoid_ferries = ch_ferry
@@ -2959,6 +2962,8 @@ with tab_nav:
 
         if r_item.is_eligible:
             color = palette[(r_item.rank - 1) % len(palette)]
+            if is_selected and st.session_state.get("selected_driving_mode") == "DRIVE_ECO":
+                color = "#10b981"
             if has_selection:
                 weight = 8 if is_selected else 3.5
                 opacity = 1.0 if is_selected else 0.40
@@ -3076,12 +3081,11 @@ with tab_nav:
         )
         active_category_facilities = [custom_res] if custom_res else []
     else:
-        active_category_facilities = get_facilities_for_category(
+        active_category_facilities = get_facilities_around_journey(
             category=active_cat_label,
             polyline=primary_route_poly,
             origin_coords=coords_orig,
             dest_coords=coords_dest,
-            search_mode=st.session_state.get("fac_search_mode", "near_destination"),
             radius_km=st.session_state.get("fac_radius_km", 10.0),
             enable_demo_mode=st.session_state.get("enable_demo_mode", False)
         )
@@ -3143,7 +3147,29 @@ with tab_nav:
         st.session_state.map_display_engine = "tactical_satellite"
 
     # Modern Navigation Map Control Toolbar
-    tb_c1, tb_c2, tb_c3 = st.columns([1.6, 1.0, 1.4], vertical_alignment="center")
+    st.markdown("""
+    <style>
+        div[data-testid="stCheckbox"] {
+            min-width: max-content !important;
+        }
+        div[data-testid="stCheckbox"] label {
+            white-space: nowrap !important;
+            align-items: center !important;
+        }
+        div[data-testid="stCheckbox"] label p {
+            white-space: nowrap !important;
+            font-size: 0.88rem !important;
+            font-weight: 600 !important;
+            color: #f1f5f9 !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+        div[data-testid="stCheckbox"] span {
+            overflow: visible !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    tb_c1, tb_c2, tb_c3 = st.columns([1.1, 0.65, 2.25], vertical_alignment="center")
     with tb_c1:
         st.markdown(
             f"<div style='display:flex; align-items:center; gap:8px; margin-bottom: 4px;'>"
@@ -3155,22 +3181,22 @@ with tab_nav:
         sub_l1, sub_l2, sub_l3 = st.columns(3)
         cur_engine = st.session_state.get("map_display_engine", "tactical_satellite")
         with sub_l1:
-            if st.button(f"🛰️ {t('map.satellite')}", key="btn_style_sat", type="primary" if cur_engine == "tactical_satellite" else "secondary", use_container_width=True):
+            if st.button(t('map.satellite'), key="btn_style_sat", type="primary" if cur_engine == "tactical_satellite" else "secondary", use_container_width=True):
                 st.session_state.map_display_engine = "tactical_satellite"
                 st.rerun()
         with sub_l2:
-            if st.button(f"🗺️ {t('map.road')}", key="btn_style_road", type="primary" if cur_engine == "google_maps_sdk" else "secondary", use_container_width=True):
+            if st.button(t('map.road'), key="btn_style_road", type="primary" if cur_engine == "google_maps_sdk" else "secondary", use_container_width=True):
                 st.session_state.map_display_engine = "google_maps_sdk"
                 st.rerun()
         with sub_l3:
-            if st.button(f"⛰️ {t('map.terrain')}", key="btn_style_terr", type="primary" if cur_engine == "google_terrain" else "secondary", use_container_width=True):
+            if st.button(t('map.terrain'), key="btn_style_terr", type="primary" if cur_engine == "google_terrain" else "secondary", use_container_width=True):
                 st.session_state.map_display_engine = "google_terrain"
                 st.rerun()
     with tb_c2:
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
         sub_act1, sub_act2 = st.columns(2)
         with sub_act1:
-            if st.button(f"📍 {t('map.snap_gps')}", key="btn_toolbar_gps", use_container_width=True, help="Snap origin to live hardware GPS"):
+            if st.button(t('map.snap_gps'), key="btn_toolbar_gps", use_container_width=True, help="Snap origin to live hardware GPS"):
                 st.session_state.is_custom_start_place = False
                 st.session_state.orig_candidates = []
                 CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
@@ -3180,10 +3206,10 @@ with tab_nav:
                 st.session_state.is_in_transit = False
                 st.session_state.auto_fit_bounds = True
                 st.session_state.scroll_to_app_map = True
-                st.toast(f"📍 {t('map.re_centered_gps')}", icon="🛰️")
+                st.toast(t('map.re_centered_gps'), icon="🛰️")
                 st.rerun()
         with sub_act2:
-            if st.button(f"🎯 {t('map.fit_view')}", key="btn_toolbar_fit", use_container_width=True, help="Auto-fit camera view to active route corridor"):
+            if st.button(t('map.fit_view'), key="btn_toolbar_fit", use_container_width=True, help="Auto-fit camera view to active route corridor"):
                 st.session_state.auto_fit_bounds = True
                 st.session_state.scroll_to_app_map = True
                 st.rerun()
@@ -3192,21 +3218,21 @@ with tab_nav:
         c_av1, c_av2, c_av3 = st.columns(3)
         with c_av1:
             cur_map_toll = st.session_state.get("avoid_tolls", False)
-            new_toll = st.checkbox(f"💳 {t('nav.avoid_tolls')}", value=cur_map_toll, key="chk_map_avoid_tolls", help="Avoid Tolls")
+            new_toll = st.checkbox(t('nav.avoid_tolls'), value=cur_map_toll, key="chk_map_avoid_tolls")
             if new_toll != cur_map_toll:
                 st.session_state.avoid_tolls = new_toll
                 st.session_state.chk_avoid_tolls = new_toll
                 st.rerun()
         with c_av2:
             cur_map_hwy = st.session_state.get("avoid_highways", False)
-            new_hwy = st.checkbox(f"🛣️ {t('nav.avoid_highways')}", value=cur_map_hwy, key="chk_map_avoid_highways", help="Avoid Highways")
+            new_hwy = st.checkbox(t('nav.avoid_highways'), value=cur_map_hwy, key="chk_map_avoid_highways")
             if new_hwy != cur_map_hwy:
                 st.session_state.avoid_highways = new_hwy
                 st.session_state.chk_avoid_highways = new_hwy
                 st.rerun()
         with c_av3:
             cur_map_ferry = st.session_state.get("avoid_ferries", False)
-            new_ferry = st.checkbox(f"⛴️ {t('nav.avoid_ferries')}", value=cur_map_ferry, key="chk_map_avoid_ferries", help="Avoid Ferries")
+            new_ferry = st.checkbox(t('nav.avoid_ferries'), value=cur_map_ferry, key="chk_map_avoid_ferries")
             if new_ferry != cur_map_ferry:
                 st.session_state.avoid_ferries = new_ferry
                 st.session_state.chk_avoid_ferries = new_ferry
@@ -3218,6 +3244,17 @@ with tab_nav:
         if active_sel:
             col_sel_info, col_sel_btn = st.columns([1.6, 0.4])
             with col_sel_info:
+                sel_mode_id = st.session_state.get("selected_driving_mode")
+                mode_pill = ""
+                if sel_mode_id == "DRIVE_ECO":
+                    mode_pill = "<span style='background: rgba(52, 211, 153, 0.25); color: #34d399; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.4); margin-left: 6px;'>🌱 ECO-PACING ACTIVE (-15% Fuel)</span>"
+                elif sel_mode_id == "DRIVE_SAFEST":
+                    mode_pill = "<span style='background: rgba(16, 185, 129, 0.25); color: #10b981; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.4); margin-left: 6px;'>🛡️ HAZARD SHIELD ACTIVE</span>"
+                elif sel_mode_id == "DRIVE_TOLL_FREE":
+                    mode_pill = "<span style='background: rgba(251, 191, 36, 0.25); color: #fbbf24; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(251, 191, 36, 0.4); margin-left: 6px;'>🪙 TOLL-FREE ACTIVE</span>"
+                elif sel_mode_id == "DRIVE_EV":
+                    mode_pill = "<span style='background: rgba(6, 182, 212, 0.25); color: #06b6d4; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(6, 182, 212, 0.4); margin-left: 6px;'>⚡ EV BATTERY OPTIMAL</span>"
+
                 st.markdown(f"""
                 <div style='background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(15, 23, 42, 0.95) 100%);
                             border: 1.5px solid #38bdf8; border-radius: 10px; padding: 10px 16px; margin-bottom: 8px;
@@ -3226,6 +3263,7 @@ with tab_nav:
                         <div style='display: flex; align-items: center; gap: 8px;'>
                             <span style='font-size: 1.1rem;'>🎯</span>
                             <b style='color: #ffffff; font-size: 0.96rem;'>{t('map.active_on_map')} {active_sel.route.name}</b>
+                            {mode_pill}
                         </div>
                         <span style='background: rgba(56,189,248,0.25); color: #38bdf8; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.4);'>{t('map.selected_corridor')}</span>
                     </div>
@@ -3811,16 +3849,40 @@ with tab_nav:
             </span>
         </div>
         """, unsafe_allow_html=True)
+
     # Navigation Trust Audit (Compact Verified Route Information Card for Selected Route)
-    if active_route_item and active_route_item.route:
-        active_route_poly = getattr(active_route_item.route, "polyline", [])
+    target_audit_route = None
+    if active_route_item and getattr(active_route_item, "route", None):
+        target_audit_route = active_route_item.route
+    elif 'ranked_routes' in locals() and ranked_routes and getattr(ranked_routes[0], "route", None):
+        target_audit_route = ranked_routes[0].route
+    elif "cached_candidate_routes" in st.session_state and st.session_state.cached_candidate_routes:
+        target_audit_route = st.session_state.cached_candidate_routes[0]
+    else:
+        from src.route_engine import RouteOption, TravelMode
+        poly = primary_route_poly if ('primary_route_poly' in locals() and primary_route_poly and len(primary_route_poly) >= 2) else [
+            (coords_orig[0], coords_orig[1]), (coords_dest[0], coords_dest[1])
+        ]
+        target_audit_route = RouteOption(
+            route_id="primary_corridor",
+            name="Primary Monitored Corridor",
+            mode=TravelMode.DRIVING,
+            distance_meters=8500.0,
+            duration_seconds=900.0,
+            polyline=poly,
+            summary_roads=["Autonomous Road Network"],
+            source="Autonomous Road Graph Model"
+        )
+
+    if target_audit_route:
+        active_route_poly = getattr(target_audit_route, "polyline", [])
         if active_route_poly and len(active_route_poly) >= 2:
             active_satellite_audit = st.session_state.satellite_auditor.audit_route_corridor(active_route_poly)
         else:
             active_satellite_audit = satellite_audit
 
         trust_audit_res = NavigationTrustAuditEngine.audit_route(
-            route=active_route_item.route,
+            route=target_audit_route,
             active_hazards=active_hazards,
             active_restrictions=active_restrictions,
             satellite_audit=active_satellite_audit,
@@ -3828,21 +3890,20 @@ with tab_nav:
             corridor_buffer_m=40.0
         )
         st.markdown(render_navigation_trust_audit_card_html(trust_audit_res), unsafe_allow_html=True)
-        with st.expander("🔍 View Route Verification Details & Technical Limitations", expanded=False):
-            st.markdown(render_navigation_trust_audit_details_html(trust_audit_res), unsafe_allow_html=True)
 
-        # =====================================================================
-        # AI ROAD INTELLIGENCE & SATELLITE SURFACE ANALYSIS DASHBOARD
-        # =====================================================================
+    # =====================================================================
+    # AI ROAD INTELLIGENCE & SATELLITE SURFACE ANALYSIS DASHBOARD
+    # =====================================================================
+    if target_audit_route:
         disp_ai_report = ai_road_report_obj
         if active_route_poly and active_route_poly != primary_route_poly and len(active_route_poly) >= 2:
             try:
                 disp_ai_report = st.session_state.ai_road_controller.analyze_corridor(
                     corridor_polyline=active_route_poly,
                     route_attributes={
-                        "summary_roads": getattr(active_route_item.route, "summary_roads", []),
-                        "road_type": getattr(active_route_item.route, "road_type", "primary"),
-                        "name": getattr(active_route_item.route, "name", "")
+                        "summary_roads": getattr(target_audit_route, "summary_roads", []),
+                        "road_type": getattr(target_audit_route, "road_type", "primary"),
+                        "name": getattr(target_audit_route, "name", "")
                     },
                     avoidance_prefs={
                         "avoid_tolls": st.session_state.get("avoid_tolls", False),
@@ -4381,6 +4442,27 @@ with tab_nav:
         unsafe_allow_html=True
     )
 
+    col_act_launch, col_act_space = st.columns([1.6, 0.4])
+    with col_act_launch:
+        btn_action_text = f"🎯 Launch {active_mode_obj.get('title', 'Driving Mode')} in Pathfinder Maps"
+        if st.button(
+            btn_action_text,
+            key="btn_launch_active_mode_pathfinder",
+            type="primary",
+            use_container_width=True
+        ):
+            if active_mode_obj.get("route_id"):
+                st.session_state.focused_route_id = active_mode_obj["route_id"]
+                st.session_state.selected_route_id = active_mode_obj["route_id"]
+                matching_r = next((r.route for r in ranked_routes if r.route.route_id == active_mode_obj["route_id"]), None)
+                if matching_r:
+                    st.session_state.selected_route_object = matching_r
+            st.session_state.selected_driving_mode = active_mode_obj["mode_id"]
+            st.session_state.auto_fit_bounds = True
+            st.session_state.scroll_to_app_map = True
+            st.toast(f"🚀 Launched {active_mode_obj.get('title')} in Pathfinder Maps!", icon=active_mode_obj.get("icon", "🌱"))
+            st.rerun()
+
 
 
 with tab_guide:
@@ -4492,37 +4574,20 @@ with tab_guide:
         components.html(companion_hud, height=315)
 
         # =========================================================================
-        # Section 3: Virtual Human Guide & Realistic 3D Scenery
-        # =========================================================================
-        st.markdown(f"#### 🧑‍✈️ {t('guide.section3_title')}")
-        always_visible_guide_tab_html = build_always_visible_virtual_guide_html(
-            origin_name=origin_display,
-            dest_name=dest_display,
-            polyline=route_coords,
-            steps=friendly_turns if friendly_turns else steps,
-            travel_mode=travel_mode_str.lower(),
-            total_distance_m=route_total_dist_km * 1000.0,
-            current_speed_kmh=guide_speed_kmh,
-            current_step_idx=cur_game_idx,
-            is_live_gps=bool(guide_speed_kmh > 0 and not st.session_state.get("is_simulation_mode", True)),
-            session_id=f"GUIDE_TAB_{route_game_key}"
-        )
-        components.html(always_visible_guide_tab_html, height=460)
-
+        # Section 3: Virtual Human Guide (Turn-by-Turn Maneuver Mode)
         # =========================================================================
         # Section 4: Additional Route Details, Landmark Storybook & Maneuvers
-        # =========================================================================
-        with st.expander(f"📖 {t('guide.section4_title')}", expanded=False):
-            turns_guide_html = build_virtual_guide_turns_html(
-                friendly_turns=friendly_turns,
-                origin=origin_display,
-                destination=dest_display,
-                travel_mode=travel_mode_str
-            )
-            components.html(turns_guide_html, height=620)
+        st.markdown(f"#### 📖 {t('guide.section3_title')}")
+        turns_guide_html = build_virtual_guide_turns_html(
+            friendly_turns=friendly_turns,
+            origin=origin_display,
+            destination=dest_display,
+            travel_mode=travel_mode_str
+        )
+        components.html(turns_guide_html, height=780)
 
     else:
-        # Standby Virtual Human Guide when no route is active yet
+        # Standby Virtual Guide when no route is active yet
         origin_standby_disp = st.session_state.get("user_live_label", "Starting Point")
         dest_standby_disp = st.session_state.get("selected_dest_label", "Destination")
         nav_mode_str = st.session_state.get("selected_travel_mode", "CAR").lower()
@@ -4530,22 +4595,15 @@ with tab_guide:
         st.info(f"🧭 {t('nav.all_routes_desc')}")
         st.markdown(f"#### 🚗 {t('guide.section2_title')}")
         st.info(f"🚗 {t('guide.companion_standby')}")
-        st.markdown(f"#### 🧑‍✈️ {t('guide.section3_title')}")
-        always_visible_standby_html = build_always_visible_virtual_guide_html(
-            origin_name=origin_standby_disp,
-            dest_name=dest_standby_disp,
-            polyline=[],
-            steps=[],
-            travel_mode=nav_mode_str,
-            total_distance_m=0.0,
-            current_speed_kmh=0.0,
-            current_step_idx=0,
-            is_live_gps=False,
-            session_id="STANDBY_GUIDE_TAB"
+        st.markdown(f"#### 📖 {t('guide.section3_title')}")
+        turns_guide_html = build_virtual_guide_turns_html(
+            friendly_turns=[],
+            origin=origin_standby_disp,
+            destination=dest_standby_disp,
+            travel_mode=nav_mode_str.capitalize()
         )
-        components.html(always_visible_standby_html, height=460)
+        components.html(turns_guide_html, height=780)
 
-        st.info(f"🧭 {t('nav.all_routes_desc')}")
         if st.button(f"🧭 {t('nav.get_directions')}", key="btn_guide_redirect_nav", type="primary"):
             st.session_state.target_tab = "nav"
             st.session_state.scroll_to_app_map = True
@@ -4894,7 +4952,11 @@ with tab_facilities:
 
                 f_rating_val = fac.get("rating")
                 if f_rating_val is not None:
-                    f_rating_display = f"<span style='color: #f59e0b; font-weight: 700;'>★ {f_rating_val:.1f}</span>"
+                    if isinstance(f_rating_val, (int, float)):
+                        f_rating_display = f"<span style='color: #f59e0b; font-weight: 700;'>★ {f_rating_val:.1f}</span>"
+                    else:
+                        clean_r = str(f_rating_val).replace("⭐", "").strip()
+                        f_rating_display = f"<span style='color: #f59e0b; font-weight: 700;'>★ {clean_r}</span>"
                 else:
                     f_rating_display = "<span style='color: #94a3b8; font-style: italic;'>Rating unavailable</span>"
 

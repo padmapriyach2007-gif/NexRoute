@@ -950,9 +950,14 @@ def render_cockpit_mode_functionality_hud(
                 <span style='display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: {accent}; box-shadow: 0 0 10px {accent};'></span>
                 <span style='font-size: 0.96rem; font-weight: 900; color: #f8fafc; letter-spacing: 0.02em;'>{mode_title}</span>
             </div>
-            <a href='{gmaps_active_url}' target='_blank' style='background: linear-gradient(135deg, {accent} 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 7px 16px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);'>
-                {action_label} ↗
-            </a>
+            <div style='display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
+                <a href='#application-map-viewport' onclick="try{{var el=window.parent.document.getElementById('application-map-viewport');if(el){{el.scrollIntoView({{behavior:'smooth',block:'start'}});}}}}catch(e){{}}" style='background: linear-gradient(135deg, {accent} 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 7px 16px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4); cursor: pointer;'>
+                    {action_label} 🎯
+                </a>
+                <a href='{gmaps_active_url}' target='_blank' style='background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); color: #cbd5e1; text-decoration: none; padding: 7px 12px; border-radius: 8px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;' title='Open in Google Maps'>
+                    Google Maps ↗
+                </a>
+            </div>
         </div>
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 10px;'>
             {feat_items_html}

@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 import time
+import textwrap
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.hazard_map import haversine_distance_m, distance_point_to_segment_m
@@ -414,17 +415,8 @@ def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult) -
         conn_color = "#94a3b8"
         conn_icon = "📡"
 
-    return f"""
-    <div class='nav-trust-audit-card' style='
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.88) 100%);
-        border: 1.5px solid {status_border};
-        border-radius: 12px;
-        padding: 12px 16px;
-        margin: 10px 0 14px 0;
-        color: #f8fafc;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px {status_bg};
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    '>
+    card_html = f"""
+    <div class="nav-trust-audit-card" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.88) 100%); border: 1.5px solid {status_border}; border-radius: 12px; padding: 12px 16px; margin: 10px 0 14px 0; color: #f8fafc; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px {status_bg}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Top Bar: Header & Status Badge -->
         <div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 8px; margin-bottom: 10px;'>
             <div style='display: flex; align-items: center; gap: 8px;'>
@@ -441,38 +433,41 @@ def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult) -
             </div>
         </div>
 
-        <!-- 4-Column Compact Metric Grid -->
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px;'>
-            <div style='background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 6px 10px;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;'>Route Status</div>
-                <div style='font-size: 0.82rem; font-weight: 800; color: {status_color}; margin-top: 2px;'>{audit.status_label}</div>
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px;'>
+            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px;'>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Route Status</div>
+                <div style='font-size: 0.85rem; font-weight: 800; color: {status_color}; margin-top: 3px; display: flex; align-items: center; gap: 4px;'>{audit.status_label}</div>
             </div>
-            <div style='background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 6px 10px;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;'>Hazard Inspection</div>
-                <div style='font-size: 0.82rem; font-weight: 700; color: {hazard_color}; margin-top: 2px;'>
+            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px;'>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Hazard Inspection</div>
+                <div style='font-size: 0.80rem; font-weight: 700; color: {hazard_color}; margin-top: 3px; line-height: 1.3;'>
                     {hazard_icon} {audit.hazard_summary}
                 </div>
             </div>
-            <div style='background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 6px 10px; overflow: hidden;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;'>Route Source</div>
-                <div style='font-size: 0.82rem; font-weight: 700; color: #e2e8f0; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' title='{audit.route_provider}'>
+            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px; overflow: hidden;'>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Route Source</div>
+                <div style='font-size: 0.80rem; font-weight: 700; color: #f1f5f9; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;' title='{audit.route_provider}'>
                     🧭 {"OSRM (OpenStreetMap)" if "OSRM" in audit.route_provider else audit.route_provider}
                 </div>
             </div>
-            <div style='background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 6px 10px;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;'>Connectivity</div>
-                <div style='font-size: 0.82rem; font-weight: 700; color: {conn_color}; margin-top: 2px;'>
+            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px;'>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Connectivity</div>
+                <div style='font-size: 0.80rem; font-weight: 700; color: {conn_color}; margin-top: 3px; line-height: 1.3;'>
                     {conn_icon} {audit.connectivity_label}
                 </div>
             </div>
         </div>
 
-        <!-- Plain-Language Summary Explanation -->
-        <div style='font-size: 0.78rem; color: #cbd5e1; line-height: 1.45; background: rgba(255, 255, 255, 0.03); border-radius: 6px; padding: 6px 10px;'>
-            {audit.status_reason}
+        <div style='font-size: 0.80rem; color: #e2e8f0; line-height: 1.5; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.07); border-left: 3.5px solid {status_color}; border-radius: 8px; padding: 9px 14px; display: flex; align-items: flex-start; gap: 8px;'>
+            <span style='font-size: 0.95rem; line-height: 1.2;'>🛡️</span>
+            <div>
+                <b style='color: {status_color};'>{audit.status_label}:</b> {audit.status_reason}
+            </div>
         </div>
     </div>
     """
+    clean_lines = [line.strip() for line in card_html.splitlines() if line.strip() and not line.strip().startswith("<!--")]
+    return "\n".join(clean_lines)
 
 
 def render_navigation_trust_audit_details_html(audit: NavigationTrustAuditResult) -> str:
@@ -514,64 +509,60 @@ def render_navigation_trust_audit_details_html(audit: NavigationTrustAuditResult
     else:
         threats_html = "<div style='font-size: 0.74rem; color: #34d399; padding: 4px 0;'>✓ No reported obstacles, closures, or active hazard points intersect the checked corridor.</div>"
 
-    return f"""
-    <div style='
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 8px;
-        padding: 12px 14px;
-        color: #cbd5e1;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    '>
-        <!-- Row 1: Corridor Parameters & Verification Baseline -->
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px; font-size: 0.74rem;'>
-            <div>
-                <span style='color: #94a3b8;'>Route Identifier:</span>
-                <b style='color: #f8fafc; margin-left: 4px;'>{audit.route_id}</b>
+    buffer_str = f"±{int(audit.corridor_buffer_m)} meters"
+    details_raw = f"""
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px; color: #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <!-- Row 1: Corridor Parameters & Verification Baseline -->
+            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px; font-size: 0.74rem;'>
+                <div>
+                    <span style='color: #94a3b8;'>Route Identifier:</span>
+                    <b style='color: #f8fafc; margin-left: 4px;'>{audit.route_id}</b>
+                </div>
+                <div>
+                    <span style='color: #94a3b8;'>Audited Distance:</span>
+                    <b style='color: #f8fafc; margin-left: 4px;'>{round(audit.corridor_length_km, 2)} km</b>
+                </div>
+                <div>
+                    <span style='color: #94a3b8;'>Corridor Safety Buffer:</span>
+                    <b style='color: #f8fafc; margin-left: 4px;'>{buffer_str}</b>
+                </div>
+                <div>
+                    <span style='color: #94a3b8;'>Routing Architecture:</span>
+                    <b style='color: #38bdf8; margin-left: 4px;'>{audit.route_source_type}</b>
+                </div>
             </div>
-            <div>
-                <span style='color: #94a3b8;'>Audited Distance:</span>
-                <b style='color: #f8fafc; margin-left: 4px;'>{audit.corridor_length_km:.2f} km</b>
-            </div>
-            <div>
-                <span style='color: #94a3b8;'>Corridor Safety Buffer:</span>
-                <b style='color: #f8fafc; margin-left: 4px;'>±{audit.corridor_buffer_m:.0f} meters</b>
-            </div>
-            <div>
-                <span style='color: #94a3b8;'>Routing Architecture:</span>
-                <b style='color: #38bdf8; margin-left: 4px;'>{audit.route_source_type}</b>
-            </div>
-        </div>
 
-        <!-- Row 2: Verified Data Sources -->
-        <div style='margin-bottom: 12px;'>
-            <div style='font-size: 0.74rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;'>
-                Verified Data Sources & Feeds
+            <!-- Row 2: Verified Data Sources -->
+            <div style='margin-bottom: 12px;'>
+                <div style='font-size: 0.74rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;'>
+                    Verified Data Sources & Feeds
+                </div>
+                {sources_html}
             </div>
-            {sources_html}
-        </div>
 
-        <!-- Row 3: Threat Analysis -->
-        <div style='margin-bottom: 12px;'>
-            <div style='font-size: 0.74rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px;'>
-                Corridor Threat Evaluation
+            <!-- Row 3: Threat Analysis -->
+            <div style='margin-bottom: 12px;'>
+                <div style='font-size: 0.74rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px;'>
+                    Corridor Threat Evaluation
+                </div>
+                {threats_html}
             </div>
-            {threats_html}
-        </div>
 
-        <!-- Row 4: Confidence Score Handling -->
-        <div style='background: rgba(0, 0, 0, 0.25); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px;'>
-            <div style='font-size: 0.72rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 2px;'>
-                Confidence Score Integrity Note
+            <!-- Row 4: Confidence Score Handling -->
+            <div style='background: rgba(0, 0, 0, 0.25); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px;'>
+                <div style='font-size: 0.72rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 2px;'>
+                    Confidence Score Integrity Note
+                </div>
+                <div style='font-size: 0.72rem; color: #94a3b8; line-height: 1.4;'>
+                    {audit.confidence_score_explanation}
+                </div>
             </div>
-            <div style='font-size: 0.72rem; color: #94a3b8; line-height: 1.4;'>
-                {audit.confidence_score_explanation}
-            </div>
-        </div>
 
-        <!-- Row 5: Operational Limitations & Disclaimers -->
-        <div style='font-size: 0.68rem; color: #64748b; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px;'>
-            <b>Operational Disclaimer:</b> {audit.limitations_disclaimer}
+            <!-- Row 5: Operational Limitations & Disclaimers -->
+            <div style='font-size: 0.68rem; color: #64748b; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px;'>
+                <b>Operational Disclaimer:</b> {audit.limitations_disclaimer}
+            </div>
         </div>
-    </div>
     """
+    clean_lines = [line.strip() for line in details_raw.splitlines() if line.strip() and not line.strip().startswith("<!--")]
+    return "\n".join(clean_lines)

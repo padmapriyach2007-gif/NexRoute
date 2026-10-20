@@ -274,17 +274,47 @@ def build_google_maps_javascript_html(
         (f.get("name") or "").lower() for f in merged_amenities
     }
     try:
-        from src.facilities_service import VERIFIED_FACILITIES_DATABASE, generate_worldwide_facilities_for_location
-        for vf in VERIFIED_FACILITIES_DATABASE:
-            k = (vf.get("name") or "").lower()
-            if k not in existing_facility_keys:
-                merged_amenities.append(vf)
-                existing_facility_keys.add(k)
-        for wwf in generate_worldwide_facilities_for_location(center_lat, center_lon, "all"):
-            k = (wwf.get("name") or "").lower()
-            if k not in existing_facility_keys:
-                merged_amenities.append(wwf)
-                existing_facility_keys.add(k)
+        from src.facilities_service import (
+            VERIFIED_FACILITIES_DATABASE,
+            generate_worldwide_facilities_for_location,
+            get_facilities_around_journey
+        )
+        is_local_ap = False
+        for c in [origin_coords, dest_coords, (center_lat, center_lon)]:
+            if c and 15.5 <= c[0] <= 17.0 and 79.5 <= c[1] <= 81.5:
+                is_local_ap = True
+                break
+        if is_local_ap:
+            for vf in VERIFIED_FACILITIES_DATABASE:
+                k = (vf.get("name") or "").lower()
+                if k not in existing_facility_keys:
+                    merged_amenities.append(vf)
+                    existing_facility_keys.add(k)
+
+        # If amenities list is sparse, discover places across the entire journey corridor
+        if len(merged_amenities) < 8:
+            journey_facs = get_facilities_around_journey(
+                category="🌐 All Facilities",
+                polyline=route_polyline,
+                origin_coords=origin_coords,
+                dest_coords=dest_coords,
+                radius_km=10.0,
+                enable_demo_mode=False
+            )
+            for jf in journey_facs:
+                k = (jf.get("name") or "").lower()
+                if k not in existing_facility_keys:
+                    merged_amenities.append(jf)
+                    existing_facility_keys.add(k)
+
+        # Ensure fallback coverage for origin, destination, and center coordinates
+        for ref_c in [dest_coords, origin_coords, (center_lat, center_lon)]:
+            if ref_c:
+                for wwf in generate_worldwide_facilities_for_location(ref_c[0], ref_c[1], "all"):
+                    k = (wwf.get("name") or "").lower()
+                    if k not in existing_facility_keys:
+                        merged_amenities.append(wwf)
+                        existing_facility_keys.add(k)
     except Exception:
         pass
 
@@ -4286,7 +4316,7 @@ def build_google_maps_javascript_html(
 
                 var marker = new google.maps.Marker({{
                     position: new google.maps.LatLng(f.latitude, f.longitude),
-                    map: null,
+                    map: gMap,
                     title: f.name,
                     icon: iconUrl,
                     filterGroup: group
@@ -4427,11 +4457,11 @@ def build_google_maps_javascript_html(
                 p.addEventListener('click', function() {{
                     var filter = p.getAttribute('data-filter');
                     if (gActiveFilter === filter) {{
-                        // Toggle off
+                        // Toggle off -> restore all detected places
                         gActiveFilter = null;
                         p.classList.remove('active');
                         allMarkers.forEach(function(m) {{
-                            m.setMap(null);
+                            m.setMap(gMap);
                         }});
                         return;
                     }}
@@ -4757,6 +4787,7 @@ def build_google_maps_javascript_html(
                     m.on('click', function() {{
                         window.inspectLocationDetails(f.latitude, f.longitude, f);
                     }});
+                    m.addTo(lMap);
                     leafletMarkers.push(m);
                 }});
 
@@ -4853,11 +4884,11 @@ def build_google_maps_javascript_html(
                     p.addEventListener('click', function() {{
                         var filter = p.getAttribute('data-filter');
                         if (activeLeafletCategory === filter) {{
-                            // Click again to toggle off / hide icons completely
+                            // Click again to toggle off -> restore all detected small place markers
                             activeLeafletCategory = null;
                             p.classList.remove('active');
                             leafletMarkers.forEach(function(m) {{
-                                if (lMap.hasLayer(m)) lMap.removeLayer(m);
+                                if (!lMap.hasLayer(m)) lMap.addLayer(m);
                             }});
                             return;
                         }}
