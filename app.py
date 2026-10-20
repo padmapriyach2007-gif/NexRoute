@@ -4400,7 +4400,7 @@ with tab_guide:
         # =========================================================================
         # SECTION 1 — VIRTUAL RUNNER & ROUTE PROCESS BANNER
         # =========================================================================
-        st.markdown("#### 🏃 Section 1: Virtual Runner & Route Process Banner")
+        st.markdown(f"#### 🏃 {t('guide.section1_title')}")
         game_avatar = st.session_state.get("selected_travel_mode", "WALK").lower()
         # Initial state must always be stationary until user explicitly clicks Move in Parallel
         is_user_moving = bool(st.session_state.get("virtual_guide_moving", False))
@@ -4422,7 +4422,7 @@ with tab_guide:
         # =========================================================================
         # SECTION 2 — VIRTUAL VEHICLE COMPANION (EXPANDED BY DEFAULT)
         # =========================================================================
-        st.markdown("#### 🚗 Section 2: Virtual Vehicle Companion")
+        st.markdown(f"#### 🚗 {t('guide.section2_title')}")
         companion_hud = build_virtual_companion_hud_html(
             session_id=f"SESS_{route_game_key}",
             origin_name=origin_display,
@@ -4440,7 +4440,7 @@ with tab_guide:
         # =========================================================================
         # SECTION 3 — VIRTUAL GUIDE & REALISTIC 3D SCENE
         # =========================================================================
-        st.markdown("#### 🧑‍✈️ Section 3: Virtual Human Guide & Realistic 3D Scenery")
+        st.markdown(f"#### 🧑‍✈️ {t('guide.section3_title')}")
         always_visible_guide_tab_html = build_always_visible_virtual_guide_html(
             origin_name=origin_display,
             dest_name=dest_display,
@@ -4458,7 +4458,7 @@ with tab_guide:
         # =========================================================================
         # SECTION 4 — ADDITIONAL ROUTE DETAILS & MANEUVERS
         # =========================================================================
-        with st.expander("📖 Section 4: Additional Route Details, Landmark Storybook & Maneuvers", expanded=False):
+        with st.expander(f"📖 {t('guide.section4_title')}", expanded=False):
             turns_guide_html = build_virtual_guide_turns_html(
                 friendly_turns=friendly_turns,
                 origin=origin_display,
@@ -4472,11 +4472,11 @@ with tab_guide:
         origin_standby_disp = st.session_state.get("user_live_label", "Starting Point")
         dest_standby_disp = st.session_state.get("selected_dest_label", "Destination")
         nav_mode_str = st.session_state.get("selected_travel_mode", "CAR").lower()
-        st.markdown("#### 🏃 Section 1: Virtual Runner & Route Process Banner")
-        st.info("🧭 Select an origin and destination in the Navigation tab to initialize your Virtual Runner & Route Process Banner.")
-        st.markdown("#### 🚗 Section 2: Virtual Vehicle Companion")
+        st.markdown(f"#### 🏃 {t('guide.section1_title')}")
+        st.info(f"🧭 {t('nav.all_routes_desc')}")
+        st.markdown(f"#### 🚗 {t('guide.section2_title')}")
         st.info("🚗 Companion HUD will activate when a route is configured.")
-        st.markdown("#### 🧑‍✈️ Section 3: Virtual Guide Scene")
+        st.markdown(f"#### 🧑‍✈️ {t('guide.section3_title')}")
         always_visible_standby_html = build_always_visible_virtual_guide_html(
             origin_name=origin_standby_disp,
             dest_name=dest_standby_disp,
@@ -4491,14 +4491,15 @@ with tab_guide:
         )
         components.html(always_visible_standby_html, height=460)
 
-        st.info("🧭 Select an origin and destination in the Navigation tab to synchronize live corridor turns and checkpoints with your Virtual Guide.")
-        if st.button("🧭 Go to Navigation Tab & Select Route", key="btn_guide_redirect_nav", type="primary"):
+        st.info(f"🧭 {t('nav.all_routes_desc')}")
+        if st.button(f"🧭 {t('nav.get_directions')}", key="btn_guide_redirect_nav", type="primary"):
             st.session_state.target_tab = "nav"
             st.session_state.scroll_to_app_map = True
             st.rerun()
 
 with tab_facilities:
-    st.markdown("### 🏥 Facility Categories Explorer & Emergency Radar")
+    st.markdown(f"### 🏥 {t('fac.title')}")
+    st.markdown(f"<p style='color: #94a3b8; font-size: 0.88rem; margin-top: -10px;'>{t('fac.subtitle')}</p>", unsafe_allow_html=True)
 
     # FACILITY CATEGORIES EXPLORER & ALL ROUTES MAPPER
     # (Linked directly to sidebar selection, showing all facilities & candidate routes)
@@ -4525,9 +4526,24 @@ with tab_facilities:
         "🔍 Custom Search"
     ]
 
+    fac_labels = {
+        "🌐 All Facilities": t('fac.all'),
+        "🏥 Hospitals": t('fac.hospitals'),
+        "⛺ Shelters": "⛺ Shelters",
+        "👮 Police/Rescue": t('fac.police'),
+        "⛽ Fuel/Charging": t('fac.fuel'),
+        "🚨 Emergency Radar": "🚨 Emergency Radar",
+        "🍽️ Restaurants": t('fac.food'),
+        "🏨 Hotels": "🏨 Hotels",
+        "🏧 ATM / Banking": t('fac.atm'),
+        "🛍️ Shopping Malls": "🛍️ Shopping Malls",
+        "🔍 Custom Search": "🔍 Custom Search",
+    }
+
     cat_quick_pills = st.pills(
-        "Switch Facility Category:",
+        t('fac.title'),
         options=cat_quick_options,
+        format_func=lambda c: fac_labels.get(c, c),
         default=cur_cat_name if cur_cat_name in cat_quick_options else "🌐 All Facilities",
         key="pills_quick_category_select"
     )
@@ -4928,7 +4944,7 @@ with tab_facilities:
 
 
 with tab_places:
-    st.markdown("### 🌟 Suggested Places & Highlights Near Location")
+    st.markdown(f"### 🌟 {t('places.title')}")
     # =========================================================================
     # SUGGESTED PLACES & HIGHLIGHTS AT LOCATION (DYNAMIC LIVE POIS)
     # =========================================================================
@@ -4999,7 +5015,7 @@ with tab_places:
                 
                 bcol1, bcol2 = st.columns(2)
                 with bcol1:
-                    if st.button("🧭 Route Here", key=f"btn_nav_sug_{place['place_id']}", use_container_width=True, type="primary"):
+                    if st.button(f"🧭 {t('places.route_here')}", key=f"btn_nav_sug_{place['place_id']}", use_container_width=True, type="primary"):
                         st.session_state.selected_dest_coords = (place["latitude"], place["longitude"])
                         st.session_state.selected_dest_label = place["name"]
                         st.session_state.last_synced_dest = place["name"]
@@ -5012,7 +5028,7 @@ with tab_places:
                         st.toast(f"🧭 Destination set to {place['name']}!", icon="🎯")
                         st.rerun()
                 with bcol2:
-                    if st.button("📍 Focus Map", key=f"btn_focus_sug_{place['place_id']}", use_container_width=True):
+                    if st.button(f"📍 {t('places.focus_map')}", key=f"btn_focus_sug_{place['place_id']}", use_container_width=True):
                         st.session_state.map_center_lat = place["latitude"]
                         st.session_state.map_center_lon = place["longitude"]
                         st.session_state.map_zoom = 16
