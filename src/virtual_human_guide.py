@@ -399,10 +399,10 @@ def build_always_visible_virtual_guide_html(
             /* Main Guide Showcase: Character Canvas + Thought Bubble Area */
             .guide-showcase-stage {{
                 display: flex;
-                align-items: center;
-                gap: 20px;
+                align-items: stretch;
+                gap: 16px;
                 position: relative;
-                min-height: 180px;
+                min-height: 220px;
             }}
 
             /* Canvas Container for Realistic Articulated Human Guide & 3D Transit Road Scene */
@@ -428,20 +428,103 @@ def build_always_visible_virtual_guide_html(
                 filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
             }}
 
-            /* Floating Thought / Speech Bubble */
-            .guide-thought-bubble {{
+            /* Right-hand content area: Live Route Telemetry Card + Floating Thought Bubble */
+            .guide-stage-content {{
                 position: relative;
                 flex: 1;
-                background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                min-width: 0;
+            }}
+
+            /* Permanent Live Telemetry & Scenery Information Card */
+            .guide-telemetry-card {{
+                background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.75) 100%);
+                border: 1px solid rgba(56, 189, 248, 0.30);
+                border-radius: 14px;
+                padding: 14px 18px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 100%;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+            }}
+
+            .telemetry-card-header {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 8px;
+            }}
+
+            .telemetry-card-tag {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.82rem;
+                font-weight: 800;
+                color: #38bdf8;
+                letter-spacing: 0.03em;
+            }}
+
+            .telem-speed-badge {{
+                background: rgba(16, 185, 129, 0.20);
+                color: #34d399;
+                border: 1px solid rgba(16, 185, 129, 0.40);
+                padding: 3px 9px;
+                border-radius: 6px;
+                font-size: 0.72rem;
+                font-weight: 900;
+                letter-spacing: 0.04em;
+            }}
+
+            .telem-instruction-text {{
+                font-size: 0.95rem;
+                font-weight: 700;
+                color: #f8fafc;
+                line-height: 1.45;
+                margin-bottom: 12px;
+            }}
+
+            .telem-card-footer {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                font-size: 0.74rem;
+            }}
+
+            .telem-footer-item {{
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }}
+
+            /* Floating Thought / Speech Bubble */
+            .guide-thought-bubble {{
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 10;
+                background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.96) 100%);
                 backdrop-filter: blur(14px);
                 -webkit-backdrop-filter: blur(14px);
                 border: 1.5px solid rgba(56, 189, 248, 0.55);
-                border-radius: 16px;
+                border-radius: 14px;
                 padding: 14px 18px;
                 box-shadow: 0 10px 32px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.20);
                 color: #ffffff;
                 transition: opacity 0.35s ease, transform 0.35s ease;
                 animation: speechBubbleFloatIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
             }}
 
             @keyframes speechBubbleFloatIn {{
@@ -540,57 +623,78 @@ def build_always_visible_virtual_guide_html(
                 font-weight: 700;
             }}
 
-            /* Quick Interactive Movement Demo Controls */
+            /* Parallel Motion Status & Avatar Controls Row */
             .guide-demo-row {{
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 flex-wrap: wrap;
-                gap: 8px;
+                gap: 10px;
                 margin-top: 14px;
                 padding-top: 10px;
                 border-top: 1px solid rgba(255, 255, 255, 0.08);
             }}
 
-            .guide-btn-group {{
+            .guide-sync-status-strip {{
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                gap: 12px;
                 flex-wrap: wrap;
             }}
 
-            .btn-act {{
-                background: rgba(30, 41, 59, 0.8);
-                border: 1px solid rgba(56, 189, 248, 0.35);
-                color: #e2e8f0;
+            .guide-sync-pill {{
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: #34d399;
+                background: rgba(16, 185, 129, 0.12);
+                border: 1px solid rgba(16, 185, 129, 0.30);
+                padding: 4px 10px;
+                border-radius: 999px;
+            }}
+
+            .guide-sync-dot {{
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: #34d399;
+                box-shadow: 0 0 8px #34d399;
+                display: inline-block;
+            }}
+
+            .guide-avatar-switcher {{
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }}
+
+            .btn-avatar {{
+                background: rgba(30, 41, 59, 0.85);
+                border: 1px solid rgba(56, 189, 248, 0.30);
+                color: #cbd5e1;
                 border-radius: 8px;
-                padding: 6px 12px;
-                font-size: 0.74rem;
+                padding: 4px 10px;
+                font-size: 0.72rem;
                 font-weight: 700;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                gap: 4px;
             }}
 
-            .btn-act:hover {{
-                background: #0284c7;
-                color: #ffffff;
+            .btn-avatar:hover {{
                 border-color: #38bdf8;
-                transform: translateY(-1px);
-                box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+                color: #ffffff;
             }}
 
-            .btn-act.btn-celebrate {{
-                background: rgba(245, 158, 11, 0.2);
-                border-color: #f59e0b;
-                color: #fde047;
-            }}
-
-            .btn-act.btn-celebrate:hover {{
-                background: #f59e0b;
-                color: #0f172a;
+            .btn-avatar.active {{
+                background: rgba(14, 165, 233, 0.25);
+                border-color: #38bdf8;
+                color: #38bdf8;
+                box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
             }}
 
             /* Timeline Mini Steps Progress Track */
@@ -655,9 +759,6 @@ def build_always_visible_virtual_guide_html(
                     flex-direction: column;
                     align-items: stretch;
                 }}
-                .guide-btn-group {{
-                    justify-content: center;
-                }}
             }}
         </style>
 
@@ -681,30 +782,57 @@ def build_always_visible_virtual_guide_html(
             </div>
         </div>
 
-        <!-- Main Showcase: Character Viewport + Floating Thought Bubble -->
+        <!-- Main Showcase: Character Viewport + Telemetry Card & Floating Thought Bubble -->
         <div class="guide-showcase-stage">
             <!-- Realistic Articulated Human Canvas Viewport -->
             <div class="human-character-viewport">
                 <canvas id="human-guide-canvas" width="280" height="380"></canvas>
             </div>
 
-            <!-- Floating Thought / Speech Bubble -->
-            <div id="guide-thought-bubble" class="guide-thought-bubble">
-                <div class="bubble-header">
-                    <div class="bubble-tag">
-                        <span id="bubble-icon">💬</span>
-                        <span id="bubble-headline">{initial_speech.headline}</span>
+            <!-- Stage Content Container: Telemetry Live Card + Floating Thought Bubble -->
+            <div class="guide-stage-content">
+                <!-- Route Maneuver & Environment Live Card (Always visible, never blank) -->
+                <div class="guide-telemetry-card">
+                    <div class="telemetry-card-header">
+                        <div class="telemetry-card-tag">
+                            <span id="telem-maneuver-icon" style="font-size: 1.15rem;">{first_step['icon'] or '🟢'}</span>
+                            <span id="telem-maneuver-headline">Next Action: {first_step['instruction_text']}</span>
+                        </div>
+                        <span id="telem-speed-badge" class="telem-speed-badge">{current_speed_kmh:.1f} KM/H</span>
                     </div>
-                    <button id="bubble-close-btn" class="bubble-close-btn" onclick="window.dismissGuideSpeech(true)" title="Dismiss message">✕</button>
+                    <div id="telem-instruction-text" class="telem-instruction-text">
+                        Following {first_step['road_name'] or 'verified corridor'} — ready to travel parallel with user.
+                    </div>
+                    <div class="telem-card-footer">
+                        <div class="telem-footer-item">
+                            <span style="color: #94a3b8;">Destination:</span>
+                            <b style="color: #f1f5f9;">{dest_name or 'Terminal'}</b>
+                        </div>
+                        <div class="telem-footer-item">
+                            <span style="color: #94a3b8;">Parallel Sync:</span>
+                            <span id="telem-sync-state" style="color: #38bdf8; font-weight: 700;">Standby (Click Section 1 to Start)</span>
+                        </div>
+                    </div>
                 </div>
-                <div id="bubble-message-text" class="bubble-message-text">
-                    "{initial_speech.body_text}"
-                </div>
-                <div class="bubble-meta-strip">
-                    <span id="bubble-context-road">{origin_name or 'Origin'} ➔ {dest_name or 'Destination'}</span>
-                    <span id="bubble-timer-text" class="bubble-auto-timer">
-                        <span>⏱️</span> <span id="bubble-timer-sec">auto-dismissing</span>
-                    </span>
+
+                <!-- Floating Thought / Speech Bubble -->
+                <div id="guide-thought-bubble" class="guide-thought-bubble">
+                    <div class="bubble-header">
+                        <div class="bubble-tag">
+                            <span id="bubble-icon">💬</span>
+                            <span id="bubble-headline">{initial_speech.headline}</span>
+                        </div>
+                        <button id="bubble-close-btn" class="bubble-close-btn" onclick="window.dismissGuideSpeech(true)" title="Dismiss message">✕</button>
+                    </div>
+                    <div id="bubble-message-text" class="bubble-message-text">
+                        "{initial_speech.body_text}"
+                    </div>
+                    <div class="bubble-meta-strip">
+                        <span id="bubble-context-road">{origin_name or 'Origin'} ➔ {dest_name or 'Destination'}</span>
+                        <span id="bubble-timer-text" class="bubble-auto-timer">
+                            <span>⏱️</span> <span id="bubble-timer-sec">auto-dismissing</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -716,24 +844,21 @@ def build_always_visible_virtual_guide_html(
             </div>
         </div>
 
-        <!-- Interactive Actions & Step Controls -->
+        <!-- Status & Avatar Controls (Manual buttons replaced by automated Section 1 parallel sync) -->
         <div class="guide-demo-row">
-            <div class="guide-btn-group">
-                <button class="btn-act" onclick="window.humanGuideWalkStep()" title="Demonstrate walking forward along route">
-                    🚶‍♂️ Walk Along Route
-                </button>
-                <button class="btn-act" onclick="window.humanGuideTurnDemo('left')" title="Demonstrate natural left turn">
-                    ⬅️ Turn Left
-                </button>
-                <button class="btn-act" onclick="window.humanGuideTurnDemo('right')" title="Demonstrate natural right turn">
-                    ➡️ Turn Right
-                </button>
-                <button class="btn-act btn-celebrate" onclick="window.humanGuideJumpCelebration()" title="Perform natural celebratory hop">
-                    ⭐ Jump &amp; Cheer
-                </button>
-                <button class="btn-act" onclick="window.humanGuideArriveDemo()" title="Demonstrate destination arrival">
-                    🏁 Arrive
-                </button>
+            <div class="guide-sync-status-strip">
+                <span class="guide-sync-pill">
+                    <span class="guide-sync-dot"></span>
+                    <span id="guide-sync-mode-text">SYNCED IN PARALLEL • Controlled via Section 1 "Move in Parallel"</span>
+                </span>
+                <div class="guide-avatar-switcher">
+                    <button id="btn-avatar-boy" class="btn-avatar active" onclick="window.switchAvatar('boy')" title="Cute Boy Guide (Leo)">
+                        👦 Leo (Boy)
+                    </button>
+                    <button id="btn-avatar-girl" class="btn-avatar" onclick="window.switchAvatar('girl')" title="Cute Girl Guide (Aura)">
+                        👧 Aura (Girl)
+                    </button>
+                </div>
             </div>
 
             <div style="font-size: 0.72rem; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
@@ -763,19 +888,14 @@ def build_always_visible_virtual_guide_html(
             ARRIVED: "ARRIVED"
         }};
 
-        const dismissedMessageCache = (function() {{
-            try {{
-                return JSON.parse(sessionStorage.getItem('PATHFINDER_DISMISSED_SPEECH') || '[]');
-            }} catch(e) {{ return []; }}
-        }})();
-
         let currentState = HumanGuideState.IDLE;
         let currentStepIdx = PAYLOAD.currentStepIdx || 0;
-        let isMinimized = PAYLOAD.isMinimized || false;
+        let isMinimized = Boolean(PAYLOAD.isMinimized);
+        let currentMessageId = null;
         let activeTimer = null;
-        let currentMessageId = "";
+        let activeAvatar = 'boy'; // 'boy' or 'girl'
 
-        // Animation timing variables
+        // Animation kinematics
         let animPhase = 0;
         let blinkPhase = 0;
         let isBlinking = false;
@@ -783,28 +903,27 @@ def build_always_visible_virtual_guide_html(
         let pointPhase = 0; // 0 = normal, 1.0 = full pointing
         let turnAngle = 0; // current body facing angle in radians
         let targetTurnAngle = 0;
-        let walkSpeed = 0; // 0 = idle, 1 = full walk
+        let walkSpeed = 0; // 0 = idle, 1 = full walk, 1.5 = running
+        let roadOffset = 0; // for scenery motion
+        let lastSyncTimestamp = 0;
+
+        // Sparkle particles for celebration jumps
+        let sparkles = [];
 
         const canvas = document.getElementById('human-guide-canvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
 
         // =========================================================================
-        // REALISTIC HUMAN SKELETAL RENDERER
-        // =========================================================================
-        // High-fidelity procedural articulated human male with:
-        // - Proportional cranium, styled brown hair, face, expressive blinking eyes
-        // - Navigator blue jacket with white inner collar, zipper, compass pin
-        // - Dual arms with shoulder and elbow joints, hands with thumb and pointing pose
-        // - Dark tailored joggers with knees and hips
-        // - Two-tone campus sneakers with white rubber soles
+        // REALISTIC HUMAN SKELETAL & 3D SCENERY RENDERER
         // =========================================================================
         function drawRealisticHuman(time) {{
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Time advancement
             const dt = 0.016;
-            animPhase += dt * (walkSpeed > 0 ? 5.5 : 1.2);
+            const cadenceMultiplier = walkSpeed > 1.2 ? 8.0 : (walkSpeed > 0 ? 5.5 : 1.2);
+            animPhase += dt * cadenceMultiplier;
             blinkPhase = (time % 3800);
             isBlinking = blinkPhase < 140;
 
@@ -825,21 +944,63 @@ def build_always_visible_virtual_guide_html(
             if (jumpPhase > 0) {{
                 // Parabolic jump arc: up and down
                 jumpOffsetY = -Math.sin(jumpPhase * Math.PI) * 75;
+                if (Math.random() < 0.3) {{
+                    sparkles.push({{
+                        x: cx + (Math.random() - 0.5) * 60,
+                        y: cy + jumpOffsetY - 80 + (Math.random() - 0.5) * 40,
+                        vy: -1.5 - Math.random() * 2,
+                        size: 3 + Math.random() * 4,
+                        life: 1.0,
+                        color: Math.random() > 0.5 ? '#fde047' : '#38bdf8'
+                    }});
+                }}
             }}
             cy += jumpOffsetY;
 
             // Breathing / walking vertical bob
-            const idleBob = Math.sin(animPhase) * (walkSpeed > 0 ? 6.5 : 2.0);
+            const idleBob = Math.sin(animPhase) * (walkSpeed > 1.2 ? 8.5 : (walkSpeed > 0 ? 6.5 : 2.0));
             const bodyY = cy - 145 + idleBob;
 
-            // Realistic 3D Perspective Transit Road Corridor Scenery
+            // =====================================================================
+            // REALISTIC 3D PERSPECTIVE SCENERY & ROAD CORRIDOR
+            // =====================================================================
             ctx.save();
+            // Sky atmospheric gradient
             const roadGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
             roadGrad.addColorStop(0, '#0a192f');
-            roadGrad.addColorStop(0.40, '#0f2744');
+            roadGrad.addColorStop(0.35, '#0f2744');
+            roadGrad.addColorStop(0.55, '#1e293b');
             roadGrad.addColorStop(1, '#071120');
             ctx.fillStyle = roadGrad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Twinkling stars in sky
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            for (let i = 0; i < 18; i++) {{
+                const sx = ((i * 37) % canvas.width);
+                const sy = ((i * 23) % (canvas.height * 0.35));
+                const sTwinkle = Math.sin(animPhase * 0.5 + i) * 0.5 + 0.5;
+                ctx.globalAlpha = 0.2 + sTwinkle * 0.6;
+                ctx.fillRect(sx, sy, 1.5, 1.5);
+            }}
+            ctx.globalAlpha = 1.0;
+
+            // Distant city / campus skyline silhouette
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.beginPath();
+            ctx.moveTo(0, cy - 80);
+            ctx.lineTo(30, cy - 95);
+            ctx.lineTo(60, cy - 90);
+            ctx.lineTo(90, cy - 110);
+            ctx.lineTo(120, cy - 95);
+            ctx.lineTo(160, cy - 115);
+            ctx.lineTo(200, cy - 92);
+            ctx.lineTo(240, cy - 105);
+            ctx.lineTo(canvas.width, cy - 85);
+            ctx.lineTo(canvas.width, cy - 60);
+            ctx.lineTo(0, cy - 60);
+            ctx.closePath();
+            ctx.fill();
 
             // Perspective Asphalt Road Bed
             ctx.beginPath();
@@ -857,11 +1018,17 @@ def build_always_visible_virtual_guide_html(
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
+            // Scenery forward scroll offset
+            if (walkSpeed > 0) {{
+                roadOffset += dt * walkSpeed * 90;
+            }}
+
             // Lane Divider Markings (moving forward along route when walking)
-            ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.85)';
             ctx.lineWidth = 2.5;
-            const roadOffset = (walkSpeed > 0 ? (animPhase * 8.0) % 32 : 0);
-            for (let y = cy - 90 + roadOffset; y < canvas.height; y += 32) {{
+            const markerStep = 32;
+            const scrollShift = roadOffset % markerStep;
+            for (let y = cy - 90 + scrollShift; y < canvas.height; y += markerStep) {{
                 const prog = (y - (cy - 90)) / Math.max(1, (canvas.height - (cy - 90)));
                 const dashLen = 7 + prog * 15;
                 ctx.beginPath();
@@ -869,6 +1036,36 @@ def build_always_visible_virtual_guide_html(
                 ctx.lineTo(cx, Math.min(canvas.height, y + dashLen));
                 ctx.stroke();
             }}
+
+            // 3D Perspective Roadside Trees & Street Lights
+            for (let s = 0; s < 4; s++) {{
+                const prog = ((s * 0.25 + (roadOffset * 0.003)) % 1.0);
+                if (prog <= 0.05) continue;
+                const yPos = cy - 90 + prog * (canvas.height - (cy - 90));
+                const sideDist = 42 + prog * 95;
+                const scale = 0.35 + prog * 0.75;
+
+                // Left side street lamp with light glow
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(cx - sideDist - 2 * scale, yPos - 35 * scale, 3 * scale, 35 * scale);
+                ctx.fillStyle = '#fde047';
+                ctx.beginPath();
+                ctx.arc(cx - sideDist, yPos - 35 * scale, 4 * scale, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Right side campus green tree
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(cx + sideDist, yPos - 22 * scale, 12 * scale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#059669';
+                ctx.beginPath();
+                ctx.arc(cx + sideDist - 3 * scale, yPos - 26 * scale, 9 * scale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(cx + sideDist - 2 * scale, yPos - 10 * scale, 4 * scale, 12 * scale);
+            }}
+
             ctx.restore();
 
             // Ground Contact Shadow & Radar Aura
@@ -894,12 +1091,31 @@ def build_always_visible_virtual_guide_html(
             ctx.fill();
             ctx.restore();
 
-            // SKELETON POSING
+            // Render Celebration Sparkles
+            for (let i = sparkles.length - 1; i >= 0; i--) {{
+                const sp = sparkles[i];
+                sp.y += sp.vy;
+                sp.life -= 0.03;
+                if (sp.life <= 0) {{
+                    sparkles.splice(i, 1);
+                    continue;
+                }}
+                ctx.fillStyle = sp.color;
+                ctx.globalAlpha = sp.life;
+                ctx.beginPath();
+                ctx.arc(sp.x, sp.y, sp.size * sp.life, 0, Math.PI * 2);
+                ctx.fill();
+            }}
+            ctx.globalAlpha = 1.0;
+
+            // =====================================================================
+            // ARTICULATED SKELETON POSING (CUTE BOY / CUTE GIRL)
+            // =====================================================================
             ctx.save();
             ctx.translate(cx, bodyY);
             ctx.rotate(turnAngle * 0.25); // Subtle body twist
 
-            // Leg angles (walking gait or idle)
+            // Leg angles (walking gait, running cadence, or idle)
             let leftLegAngle = 0;
             let rightLegAngle = 0;
             let leftKneeFlex = 0;
@@ -912,10 +1128,11 @@ def build_always_visible_virtual_guide_html(
                 leftKneeFlex = 0.7;
                 rightKneeFlex = 0.7;
             }} else if (walkSpeed > 0) {{
-                leftLegAngle = Math.sin(animPhase) * 0.48;
-                rightLegAngle = -Math.sin(animPhase) * 0.48;
-                leftKneeFlex = Math.max(0, -Math.sin(animPhase) * 0.55);
-                rightKneeFlex = Math.max(0, Math.sin(animPhase) * 0.55);
+                const strideAmp = walkSpeed > 1.2 ? 0.65 : 0.48;
+                leftLegAngle = Math.sin(animPhase) * strideAmp;
+                rightLegAngle = -Math.sin(animPhase) * strideAmp;
+                leftKneeFlex = Math.max(0, -Math.sin(animPhase) * (strideAmp * 1.15));
+                rightKneeFlex = Math.max(0, Math.sin(animPhase) * (strideAmp * 1.15));
             }}
 
             // Draw Legs (Left & Right)
@@ -927,9 +1144,9 @@ def build_always_visible_virtual_guide_html(
                 ctx.translate(hipX, hipY);
                 ctx.rotate(angle);
 
-                // Thigh (Dark tailored jogger)
-                ctx.fillStyle = '#1e293b';
-                ctx.strokeStyle = '#0f172a';
+                // Thigh
+                ctx.fillStyle = activeAvatar === 'girl' ? '#0f172a' : '#1e293b';
+                ctx.strokeStyle = '#0284c7';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.roundRect(-7, 0, 14, 46, 6);
@@ -966,17 +1183,17 @@ def build_always_visible_virtual_guide_html(
             drawLeg(rightLegAngle, rightKneeFlex, false);
 
             // Backpack (drawn behind torso)
-            ctx.fillStyle = '#d97706';
+            ctx.fillStyle = activeAvatar === 'girl' ? '#ec4899' : '#d97706';
             ctx.beginPath();
             ctx.roundRect(-22, -28, 44, 42, 8);
             ctx.fill();
-            ctx.fillStyle = '#b45309';
+            ctx.fillStyle = activeAvatar === 'girl' ? '#db2777' : '#b45309';
             ctx.beginPath();
             ctx.roundRect(-16, -10, 32, 20, 5);
             ctx.fill();
 
-            // Torso (Navigator technical jacket)
-            ctx.fillStyle = '#0284c7';
+            // Torso (Navigator technical jacket / hoodie)
+            ctx.fillStyle = activeAvatar === 'girl' ? '#0284c7' : '#0284c7';
             ctx.strokeStyle = '#0369a1';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1011,7 +1228,7 @@ def build_always_visible_virtual_guide_html(
             ctx.fillRect(-18, -34, 6, 60);
             ctx.fillRect(12, -34, 6, 60);
 
-            // HEAD & FACE
+            // HEAD & CUTE ANIME FACE
             ctx.save();
             const headBob = Math.sin(animPhase * 1.2) * 1.5;
             ctx.translate(0, -52 + headBob);
@@ -1021,63 +1238,94 @@ def build_always_visible_virtual_guide_html(
             ctx.fillStyle = '#fed7aa';
             ctx.fillRect(-6, 12, 12, 10);
 
-            // Cranium / Face (Proportional friendly oval)
+            // Cranium / Face (Cute proportional anime oval)
             ctx.fillStyle = '#fed7aa';
             ctx.beginPath();
             ctx.ellipse(0, 0, 20, 24, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Soft styled brown hair
-            ctx.fillStyle = '#382216';
-            ctx.beginPath();
-            ctx.arc(0, -6, 21, Math.PI * 0.8, Math.PI * 2.2);
-            ctx.fill();
+            // Hair & Accessories depending on Avatar
+            if (activeAvatar === 'girl') {{
+                // Cute chestnut twin-tails / bob
+                ctx.fillStyle = '#7c2d12';
+                // Back hair
+                ctx.beginPath();
+                ctx.arc(0, -6, 22, Math.PI * 0.7, Math.PI * 2.3);
+                ctx.fill();
+                // Twin-tails / side ponytails
+                const tailSway = Math.sin(animPhase * 1.5) * 4;
+                ctx.beginPath();
+                ctx.ellipse(-22, 6 + tailSway, 8, 18, -0.2, 0, Math.PI * 2);
+                ctx.ellipse(22, 6 - tailSway, 8, 18, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                // Cute hair clips
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(-18, -14, 6, 4);
+                ctx.fillRect(12, -14, 6, 4);
+                // Cute front bangs
+                ctx.fillStyle = '#7c2d12';
+                ctx.beginPath();
+                ctx.moveTo(-16, -12);
+                ctx.quadraticCurveTo(-4, 0, 16, -12);
+                ctx.quadraticCurveTo(0, -22, -16, -12);
+                ctx.fill();
+            }} else {{
+                // Cute styled brown hair
+                ctx.fillStyle = '#382216';
+                ctx.beginPath();
+                ctx.arc(0, -6, 21, Math.PI * 0.8, Math.PI * 2.2);
+                ctx.fill();
 
-            // Hair fringe sweeping across forehead
-            ctx.beginPath();
-            ctx.moveTo(-16, -12);
-            ctx.quadraticCurveTo(-2, -2, 16, -14);
-            ctx.quadraticCurveTo(4, -22, -16, -12);
-            ctx.fill();
+                // Hair fringe sweeping across forehead
+                ctx.beginPath();
+                ctx.moveTo(-16, -12);
+                ctx.quadraticCurveTo(-2, -2, 16, -14);
+                ctx.quadraticCurveTo(4, -22, -16, -12);
+                ctx.fill();
 
-            // Navigator Cap
-            ctx.fillStyle = '#0284c7';
-            ctx.beginPath();
-            ctx.ellipse(0, -18, 19, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            // Cap brim
-            ctx.fillStyle = '#0369a1';
-            ctx.beginPath();
-            ctx.ellipse(2, -16, 22, 4, 0.1, 0, Math.PI * 2);
-            ctx.fill();
+                // Navigator Cap
+                ctx.fillStyle = '#0284c7';
+                ctx.beginPath();
+                ctx.ellipse(0, -18, 19, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Cap brim
+                ctx.fillStyle = '#0369a1';
+                ctx.beginPath();
+                ctx.ellipse(2, -16, 22, 4, 0.1, 0, Math.PI * 2);
+                ctx.fill();
+            }}
 
-            // Expressive Eyes (Left & Right)
+            // Expressive Eyes (Left & Right) with Cute Highlights
             function drawEye(x) {{
                 if (isBlinking) {{
-                    // Blink line
+                    // Cute curved blink line
                     ctx.strokeStyle = '#382216';
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = 2.2;
                     ctx.beginPath();
-                    ctx.moveTo(x - 4, -2);
-                    ctx.lineTo(x + 4, -2);
+                    ctx.arc(x, -2, 4, 0.2, Math.PI - 0.2);
                     ctx.stroke();
                 }} else {{
                     // Sclera
                     ctx.fillStyle = '#ffffff';
                     ctx.beginPath();
-                    ctx.ellipse(x, -2, 4, 5, 0, 0, Math.PI * 2);
+                    ctx.ellipse(x, -2, 4.5, 5.5, 0, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Pupil / Iris
-                    ctx.fillStyle = '#0f172a';
+                    // Pupil / Iris (Large sparkling anime iris)
+                    ctx.fillStyle = activeAvatar === 'girl' ? '#4f46e5' : '#0369a1';
                     ctx.beginPath();
-                    ctx.arc(x + 0.5, -2, 2.8, 0, Math.PI * 2);
+                    ctx.arc(x + 0.3, -2, 3.2, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Specular highlight catchlight
+                    // Specular main highlight (Big sparkle)
                     ctx.fillStyle = '#ffffff';
                     ctx.beginPath();
-                    ctx.arc(x + 1.5, -3.2, 1.1, 0, Math.PI * 2);
+                    ctx.arc(x + 1.2, -3.2, 1.4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Secondary twinkle highlight
+                    ctx.beginPath();
+                    ctx.arc(x - 1.0, -1.0, 0.7, 0, Math.PI * 2);
                     ctx.fill();
                 }}
             }}
@@ -1088,20 +1336,19 @@ def build_always_visible_virtual_guide_html(
             ctx.strokeStyle = '#9f1239';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(0, 7, 6, 0.2, Math.PI - 0.2);
+            ctx.arc(0, 7, 5.5, 0.2, Math.PI - 0.2);
             ctx.stroke();
 
             // Cheerful blush dots
-            ctx.fillStyle = 'rgba(244, 114, 182, 0.45)';
+            ctx.fillStyle = 'rgba(244, 114, 182, 0.48)';
             ctx.beginPath();
-            ctx.arc(-11, 4, 3.5, 0, Math.PI * 2);
-            ctx.arc(11, 4, 3.5, 0, Math.PI * 2);
+            ctx.arc(-11, 4, 3.8, 0, Math.PI * 2);
+            ctx.arc(11, 4, 3.8, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.restore(); // end head
 
             // ARMS (Left & Right)
-            // Left arm swing (synchronized with right leg)
             let leftArmAngle = -rightLegAngle * 0.9;
             let rightArmAngle = -leftLegAngle * 0.9;
 
@@ -1110,7 +1357,7 @@ def build_always_visible_virtual_guide_html(
                 leftArmAngle = -2.2;
                 rightArmAngle = 2.2;
             }} else if (pointPhase > 0) {{
-                // Pointing right arm forward
+                // Pointing right arm forward in turn direction
                 rightArmAngle = -1.5;
             }}
 
@@ -1161,7 +1408,6 @@ def build_always_visible_virtual_guide_html(
         window.displayGuideSpeech = function(messageObj, forceShow) {{
             if (!messageObj || !messageObj.body_text) return;
 
-            // Check if already dismissed recently unless forced
             const bubble = document.getElementById('guide-thought-bubble');
             const headlineEl = document.getElementById('bubble-headline');
             const textEl = document.getElementById('bubble-message-text');
@@ -1170,7 +1416,6 @@ def build_always_visible_virtual_guide_html(
 
             if (!bubble || !textEl) return;
 
-            // Prevent repetitive notification loop on every page cycle
             if (!forceShow && currentMessageId === messageObj.id) return;
             currentMessageId = messageObj.id;
 
@@ -1181,7 +1426,6 @@ def build_always_visible_virtual_guide_html(
             // Open bubble smoothly
             bubble.classList.remove('bubble-dismissed');
 
-            // Set auto-dismiss timer
             if (activeTimer) clearTimeout(activeTimer);
 
             const duration = messageObj.duration_ms || Math.max(4200, Math.min(8500, messageObj.body_text.length * 75));
@@ -1209,6 +1453,26 @@ def build_always_visible_virtual_guide_html(
             if (activeTimer) clearTimeout(activeTimer);
         }};
 
+        // Avatar Switcher
+        window.switchAvatar = function(av) {{
+            activeAvatar = av;
+            const bBoy = document.getElementById('btn-avatar-boy');
+            const bGirl = document.getElementById('btn-avatar-girl');
+            if (bBoy && bGirl) {{
+                bBoy.classList.toggle('active', av === 'boy');
+                bGirl.classList.toggle('active', av === 'girl');
+            }}
+            // Hop happily upon selection!
+            if (jumpPhase <= 0) jumpPhase = 0.01;
+            window.displayGuideSpeech({{
+                id: 'MSG_AVATAR_' + Date.now(),
+                headline: av === 'girl' ? "Aura is Ready!" : "Leo is Ready!",
+                body_text: (av === 'girl' ? "Hi! I am Aura, your virtual companion. Let's travel together!" : "Hey! I am Leo. Ready to navigate in parallel with you!"),
+                duration_ms: 4500,
+                icon: av === 'girl' ? '👧' : '👦'
+            }}, true);
+        }};
+
         // =========================================================================
         // STATE CONTROLLER & MOVEMENT LOGIC
         // =========================================================================
@@ -1223,7 +1487,7 @@ def build_always_visible_virtual_guide_html(
             }}
         }};
 
-        // Interactive Demonstrations
+        // Programmatic Helper Demos (Preserved for tests & automated triggers)
         window.humanGuideWalkStep = function() {{
             window.setGuideState('WALKING', 'Walking Along Route');
             walkSpeed = 1.0;
@@ -1236,15 +1500,14 @@ def build_always_visible_virtual_guide_html(
             window.displayGuideSpeech({{
                 id: 'MSG_WALK_' + Date.now(),
                 headline: 'Walking Stride',
-                body_text: 'Following ' + (step.road_name || 'the road') + ' — ' + step.instruction_text,
+                body_text: 'Following ' + (step.road_name || 'the road') + ' — ' + (step.instruction_text || 'moving forward'),
                 duration_ms: 5000,
                 icon: '🚶‍♂️'
             }}, true);
 
-            // Advance step index after 4 seconds of walking
             setTimeout(() => {{
                 walkSpeed = 0;
-                window.setGuideState('IDLE', 'Standing Idle');
+                window.setGuideState('IDLE', 'Stationary (0.0 km/h)');
                 if (currentStepIdx < STEPS.length - 1) {{
                     currentStepIdx++;
                     updateTimelineProgress();
@@ -1330,9 +1593,13 @@ def build_always_visible_virtual_guide_html(
             }}, 500);
         }}
 
-        // Listen for parent messages or broadcast channel events
+        // =========================================================================
+        // SYNCHRONIZATION WITH SECTION 1 "MOVE IN PARALLEL" & TRAFFIC STOPS
+        // =========================================================================
         function handleGuideSyncEvent(data) {{
             if (!data) return;
+
+            // Update GPS / Satellite sensor status badge
             if (data.type === 'PATHFINDER_GPS_DETECTED') {{
                 const badge = document.getElementById('guide-gps-sync-badge');
                 if (badge) {{
@@ -1350,21 +1617,89 @@ def build_always_visible_virtual_guide_html(
                     icon: '🔄'
                 }}, true);
             }} else if (data.type === 'PATHFINDER_SYNC' || data.type === 'PATHFINDER_JOURNEY_SYNC') {{
+                const spd = (typeof data.speedKmh === 'number' ? data.speedKmh : (typeof data.speed_kmh === 'number' ? data.speed_kmh : (data.speed !== undefined ? Number(data.speed) : 0)));
+                const speedBadge = document.getElementById('telem-speed-badge');
+                if (speedBadge) speedBadge.innerText = spd.toFixed(1) + ' KM/H';
+
+                const syncStateEl = document.getElementById('telem-sync-state');
+                const syncModeText = document.getElementById('guide-sync-mode-text');
+
+                // STOP / TRAFFIC STOPPED
                 if (data.action === 'STOP' || data.state === 'TRAFFIC_STOPPED') {{
                     walkSpeed = 0;
                     targetTurnAngle = 0;
-                    window.setGuideState('IDLE', 'Stationary (0.0 km/h)');
+                    pointPhase = 0;
+                    window.setGuideState('IDLE', 'Stationary at Checkpoint (0.0 km/h)');
+                    if (syncStateEl) syncStateEl.innerText = '🛑 Traffic Stop Active (Standing By)';
+                    if (syncModeText) syncModeText.innerText = '🛑 STOPPED AT CHECKPOINT • Click "Move in Parallel" in Section 1 to Resume';
+                    window.displayGuideSpeech({{
+                        id: 'MSG_STOP_' + Date.now(),
+                        headline: 'Traffic Stop Active',
+                        body_text: 'Stationary at checkpoint — standing by safely until you resume movement.',
+                        duration_ms: 4500,
+                        icon: '🛑'
+                    }}, false);
+
+                // MOVE / MOVING IN PARALLEL
                 }} else if (data.action === 'MOVE' || data.state === 'MOVING') {{
-                    walkSpeed = 1.0;
-                    const spdText = (data.speed_kmh !== undefined ? Number(data.speed_kmh).toFixed(1) : '35.0');
+                    walkSpeed = spd > 15 ? 1.5 : 1.0;
+                    const spdText = spd > 0 ? spd.toFixed(1) : '15.0';
                     window.setGuideState('WALKING', 'Moving in Parallel (' + spdText + ' km/h)');
+                    if (syncStateEl) syncStateEl.innerText = '🟢 Traveling in Parallel with User (' + spdText + ' km/h)';
+                    if (syncModeText) syncModeText.innerText = '🟢 MOVING IN PARALLEL • Real-time Corridor Sync Active';
+
+                    // Update step index if provided
+                    if (typeof data.step === 'number' && data.step !== currentStepIdx && STEPS[data.step]) {{
+                        currentStepIdx = data.step;
+                        const curStepObj = STEPS[currentStepIdx];
+                        const roadEl = document.getElementById('guide-active-road');
+                        if (roadEl && curStepObj.road_name) roadEl.innerText = curStepObj.road_name;
+
+                        const telemInstr = document.getElementById('telem-instruction-text');
+                        if (telemInstr) telemInstr.innerText = curStepObj.instruction_text || ('Following ' + curStepObj.road_name);
+
+                        // If upcoming maneuver is a turn, trigger natural turning gesture!
+                        const isLeft = (curStepObj.instruction_text || '').toLowerCase().includes('left');
+                        const isRight = (curStepObj.instruction_text || '').toLowerCase().includes('right');
+                        if (isLeft || isRight) {{
+                            targetTurnAngle = isLeft ? -0.7 : 0.7;
+                            pointPhase = 1.0;
+                            setTimeout(() => {{ targetTurnAngle = 0; pointPhase = 0; }}, 2800);
+                        }} else {{
+                            // Hop happily on milestone passage!
+                            if (jumpPhase <= 0) jumpPhase = 0.01;
+                        }}
+
+                        window.displayGuideSpeech({{
+                            id: 'MSG_STEP_' + currentStepIdx + '_' + Date.now(),
+                            headline: curStepObj.road_name || 'Next Milestone',
+                            body_text: curStepObj.instruction_text || ('Following ' + curStepObj.road_name),
+                            duration_ms: 4500,
+                            icon: curStepObj.icon || '🚶‍♂️'
+                        }}, false);
+                    }}
+
+                // ARRIVED
                 }} else if (data.action === 'ARRIVED' || data.state === 'ARRIVED') {{
                     walkSpeed = 0;
+                    jumpPhase = 0.01;
                     window.setGuideState('ARRIVED', 'Arrived at Destination! 🏁');
+                    if (syncStateEl) syncStateEl.innerText = '🏆 Destination Reached';
+                    if (syncModeText) syncModeText.innerText = '🏆 ARRIVED AT DESTINATION • Safely Completed';
+                    window.displayGuideSpeech({{
+                        id: 'MSG_ARRIVED_SYNC_' + Date.now(),
+                        headline: 'Destination Reached!',
+                        body_text: "Congratulations! We've arrived safely at " + PAYLOAD.destName + "!",
+                        duration_ms: 6500,
+                        icon: '🏆'
+                    }}, true);
                 }}
-                if (typeof data.progress_pct === 'number') {{
+
+                // Progress update
+                const pPct = (data.progressPct !== undefined ? data.progressPct : (data.progress_pct !== undefined ? data.progress_pct : null));
+                if (typeof pPct === 'number') {{
                     const fill = document.getElementById('guide-progress-fill');
-                    if (fill) fill.style.width = Math.min(100, Math.max(0, data.progress_pct)) + '%';
+                    if (fill) fill.style.width = Math.min(100, Math.max(0, pPct)) + '%';
                 }}
             }}
         }}
@@ -1382,7 +1717,31 @@ def build_always_visible_virtual_guide_html(
             }}
         }} catch(e) {{}}
 
+        // Periodic localStorage check to ensure parallel sync across iframes
+        setInterval(function() {{
+            try {{
+                const rawState = localStorage.getItem('pathfinder_journey_sync_state');
+                if (rawState) {{
+                    const parsed = JSON.parse(rawState);
+                    if (parsed && parsed.timestamp && parsed.timestamp !== lastSyncTimestamp) {{
+                        lastSyncTimestamp = parsed.timestamp;
+                        handleGuideSyncEvent(parsed);
+                    }}
+                }}
+            }} catch(e) {{}}
+        }}, 350);
+
+        // Deduplication cache support
+        try {{
+            const seen = sessionStorage.getItem('dismissedMessageCache') || '[]';
+            const cache = JSON.parse(seen);
+            if (PAYLOAD.initialSpeech && cache.includes(PAYLOAD.initialSpeech.id)) {{
+                window.dismissGuideSpeech(false);
+            }}
+        }} catch(e) {{}}
+
         updateTimelineProgress();
     }})();
     </script>
     """
+
