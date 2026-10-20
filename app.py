@@ -1154,11 +1154,17 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 st.toast(f"🧭 Route calculated: {act.get('origin')} to {act.get('destination')}!", icon="🎯")
             elif act.get("type") == "update_preferences":
                 if "avoid_tolls" in act:
+                    st.session_state.avoid_tolls = bool(act["avoid_tolls"])
                     st.session_state.chk_avoid_tolls = bool(act["avoid_tolls"])
+                    st.session_state.chk_map_avoid_tolls = bool(act["avoid_tolls"])
                 if "avoid_highways" in act:
+                    st.session_state.avoid_highways = bool(act["avoid_highways"])
                     st.session_state.chk_avoid_highways = bool(act["avoid_highways"])
+                    st.session_state.chk_map_avoid_highways = bool(act["avoid_highways"])
                 if "avoid_ferries" in act:
+                    st.session_state.avoid_ferries = bool(act["avoid_ferries"])
                     st.session_state.chk_avoid_ferries = bool(act["avoid_ferries"])
+                    st.session_state.chk_map_avoid_ferries = bool(act["avoid_ferries"])
                 if "objective" in act and act["objective"]:
                     obj_map = {
                         "fastest": OptimizationObjective.FASTEST,
@@ -2773,18 +2779,21 @@ with tab_nav:
         ch_tolls = st.checkbox(f"💳 {t('nav.avoid_tolls')}", value=cur_tolls, key="chk_avoid_tolls")
         if ch_tolls != cur_tolls:
             st.session_state.avoid_tolls = ch_tolls
+            st.session_state.chk_map_avoid_tolls = ch_tolls
             st.rerun()
     with c_av2:
         cur_hw = st.session_state.get("avoid_highways", False)
         ch_hw = st.checkbox(f"🛣️ {t('nav.avoid_highways')}", value=cur_hw, key="chk_avoid_highways")
         if ch_hw != cur_hw:
             st.session_state.avoid_highways = ch_hw
+            st.session_state.chk_map_avoid_highways = ch_hw
             st.rerun()
     with c_av3:
         cur_ferry = st.session_state.get("avoid_ferries", False)
         ch_ferry = st.checkbox(f"⛴️ {t('nav.avoid_ferries')}", value=cur_ferry, key="chk_avoid_ferries")
         if ch_ferry != cur_ferry:
             st.session_state.avoid_ferries = ch_ferry
+            st.session_state.chk_map_avoid_ferries = ch_ferry
             st.rerun()
 
     coords_orig = st.session_state.user_live_coords
@@ -3177,19 +3186,25 @@ with tab_nav:
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
         c_av1, c_av2, c_av3 = st.columns(3)
         with c_av1:
-            new_toll = st.checkbox("Tolls", value=st.session_state.avoid_tolls, key="chk_avoid_tolls", help="Avoid Tolls")
-            if new_toll != st.session_state.avoid_tolls:
+            cur_map_toll = st.session_state.get("avoid_tolls", False)
+            new_toll = st.checkbox(f"💳 {t('nav.avoid_tolls')}", value=cur_map_toll, key="chk_map_avoid_tolls", help="Avoid Tolls")
+            if new_toll != cur_map_toll:
                 st.session_state.avoid_tolls = new_toll
+                st.session_state.chk_avoid_tolls = new_toll
                 st.rerun()
         with c_av2:
-            new_hwy = st.checkbox("Highways", value=st.session_state.avoid_highways, key="chk_avoid_highways", help="Avoid Highways")
-            if new_hwy != st.session_state.avoid_highways:
+            cur_map_hwy = st.session_state.get("avoid_highways", False)
+            new_hwy = st.checkbox(f"🛣️ {t('nav.avoid_highways')}", value=cur_map_hwy, key="chk_map_avoid_highways", help="Avoid Highways")
+            if new_hwy != cur_map_hwy:
                 st.session_state.avoid_highways = new_hwy
+                st.session_state.chk_avoid_highways = new_hwy
                 st.rerun()
         with c_av3:
-            new_ferry = st.checkbox("Ferries", value=st.session_state.avoid_ferries, key="chk_avoid_ferries", help="Avoid Ferries")
-            if new_ferry != st.session_state.avoid_ferries:
+            cur_map_ferry = st.session_state.get("avoid_ferries", False)
+            new_ferry = st.checkbox(f"⛴️ {t('nav.avoid_ferries')}", value=cur_map_ferry, key="chk_map_avoid_ferries", help="Avoid Ferries")
+            if new_ferry != cur_map_ferry:
                 st.session_state.avoid_ferries = new_ferry
+                st.session_state.chk_avoid_ferries = new_ferry
                 st.rerun()
 
     # Active Route On Map Banner (Shows which route is selected and highlighted)
