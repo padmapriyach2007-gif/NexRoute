@@ -523,32 +523,23 @@ def build_virtual_companion_hud_html(
             <!-- Rendered by client script -->
         </div>
 
-        <!-- Testing & Simulation Control Panel -->
+        <!-- Operational Controls Bar (Synchronized Movement Controls) -->
         <div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);'>
-            <div style='display: flex; align-items: center; gap: 6px; flex-wrap: wrap;'>
-                <button class='btn-ctrl btn-traffic' onclick='window.companionSimulateStop()' title='Traffic stop / red light — 0 km/h stationary state'>
-                    🛑 Traffic Stop <span style='opacity:0.7; font-size:0.60rem;'>(0 km/h)</span>
-                </button>
-                <button class='btn-ctrl btn-moving' onclick='window.companionSimulateWalk()' title='Walk forward step-by-step'>
-                    🚶 Walking
-                </button>
-                <button class='btn-ctrl btn-moving' onclick='window.companionSimulateMove()' title='Simulate moving in parallel at cruise speed'>
-                    🟢 Move in Parallel
-                </button>
-                <button class='btn-ctrl' onclick='window.companionSimulateTurn()' title='Approach intersection, brake, turn, resume'>
-                    ↩️ Approach &amp; Turn
-                </button>
-                <button class='btn-ctrl' onclick='window.companionSimulateArrival()' title='Complete journey and mark destination reached'>
-                    🏆 Complete Arrival
-                </button>
+            <div style='display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
+                <span id='companion-status-indicator' style='font-size: 0.74rem; color: #38bdf8; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;'>
+                    <span>🛰️</span> <span>SIMULATED ROUTE COMPANION</span>
+                </span>
+                <span id='companion-sync-mode-badge' style='background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.68rem; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.4); font-weight: 700;'>
+                    ● IN LOCKSTEP WITH RUNNER
+                </span>
             </div>
 
-            <div style='display: flex; align-items: center; gap: 6px;'>
-                <button id='btn-comp-pause' class='btn-ctrl' onclick='window.companionTogglePause()'>
-                    ⏸️ Pause
+            <div style='display: flex; align-items: center; gap: 8px;'>
+                <button id='btn-comp-traffic-stop' class='btn-ctrl btn-traffic' onclick='window.companionSimulateStop()' style='background: rgba(239, 68, 68, 0.22); border: 1.5px solid #ef4444; color: #fca5a5; font-weight: 800; padding: 6px 14px; border-radius: 6px; cursor: pointer;' title='Traffic Stop — Stop companion & vehicle (0.0 km/h)'>
+                    🛑 Traffic Stop (0 km/h)
                 </button>
-                <button class='btn-ctrl' onclick='window.companionRestart()'>
-                    🔁 Restart
+                <button id='btn-comp-move-parallel' class='btn-ctrl btn-moving' onclick='window.companionSimulateMove()' style='background: rgba(16, 185, 129, 0.22); border: 1.5px solid #10b981; color: #6ee7b7; font-weight: 800; padding: 6px 14px; border-radius: 6px; cursor: pointer;' title='Move in Parallel — Manually start or resume movement'>
+                    🟢 Move in Parallel
                 </button>
             </div>
         </div>
@@ -615,7 +606,7 @@ def build_virtual_companion_hud_html(
 
             const avatarIcon = document.getElementById('companion-avatar-icon');
             if (avatarIcon) {{
-                const isStopped = (state === 'TEMPORARILY_STOPPED' || state === 'TRAFFIC_DELAY' || state === 'PAUSED' || state === 'ARRIVED');
+                const isStopped = (state === 'TEMPORARILY_STOPPED' || state === 'TRAFFIC_STOPPED' || state === 'TRAFFIC_DELAY' || state === 'PAUSED' || state === 'ARRIVED' || state === 'ROUTE_READY' || state === 'READY');
                 if (isStopped) {{
                     avatarIcon.classList.remove('anim-active');
                     avatarIcon.classList.add('anim-paused');
@@ -655,7 +646,7 @@ def build_virtual_companion_hud_html(
 
         // Broadcast to Leaflet map or Google Maps component
         function broadcastCompanionPosition() {{
-            const pt = POLYLINE[Math.min(currentStepIdx, POLYLINE.length - 1)];
+            const pt = POLYLINE[Math.min(currentStepIdx, POLYLINE.length - 1)] || [0, 0];
             const payload = {{
                 type: 'PATHFINDER_COMPANION_UPDATE',
                 state: currentState,
@@ -675,67 +666,61 @@ def build_virtual_companion_hud_html(
             }} catch(e) {{}}
         }}
 
+        function broadcastJourneySync(action, state, speed) {{
+            const payload = {{
+                type: 'PATHFINDER_JOURNEY_SYNC',
+                action: action,
+                state: state,
+                step: currentStepIdx,
+                speedKmh: speed,
+                timestamp: Date.now()
+            }};
+            try {{ window.parent.postMessage(payload, '*'); }} catch(e) {{}}
+            try {{
+                if (window.BroadcastChannel) {{
+                    const bc = new BroadcastChannel('pathfinder_journey_sync');
+                    bc.postMessage(payload);
+                    bc.close();
+                }}
+            }} catch(e) {{}}
+        }}
+
         // Interactive simulation methods
         window.companionSimulateStop = function() {{
-            updateCompanionHUD('TEMPORARILY_STOPPED', 0.0, 600, 45);
-        }};
-
-        window.companionSimulateWalk = function() {{
-            // Step-by-step walking: slow pace, periodic step increments
-            updateCompanionHUD('WALKING', BASE_SPEED * 0.12, 600, 45);
-            let walkSteps = 0;
-            const walkInterval = setInterval(() => {{
-                walkSteps++;
-                // Animate avatar with turn on each step
-                const avatarEl = document.getElementById('companion-avatar-icon');
-                if (avatarEl) {{
-                    avatarEl.classList.add('anim-turning');
-                    setTimeout(() => avatarEl.classList.remove('anim-turning'), 600);
-                }}
-                if (walkSteps >= 4) {{
-                    clearInterval(walkInterval);
-                    // Auto-advance one step on the timeline
-                    if (currentStepIdx < STEPS.length - 1) {{
-                        STEPS[currentStepIdx].is_completed = true;
-                        currentStepIdx++;
-                    }}
-                    updateCompanionHUD('MOVING', BASE_SPEED, 450, 45);
-                }}
-            }}, 600);
+            updateCompanionHUD('TRAFFIC_STOPPED', 0.0, {total_distance_m}, 45);
+            broadcastJourneySync('STOP', 'TRAFFIC_STOPPED', 0.0);
         }};
 
         window.companionSimulateMove = function() {{
-            updateCompanionHUD('MOVING', BASE_SPEED, 450, 45);
+            updateCompanionHUD('MOVING', BASE_SPEED, {total_distance_m}, 45);
+            broadcastJourneySync('MOVE', 'MOVING', BASE_SPEED);
+        }};
+
+        // Legacy / automated test compatibility methods
+        window.companionSimulateWalk = function() {{
+            updateCompanionHUD('MOVING', BASE_SPEED * 0.15, {total_distance_m}, 45);
         }};
 
         window.companionSimulateTurn = function() {{
             updateCompanionHUD('APPROACHING_TURN', BASE_SPEED * 0.7, 30, 270);
             setTimeout(() => {{
-                updateCompanionHUD('TURNING', BASE_SPEED * 0.5, 10, 270);
-                setTimeout(() => {{
-                    if (currentStepIdx < STEPS.length - 1) {{
-                        STEPS[currentStepIdx].is_completed = true;
-                        currentStepIdx++;
-                    }}
-                    updateCompanionHUD('MOVING', BASE_SPEED, 250, 270);
-                }}, 1500);
-            }}, 1200);
+                updateCompanionHUD('MOVING', BASE_SPEED, 250, 270);
+            }}, 1000);
         }};
 
         window.companionSimulateArrival = function() {{
             STEPS.forEach(s => s.is_completed = true);
             currentStepIdx = STEPS.length - 1;
             updateCompanionHUD('ARRIVED', 0.0, 0, 90);
+            broadcastJourneySync('ARRIVED', 'ARRIVED', 0.0);
         }};
 
         window.companionTogglePause = function() {{
             isPaused = !isPaused;
-            const btn = document.getElementById('btn-comp-pause');
-            if (btn) btn.innerText = isPaused ? '▶️ Resume' : '⏸️ Pause';
             if (isPaused) {{
-                updateCompanionHUD('PAUSED', 0.0, 400, 45);
+                window.companionSimulateStop();
             }} else {{
-                updateCompanionHUD('MOVING', BASE_SPEED, 400, 45);
+                window.companionSimulateMove();
             }}
         }};
 
@@ -743,7 +728,7 @@ def build_virtual_companion_hud_html(
             STEPS.forEach(s => s.is_completed = false);
             currentStepIdx = 0;
             isPaused = false;
-            updateCompanionHUD('ROUTE_READY', 0.0, 1200, 45);
+            updateCompanionHUD('READY', 0.0, {total_distance_m}, 45);
         }};
 
         // Real Live Geolocation Watcher: Synchronizes in lockstep with real user GPS
@@ -761,7 +746,7 @@ def build_virtual_companion_hud_html(
                     }}
 
                     if (uSpeed <= 1.0) {{
-                        updateCompanionHUD('TEMPORARILY_STOPPED', 0.0, 400, null);
+                        updateCompanionHUD('TRAFFIC_STOPPED', 0.0, 400, null);
                     }} else {{
                         updateCompanionHUD('MOVING', uSpeed, 350, pos.coords.heading);
                     }}
@@ -771,9 +756,34 @@ def build_virtual_companion_hud_html(
             }} catch(e) {{}}
         }}
 
-        // Initialize HUD
+        // Listen for sync events from Virtual Runner or external triggers
+        function handleCompanionSync(data) {{
+            if (!data) return;
+            if (data.type === 'PATHFINDER_JOURNEY_SYNC' || data.type === 'PATHFINDER_SENSOR_COMMAND') {{
+                if (data.action === 'STOP' || data.state === 'TRAFFIC_STOPPED') {{
+                    updateCompanionHUD('TRAFFIC_STOPPED', 0.0, {total_distance_m}, 45);
+                }} else if (data.action === 'MOVE' || data.state === 'MOVING') {{
+                    const spd = (typeof data.speedKmh === 'number' && data.speedKmh > 0) ? data.speedKmh : BASE_SPEED;
+                    updateCompanionHUD('MOVING', spd, {total_distance_m}, 45);
+                }}
+                if (typeof data.step === 'number' && data.step >= 0 && data.step < STEPS.length) {{
+                    currentStepIdx = data.step;
+                    renderTimeline();
+                }}
+            }}
+        }}
+
+        window.addEventListener('message', function(ev) {{ handleCompanionSync(ev.data); }});
+        try {{
+            if (window.BroadcastChannel) {{
+                const compBc = new BroadcastChannel('pathfinder_journey_sync');
+                compBc.onmessage = function(ev) {{ handleCompanionSync(ev.data); }};
+            }}
+        }} catch(e) {{}}
+
+        // Initialize HUD in stationary state on load
         renderTimeline();
-        updateCompanionHUD(currentState, currentSpeed, {total_distance_m}, 45);
+        updateCompanionHUD(currentState, 0.0, {total_distance_m}, 45);
     }})();
     </script>
     """

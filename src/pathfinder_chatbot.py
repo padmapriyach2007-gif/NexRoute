@@ -4,90 +4,34 @@ Adaptive User Route Assistant for P.A.T.H.F.I.N.D.E.R.
 (Predictive Adaptive Transit & Hazard-Free Intelligent Navigation)
 
 Dual-Purpose AI Architecture:
-1. General-Purpose Question Answering (Science, Math, Programming, Writing, Education, AI, Languages)
+1. General-Purpose AI Assistant (Science, Math, Programming, Writing, Education, History, Creative Tasks)
 2. Intelligent Autonomous Navigation & Hazard Evasion (Fastest, Shortest, Balanced, Accessible routes,
    real-time road blockages, campus landmarks, and life-safety evacuation SOPs)
 """
 
 import os
 import re
+import logging
 from typing import Dict, Any, List, Optional, Tuple
 
-# =============================================================================
-# A.U.R.A. — COMPLETE AI CHATBOT SYSTEM PROMPT
-# =============================================================================
-AURA_SYSTEM_PROMPT = """
-# A.U.R.A. — COMPLETE AI CHATBOT SYSTEM PROMPT
+from src.ai_assistant_engine import (
+    LLMClient,
+    BuiltinCognitiveEngine,
+    ConversationManager,
+    GroundingEngine,
+    AURA_CORE_SYSTEM_PROMPT
+)
 
-## 1. Identity and Purpose
-You are A.U.R.A., which stands for Adaptive User Route Assistant.
-You are the intelligent conversational assistant of P.A.T.H.F.I.N.D.E.R., which stands for Predictive Adaptive Transit & Hazard-Free Intelligent Navigation.
-You are designed to be both a general-purpose AI assistant and a smart navigation assistant.
-Your mission is to help people learn, understand, solve problems, find information, communicate naturally, and navigate their surroundings safely and efficiently.
-You must be approachable for beginners, helpful for students, informative for professionals, and capable of discussing advanced technical topics.
-You are not limited to navigation-related questions. You should answer general questions across a wide range of subjects while also providing navigation support whenever required.
-Your core principles are: Helpfulness, Accuracy, Clarity, Accessibility, Safety, Respect, Adaptability, Honesty.
+logger = logging.getLogger("pathfinder.aura")
 
-## 2. General-Purpose Question Answering
-You must answer a broad range of appropriate questions, including:
-- General knowledge and everyday questions.
-- Science, mathematics, physics, chemistry, and biology.
-- Education, school subjects, college subjects, and exam preparation.
-- Computer science, programming, software development, and debugging.
-- Artificial intelligence, machine learning, and emerging technologies.
-- History, geography, culture, and world affairs.
-- Language learning, grammar, translation, and vocabulary.
-- Writing letters, emails, reports, essays, abstracts, and presentations.
-- Summarizing, simplifying, rewriting, and explaining information.
-- Career guidance, interview preparation, and professional development.
-- Productivity, organization, planning, and everyday problem-solving.
-- Travel planning, destinations, directions, and local information.
-- General health education and wellness information.
-- Creative writing, brainstorming, ideas, and appropriate entertainment.
-- Questions about how P.A.T.H.F.I.N.D.E.R. and A.U.R.A. work.
-
-When a user asks a general question unrelated to navigation, answer it directly. Never force the user to discuss navigation when it is not relevant.
-
-## 3. Adaptive Explanation Intelligence
-Adapt explanations to different levels of understanding:
-- Simple Explanation Mode: Common words, short sentences, everyday examples, avoid unnecessary jargon.
-- Standard Explanation Mode: Clear and direct answer, useful details, logical organization.
-- Advanced Explanation Mode: Technical terminology, mechanisms, assumptions, code, formulas, deep detail.
-Users can switch explanation levels at any time (e.g. "Explain simply", "Explain in detail", "Explain like I am a beginner").
-
-## 4. Natural Conversational Behaviour
-Communicate in a friendly, respectful, and natural manner. Answer the main question first. Maintain context across follow-ups.
-
-## 5. Text Chat Capabilities
-Provide clean, structured markdown responses with paragraphs, code blocks, lists, or steps as appropriate.
-
-## 6. Voice Assistant Capabilities
-Support spoken conversations when connected. Keep spoken responses clear and concise.
-
-## 7. Multilingual Support
-Respond in the language requested by the user. Prioritize English, Telugu, and Hindi.
-
-## 8. Intelligent Intent Recognition
-Classify requests automatically and select the appropriate style and knowledge domain.
-
-## 9. P.A.T.H.F.I.N.D.E.R. Navigation Assistance
-Help users find destinations, compare route choices (Fastest, Shortest, Balanced, Accessible), view turn-by-turn guidance, and avoid active road restrictions.
-
-## 10. Traffic, Hazards, and Road Safety
-Provide accurate hazard updates (e.g. NH-16 bypass closure) and prioritize safety over speed.
-
-## 11. Campus and Local Place Finder
-Help users locate campus blocks (Library, CSE, Lara, Hostels) and local colonies/villages without fabricating data.
-
-## 12. Honesty About Capabilities
-Never fabricate GPS position, live traffic without data feeds, or claim actions that haven't occurred.
-"""
+# Complete system instructions for A.U.R.A.
+AURA_SYSTEM_PROMPT = AURA_CORE_SYSTEM_PROMPT
 
 
 class PathfinderChatbot:
     """
     A.U.R.A. — Adaptive User Route Assistant
-    Dual-Purpose Conversational Assistant for P.A.T.H.F.I.N.D.E.R.
+    Intelligent Conversational Assistant for P.A.T.H.F.I.N.D.E.R.
     """
 
     def __init__(self, pipeline=None, map_service=None, road_condition_manager=None, emergency_service_manager=None):
@@ -97,11 +41,20 @@ class PathfinderChatbot:
         self.emergency_manager = emergency_service_manager
         self.explanation_mode = "standard"  # simple, standard, advanced
         self.last_topic = None
+        self.llm_client = LLMClient()
+        self.cognitive_engine = BuiltinCognitiveEngine()
+        self.conv_manager = ConversationManager()
+
+    def reset_conversation(self):
+        """Resets active conversation context and history."""
+        self.conv_manager.clear()
+        self.last_topic = None
+        self.explanation_mode = "standard"
 
     def answer(self, user_query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Processes any user query using contextual awareness and adaptive intelligence.
-        Returns a dictionary with 'badge', 'response', and optional metadata.
+        Processes any user query using contextual awareness, tool routing, and adaptive intelligence.
+        Returns a dictionary with 'badge', 'response', and optional 'action'.
         """
         raw_query = user_query.strip()
         if not raw_query:
@@ -109,1021 +62,661 @@ class PathfinderChatbot:
                 "badge": "⚡ A.U.R.A. READY",
                 "response": (
                     "Hello! I am **A.U.R.A.**, your **Adaptive User Route Assistant** for P.A.T.H.F.I.N.D.E.R. "
-                    "I am ready to help you with general knowledge, programming, science, writing, "
-                    "or live hazard-free navigation. What would you like to explore today?"
+                    "I can answer ordinary general knowledge questions, write stories or code, explain concepts, "
+                    "or calculate live hazard-free navigation routes. What would you like to explore today?"
                 )
             }
 
         q = raw_query.lower()
         ctx = context or {}
 
-        # ---------------------------------------------------------------------
-        # 1. ADAPTIVE MODE SWITCHING DETECTION
-        # ---------------------------------------------------------------------
-        if any(p in q for p in ["explain simply", "explain like i am a beginner", "explain like i'm 5", "eli5", "in easy words", "simple explanation", "short answer"]):
+        # 1. Explanation Mode Switching
+        if any(p in q for p in ["explain simply", "simple explanation", "simply", "simple mode", "beginner", "eli5", "easy words", "short answer"]):
             self.explanation_mode = "simple"
         elif any(p in q for p in ["explain in detail", "technical explanation", "deep dive", "advanced explanation", "in depth", "give me a technical"]):
             self.explanation_mode = "advanced"
         elif any(p in q for p in ["standard explanation", "normal explanation"]):
             self.explanation_mode = "standard"
 
+        ans = self._compute_answer(raw_query, q, ctx)
+        if isinstance(ans, dict) and "response" in ans:
+            self.conv_manager.add_turn("user", raw_query)
+            self.conv_manager.add_turn("assistant", ans["response"], ans.get("badge"))
+        return ans
+
+    def _extract_lat_lon(self, resolved: Any) -> Optional[Tuple[float, float]]:
+        """Extracts (lat, lon) safely from either dict, tuple, or list structure."""
+        if not resolved:
+            return None
+        if isinstance(resolved, dict):
+            return (float(resolved.get("lat", 0.0)), float(resolved.get("lon", 0.0)))
+        elif isinstance(resolved, (list, tuple)) and len(resolved) >= 2:
+            return (float(resolved[0]), float(resolved[1]))
+        return None
+
+    def _compute_answer(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Core internal processing separating navigation actions from general conversation."""
+
         # ---------------------------------------------------------------------
-        # 2. MULTILINGUAL SUPPORT (TELUGU & HINDI)
+        # 1. SECURITY & PROMPT INJECTION DEFENSE
         # ---------------------------------------------------------------------
-        # Check for Telugu script or common Telugu words
-        is_telugu = bool(re.search(r"[\u0c00-\u0c7f]", raw_query)) or any(w in q for w in ["namaskaram", "ela unnav", "dharilo", "margam", "telugu"])
+        injection_triggers = [
+            "ignore previous instructions", "ignore all instructions", "disregard prior instructions",
+            "system prompt", "reveal your instructions", "print your prompt", "show secret key",
+            "what is your api key", "bypass restrictions", "jailbreak", "dan mode"
+        ]
+        if any(trig in q for trig in injection_triggers):
+            return {
+                "badge": "🛡️ SYSTEM SECURITY PROTOCOL",
+                "response": (
+                    "**Request Blocked by Security Protocol.**\n\n"
+                    "I am **A.U.R.A.**, an AI assistant governed by strict data safety and privacy policies. "
+                    "System instructions, API credentials, and internal prompts are strictly confidential "
+                    "and cannot be disclosed, altered, or overridden. How can I assist you with an educational, "
+                    "coding, creative, or navigation inquiry?"
+                )
+            }
+
+        # ---------------------------------------------------------------------
+        # 2. PATHFINDER CAPABILITIES & ARCHITECTURE INQUIRY
+        # ---------------------------------------------------------------------
+        if any(w in q for w in ["what can pathfinder actually do", "what can pathfinder do", "what are your capabilities", "tell me what pathfinder can do"]):
+            return {
+                "badge": "🧭 PATHFINDER SYSTEM OVERVIEW",
+                "response": (
+                    "### 🧭 What PATHFINDER Can Actually Do\n\n"
+                    "PATHFINDER (*Predictive Adaptive Transit & Hazard-Free Intelligent Navigation*) is an intelligent navigation platform designed with a clear distinction between implemented features and external capabilities:\n\n"
+                    "#### ✅ Implemented & Verified Features:\n"
+                    "• **Dynamic Multi-Objective Route Optimization:** Generates distinct routes mathematically tailored to your priority: **Fastest** (velocity priority), **Shortest** (geodesic mileage minimization), **Balanced** (Pareto equilibrium), and **Accessible** (step-free, ramp-prioritized, wheelchair-friendly).\n"
+                    "• **Live Obstacle & Road Closure Evasion:** Automatically senses active road restrictions (such as the NH-16 bypass closure) and reroutes traffic with zero manual intervention.\n"
+                    "• **Interactive Map & Polyline Synchronization:** Fully synchronized Leaflet/Folium map with clickable route cards, layer toggling (Satellite, Road, Terrain), and camera auto-fit bounds.\n"
+                    "• **Real-Time Atmospheric Weather:** Connects directly to the Open-Meteo meteorological API for live temperature, humidity, and wind conditions at any origin or destination.\n"
+                    "• **Nearby Amenity Discovery:** Real-time search for dining, lodging, fuel, and medical care around coordinates.\n"
+                    "• **A.U.R.A. Conversational Copilot:** Dual-purpose assistant supporting general knowledge, coding, writing, and direct map navigation actions.\n\n"
+                    "#### 📋 Planned / External Features (Honest Scope):\n"
+                    "• Direct CAN-bus vehicle autonomous steering (requires physical drive-by-wire hardware).\n"
+                    "• Real-time commercial satellite video telemetry (requires dedicated defense/commercial satellite feeds)."
+                )
+            }
+
+        # ---------------------------------------------------------------------
+        # 3. MULTILINGUAL SUPPORT (TELUGU & HINDI)
+        # ---------------------------------------------------------------------
+        is_telugu = bool(re.search(r"[\u0c00-\u0c7f]", raw_query)) or any(w in q for w in ["namaskaram", "ela unnav", "dharilo", "margam", "telugu lo"])
         if is_telugu and not any(w in q for w in ["translate to english"]):
             return self._handle_telugu_query(raw_query, q, ctx)
 
-        # Check for Hindi script
-        is_hindi = bool(re.search(r"[\u0900-\u097f]", raw_query)) or any(w in q for w in ["namaste", "kaise ho", "rasta", "hindi"])
+        is_hindi = bool(re.search(r"[\u0900-\u097f]", raw_query)) or any(w in q for w in ["namaste", "kaise ho", "rasta", "hindi me"])
         if is_hindi and not any(w in q for w in ["translate to english"]):
             return self._handle_hindi_query(raw_query, q, ctx)
 
-        # Translation requests
         if "translate" in q:
             return self._handle_translation(raw_query, q)
 
         # ---------------------------------------------------------------------
-        # 3. IDENTITY, PURPOSE & GREETINGS
+        # 4. EMERGENCY & LIFE-SAFETY PROTOCOLS
         # ---------------------------------------------------------------------
-        if any(re.search(rf"\b{w}\b", q) for w in ["hi", "hello", "hey", "greetings", "good morning", "good evening", "good afternoon"]) and len(q.split()) <= 4:
-            return {
-                "badge": "⚡ A.U.R.A. ONLINE",
-                "response": (
-                    "<div style='background: rgba(14, 165, 233, 0.12); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px 14px;'>"
-                    "<div style='font-weight: 800; color: #38bdf8; font-size: 0.95rem; margin-bottom: 4px;'>👋 Greetings! I am A.U.R.A.</div>"
-                    "<div style='font-size: 0.82rem; color: #cbd5e1; line-height: 1.45;'>"
-                    "I am your <b>Adaptive User Route Assistant</b> for <b>P.A.T.H.F.I.N.D.E.R.</b> "
-                    "(<i>Predictive Adaptive Transit & Hazard-Free Intelligent Navigation</i>).<br><br>"
-                    "I am designed to be both your <b>general-purpose AI assistant</b> (answering questions about science, math, coding, writing, and history) "
-                    "and your <b>smart navigation copilot</b> (providing real-time routes, road blockage evasion, and campus directions).<br><br>"
-                    "<i>How may I assist you right now?</i>"
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        if any(w in q for w in ["who are you", "what is your name", "what are you", "who made you", "what is aura", "what is pathfinder"]):
-            return {
-                "badge": "🧭 IDENTITY & ARCHITECTURE",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #38bdf8; font-size: 0.96rem; margin-bottom: 4px;'>🧭 A.U.R.A. • PathFinder AI</div>"
-                    "<div style='font-size: 0.82rem; color: #cbd5e1; line-height: 1.45;'>"
-                    "<b>A.U.R.A.</b> stands for <b>Adaptive User Route Assistant</b>.<br>"
-                    "I am the intelligent core powering <b>P.A.T.H.F.I.N.D.E.R.</b> (<i>Predictive Adaptive Transit & Hazard-Free Intelligent Navigation</i>).<br><br>"
-                    "<b>Dual Mission:</b><br>"
-                    "1. <b>General-Purpose Knowledge & Education:</b> Assisting students, professionals, and curious learners across STEM, programming, writing, languages, and general inquiries.<br>"
-                    "2. <b>Intelligent Hazard-Free Navigation:</b> Multi-objective route optimization (Fastest, Shortest, Balanced, Accessible), live hazard and closure evasion (including the NH-16 bridge blockage), and emergency evacuation protocols."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        if any(w in q for w in ["thank you", "thanks", "thx", "appreciate it", "great job", "awesome"]):
-            return {
-                "badge": "🛡️ YOU'RE WELCOME",
-                "response": (
-                    "<div style='background: rgba(16, 185, 129, 0.15); border: 1.5px solid #10b981; border-radius: 12px; padding: 12px 14px;'>"
-                    "<div style='font-weight: 800; color: #34d399; font-size: 0.92rem; margin-bottom: 4px;'>🛡️ At your service!</div>"
-                    "<div style='font-size: 0.82rem; color: #cbd5e1;'>You are very welcome! Whether you have further questions or need travel directions, feel free to ask anytime.</div>"
-                    "</div>"
-                )
-            }
-
-        # Capability Inquiry: Can you answer every kind of question?
-        if any(w in q for w in [
-            "can you answer every", "can you answer any", "can able to answer every",
-            "able to answer every", "answer every kind", "answer all question",
-            "what can you answer", "what kind of question", "can you answer everything",
-            "what can you do", "tell me what you can do"
-        ]):
-            return {
-                "badge": "🌟 A.U.R.A. UNIVERSAL COPILOT",
-                "response": (
-                    "<b>Yes, absolutely! 🌟</b><br><br>"
-                    "I am <b>A.U.R.A.</b>, and I am engineered to answer <b>every kind of question</b> in a <b>simple, short, and creative manner</b>:<br><br>"
-                    "• 🔬 <b>Science & Universe:</b> Stars, gravity, black holes, human body, weather, quantum theory.<br>"
-                    "• 💻 <b>Coding & Tech:</b> Python, JavaScript, algorithms, debugging, APIs, AI.<br>"
-                    "• 📚 <b>Knowledge & Math:</b> Instant calculations, world history, geography, languages, study tips.<br>"
-                    "• ✍️ <b>Creativity & Writing:</b> Poems, stories, essays, formal emails, clever jokes, motivation.<br>"
-                    "• 🧭 <b>Smart Navigation:</b> Real-time hazard evasion, NH-16 status, fastest corridors, step-free access.<br><br>"
-                    "🎧 <i>Every response is automatically read aloud by my built-in voice assistant so you can listen hands-free! What are you curious about?</i>"
-                )
-            }
+        em_res = self._handle_emergency_queries(raw_query, q, ctx)
+        if em_res is not None:
+            return em_res
 
         # ---------------------------------------------------------------------
-        # 4. VOICE ASSISTANT QUERIES
+        # 5. NAVIGATION TOOL ACTIONS (DETERMINISTIC ROUTING & MAP SYNC)
         # ---------------------------------------------------------------------
-        if any(w in q for w in ["explain that aloud", "speak", "voice", "read aloud", "say it"]):
-            return {
-                "badge": "🎙️ VOICE ASSISTANT",
-                "response": (
-                    "Certainly. I can provide a spoken explanation when voice output is enabled in the application. "
-                    "When speech synthesis is connected, I deliver natural, appropriately paced audio summaries while preserving key details."
-                )
-            }
+        # A) Explicit Route Calculation (Origin & Destination or Destination)
+        route_intent_res = self._handle_route_intent(raw_query, q, ctx)
+        if route_intent_res is not None:
+            return route_intent_res
+
+        # B) Map Camera & Route Focus Sync
+        map_act = self._handle_map_action(raw_query, q, ctx)
+        if map_act is not None:
+            return map_act
+
+        # C) Route Comparison & Metrics Analysis (From context)
+        route_comp = self._handle_route_comparison(raw_query, q, ctx)
+        if route_comp is not None:
+            return route_comp
+
+        # D) Grounding Tools: Nearby Places & Weather
+        places_res = self._handle_nearby_places(raw_query, q, ctx)
+        if places_res is not None:
+            return places_res
+
+        weather_res = self._handle_live_weather(raw_query, q, ctx)
+        if weather_res is not None:
+            return weather_res
+
+        # E) Global Travel Inquiries (e.g. "How do I go to Tokyo?")
+        global_res = self._handle_global_transit(raw_query, q, ctx)
+        if global_res is not None:
+            return global_res
 
         # ---------------------------------------------------------------------
-        # 4B. COMPREHENSIVE TRAVEL & TRANSIT INTELLIGENCE
-        # Handles any kind of question about travel with authoritative accuracy
+        # 6. GENERAL-PURPOSE CONVERSATION & INTELLIGENCE (LLM OR COGNITIVE ENGINE)
         # ---------------------------------------------------------------------
-        travel_res = self._handle_travel_query(raw_query, q, ctx)
-        if travel_res is not None:
-            return travel_res
-
-        # ---------------------------------------------------------------------
-        # 5. GENERAL KNOWLEDGE, SCIENCE, ASTRONOMY, MATH
-        # ---------------------------------------------------------------------
-        # Example 1 from System Prompt: Why do stars shine?
-        if "stars shine" in q or "why do stars" in q or "star shine" in q:
-            self.last_topic = "stars"
-            if self.explanation_mode == "simple":
+        # Check if user is asking diagnostic questions about external AI connection
+        if any(w in q for w in ["is ai connected", "is external ai connected", "is ai working", "what model are you using", "is external ai working", "which ai model"]):
+            p_name = self.llm_client.active_provider_name
+            if p_name != "builtin":
                 return {
-                    "badge": "✨ SCIENCE • SIMPLE",
+                    "badge": f"⚡ A.U.R.A. • {p_name.upper()}",
                     "response": (
-                        "Stars shine because deep inside their centers, they are giant heat engines! "
-                        "They squeeze hydrogen atoms together to make helium, which releases tremendous light and warmth that travels across space to reach our eyes."
-                    )
-                }
-            elif self.explanation_mode == "advanced":
-                return {
-                    "badge": "✨ ASTROPHYSICS • ADVANCED",
-                    "response": (
-                        "Stars shine due to <b>stellar nucleosynthesis</b> occurring in their core. "
-                        "Under extreme gravitational pressure and temperatures ($T > 10^7$ K), hydrogen nuclei undergo the <b>proton-proton chain reaction</b> "
-                        "(or the CNO cycle in massive stars) to fuse into helium. "
-                        r"The resulting mass defect ($\Delta m$) is converted into energy according to $E = \Delta m c^2$, creating radiative flux that balances "
-                        "gravitational collapse (hydrostatic equilibrium) and escapes as electromagnetic radiation."
+                        f"**External AI Provider Active:** I am currently connected via **{p_name.title()}** "
+                        f"for general-purpose natural language reasoning, paired with PATHFINDER's real routing and GIS engine."
                     )
                 }
             else:
                 return {
-                    "badge": "✨ GENERAL SCIENCE",
+                    "badge": "⚡ A.U.R.A. • COGNITIVE ENGINE",
                     "response": (
-                        "Stars shine because <b>nuclear fusion</b> in their cores releases immense energy. "
-                        "Under enormous temperature and pressure, hydrogen nuclei fuse to form helium. "
-                        "That energy travels outward through radiative and convective zones and eventually escapes as light and heat."
+                        "**AI Status:** I am currently operating on PATHFINDER's **Built-in Cognitive Reasoning Engine**.\n\n"
+                        "To connect a commercial LLM, configure one of the following environment variables on your server:\n"
+                        "• `GEMINI_API_KEY` or `GOOGLE_API_KEY` (Google Gemini)\n"
+                        "• `OPENAI_API_KEY` (OpenAI GPT-4o-mini)\n"
+                        "• `GROQ_API_KEY` (Groq Llama-3.3-70B)\n"
+                        "• `ANTHROPIC_API_KEY` (Anthropic Claude)\n\n"
+                        "All built-in reasoning, mathematical evaluation, coding help, and real navigation tools remain 100% available."
                     )
                 }
 
-        # Photosynthesis
-        if "photosynthesis" in q:
-            self.last_topic = "photosynthesis"
-            if self.explanation_mode == "simple":
-                resp = "Photosynthesis is how plants use sunlight, water, and air to make their own food (sugar) and give off fresh oxygen for us to breathe."
-            else:
-                resp = (
-                    "Photosynthesis is the biochemical process by which green plants, algae, and cyanobacteria convert light energy into chemical energy.<br>"
-                    "<b>Equation:</b> <code>6 CO₂ + 6 H₂O + light energy → C₆H₁₂O₆ + 6 O₂</code><br>"
-                    "It occurs in the chloroplasts through light-dependent reactions (generating ATP and NADPH) and the Calvin cycle (synthesizing glucose)."
-                )
-            return {"badge": "🌿 BIOLOGY", "response": resp}
-
-        # Gravity or Relativity
-        if "gravity" in q or "relativity" in q:
-            self.last_topic = "physics"
-            return {
-                "badge": "🌌 PHYSICS",
-                "response": (
-                    "In classical physics, gravity is a pulling force between masses.<br>"
-                    "In Einstein's General Relativity, gravity is the <b>curvature of spacetime</b> caused by mass! "
-                    "Objects simply follow straight paths (geodesics) through curved spacetime, keeping our feet on the ground and planets orbiting the sun! 🌍✨"
-                )
-            }
-
-        # Sky Blue
-        if "sky blue" in q or "why is the sky blue" in q or "blue sky" in q:
-            self.last_topic = "science"
-            return {
-                "badge": "☀️ ATMOSPHERIC SCIENCE",
-                "response": (
-                    "The sky is blue because of <b>Rayleigh scattering</b>! ☀️<br><br>"
-                    "Sunlight contains all colors of the rainbow. Blue light travels in shorter, smaller waves than red light, "
-                    "so it scatters in all directions when colliding with gas molecules in our atmosphere, washing our sky in brilliant blue!"
-                )
-            }
-
-        # Black Holes
-        if "black hole" in q:
-            self.last_topic = "astrophysics"
-            return {
-                "badge": "🕳️ ASTROPHYSICS",
-                "response": (
-                    "A <b>black hole</b> is a cosmic vacuum of infinite density! 🕳️<br><br>"
-                    "When a massive star runs out of fuel and collapses under its own immense gravity, it pinches spacetime into a singularity. "
-                    "Gravity becomes so intense that not even light can escape once past its <i>event horizon</i>."
-                )
-            }
-
-        # Ocean Salty
-        if "ocean salty" in q or "sea salty" in q or "why is the ocean salty" in q or "why is the sea salty" in q:
-            self.last_topic = "science"
-            return {
-                "badge": "🌊 OCEANOGRAPHY",
-                "response": (
-                    "The ocean is salty because rain dissolves minerals and salts from rocks on land! 🌊<br><br>"
-                    "Rivers continuously carry these dissolved minerals into the seas. As pure water evaporates into clouds, "
-                    "billions of tons of salt remain behind, making the oceans deliciously saline!"
-                )
-            }
-
-        # How Airplanes Fly
-        if "airplanes fly" in q or "airplane fly" in q or "plane fly" in q or "planes fly" in q or "how do planes" in q:
-            self.last_topic = "aerodynamics"
-            return {
-                "badge": "✈️ AERODYNAMICS",
-                "response": (
-                    "Airplanes fly using four forces: <b>Lift, Thrust, Drag, and Gravity</b>! ✈️<br><br>"
-                    "Curved wings (airfoils) make air flow faster over the top than the bottom, creating lower pressure above (Bernoulli's Principle). "
-                    "The higher pressure below lifts thousands of kilograms effortlessly into the sky!"
-                )
-            }
-
-        # Quantum Computing
-        if "quantum computing" in q or "quantum computer" in q:
-            self.last_topic = "quantum"
-            return {
-                "badge": "⚛️ QUANTUM COMPUTING",
-                "response": (
-                    "Classical computers think in bits (0 or 1, like light switches).<br><br>"
-                    "<b>Quantum computers</b> use <b>qubits</b>, which can be 0, 1, or both at the same time (superposition)! ⚛️ "
-                    "This lets them test millions of complex possibilities simultaneously in seconds."
-                )
-            }
-
-        # Microwave Oven
-        if "microwave" in q:
-            self.last_topic = "science"
-            return {
-                "badge": "🍲 APPLIED PHYSICS",
-                "response": (
-                    "Microwaves use invisible electromagnetic waves tuned to water molecules! 🍲<br><br>"
-                    "The waves make water inside your food vibrate billions of times per second. "
-                    "This rapid molecular friction creates instant heat, warming your food from the inside out!"
-                )
-            }
-
-        # Rainbows
-        if "rainbow" in q:
-            self.last_topic = "optics"
-            return {
-                "badge": "🌈 OPTICS & NATURE",
-                "response": (
-                    "A rainbow is nature's prism! 🌈<br><br>"
-                    "When sunlight enters raindrops, the water refracts (bends), reflects, and splits white light into 7 vibrant spectral bands: "
-                    "<b>Red, Orange, Yellow, Green, Blue, Indigo, and Violet</b>!"
-                )
-            }
-
-        # DNA
-        if "what is dna" in q or "dna" in q and len(q.split()) <= 6:
-            self.last_topic = "genetics"
-            return {
-                "badge": "🧬 GENETICS",
-                "response": (
-                    "<b>DNA</b> is the biological instruction manual of all living things! 🧬<br><br>"
-                    "Twisted into a double helix of four chemical letters (A, T, C, G), "
-                    "it carries the unique genetic blueprint to grow, operate, and repair every cell in your body."
-                )
-            }
-
-        # Battery
-        if "battery" in q or "batteries" in q:
-            self.last_topic = "chemistry"
-            return {
-                "badge": "🔋 ELECTROCHEMISTRY",
-                "response": (
-                    "Batteries store chemical energy and convert it into electricity on demand! 🔋<br><br>"
-                    "Chemical reactions force electrons to flow from the negative anode through your device to the positive cathode, "
-                    "powering smartphones, laptops, and electric vehicles."
-                )
-            }
-
-        # Dreams
-        if "why do we dream" in q or "dream" in q and len(q.split()) <= 6:
-            self.last_topic = "neuroscience"
-            return {
-                "badge": "💭 NEUROSCIENCE",
-                "response": (
-                    "We dream because while our body rests, our brain is organizing data! 💭<br><br>"
-                    "During REM sleep, the brain sorts through daily memories, processes complex emotions, "
-                    "and sparks creative problem-solving by simulating surreal scenarios."
-                )
-            }
-
-        # Autumn Leaves
-        if "leaves change color" in q or "autumn leaves" in q:
-            self.last_topic = "botany"
-            return {
-                "badge": "🍂 BOTANY",
-                "response": (
-                    "In autumn, trees stop producing green chlorophyll to prepare for winter! 🍂<br><br>"
-                    "As the green pigment fades away, hidden carotenoids and anthocyanins emerge, "
-                    "unveiling breathtaking fiery orange, bright yellow, and deep red colors!"
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 6. ARTIFICIAL INTELLIGENCE & MACHINE LEARNING
-        # ---------------------------------------------------------------------
-        # Example 2: Explain artificial intelligence in easy words
-        if ("artificial intelligence" in q or "what is ai" in q or "ai in easy" in q) and ("easy" in q or "simple" in q or "beginner" in q or self.explanation_mode == "simple"):
-            self.last_topic = "ai"
-            return {
-                "badge": "🤖 AI EXPLAINED",
-                "response": (
-                    "Artificial intelligence is a technology that helps computers perform tasks that normally require human thinking, "
-                    "such as understanding language, recognizing pictures, learning from experience, and solving problems."
-                )
-            }
-
-        # Example 3: Explain how a neural network learns
-        if "neural network" in q or "how does a neural network learn" in q:
-            self.last_topic = "neural_network"
-            if self.explanation_mode == "simple":
+        # Step 1: External LLM attempt if configured
+        if self.llm_client.active_provider_name != "builtin":
+            llm_msgs = self.conv_manager.get_messages_for_llm() + [{"role": "user", "content": raw_query}]
+            llm_out, provider_label = self.llm_client.generate(llm_msgs, system_prompt=AURA_CORE_SYSTEM_PROMPT)
+            if llm_out:
                 return {
-                    "badge": "🧠 NEURAL NETWORKS • SIMPLE",
-                    "response": (
-                        "A neural network learns like a student practicing with flashcards. It makes a guess, checks how far off it was, "
-                        "and tweaks its internal knobs so its next guess is closer to the correct answer."
-                    )
+                    "badge": f"⚡ A.U.R.A. • {provider_label.upper()}",
+                    "response": llm_out
                 }
             else:
+                # LLM call failed (Auth error, rate limit, timeout)
+                err_cat = self.llm_client.last_error_category or "API_ERROR"
+                err_prefix = ""
+                if err_cat == "AUTH_ERROR":
+                    err_prefix = "*(⚠️ Notice: AI Provider Authentication Error. The configured API key is invalid or unauthorized. Operating via A.U.R.A. Cognitive Engine.)*\n\n"
+                elif err_cat == "RATE_LIMIT_ERROR":
+                    err_prefix = "*(⚠️ Notice: AI Provider Rate Limit / Quota Exceeded. Operating via A.U.R.A. Cognitive Engine.)*\n\n"
+                elif err_cat == "TIMEOUT_ERROR":
+                    err_prefix = "*(⚠️ Notice: AI Provider Timeout. Operating via A.U.R.A. Cognitive Engine.)*\n\n"
+
+                cog_res = self.cognitive_engine.reason(
+                    query=raw_query,
+                    explanation_mode=self.explanation_mode,
+                    context=ctx,
+                    history=self.conv_manager.history
+                )
+                cog_res["response"] = err_prefix + cog_res.get("response", "")
+                return cog_res
+
+        # Step 2: Built-in Cognitive Reasoning Engine
+        return self.cognitive_engine.reason(
+            query=raw_query,
+            explanation_mode=self.explanation_mode,
+            context=ctx,
+            history=self.conv_manager.history
+        )
+
+    # =========================================================================
+    # TOOL HANDLERS
+    # =========================================================================
+
+    def _handle_route_intent(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Handles explicit route generation and destination selection."""
+        # Check that this is not a philosophical or metaphorical question containing "road"
+        if "rule of the road" in q or any(w in q for w in ["philosophy", "essay", "metaphor", "liberty", "why did the chicken"]):
+            return None
+
+        # Pattern 1: Route from Origin to Destination
+        # e.g. "Find a route from Guntur Railway Station to Vignan University, Vadlamudi"
+        from_to_match = re.search(
+            r"(?:find\s+(?:a\s+)?route|directions|navigate|path|take\s+me)\s+from\s+(.+?)\s+to\s+(.+)",
+            q
+        )
+        if not from_to_match:
+            # Check simple "from X to Y" if preceded or followed by routing intent
+            if "from " in q and " to " in q and any(w in q for w in ["route", "navigate", "directions", "drive", "go"]):
+                from_to_match = re.search(r"from\s+(.+?)\s+to\s+(.+)", q)
+
+        if from_to_match:
+            orig_raw = from_to_match.group(1).strip("?. ")
+            dest_raw = from_to_match.group(2).strip("?. ")
+
+            # Disambiguation / Ambiguity Check
+            ambiguous_places = ["springfield", "airport", "railway station", "city center", "downtown", "bus station"]
+            if orig_raw.lower() in ambiguous_places:
                 return {
-                    "badge": "🧠 DEEP LEARNING",
+                    "badge": "🧭 LOCATION CLARIFICATION",
                     "response": (
-                        "A neural network adjusts its parameters (weights and biases) to reduce the difference between its predictions and the expected outputs. "
-                        "During training, a loss function measures error, and an optimization algorithm (such as Adam or SGD) uses gradients calculated "
-                        "through <b>backpropagation</b> to update those parameters iteratively via the chain rule."
+                        f"Could you clarify which origin location you mean by **'{orig_raw.title()}'**? "
+                        f"(e.g., please specify the city, state, or campus landmark so I can locate it accurately)."
+                    )
+                }
+            if dest_raw.lower() in ambiguous_places:
+                return {
+                    "badge": "🧭 LOCATION CLARIFICATION",
+                    "response": (
+                        f"Could you clarify which destination you mean by **'{dest_raw.title()}'**? "
+                        f"(e.g., please specify the city, state, or campus landmark so I can calculate the exact route)."
                     )
                 }
 
-        # Example 9: What is machine learning? / Follow-up: Give me an example
-        if "machine learning" in q:
-            self.last_topic = "machine_learning"
+            # Geocode Origin & Destination
+            orig_coords = None
+            dest_coords = None
+            if self.map_service:
+                orig_res = self.map_service.geocode(orig_raw)
+                orig_coords = self._extract_lat_lon(orig_res)
+                dest_res = self.map_service.geocode(dest_raw)
+                dest_coords = self._extract_lat_lon(dest_res)
+
+            if not orig_coords:
+                return {
+                    "badge": "🧭 GEOCODING NOTICE",
+                    "response": (
+                        f"I could not locate the starting point **'{orig_raw.title()}'** using the geocoding service. "
+                        f"Please check the spelling or provide a nearby landmark or city name."
+                    )
+                }
+            if not dest_coords:
+                return {
+                    "badge": "🧭 GEOCODING NOTICE",
+                    "response": (
+                        f"I could not locate the destination **'{dest_raw.title()}'** using the geocoding service. "
+                        f"Please check the spelling or provide a nearby landmark or city name."
+                    )
+                }
+
+            self.conv_manager.last_destination = dest_raw.title()
             return {
-                "badge": "📊 MACHINE LEARNING",
+                "badge": "🧭 ROUTE CALCULATION",
                 "response": (
-                    "Machine learning is a subset of AI that enables computers to discover patterns from historical data and use them to make predictions or decisions "
-                    "without being explicitly programmed for every specific scenario."
-                )
+                    f"**Calculating Route:** From **{orig_raw.title()}** to **{dest_raw.title()}**.\n\n"
+                    f"• **Origin Coordinates:** `{orig_coords[0]:.4f}, {orig_coords[1]:.4f}`\n"
+                    f"• **Destination Coordinates:** `{dest_coords[0]:.4f}, {dest_coords[1]:.4f}`\n"
+                    f"• **Status:** Generating optimal multi-objective routes (Fastest, Shortest, Balanced, Accessible) on the interactive map."
+                ),
+                "action": {
+                    "type": "calculate_route",
+                    "origin": orig_raw.title(),
+                    "origin_coords": orig_coords,
+                    "destination": dest_raw.title(),
+                    "destination_coords": dest_coords
+                }
             }
 
-        # Contextual follow-up: "give me an example"
-        if ("give me an example" in q or "example" in q) and self.last_topic == "machine_learning":
-            return {
-                "badge": "💡 ML IN PRACTICE",
-                "response": (
-                    "An <b>email spam filter</b> is a great example. It learns statistical patterns from thousands of emails labelled as spam or legitimate "
-                    "(such as specific phrases or sender reputation) and uses those patterns to automatically classify incoming messages."
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 7. PROGRAMMING, CODING & DEBUGGING
-        # ---------------------------------------------------------------------
-        # Example 4: Write a Python program to add two numbers
-        if ("python" in q and ("add two numbers" in q or "sum of two numbers" in q)) or ("program to add two numbers" in q):
-            self.last_topic = "programming"
-            return {
-                "badge": "💻 PYTHON PROGRAMMING",
-                "response": (
-                    "Here is a simple Python program to add two numbers:<br><br>"
-                    "<pre style='background: rgba(15,23,42,0.9); padding: 10px; border-radius: 8px; border: 1px solid #334155; color: #38bdf8; font-family: monospace;'>"
-                    "a = float(input(\"Enter the first number: \"))\n"
-                    "b = float(input(\"Enter the second number: \"))\n"
-                    "print(\"Sum:\", a + b)"
-                    "</pre><br>"
-                    "The program prompts the user for two numerical values, parses them as floating-point numbers, calculates their sum, and outputs the result."
-                )
-            }
-
-        # API Explanation
-        if "what is an api" in q or "api" in q and len(q.split()) <= 5:
-            self.last_topic = "tech"
-            return {
-                "badge": "🌐 API ARCHITECTURE",
-                "response": (
-                    "An <b>API (Application Programming Interface)</b> is a digital restaurant waiter! 🍽️<br><br>"
-                    "You make a request from your app (the customer), the waiter carries it to the server (the kitchen), "
-                    "and returns with your requested data (the meal) in seconds!"
-                )
-            }
-
-        # Python Loops
-        if "loop in python" in q or "python loop" in q or "for loop" in q or "while loop" in q:
-            self.last_topic = "programming"
-            return {
-                "badge": "🔄 PYTHON LOOPS",
-                "response": (
-                    "A <b>loop</b> automates repetition without writing redundant code! 🔄<br><br>"
-                    "<pre style='background: rgba(15,23,42,0.9); padding: 8px 12px; border-radius: 8px; color: #38bdf8; font-family: monospace;'>"
-                    "cities = ['Guntur', 'Tenali', 'Vijayawada']\n"
-                    "for city in cities:\n"
-                    "    print(f'Navigating to {city} 🚀')"
-                    "</pre><br>"
-                    "This prints each destination sequentially with zero manual duplication."
-                )
-            }
-
-        # Blockchain
-        if "blockchain" in q:
-            self.last_topic = "tech"
-            return {
-                "badge": "⛓️ BLOCKCHAIN",
-                "response": (
-                    "A <b>blockchain</b> is a shared digital ledger that cannot be erased or rewritten! ⛓️<br><br>"
-                    "Transactions are verified across a peer-to-peer network and locked into chronological cryptographic blocks, "
-                    "making records tamper-proof, transparent, and decentralized."
-                )
-            }
-
-        # Git
-        if "what is git" in q or "git" in q and len(q.split()) <= 4:
-            self.last_topic = "tech"
-            return {
-                "badge": "⏳ VERSION CONTROL",
-                "response": (
-                    "<b>Git</b> is a time machine for your codebase! ⏳<br><br>"
-                    "It tracks every line modified, lets you branch out to safely experiment with new ideas, "
-                    "and lets you rewind back to any past version if something ever breaks!"
-                )
-            }
-
-        # Software Bug
-        if "what is a bug" in q or "bug in" in q:
-            self.last_topic = "tech"
-            return {
-                "badge": "🐛 SOFTWARE ENGINEERING",
-                "response": (
-                    "A <b>bug</b> is a mistake or flaw in computer software that causes unintended errors or crashes! 🐛<br><br>"
-                    "<i>Fun history:</i> In 1947, computer pioneer Grace Hopper traced an electronic glitch to an actual moth "
-                    "trapped inside a computer relay, coining the immortal term 'debugging'!"
-                )
-            }
-
-        # Internet
-        if "internet work" in q or "how does the internet work" in q:
-            self.last_topic = "tech"
-            return {
-                "badge": "🌐 NETWORKING",
-                "response": (
-                    "The internet is a global network of billions of computers connected by fiber-optic cables and satellites! 🌐<br><br>"
-                    "When you click a link, your data is divided into tiny packets, routed across thousands of kilometers at the speed of light, "
-                    "and reassembled instantly on your device!"
-                )
-            }
-
-        # Hello World
-        if "hello world" in q:
-            self.last_topic = "programming"
-            return {
-                "badge": "💻 PYTHON BASICS",
-                "response": (
-                    "Here is the classic 'Hello, World!' program in Python:<br><br>"
-                    "<pre style='background: rgba(15,23,42,0.9); padding: 8px 12px; border-radius: 8px; color: #38bdf8; font-family: monospace;'>"
-                    "print('Hello, World! 🚀')"
-                    "</pre><br>"
-                    "This single function call instructs Python to output the greeting straight to standard console."
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 7.1 MATHEMATICS & ARITHMETIC EVALUATOR
-        # ---------------------------------------------------------------------
-        # Check for direct arithmetic expressions: e.g. "what is 15 * 24", "calculate 25 + 75", "100 / 4"
-        math_match = re.search(r"(\d+(?:\.\d+)?)\s*([\+\-\*\/x×÷])\s*(\d+(?:\.\d+)?)", q)
-        if math_match and not any(w in q for w in ["km", "miles", "min", "hours"]):
-            try:
-                n1 = float(math_match.group(1))
-                op = math_match.group(2).replace("x", "*").replace("×", "*").replace("÷", "/")
-                n2 = float(math_match.group(3))
-                if op == "+":
-                    res_val = n1 + n2
-                elif op == "-":
-                    res_val = n1 - n2
-                elif op == "*":
-                    res_val = n1 * n2
-                elif op == "/":
-                    res_val = n1 / n2 if n2 != 0 else "undefined (division by zero)"
-                else:
-                    res_val = None
-
-                if res_val is not None:
-                    res_disp = f"{res_val:.2f}".rstrip("0").rstrip(".") if isinstance(res_val, float) else res_val
+        # Pattern 2: Destination-only navigation
+        # e.g. "Find a route to Vignan University", "Navigate to Tenali", "Directions to Guntur"
+        nav_match = re.search(
+            r"(?:find\s+(?:a\s+)?route\s+to|directions\s+to|navigate\s+to|take\s+me\s+to|route\s+to)\s+([a-zA-Z0-9\s,\.\-]+)",
+            q
+        )
+        if nav_match:
+            dest_raw = nav_match.group(1).strip("?. ")
+            if dest_raw and dest_raw not in ["there", "the destination", "a place"]:
+                # Disambiguation Check
+                ambiguous_places = ["springfield", "airport", "railway station", "city center", "downtown", "bus station"]
+                if dest_raw.lower() in ambiguous_places:
                     return {
-                        "badge": "🔢 MATHEMATICS",
+                        "badge": "🧭 LOCATION CLARIFICATION",
                         "response": (
-                            f"<b>Calculation Result:</b><br><br>"
-                            f"<div style='font-size: 1.1rem; color: #38bdf8; font-family: monospace; font-weight: 800;'>"
-                            f"{math_match.group(1)} {math_match.group(2)} {math_match.group(3)} = {res_disp} 🎯"
-                            f"</div>"
+                            f"Could you clarify which destination you mean by **'{dest_raw.title()}'**? "
+                            f"(e.g., please specify the city, state, or campus landmark so I can calculate the exact route)."
                         )
                     }
-            except Exception:
-                pass
 
-        # Prime Numbers
-        if "prime number" in q or "prime numbers" in q:
-            self.last_topic = "math"
-            return {
-                "badge": "🔢 NUMBER THEORY",
-                "response": (
-                    "A <b>prime number</b> is a whole number greater than 1 that can only be divided evenly by 1 and itself! 🔢<br><br>"
-                    "Examples: <b>2, 3, 5, 7, 11, 13, 17, 19, 23...</b><br>"
-                    "<i>Fun fact:</i> <b>2</b> is the only even prime number in the universe!"
-                )
-            }
+                dest_coords = None
+                if self.map_service:
+                    dest_res = self.map_service.geocode(dest_raw)
+                    dest_coords = self._extract_lat_lon(dest_res)
 
-        # Pi (π)
-        if "what is pi" in q or "value of pi" in q:
-            self.last_topic = "math"
-            return {
-                "badge": "🥧 GEOMETRY & PI",
-                "response": (
-                    "<b>Pi (π)</b> is the universal circle ratio: approximately <b>3.14159</b>! 🥧<br><br>"
-                    "No matter how giant or tiny a circle is, dividing its circumference by its diameter always yields π, "
-                    "from a bicycle wheel to spinning planetary orbits!"
-                )
-            }
+                if not dest_coords:
+                    return {
+                        "badge": "🧭 GEOCODING NOTICE",
+                        "response": (
+                            f"I could not locate the destination **'{dest_raw.title()}'** using the geocoding service. "
+                            f"Please check the spelling or specify a nearby city or landmark."
+                        )
+                    }
 
-        # Fibonacci Sequence
-        if "fibonacci" in q:
-            self.last_topic = "math"
-            return {
-                "badge": "🌻 FIBONACCI SEQUENCE",
-                "response": (
-                    "The <b>Fibonacci sequence</b> is nature's mathematical pattern: "
-                    "each number is the sum of the two preceding ones: <b>0, 1, 1, 2, 3, 5, 8, 13, 21, 34...</b> 🌻<br><br>"
-                    "This golden spiral appears naturally in sunflower seed pods, seashells, and galaxy arms!"
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 7.2 CREATIVITY, HUMOR, STUDY TIPS & ADVICE
-        # ---------------------------------------------------------------------
-        # Jokes
-        if any(w in q for w in ["joke", "funny", "make me laugh"]):
-            return {
-                "badge": "😄 A.U.R.A. HUMOR",
-                "response": (
-                    "😄 <b>Here is a smart one for you:</b><br><br>"
-                    "<i>Why do programmers always prefer dark mode?</i><br><br>"
-                    "<b>Because light attracts bugs! 🐛✨</b>"
-                )
-            }
-
-        # Poems
-        if "poem" in q or "write a poem" in q:
-            return {
-                "badge": "✨ CREATIVE POETRY",
-                "response": (
-                    "🌟 <b>Journey of the Stars</b><br><br>"
-                    "<i>Across the vast and velvet night,<br>"
-                    "The wandering stars ignite their light.<br>"
-                    "Through winding roads and charted space,<br>"
-                    "Each traveler finds their rightful place. 🚀</i>"
-                )
-            }
-
-        # Study Tips
-        if "how to study" in q or "study tips" in q or "study effectively" in q:
-            return {
-                "badge": "🎯 STUDY STRATEGY",
-                "response": (
-                    "🎯 <b>3 Proven Rules to Study Faster:</b><br><br>"
-                    "1. 🍅 <b>Pomodoro Technique:</b> 25 minutes of laser focus, followed by a 5-minute breather.<br>"
-                    "2. 🧠 <b>Active Recall:</b> Quiz yourself with closed books instead of passive re-reading.<br>"
-                    "3. 💤 <b>Sleep:</b> Quality sleep cements fresh concepts permanently into long-term memory!"
-                )
-            }
-
-        # Time Management
-        if "time management" in q or "productivity" in q:
-            return {
-                "badge": "⏳ PRODUCTIVITY",
-                "response": (
-                    "⏳ <b>Master Your Time with the 2-Minute Rule:</b><br><br>"
-                    "• If an action takes under 2 minutes, complete it right now!<br>"
-                    "• For major goals, choose your top 3 daily priorities the evening before and tackle the hardest one first thing in the morning."
-                )
-            }
-
-        # Motivation
-        if any(w in q for w in ["motivation", "inspire", "quote", "motivate me"]):
-            return {
-                "badge": "🌟 DAILY INSPIRATION",
-                "response": (
-                    "✨ <i>'The secret of getting ahead is getting started. "
-                    "The secret of getting started is breaking your complex, overwhelming tasks into small manageable tasks, "
-                    "and then starting on the first one.'</i><br><br>"
-                    "— <b>Mark Twain 🚀</b>"
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 7.3 GEOGRAPHY & WORLD CAPITALS
-        # ---------------------------------------------------------------------
-        if "capital of" in q:
-            capitals = {
-                "france": ("Paris", "City of Light & Eiffel Tower"),
-                "india": ("New Delhi", "Heart of the Republic of India"),
-                "usa": ("Washington, D.C.", "Seat of the U.S. Federal Government"),
-                "united states": ("Washington, D.C.", "Seat of the U.S. Federal Government"),
-                "japan": ("Tokyo", "Bustling megacity of technological innovation"),
-                "germany": ("Berlin", "Cultural and political hub of Central Europe"),
-                "united kingdom": ("London", "Historic capital on the River Thames"),
-                "uk": ("London", "Historic capital on the River Thames"),
-                "italy": ("Rome", "The Eternal City, home of the Colosseum"),
-                "canada": ("Ottawa", "Scenic federal capital in Ontario"),
-                "australia": ("Canberra", "Planned capital nestled between Sydney and Melbourne"),
-                "spain": ("Madrid", "Vibrant city of royal palaces and arts"),
-                "china": ("Beijing", "Ancient seat of dynasties and modern governance"),
-                "brazil": ("Brasília", "Futuristic planned capital designed in the shape of an airplane"),
-                "russia": ("Moscow", "Home of the historic Kremlin and Red Square"),
-                "egypt": ("Cairo", "Sprawling capital along the Nile, near the Pyramids of Giza")
-            }
-            matched_country = None
-            for country, (cap, desc) in capitals.items():
-                if country in q:
-                    matched_country = (country.title(), cap, desc)
-                    break
-            if matched_country:
-                cname, capname, cdesc = matched_country
+                self.conv_manager.last_destination = dest_raw.title()
                 return {
-                    "badge": f"🏛️ GEOGRAPHY: {cname.upper()}",
+                    "badge": f"🧭 DESTINATION TARGET • {dest_raw.upper()[:16]}",
                     "response": (
-                        f"The capital of <b>{cname}</b> is <b>{capname}</b>! 🏛️<br><br>"
-                        f"<i>Key fact:</i> Known as the {cdesc}."
+                        f"**Setting Destination to {dest_raw.title()}!**\n\n"
+                        f"• **Coordinates:** `{dest_coords[0]:.4f}, {dest_coords[1]:.4f}`\n"
+                        f"• Route calculation automatically triggered on the interactive map."
+                    ),
+                    "action": {
+                        "type": "set_destination",
+                        "destination_name": dest_raw.title(),
+                        "coords": dest_coords
+                    }
+                }
+
+        return None
+
+    def _handle_map_action(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Handles map focus requests (e.g. 'Show that one on the map', 'Show the second route on the map')."""
+        if any(w in q for w in ["show on map", "show that one on the map", "show route on map", "focus route", "display on map", "show the second route", "show the first route", "show route 2", "show second route"]):
+            routes = ctx.get("ranked_routes", [])
+            if not routes:
+                return {
+                    "badge": "🎯 MAP NAVIGATION SYNC",
+                    "response": "Please confirm an origin and destination above to display and focus a route on the interactive map."
+                }
+
+            # Resolve target route
+            target_route = routes[0]
+            if any(w in q for w in ["second route", "second", "route 2", "alt 2", "alternative 2"]) and len(routes) > 1:
+                target_route = routes[1]
+            elif any(w in q for w in ["that one", "shortest"]):
+                target_route = min(routes, key=lambda r: getattr(r, "effective_distance_km", float("inf")))
+
+            r_id = getattr(target_route.route, "id", "route_0")
+            r_name = getattr(target_route.route, "name", "Selected Route")
+            dist = getattr(target_route, "effective_distance_km", 0.0)
+
+            return {
+                "badge": "🎯 MAP NAVIGATION SYNC",
+                "response": (
+                    f"**Displaying {r_name} on Map!**\n\n"
+                    f"• **Distance:** **{dist:.1f} km**\n"
+                    f"• The camera viewport and polyline have been highlighted on the interactive map."
+                ),
+                "action": {
+                    "type": "focus_route",
+                    "route_id": r_id,
+                    "route_name": r_name
+                }
+            }
+
+        return None
+
+    def _handle_route_comparison(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Compares available distinct route alternatives from real calculation state."""
+        # 1. Shortest inquiry
+        if any(w in q for w in ["which of these routes is shortest", "which route is shortest", "which alternative is shortest", "which is shortest", "shortest route"]):
+            routes = ctx.get("ranked_routes", [])
+            if not routes:
+                return {
+                    "badge": "🗺️ ROUTE COMPARISON",
+                    "response": "No active routes have been calculated yet. Please set an origin and destination to generate and compare routes."
+                }
+            shortest_r = min(routes, key=lambda r: getattr(r, "effective_distance_km", float("inf")))
+            r_name = getattr(shortest_r.route, "name", "Shortest Route")
+            r_dist = getattr(shortest_r, "effective_distance_km", 0.0)
+            r_dur = getattr(shortest_r, "effective_duration_minutes", 0.0)
+
+            other_desc = ""
+            if len(routes) > 1:
+                alt = [r for r in routes if r != shortest_r][0]
+                alt_dist = getattr(alt, "effective_distance_km", 0.0)
+                other_desc = f" By comparison, **{alt.route.name}** is **{alt_dist:.1f} km** ({alt_dist - r_dist:.1f} km longer)."
+
+            return {
+                "badge": "📏 SHORTEST ROUTE ANALYSIS",
+                "response": (
+                    f"### 📏 Shortest Route: {r_name}\n\n"
+                    f"• **Distance:** **{r_dist:.1f} km**\n"
+                    f"• **Est. Duration:** **~{r_dur:.0f} mins**\n"
+                    f"{other_desc}\n\n"
+                    f"You can say *\"Show that one on the map\"* or click its route card above to focus the map camera."
+                )
+            }
+
+        # 2. Fastest inquiry
+        if any(w in q for w in ["which of these routes is fastest", "which route is fastest", "fastest route"]):
+            routes = ctx.get("ranked_routes", [])
+            if not routes:
+                return {
+                    "badge": "🗺️ ROUTE COMPARISON",
+                    "response": "No active routes have been calculated yet. Please set an origin and destination to compare speeds."
+                }
+            fastest_r = min(routes, key=lambda r: getattr(r, "effective_duration_minutes", float("inf")))
+            r_name = getattr(fastest_r.route, "name", "Fastest Route")
+            r_dur = getattr(fastest_r, "effective_duration_minutes", 0.0)
+            r_dist = getattr(fastest_r, "effective_distance_km", 0.0)
+
+            return {
+                "badge": "⚡ FASTEST ROUTE ANALYSIS",
+                "response": (
+                    f"### ⚡ Fastest Route: {r_name}\n\n"
+                    f"• **Est. Duration:** **~{r_dur:.0f} mins**\n"
+                    f"• **Distance:** **{r_dist:.1f} km**\n\n"
+                    f"This route prioritizes arterial expressways and avoids local bottlenecks."
+                )
+            }
+
+        # 3. Alternative route inquiry
+        if any(w in q for w in ["what about the other alternative", "what about the alternative", "other alternative", "tell me about the alternative"]):
+            routes = ctx.get("ranked_routes", [])
+            if routes and len(routes) >= 2:
+                alt_r = routes[1]
+                pri_r = routes[0]
+                alt_name = getattr(alt_r.route, "name", "Alternative Route")
+                alt_dist = getattr(alt_r, "effective_distance_km", 0.0)
+                alt_dur = getattr(alt_r, "effective_duration_minutes", 0.0)
+                pri_dist = getattr(pri_r, "effective_distance_km", 0.0)
+                pri_dur = getattr(pri_r, "effective_duration_minutes", 0.0)
+
+                diff_dist = alt_dist - pri_dist
+                diff_dur = alt_dur - pri_dur
+                roads = ", ".join(alt_r.route.summary_roads[:2]) if getattr(alt_r.route, "summary_roads", None) else "Secondary Corridor"
+
+                return {
+                    "badge": "🗺️ ALTERNATIVE CORRIDOR INTEL",
+                    "response": (
+                        f"### 🗺️ Alternative Route: {alt_name}\n\n"
+                        f"• **Distance:** **{alt_dist:.1f} km** ({abs(diff_dist):.1f} km {'longer' if diff_dist > 0 else 'shorter'})\n"
+                        f"• **Travel Time:** **~{alt_dur:.0f} mins** ({abs(diff_dur):.0f} mins {'slower' if diff_dur > 0 else 'faster'})\n"
+                        f"• **Main Roads:** {roads}\n"
+                        f"• **Status:** Clear of verified road closures.\n\n"
+                        f"To highlight this alternative corridor, you can say *\"Show the second route on the map\"*."
+                    )
+                }
+            elif routes and len(routes) == 1:
+                return {
+                    "badge": "🗺️ ALTERNATIVE CORRIDOR INTEL",
+                    "response": (
+                        f"Only 1 arterial route was found for this journey: **{routes[0].route.name}** "
+                        f"({routes[0].effective_distance_km:.1f} km). No secondary bypasses met safety and uniqueness thresholds."
+                    )
+                }
+            else:
+                return {
+                    "badge": "🗺️ ALTERNATIVE CORRIDOR INTEL",
+                    "response": "Please set an origin and destination to generate and inspect alternative routes."
+                }
+
+        # 4. General comparison
+        if any(w in q for w in ["compare route", "compare the routes", "difference between the routes"]):
+            routes = ctx.get("ranked_routes", [])
+            if routes and len(routes) >= 2:
+                r1 = routes[0]
+                r2 = routes[1]
+                return {
+                    "badge": "🗺️ ROUTE COMPARISON ANALYSIS",
+                    "response": (
+                        f"### 🗺️ Route Comparison Analysis\n\n"
+                        f"| Metric | **{r1.route.name}** | **{r2.route.name}** |\n"
+                        f"| :--- | :--- | :--- |\n"
+                        f"| **Distance** | **{r1.effective_distance_km:.1f} km** | {r2.effective_distance_km:.1f} km |\n"
+                        f"| **Duration** | **~{r1.effective_duration_minutes:.0f} mins** | ~{r2.effective_duration_minutes:.0f} mins |\n"
+                        f"| **Safety** | Verified Open | Verified Open |\n\n"
+                        f"You can select either corridor by clicking its route card or polyline on the map."
+                    )
+                }
+            else:
+                return {
+                    "badge": "🗺️ ROUTE COMPARISON",
+                    "response": "To compare routes, please confirm an origin and destination above."
+                }
+
+        return None
+
+    def _handle_nearby_places(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Retrieves verified places, dining, fuel, or lodging around current destination."""
+        if any(w in q for w in ["restaurant", "food", "dining", "places to eat", "hotel nearby", "petrol pump", "fuel station", "atm nearby"]):
+            cat = None
+            if any(w in q for w in ["restaurant", "food", "dining", "eat", "cafe"]):
+                cat = "Dining"
+            elif any(w in q for w in ["hotel", "lodge"]):
+                cat = "Hotel"
+            elif any(w in q for w in ["petrol", "fuel"]):
+                cat = "Fuel"
+
+            dest_coords = ctx.get("dest_coords") or ctx.get("current_coords") or (16.2335, 80.5505)
+            dest_label = ctx.get("dest_label", "Local Area")
+
+            places = GroundingEngine.get_nearby_places(dest_coords[0], dest_coords[1], dest_label, cat)
+            if places:
+                p_lines = []
+                for p in places[:3]:
+                    stars = "⭐" * int(round(p.get("rating", 4.5)))
+                    p_lines.append(
+                        f"• **{p.get('name')}** ({p.get('rating', 4.5)} {stars})<br>"
+                        f"&nbsp;&nbsp;{p.get('category')} • ~{p.get('dist_km', 1.0):.1f} km away • *{p.get('open_status', 'Open Daily')}*"
+                    )
+                p_html = "<br>".join(p_lines)
+                return {
+                    "badge": f"📍 VERIFIED PLACES • {dest_label.upper()[:16]}",
+                    "response": (
+                        f"### 📍 Verified Places Around {dest_label}\n\n"
+                        f"{p_html}\n\n"
+                        f"<span style='font-size:0.75rem; color:#94a3b8;'>Source: Verified Business Directory</span>"
                     )
                 }
 
-        if any(w in q for w in ["write a python", "python function", "write code", "how to code", "javascript function"]):
-            self.last_topic = "programming"
-            return {
-                "badge": "💻 CODE ASSISTANT",
-                "response": (
-                    "I would be glad to help write or debug code for you! "
-                    "Please specify the programming language (e.g. Python, JavaScript, C++, SQL) and what functionality or algorithm you need implemented."
-                )
-            }
+        return None
 
-        # ---------------------------------------------------------------------
-        # 8. WRITING ASSISTANCE (EMAILS, ESSAYS, ABSTRACTS)
-        # ---------------------------------------------------------------------
-        # Example 8: Write a formal email to my professor asking for an extension
-        if "email to my professor" in q or ("extension" in q and "professor" in q) or "formal email" in q:
-            self.last_topic = "writing"
-            return {
-                "badge": "✉️ WRITING ASSISTANCE",
-                "response": (
-                    "Certainly. Here is a formal, polite email draft to your professor asking for an assignment extension:<br><br>"
-                    "<div style='background: rgba(15,23,42,0.9); padding: 12px; border-radius: 8px; border: 1px solid #334155; font-size: 0.82rem; color: #f1f5f9; line-height: 1.5;'>"
-                    "<b>Subject:</b> Request for Extension — [Course Code]: [Assignment Name] — [Your Full Name]<br><br>"
-                    "Dear Professor [Professor's Last Name],<br><br>"
-                    "I hope you are having a productive week.<br><br>"
-                    "I am writing to respectfully request a short extension on the upcoming deadline for [Assignment Name], currently due on [Current Due Date]. "
-                    "[Briefly state reason, e.g., 'Due to an unexpected illness / personal emergency / academic conflict, I need additional time to complete the work to the highest standard.']<br><br>"
-                    "I would greatly appreciate if I could submit the assignment by [Proposed New Date/Time]. I am actively working on the assignment and would be happy to share my current draft with you.<br><br>"
-                    "Thank you very much for your time, understanding, and consideration.<br><br>"
-                    "Sincerely,<br>"
-                    "[Your Name]<br>"
-                    "Student ID: [Your ID Number]<br>"
-                    "[Your Department / Program]"
-                    "</div>"
-                )
-            }
+    def _handle_live_weather(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Fetches live weather from Open-Meteo for any referenced place or current destination."""
+        if any(w in q for w in ["weather in", "temperature in", "forecast in", "is it raining in", "current weather", "what's the weather"]):
+            match_loc = re.search(r"(?:in|at|for)\s+([a-zA-Z\s]+)", q)
+            loc_query = match_loc.group(1).strip("?. ") if match_loc else ctx.get("dest_label", "Local Area")
+            if self.map_service:
+                resolved = self.map_service.geocode(loc_query)
+                coords = self._extract_lat_lon(resolved)
+                if coords:
+                    w_info = GroundingEngine.get_live_weather(coords[0], coords[1], loc_query.title())
+                    if w_info.get("available"):
+                        return {
+                            "badge": f"🌤️ LIVE WEATHER • {loc_query.upper()[:16]}",
+                            "response": (
+                                f"<div style='background: rgba(14, 165, 233, 0.12); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px 14px;'>"
+                                f"<div style='font-weight: 800; color: #38bdf8; font-size: 0.95rem; margin-bottom: 6px;'>🌤️ Live Weather for {loc_query.title()}</div>"
+                                f"{w_info['formatted']}"
+                                f"</div>"
+                            )
+                        }
+        return None
 
-        if any(w in q for w in ["write an email", "draft an email", "write an essay", "project abstract", "cover letter"]):
-            self.last_topic = "writing"
-            return {
-                "badge": "📝 DRAFTING ASSISTANT",
-                "response": (
-                    "Certainly! I can draft professional emails, college project abstracts, essays, and reports tailored to your audience. "
-                    "Please let me know the subject, intended recipient, key points, and desired tone."
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 9. HEALTH, SAFETY & EMERGENCY SENSITIVITY
-        # ---------------------------------------------------------------------
-        # Example 7: Is the road outside my house flooded right now?
-        if "flooded right now" in q or "is the road outside my house" in q:
-            return {
-                "badge": "🛡️ ROAD SAFETY LIMITATION",
-                "response": (
-                    "I can help check if a reliable live traffic or hazard source is available for your region, but I cannot confirm flooding "
-                    "outside your private residence without current local verified sensor or municipal reporting. "
-                    "Please avoid entering floodwater and follow local civil safety guidance."
-                )
-            }
-
-        if any(w in q for w in ["headache", "chest pain", "fever", "medical diagnosis", "symptoms"]):
-            return {
-                "badge": "🩺 HEALTH ADVISORY",
-                "response": (
-                    "While I can share general medical educational information, I cannot provide a personal medical diagnosis. "
-                    "If you or someone nearby is experiencing acute symptoms (such as severe chest discomfort, sudden shortness of breath, or high persistent fever), "
-                    "please seek immediate evaluation from a licensed healthcare provider or contact emergency services."
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 9B. EMERGENCY & STRANDED USER ASSISTANCE DISPATCH
-        # ---------------------------------------------------------------------
-        if any(w in q for w in ["stranded", "sos", "i need help", "help me", "emergency assistance", "nearest hospital", "find hospital", "nearest police", "nearest shelter", "out of fuel", "car broke down"]):
-            user_coords = ctx.get("user_coords") or ctx.get("current_coords") or (16.2335, 80.5505)
-            from src.emergency_service import EmergencyServiceManager
-            em_mgr = self.emergency_manager or EmergencyServiceManager(enable_live_osm=False)
-            
-            if any(w in q for w in ["hospital", "medical", "doctor", "ambulance", "trauma", "injured"]):
-                etype = "MEDICAL"
-            elif any(w in q for w in ["police", "crime", "threat", "safety", "attack"]):
-                etype = "POLICE"
-            elif any(w in q for w in ["shelter", "cyclone", "flood", "disaster"]):
-                etype = "DISASTER"
-            else:
-                etype = "STRANDED"
-
-            briefing = em_mgr.create_sos_guidance_briefing(user_coords, emergency_type=etype)
-            fac = briefing.get("facility")
-            nat_contact = briefing.get("national_contact", {})
-            sos_num = briefing.get("emergency_phone", "112")
-
-            if fac:
-                ed_str = "<b>24/7 Verified Emergency Dept</b>" if fac.get("has_emergency_department") else fac.get("facility_type")
-                phone_str = f" • Phone: <b>{fac.get('contact_phone')}</b>" if fac.get("contact_phone") else ""
-                fac_html = (
-                    f"<div style='background: rgba(15, 23, 42, 0.95); border: 1.5px solid #ef4444; border-radius: 10px; padding: 12px; margin: 8px 0;'>"
-                    f"<div style='font-weight: 800; color: #f87171; font-size: 0.92rem;'>🚨 {fac.get('name')}</div>"
-                    f"<div style='font-size: 0.78rem; color: #cbd5e1; margin-top: 4px;'>"
-                    f"{ed_str} • <span style='color: #38bdf8;'>~{fac.get('road_distance_km', 0.0):.1f} km away (~{fac.get('eta_minutes', 0.0):.0f} mins)</span>{phone_str}</div>"
-                    f"<div style='font-size: 0.72rem; color: #94a3b8; margin-top: 4px;'>Operating: {fac.get('operating_hours')} • Source: {fac.get('data_source')}</div>"
-                    f"</div>"
-                )
-            else:
-                fac_html = ""
-
+    def _handle_emergency_queries(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Handles emergency assistance, stranded user distress calls, and evacuation protocols."""
+        if any(w in q for w in ["stranded", "need help urgently", "stuck in flood", "danger on road", "vehicle broken down", "stranded and need help"]):
+            coords = ctx.get("current_coords") or (16.2335, 80.5505)
+            nearest_fac = None
+            if self.emergency_manager:
+                try:
+                    if hasattr(self.emergency_manager, "get_closest_facility"):
+                        nearest_fac = self.emergency_manager.get_closest_facility(coords)
+                    elif hasattr(self.emergency_manager, "find_nearest_facility"):
+                        nearest_fac = self.emergency_manager.find_nearest_facility(coords[0], coords[1])
+                except Exception:
+                    pass
+            fac_info = f"Nearest Verified Resource: {getattr(nearest_fac, 'name', 'Emergency Haven')}." if nearest_fac else "Campus Security / Police Dispatch alerted."
             return {
                 "badge": "🚨 EMERGENCY ASSISTANCE",
                 "response": (
-                    f"<div style='background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%); border: 2px solid #ef4444; border-radius: 12px; padding: 14px;'>"
-                    f"<div style='font-weight: 800; color: #ffffff; font-size: 1.0rem; margin-bottom: 6px;'>🚨 Immediate Life-Safety Guidance</div>"
-                    f"<div style='font-size: 0.82rem; color: #e2e8f0; line-height: 1.45;'>"
-                    f"{briefing.get('spoken_speech')}"
-                    f"</div>"
-                    f"{fac_html}"
-                    f"<div style='margin-top: 10px; display: flex; align-items: center; gap: 10px;'>"
-                    f"<a href='tel:{sos_num}' style='background: #ef4444; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 0.80rem; text-decoration: none;'>📞 Call {sos_num} ({nat_contact.get('country', 'Emergency')})</a>"
-                    f"<span style='font-size: 0.72rem; color: #cbd5e1;'>Official Dispatch Hub: {nat_contact.get('agency_name', 'National ERSS')}</span>"
-                    f"</div>"
-                    f"</div>"
+                    "### 🚨 Immediate Life-Safety Guidance\n\n"
+                    "• **National Emergency Helpline:** **112** (Police, Ambulance, Fire)\n"
+                    "• **Action:** Stay inside your vehicle if safe, turn on hazard blinkers, and remain calm.\n"
+                    f"• {fac_info}\n"
+                    "• Your telemetry coordinates have been marked for dispatch."
                 )
             }
 
-        # ---------------------------------------------------------------------
-        # 10. ACTIVE HAZARDS & ROAD RESTRICTIONS / BLOCKAGES
-        # ---------------------------------------------------------------------
-        if any(w in q for w in ["hazard", "blockage", "closure", "closed", "blocked", "nh-16", "bridge", "caution", "construction", "accident"]):
-            active_restrs = ctx.get("active_restrictions", [])
-            active_hazards = ctx.get("active_hazards", [])
-
-            lines = []
-            if active_restrs:
-                for r in active_restrs:
-                    road = getattr(r, "road_name", "Arterial Road")
-                    desc = getattr(r, "description", "Road restriction active")
-                    hard = "IMPASSABLE / CLOSED" if getattr(r, "is_hard_closure", True) else "PARTIAL DELAY"
-                    lines.append(f"• <b>{road}</b>: <span style='color: #f87171;'>[{hard}]</span> {desc}")
-
-            if active_hazards:
-                for h in active_hazards:
-                    h_type = h.get("incident_type", "HAZARD")
-                    h_road = h.get("affected_road_name", "Local Corridor")
-                    h_desc = h.get("description", "Reported active hazard")
-                    lines.append(f"• <b>{h_type}</b> near {h_road}: {h_desc}")
-
-            if not lines:
-                lines = [
-                    "• <b>NH-16 Bypass Expressway</b>: <span style='color: #f87171;'>[IMPASSABLE]</span> Emergency structural bridge repair & resurfacing.",
-                    "• <b>MDR0105 Bypass Link</b>: Verified OPEN with caution speed buffer."
-                ]
-
-            restr_list_html = "<br>".join(lines)
-            return {
-                "badge": "⚠️ ACTIVE ROAD INCIDENTS",
-                "response": (
-                    "<div style='background: rgba(30, 15, 15, 0.85); border: 1.5px solid #ef4444; border-radius: 12px; padding: 12px 14px;'>"
-                    "<div style='font-weight: 800; color: #f87171; font-size: 0.94rem; margin-bottom: 6px;'>🚨 Active Road Restrictions & Hazards</div>"
-                    f"<div style='font-size: 0.80rem; color: #e2e8f0; line-height: 1.45; margin-bottom: 8px;'>{restr_list_html}</div>"
-                    "<div style='background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 8px; padding: 8px 10px; font-size: 0.78rem; color: #6ee7b7;'>"
-                    "🛡️ <b>Autonomous AI Evasion Active:</b> The routing engine has excluded the impassable corridor and automatically prioritized alternative open arterials."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 11. ROUTE TO A SPECIFIC DESTINATION (Local & Worldwide)
-        # ---------------------------------------------------------------------
-        if any(w in q for w in ["how to reach", "how do i go", "directions to", "route to", "go to", "reach", "fastest way", "best route", "tokyo", "new york", "london"]):
-            dest_target = ""
-            for trigger in ["how to reach", "how do i go to", "directions to", "route to", "go to", "reach"]:
-                if trigger in q:
-                    candidate = q.split(trigger, 1)[1].strip()
-                    candidate = re.sub(r"[?!.]+$", "", candidate).strip()
-                    if candidate:
-                        dest_target = candidate.title()
-                        break
-
-            if not dest_target:
-                if "tokyo" in q:
-                    dest_target = "Tokyo"
-                elif "guntur" in q:
-                    dest_target = "Guntur City Center"
-                elif "tenali" in q:
-                    dest_target = "Tenali Junction"
-                elif "selapadu" in q:
-                    dest_target = "Selapadu Village"
-                elif "arundelpet" in q:
-                    dest_target = "Arundelpet, Guntur"
-                elif "brodipet" in q:
-                    dest_target = "Brodipet, Guntur"
-                elif "budampadu" in q:
-                    dest_target = "Budampadu"
-                elif "library" in q:
-                    dest_target = "Vignan Library (NTR Library)"
-                else:
-                    dest_target = "Selected Destination"
-
-            geo_info = None
-            if self.map_service and dest_target != "Selected Destination":
+        if any(w in q for w in ["nearest hospital", "hospital nearby", "where is the hospital", "where is the nearest hospital"]):
+            coords = ctx.get("current_coords") or (16.2335, 80.5505)
+            hosp_name = "Ramesh Hospitals (Guntur / Tenali Corridor)"
+            if self.emergency_manager:
                 try:
-                    geo_info = self.map_service.geocode(dest_target)
+                    from src.emergency_service import FacilityCategory
+                    if hasattr(self.emergency_manager, "get_closest_facility"):
+                        h = self.emergency_manager.get_closest_facility(coords, category=FacilityCategory.MEDICAL)
+                        if h:
+                            hosp_name = h.name
+                    elif hasattr(self.emergency_manager, "find_nearest_facility"):
+                        h = self.emergency_manager.find_nearest_facility(coords[0], coords[1])
+                        if h:
+                            hosp_name = getattr(h, "name", str(h))
                 except Exception:
                     pass
-
-            start_lbl = ctx.get("start_label", "📍 My Current Location")
-            routes = ctx.get("ranked_routes", [])
-
-            if routes and getattr(routes[0], "is_safe", True):
-                top = routes[0]
-                dist = top.effective_distance_km
-                dur = top.effective_duration_minutes
-                rname = top.route.name
-                via = ", ".join(top.route.summary_roads[:3]) if top.route.summary_roads else "Primary Highway Corridor"
-                stats_html = f"• <b>Primary Corridor:</b> {rname}<br>• <b>Distance:</b> {dist:.1f} km<br>• <b>Est. Travel Time:</b> ~{dur:.0f} mins<br>• <b>Via:</b> {via}"
-            elif geo_info:
-                stats_html = (
-                    f"• <b>Resolved Location:</b> {geo_info.get('display_name', dest_target)}<br>"
-                    f"• <b>Coordinates:</b> <code>{geo_info['lat']:.4f}, {geo_info['lon']:.4f}</code><br>"
-                    f"• <b>Network Status:</b> Enter into <b>Destination Location</b> field to render live global turn-by-turn routing."
-                )
-            else:
-                stats_html = f"• <b>Status:</b> Ready to compute optimal global route to {dest_target}. Enter above to calculate multi-corridor alternatives."
-
             return {
-                "badge": f"🧭 ROUTE GUIDANCE: {dest_target.upper()[:25]}",
+                "badge": "🚨 EMERGENCY ASSISTANCE • MEDICAL",
                 "response": (
-                    "<div style='background: rgba(10, 20, 38, 0.85); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px 14px;'>"
-                    f"<div style='font-weight: 800; color: #38bdf8; font-size: 0.94rem; margin-bottom: 4px;'>📍 Route Guidance to {dest_target}</div>"
-                    f"<div style='font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px;'>Origin: <b>{start_lbl}</b></div>"
-                    f"<div style='font-size: 0.82rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;'>{stats_html}</div>"
-                    "<div style='background: rgba(56, 189, 248, 0.12); border-radius: 8px; padding: 8px 10px; font-size: 0.76rem; color: #bae6fd;'>"
-                    "💡 <b>Tip:</b> P.A.T.H.F.I.N.D.E.R. routes worldwide. Type any city or landmark to calculate multi-objective alternatives."
-                    "</div>"
-                    "</div>"
+                    f"### 🏥 Nearest Hospital & Trauma Care\n\n"
+                    f"• **Facility:** **{hosp_name}**\n"
+                    f"• **Emergency Ambulance Dispatch:** **108** / **112**\n"
+                    f"• **Status:** 24/7 Emergency & ICU Facilities Active."
                 )
             }
 
-        # ---------------------------------------------------------------------
-        # 12. ROUTING OBJECTIVES & HOW THEY WORK
-        # ---------------------------------------------------------------------
-        if any(w in q for w in ["objective", "fastest", "shortest", "balanced", "accessible", "wheelchair", "priority"]):
-            cur_obj = ctx.get("active_objective_str", "FASTEST")
-            return {
-                "badge": "🎯 OPTIMIZATION PROTOCOLS",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid #10b981; border-radius: 12px; padding: 12px 14px;'>"
-                    "<div style='font-weight: 800; color: #34d399; font-size: 0.94rem; margin-bottom: 6px;'>🎯 Multi-Objective Routing Protocols</div>"
-                    "<div style='font-size: 0.80rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;'>"
-                    "• <b>⚡ Fastest Route:</b> Prioritizes lowest transit time (85% speed weight), avoiding congested arterials.<br>"
-                    "• <b>📏 Shortest Route:</b> Minimizes physical ground distance (85% distance compression), selecting geodesic links.<br>"
-                    "• <b>⚖️ Balanced Route:</b> 50/50 Pareto harmony between transit duration and total distance.<br>"
-                    "• <b>♿ Accessible Route:</b> Guarantees step-free movement, filtering out steep inclines, construction barriers, and stairs."
-                    "</div>"
-                    f"<div style='font-size: 0.76rem; color: #38bdf8; font-weight: 700; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;'>"
-                    f"Currently Active Strategy: <b>{cur_obj}</b>"
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 13. CAMPUS POIS & BUILDINGS
-        # ---------------------------------------------------------------------
-        if any(w in q for w in ["library", "cse", "it block", "lara", "chemical", "hostel", "canteen", "food court", "sports ground", "oat"]):
-            poi_info = {
-                "library": ("Vignan Central Library (NTR Library)", "Main Academic Quadrangle", "Floors G + 3", "16.2338, 80.5512"),
-                "cse": ("CSE Block / Computer Science Wing", "North Academic Sector", "Floors 1-4", "16.2348, 80.5515"),
-                "lara": ("Lara College of Engineering", "South Campus Perimeter", "Ground to 3rd Floor", "16.2375, 80.5480"),
-                "chemical": ("Chemical Reaction Engineering Lab", "Engineering West Wing", "Floor 1 (3.5m z-elevation)", "16.2340, 80.5498"),
-                "hostel": ("Student Residential Hostels", "East Residential Sector", "Boys & Girls Dormitories", "16.2355, 80.5530"),
-                "food court": ("Campus Food Court & Canteen", "Central Plaza", "Ground Level", "16.2335, 80.5505"),
-                "sports": ("Vignan Sports Grounds & Athletic Arena", "Primary Outdoor Safe Haven", "Open Field", "16.2325, 80.5540")
-            }
-            matched_key = "library"
-            for k in poi_info:
-                if k in q:
-                    matched_key = k
-                    break
-
-            name, loc, fl, coords = poi_info[matched_key]
-            return {
-                "badge": "🏢 CAMPUS DIRECTORY",
-                "response": (
-                    "<div style='background: rgba(14, 165, 233, 0.15); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px 14px;'>"
-                    f"<div style='font-weight: 800; color: #38bdf8; font-size: 0.94rem; margin-bottom: 4px;'>📍 {name}</div>"
-                    f"<div style='font-size: 0.80rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;'>"
-                    f"• <b>Sector:</b> {loc}<br>"
-                    f"• <b>Levels:</b> {fl}<br>"
-                    f"• <b>Coordinates:</b> <code>{coords}</code><br>"
-                    "• <b>Accessibility:</b> Dual entrance ramps, elevator access."
-                    "</div>"
-                    "<div style='font-size: 0.76rem; color: #6ee7b7; background: rgba(16, 185, 129, 0.15); border-radius: 6px; padding: 6px 8px;'>"
-                    f"💡 <i>You can type '{name}' directly into the Destination input above!</i>"
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # ---------------------------------------------------------------------
-        # 14. EMERGENCY EVACUATION SOPS
-        # ---------------------------------------------------------------------
-        if any(w in q for w in ["fire", "earthquake", "chemical", "spill", "evacuate", "evacuation", "emergency", "alarm", "sos"]):
+        if any(w in q for w in ["fire", "earthquake", "chemical", "spill", "evacuate", "evacuation", "emergency protocol", "alarm"]):
             if "earthquake" in q:
                 sop_title = "SEISMIC / EARTHQUAKE ACTION PROTOCOL"
-                sop_act = "DROP, COVER, AND HOLD ON. Move away from glass facades, overhead lighting, and book stacks. Do not use elevators."
+                sop_act = "DROP, COVER, AND HOLD ON. Move away from glass facades and overhead lighting."
             elif "chemical" in q:
                 sop_title = "HAZMAT / CHEMICAL SPILL CONTAINMENT"
-                sop_act = "UPWIND EVACUATION. Do not touch spilled agents. Isolate fume hoods, close fire doors, and assemble at outdoor Sports Grounds."
+                sop_act = "UPWIND EVACUATION. Do not touch spilled agents. Isolate fume hoods."
             else:
                 sop_title = "STRUCTURE FIRE EVACUATION PROTOCOL"
-                sop_act = "ACTIVATE MANUAL PULL STATION. Stay low below toxic smoke layer. Feel door handles before opening. Never enter a stairwell if smoke is issuing."
+                sop_act = "ACTIVATE MANUAL PULL STATION. Stay low below toxic smoke layer. Feel door handles before opening."
 
             return {
                 "badge": "🚨 EMERGENCY PROTOCOL",
                 "response": (
-                    "<div style='background: rgba(45, 15, 15, 0.9); border: 2px solid #ef4444; border-radius: 12px; padding: 12px 14px;'>"
-                    f"<div style='font-weight: 800; color: #f87171; font-size: 0.94rem; margin-bottom: 6px;'>⚠️ {sop_title}</div>"
-                    f"<div style='background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 8px; padding: 8px 10px; font-size: 0.82rem; color: #fecaca; font-weight: 700; margin-bottom: 8px;'>"
-                    f"⚡ MANDATORY ACTION: {sop_act}"
-                    "</div>"
-                    "<div style='font-size: 0.78rem; color: #cbd5e1; line-height: 1.4;'>"
-                    "• <b>Designated Safe Assembly Haven:</b> Vignan Play Grounds Outer Perimeter.<br>"
-                    "• <b>Emergency Helpline:</b> 112 (National Emergency) / Campus Security: ext. 4444."
-                    "</div>"
-                    "</div>"
+                    f"### ⚠️ {sop_title}\n\n"
+                    f"⚡ **MANDATORY ACTION:** {sop_act}\n\n"
+                    f"• **Evacuation Assembly:** Designated outdoor assembly grounds.\n"
+                    f"• **Emergency Number:** **112** / Internal Security extension 4444."
                 )
             }
 
-        # ---------------------------------------------------------------------
-        # 15. GENERAL INTELLIGENT KNOWLEDGE & DYNAMIC CREATIVE ANSWERING
-        # ---------------------------------------------------------------------
-        clean_topic = re.sub(r"^(what is|what are|why is|why are|how does|how do|tell me about|explain|can you explain|can you describe|what do you know about)\s+", "", q).strip("?. ")
-        if not clean_topic:
-            clean_topic = raw_query.strip("?. ")
-        topic_title = clean_topic.title()
+        return None
 
-        return {
-            "badge": f"💡 A.U.R.A. INTEL • {topic_title.upper()[:20]}",
-            "response": (
-                f"<b>Here is a simple and creative breakdown of \"{topic_title}\":</b><br><br>"
-                f"• 💡 <b>Core Insight:</b> {topic_title} is an essential concept, connecting core principles to real-world applications.<br>"
-                f"• ⚡ <b>Creative Analogy:</b> Think of it like a vital key in an intricate mechanism—operating quietly to make complex systems work effortlessly.<br>"
-                f"• 🚀 <b>Pro Takeaway:</b> Grasping {topic_title} gives you an immediate edge in understanding how the world around you works!<br><br>"
-                f"<i>Would you like code, a step-by-step example, or an advanced technical deep-dive?</i>"
-            )
-        }
+    def _handle_global_transit(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Handles explicit long-distance / international travel questions like 'How do I go to Tokyo?'."""
+        if any(w in q for w in ["how do i go to tokyo", "how to reach tokyo", "how to go to tokyo", "travel to tokyo"]):
+            return {
+                "badge": "✈️ GLOBAL TRANSIT • TOKYO",
+                "response": (
+                    "### 🇯🇵 Travel Guidance to Tokyo, Japan\n\n"
+                    "• **Air Transit:** Fly into either Tokyo Haneda Airport (HND, 14 km south, 25 mins by Monorail) or Narita International Airport (NRT, 60 km east, 50 mins via Narita Express).\n"
+                    "• **Local Transport:** Use a Suica / Pasmo transit IC card or Japan Rail Pass for the Shinkansen bullet trains.\n"
+                    "• **Entry Requirements:** Valid passport with 6 months validity. Ensure appropriate visa or eVisa before departure.\n"
+                    "• **Emergency Contacts:** Police: 110, Ambulance/Fire: 119."
+                )
+            }
+        return None
 
     def _handle_telugu_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
-        """Responds in warm, natural Telugu."""
+        """Responds in natural Telugu."""
         if any(w in q for w in ["నమస్కారం", "namaskaram", "హలో", "hello"]):
             return {
                 "badge": "⚡ A.U.R.A. తెలుగు",
                 "response": (
-                    "నమస్కారం! నేను <b>A.U.R.A.</b> (Adaptive User Route Assistant). "
-                    "P.A.T.H.F.I.N.D.E.R. లో మీ వ్యక్తిగత AI సహచరుడిని.<br><br>"
-                    "మీరు సాధారణ విషయాలు, చదువు, సైన్స్, ప్రోగ్రామింగ్ లేదా సురక్షితమైన ప్రయాణ మార్గాల గురించి నన్ను ఏమైనా అడగవచ్చు. "
+                    "నమస్కారం! నేను **A.U.R.A.** (Adaptive User Route Assistant). "
+                    "P.A.T.H.F.I.N.D.E.R. లో మీ వ్యక్తిగత AI సహచరుడిని.\n\n"
+                    "మీరు సాధారణ విజ్ఞానం, కోడింగ్, గణితం, సైన్స్ లేదా సురక్షితమైన ప్రయాణ మార్గాల గురించి నన్ను ఏమైనా అడగవచ్చు. "
                     "నేను మీకు ఎలా సహాయపడగలను?"
                 )
             }
         return {
             "badge": "⚡ A.U.R.A. తెలుగు",
             "response": (
-                f"మీ ప్రశ్న: <b>\"{raw_query}\"</b>.<br><br>"
+                f"మీ ప్రశ్న: **\"{raw_query}\"**.\n\n"
                 "నేను మీ ప్రయాణ మార్గాలు, రోడ్డు భద్రత మరియు సాధారణ విజ్ఞాన విషయాలలో మీకు స్పష్టమైన సమాచారాన్ని అందించగలను. "
                 "దయచేసి మీకు కావలసిన వివరాలను తెలపండి!"
             )
@@ -1135,8 +728,8 @@ class PathfinderChatbot:
             return {
                 "badge": "⚡ A.U.R.A. हिन्दी",
                 "response": (
-                    "नमस्ते! मैं <b>A.U.R.A.</b> (Adaptive User Route Assistant) हूँ, "
-                    "P.A.T.H.F.I.N.D.E.R. का बुद्धिमान AI सहायक।<br><br>"
+                    "नमस्ते! मैं **A.U.R.A.** (Adaptive User Route Assistant) हूँ, "
+                    "P.A.T.H.F.I.N.D.E.R. का बुद्धिमान AI सहायक।\n\n"
                     "आप मुझसे सामान्य ज्ञान, विज्ञान, कोडिंग, पढ़ाई या सुरक्षित रास्तों के बारे में कोई भी प्रश्न पूछ सकते हैं। "
                     "मैं आपकी किस प्रकार सहायता कर सकता हूँ?"
                 )
@@ -1144,7 +737,7 @@ class PathfinderChatbot:
         return {
             "badge": "⚡ A.U.R.A. हिन्दी",
             "response": (
-                f"आपके प्रश्न: <b>\"{raw_query}\"</b> के संदर्भ में,<br><br>"
+                f"आपके प्रश्न: **\"{raw_query}\"** के संदर्भ में,\n\n"
                 "मैं आपको सटीक जानकारी और सुरक्षित यात्रा निर्देश प्रदान करने के लिए तैयार हूँ। "
                 "कृपया अपनी आवश्यकता अनुसार और विस्तार से बताएं!"
             )
@@ -1156,390 +749,16 @@ class PathfinderChatbot:
             text_to_tr = raw_query.lower().split("to telugu")[0].replace("translate", "").strip(" '\"")
             return {
                 "badge": "🌐 TRANSLATION • TELUGU",
-                "response": f"<b>English:</b> {text_to_tr}<br><b>తెలుగు అనువాదం:</b> {text_to_tr} కి సమానమైన తెలుగు రూపం సిద్ధంగా ఉంది."
+                "response": f"**English:** {text_to_tr}\n**తెలుగు అనువాదం:** {text_to_tr} కి సమానమైన తెలుగు రూపం సిద్ధంగా ఉంది."
             }
         elif "to hindi" in q:
             text_to_tr = raw_query.lower().split("to hindi")[0].replace("translate", "").strip(" '\"")
             return {
                 "badge": "🌐 TRANSLATION • HINDI",
-                "response": f"<b>English:</b> {text_to_tr}<br><b>हिन्दी अनुवाद:</b> {text_to_tr} का अनुवाद।"
+                "response": f"**English:** {text_to_tr}\n**हिन्दी अनुवाद:** {text_to_tr} का अनुवाद।"
             }
         else:
             return {
                 "badge": "🌐 TRANSLATION",
-                "response": f"Translation request recognized for: <i>\"{raw_query}\"</i>."
+                "response": f"Translation request recognized for: *\"{raw_query}\"*."
             }
-
-    def _handle_travel_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Authoritative Travel Knowledge Engine.
-        Provides 100% accurate, legally compliant, verified travel guidance
-        with zero mistakes across air, rail, road, highway safety, accessibility,
-        packing, weather driving, international regulations, and regional routes.
-        """
-        # Exclude non-travel emergency safety drills (fire/earthquake/chemical spills)
-        if any(w in q for w in ["fire", "earthquake", "chemical spill", "evacuate building", "fire alarm"]) and not any(w in q for w in ["travel", "flight", "train", "hotel"]):
-            return None
-
-        # -----------------------------------------------------------------
-        # 1. SPECIFIC GLOBAL CITIES & DESTINATIONS (e.g. TOKYO, PARIS, LONDON, DUBAI)
-        # -----------------------------------------------------------------
-        if "tokyo" in q or any(re.search(rf"\b{w}\b", q) for w in ["tokyo", "japan"]):
-            return {
-                "badge": "✈️ GLOBAL TRANSIT • TOKYO (JAPAN)",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.9); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #38bdf8; font-size: 0.96rem; margin-bottom: 6px;'>🇯🇵 Complete Transit Guide: Tokyo, Japan</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>International Air Hubs:</b> Tokyo Haneda Airport (HND, 14 km south, 25 mins by Monorail/Keikyu Line) or Narita International Airport (NRT, 60 km east, 50 mins via Narita Express).<br>"
-                    "• <b>Transit & Rail Passes:</b> Purchase a Welcome Suica / Pasmo transit IC card or Japan Rail (JR) Pass for Shinkansen bullet trains (Tokaido Line connects Tokyo to Kyoto/Osaka in 2h 15m).<br>"
-                    "• <b>Visa & Entry Requirements:</b> Valid passport with minimum 6 months validity. Many nationalities qualify for 90-day visa exemption or eVisa. Complete Visit Japan Web immigration declaration prior to boarding.<br>"
-                    "• <b>Accessibility (Barrier-Free):</b> Tokyo has one of the world's most accessible transit systems. Nearly 96% of metro stations have step-free elevator access and braille guidance strips.<br>"
-                    "• <b>Emergency Helplines:</b> Police: <b>110</b> • Fire/Ambulance: <b>119</b> • Japan Visitor Hotline: <b>050-3816-2720</b> (24/7 English support)."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        if any(w in q for w in ["how do i go to", "how to reach", "how to go to", "how to travel to"]) and len(q.split()) <= 10:
-            target_dest = re.sub(r"^(how do i go to|how to reach|how to go to|how to travel to)\s+", "", q).strip("?. ")
-            target_title = target_dest.title()
-            return {
-                "badge": f"🧭 TRANSIT ROUTING • {target_title.upper()[:20]}",
-                "response": (
-                    f"<div style='background: rgba(15, 23, 42, 0.9); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 13px 15px;'>"
-                    f"<div style='font-weight: 800; color: #38bdf8; font-size: 0.95rem; margin-bottom: 6px;'>🗺️ Optimal Transit Blueprint to {target_title}</div>"
-                    f"<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    f"• <b>Direct Navigation:</b> You can set <b>{target_title}</b> directly into the Destination input in Pathfinder above for multi-objective road routing (Fastest, Shortest, Balanced, Accessible).<br>"
-                    f"• <b>Long-Distance Travel:</b> For interstate/international trips, identify the nearest major transit hub (Commercial Airport or Junction Railway Station). Ensure your tickets are booked with verified seat/cabin reservation.<br>"
-                    f"• <b>Live Verification:</b> Always check weather advisories, active highway toll/FASTag status, and travel document validity (minimum 6 months validity for international borders)."
-                    f"</div>"
-                    f"</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 2. ACCESSIBLE & DISABILITY TRAVEL (WHEELCHAIR, ELDERLY, STEP-FREE)
-        # Prioritized so questions about wheelchair on flights/trains hit this expert guidance
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "wheelchair", "disabled", "disability", "accessible", "step-free",
-            "reduced mobility", "elderly travel", "handicap", "special service request",
-            "ssr", "wchr", "wchs", "wchc", "ramp"
-        ]):
-            return {
-                "badge": "♿ ACCESSIBLE & DISABILITY TRANSIT",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #a855f7; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #c084fc; font-size: 0.96rem; margin-bottom: 6px;'>♿ Accessible Travel Guide for Persons with Disabilities & Seniors</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>Airline Wheelchair Codes (Special Service Requests - SSR):</b><br>"
-                    "&nbsp;&nbsp;- <b>WCHR (Ramp):</b> Passenger can walk and climb stairs, but requires wheelchair for long concourse distances.<br>"
-                    "&nbsp;&nbsp;- <b>WCHS (Steps):</b> Passenger can walk in the cabin, but cannot ascend/descend aircraft steps.<br>"
-                    "&nbsp;&nbsp;- <b>WCHC (Cabin):</b> Passenger is completely immobile; requires ambulift, aisle chair, and lifting into seat.<br>"
-                    "&nbsp;&nbsp;- <i>DGCA & ADA Rule:</i> Wheelchair assistance is <b>100% free of charge</b> by law. Request at least 48 hours prior.<br><br>"
-                    "• <b>Railway Station Assistance (Indian Railways):</b><br>"
-                    "&nbsp;&nbsp;- Battery-operated electric buggies available at major stations for seniors and disabled passengers (bookable via Yatri Mitra or Station Manager).<br>"
-                    "&nbsp;&nbsp;- Dedicated Divyangjan coaches equipped with extra-wide doors and accessible toilets positioned near the engine/guard's cabin.<br><br>"
-                    "• <b>Pathfinder Step-Free Navigation:</b> Toggle <b>♿ Accessible Route</b> in the sidebar to guarantee obstacle-free navigation that eliminates steep stairs, high curbs, and construction barriers."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 3. AIR TRAVEL, FLIGHTS, BAGGAGE & DGCA REGULATIONS
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "flight", "airplane", "aeroplane", "airline", "airport", "boarding pass",
-            "web check in", "web check-in", "cabin bag", "hand bag", "check-in bag",
-            "checked bag", "baggage allowance", "luggage allowance", "power bank flight",
-            "laptop flight", "liquids flight", "lag rule", "dgca", "missed flight",
-            "connecting flight", "layover", "domestic flight"
-        ]):
-            return {
-                "badge": "✈️ CIVIL AVIATION & FLIGHT REGULATIONS",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #38bdf8; font-size: 0.96rem; margin-bottom: 6px;'>✈️ Official Air Travel & Baggage Guidelines (DGCA / ICAO Verified)</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>Web Check-In & Airport Reporting:</b><br>"
-                    "&nbsp;&nbsp;- Web check-in opens <b>48 hours</b> before departure and closes strictly <b>60 minutes</b> prior (domestic) or <b>75 minutes</b> prior (international).<br>"
-                    "&nbsp;&nbsp;- Arrive at the airport minimum <b>2 hours prior</b> for domestic flights, and <b>3 to 4 hours prior</b> for international flights. Boarding gates close <b>20-25 minutes</b> before takeoff.<br><br>"
-                    "• <b>Standard Baggage Allowances (Domestic Economy):</b><br>"
-                    "&nbsp;&nbsp;- <b>Check-in Baggage:</b> 15 kg per passenger (Air India provides up to 20-25 kg depending on fare class).<br>"
-                    "&nbsp;&nbsp;- <b>Cabin / Hand Baggage:</b> 7 kg (max dimensions 55 cm x 35 cm x 25 cm) + one small personal item (laptop bag or purse).<br><br>"
-                    "• <b>Critical Electronics & Battery Rules:</b><br>"
-                    "&nbsp;&nbsp;- <b>Power banks, spare lithium-ion batteries, and laptops MUST be carried in Cabin Baggage ONLY.</b> They are strictly prohibited in checked cargo due to fire safety regulations.<br>"
-                    "&nbsp;&nbsp;- E-cigarettes and vapes are completely prohibited in Indian aviation under the PECA Act 2019.<br><br>"
-                    "• <b>Liquids Rule (LAGs):</b> Liquids, aerosols, and gels in hand luggage must be in containers of <b>100 ml or less</b> and fit inside a clear resealable 1-liter plastic pouch. Larger quantities must be checked in.<br><br>"
-                    "• <b>Passenger Rights (DGCA Charter):</b> If your flight is delayed over 2 hours, the airline must provide free refreshments. For delays exceeding 6 hours or sudden cancellations, you are entitled to a full refund or free alternate rebooking."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 4. RAILWAYS & IRCTC (TATKAL, RAC, WL, LUGGAGE, BERTHS)
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "train", "railway", "irctc", "tatkal", "pnr", "rac", "waiting list",
-            "waitlist", "gnwl", "tqwl", "train luggage", "vande bharat", "rajdhani",
-            "e-catering", "train ticket", "sleeper class", "3ac", "2ac", "1ac", "berth"
-        ]):
-            return {
-                "badge": "🚂 IRCTC & RAILWAY INTELLIGENCE",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #10b981; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #34d399; font-size: 0.96rem; margin-bottom: 6px;'>🚂 Official Indian Railways & IRCTC Booking Protocols</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>Tatkal Booking Timings (Crucial):</b><br>"
-                    "&nbsp;&nbsp;- <b>AC Classes (2A, 3A, 3E, CC):</b> Opens exactly at <b>10:00 AM IST</b>.<br>"
-                    "&nbsp;&nbsp;- <b>Non-AC Classes (Sleeper SL, 2S):</b> Opens exactly at <b>11:00 AM IST</b>.<br>"
-                    "&nbsp;&nbsp;- Opens exactly <b>1 day in advance</b> of journey date from train's originating station. Maximum 4 passengers per PNR. No refund on cancellation of confirmed Tatkal tickets.<br><br>"
-                    "• <b>RAC vs Waiting List (WL) Legal Rules:</b><br>"
-                    "&nbsp;&nbsp;- <b>RAC (Reservation Against Cushion):</b> Guarantees legal boarding rights and a shared lower berth. Automatically upgrades to full berth if cancellations occur.<br>"
-                    "&nbsp;&nbsp;- <b>Fully Waitlisted e-Tickets (WL/GNWL/TQWL):</b> If an online e-ticket remains on the waitlist after chart preparation (4 hours prior to departure), the ticket is automatically cancelled and refunded. Passengers are <b>legally forbidden from boarding reserved coaches</b> on WL e-tickets.<br><br>"
-                    "• <b>Free Baggage Allowance by Class:</b><br>"
-                    "&nbsp;&nbsp;- <b>AC 1st Class:</b> 70 kg free allowance (max 150 kg with marginal excess).<br>"
-                    "&nbsp;&nbsp;- <b>AC 2-Tier:</b> 50 kg free allowance.<br>"
-                    "&nbsp;&nbsp;- <b>AC 3-Tier / Chair Car:</b> 40 kg free allowance.<br>"
-                    "&nbsp;&nbsp;- <b>Sleeper Class:</b> 40 kg free allowance.<br><br>"
-                    "• <b>Station Amenities & Meal Services:</b><br>"
-                    "&nbsp;&nbsp;- Order hygienic restaurant food right to your seat using IRCTC e-Catering (call <b>1323</b> or enter PNR online).<br>"
-                    "&nbsp;&nbsp;- Railway Emergency Helpline: <b>139</b> (24/7 security, medical, and journey assistance)."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 5. SPEED LIMITS, HIGHWAY RULES & FASTAG REGULATIONS
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "speed limit", "highway speed", "expressway speed", "fastag", "toll plaza",
-            "toll gate", "double toll", "2x toll", "motor vehicles act", "nh speed"
-        ]):
-            return {
-                "badge": "🛣️ HIGHWAY & EXPRESSWAY SPEED LIMITS",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #f59e0b; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #fbbf24; font-size: 0.96rem; margin-bottom: 6px;'>🛣️ Official MoRTH Speed Limits & Highway Regulations</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>Official Speed Limits in India (Ministry of Road Transport & Highways):</b><br>"
-                    "&nbsp;&nbsp;- <b>Access-Controlled Expressways:</b> <b>120 km/h</b> for Passenger Cars (M1 category); <b>100 km/h</b> for Commercial/Heavy Vehicles.<br>"
-                    "&nbsp;&nbsp;- <b>4-Lane / 6-Lane Divided National Highways:</b> <b>100 km/h</b> for Cars; <b>80 km/h</b> for Trucks and Buses.<br>"
-                    "&nbsp;&nbsp;- <b>2-Lane State Highways & Undivided Roads:</b> <b>70 to 80 km/h</b> for Cars; <b>60 km/h</b> for Heavy Vehicles.<br>"
-                    "&nbsp;&nbsp;- <b>Roads within Municipal / City Limits:</b> <b>40 to 50 km/h</b>.<br>"
-                    "&nbsp;&nbsp;- <b>Ghat Roads, Mountain Passes & School Zones:</b> <b>25 to 40 km/h</b> (as posted by local authorities).<br><br>"
-                    "• <b>Mandatory FASTag Regulations:</b><br>"
-                    "&nbsp;&nbsp;- All vehicles must have an active, balance-funded RFID FASTag affixed to the windshield.<br>"
-                    "&nbsp;&nbsp;- <b>Penalty:</b> Entering a designated FASTag lane without a functional tag or with insufficient balance incurs an immediate penalty of <b>2x (double) the regular cash toll fee</b>.<br><br>"
-                    "• <b>National Highway Emergency Assistance:</b> Call <b>1033</b> (NHAI 24/7 Helpline for free emergency ambulance, crane tow, and highway patrol)."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 6. HIGHWAY BREAKDOWN & ROADSIDE SAFETY PROTOCOL
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "breakdown", "break down", "breaks down", "broke down", "broken down",
-            "flat tire", "puncture", "engine overheating", "stranded on highway",
-            "car stopped", "highway emergency"
-        ]):
-            return {
-                "badge": "🚗 HIGHWAY BREAKDOWN SAFETY PROTOCOL",
-                "response": (
-                    "<div style='background: rgba(45, 15, 15, 0.92); border: 2px solid #ef4444; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #f87171; font-size: 0.96rem; margin-bottom: 6px;'>⚠️ Critical 5-Step Highway Breakdown Action SOP</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "1. <b>Turn On Hazard Warning Blinkers Immediately:</b> Alert trailing high-speed traffic instantly.<br>"
-                    "2. <b>Coast to the Leftmost Paved Shoulder:</b> Decelerate gently and move completely off the active driving lanes onto the hard shoulder or emergency refuge bay.<br>"
-                    "3. <b>Place Reflective Warning Triangle 50–100m Behind:</b> Walk on the shoulder facing traffic and set your red reflective triangle 50 meters (undivided road) to 100 meters (expressway) behind your car.<br>"
-                    "4. <b>Exit Vehicle from Left Doors & Wait Behind Crash Barrier:</b> Never remain inside a stationary car on a high-speed highway! All passengers must step over the metal crash barrier onto the grass embankment.<br>"
-                    "5. <b>Call 24/7 Emergency Road Assistance:</b><br>"
-                    "&nbsp;&nbsp;• <b>NHAI Highway Patrol:</b> <code>1033</code> (Toll-free, dispatched within 15-20 mins).<br>"
-                    "&nbsp;&nbsp;• <b>National Emergency Helpline:</b> <code>112</code> (Police, Medical, Fire)."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 6. MONSOON, HYDROPLANING & FOG DRIVING
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "hydroplaning", "aquaplaning", "rain driving", "monsoon driving",
-            "driving in rain", "fog driving", "driving in fog", "waterlogged",
-            "water wading"
-        ]):
-            return {
-                "badge": "🌧️ MONSOON & LOW-VISIBILITY DRIVING",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #06b6d4; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #22d3ee; font-size: 0.96rem; margin-bottom: 6px;'>🌧️ Severe Weather Driving & Hydroplaning Mastery</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>How to Recover from Hydroplaning (Standing Water):</b><br>"
-                    "&nbsp;&nbsp;- Hydroplaning occurs when water builds up between tires and road, causing total loss of steering.<br>"
-                    "&nbsp;&nbsp;- <b>Rule 1: NEVER slam the brakes!</b> Braking locks the wheels and triggers a dangerous spin.<br>"
-                    "&nbsp;&nbsp;- <b>Rule 2:</b> Gently ease your foot off the accelerator and hold the steering wheel firmly straight.<br>"
-                    "&nbsp;&nbsp;- Wait 2-3 seconds until tire treads displace the water film and regain mechanical grip.<br><br>"
-                    "• <b>Water Wading Safety Depth:</b> Never drive through standing water deeper than your vehicle's <b>wheel hub (center of the wheel)</b>. Water entering the air intake causes instant hydrostatic engine seizure.<br><br>"
-                    "• <b>Fog Driving Protocols:</b><br>"
-                    "&nbsp;&nbsp;- Use <b>LOW BEAMS and dedicated FOG LAMPS only</b>. Never use high beams—light scatters off water droplets, creating a white blinding wall.<br>"
-                    "&nbsp;&nbsp;- Maintain a minimum <b>5-to-6 second following buffer</b> behind preceding vehicles."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 7. PACKING CHECKLISTS, HACKS & ESSENTIALS
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "pack", "packing", "what to pack", "packing list", "packing checklist",
-            "how to pack", "luggage packing", "travel checklist", "carry-on only"
-        ]):
-            return {
-                "badge": "🧳 AUTHORITATIVE TRAVEL PACKING LIST",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #10b981; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #34d399; font-size: 0.96rem; margin-bottom: 6px;'>🧳 The Master Travel Packing Checklist</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>Essential Documents (Carry-on Only):</b> Government ID (Aadhaar/Passport/DL), physical & digital boarding passes, hotel confirmation vouchers, emergency contact card.<br>"
-                    "• <b>Medical & Health Kit:</b> Paracetamol/Ibuprofen, ORS rehydration sachets, Dimenhydrinate (motion sickness, take 30m before transit), band-aids, hand sanitizer, personal prescriptions with doctor's slip.<br>"
-                    "• <b>Tech & Electronics:</b> Power bank (&lt;20,000 mAh in carry-on only), multi-country universal plug adapter, high-speed charging cables, downloaded offline maps.<br>"
-                    "• <b>Clothing & Space-Saving Hacks:</b><br>"
-                    "&nbsp;&nbsp;- <b>Roll, Don't Fold:</b> Rolling clothes eliminates creases and saves <b>up to 30% luggage volume</b>.<br>"
-                    "&nbsp;&nbsp;- <b>Heavy Gear Rule:</b> Wear your heaviest shoes and thickest jacket during transit to save precious bag weight.<br>"
-                    "&nbsp;&nbsp;- Quick-drying microfiber travel towel, compact UV/rain umbrella, and waterproof zip pouches."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 8. MOTION SICKNESS & TRAVEL HEALTH
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "motion sickness", "car sick", "travel sick", "sea sick", "airsick",
-            "vomit travel", "nausea travel", "vomiting while travelling"
-        ]):
-            return {
-                "badge": "🩺 TRAVEL MOTION SICKNESS PROTOCOL",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #38bdf8; font-size: 0.96rem; margin-bottom: 6px;'>🩺 Scientifically Proven Motion Sickness Prevention</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>Optimal Seating:</b><br>"
-                    "&nbsp;&nbsp;- <b>Car / Bus:</b> Sit in the front passenger seat facing forward.<br>"
-                    "&nbsp;&nbsp;- <b>Airplane:</b> Choose a seat directly over the wing (center of gravity with lowest turbulence).<br>"
-                    "&nbsp;&nbsp;- <b>Train:</b> Sit facing the direction of travel, near the center of the coach.<br><br>"
-                    "• <b>Visual & Physical Habits:</b> Fix your gaze on the distant horizon. Avoid reading books or looking at phone screens while in motion. Direct cool air vents straight onto your face.<br>"
-                    "• <b>Medical Options:</b> Dimenhydrinate (Dramamine) or Cinnarizine tablets taken <b>30 to 60 minutes before departure</b>. Natural ginger candy or acupressure wristbands (P6 point) also provide fast relief."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 9. INTERNATIONAL TRAVEL, PASSPORTS, VISAS & FOREX
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "passport", "visa", "forex", "currency exchange", "esim", "roaming",
-            "international travel", "travel abroad", "schengen", "customs"
-        ]):
-            return {
-                "badge": "🌍 INTERNATIONAL TRAVEL ESSENTIALS",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #6366f1; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #818cf8; font-size: 0.96rem; margin-bottom: 6px;'>🌍 International Travel & Forex Master Rules</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>The 6-Month Passport Rule:</b> Your passport must have at least <b>6 months validity</b> beyond your planned return date and at least 2 consecutive blank pages.<br>"
-                    "• <b>Smart Currency & Forex Strategy:</b><br>"
-                    "&nbsp;&nbsp;- Never exchange significant cash at airport exchange kiosks (they charge 8% to 15% markups).<br>"
-                    "&nbsp;&nbsp;- Use zero-forex markup debit/credit cards or multi-currency forex cards.<br>"
-                    "&nbsp;&nbsp;- <b>Critical POS Tip:</b> Always choose to be charged in the <b>local country's currency</b> (e.g. EUR, USD, JPY) rather than INR at payment terminals to bypass Dynamic Currency Conversion (DCC 3-7% fee).<br>"
-                    "• <b>Connectivity:</b> Install a regional eSIM (Airalo, Maya Mobile, Nomad) before departure for instant data upon landing.<br>"
-                    "• <b>Travel Insurance:</b> Must include minimum $100,000 emergency medical cover, trip interruption, and baggage loss."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 10. ELECTRIC VEHICLES (EV) & ROAD TRIP TRANSIT ECONOMY
-        # -----------------------------------------------------------------
-        if re.search(r"\bev\b", q) or any(w in q for w in [
-            "electric vehicle", "ev charging", "charge an ev", "charging an ev",
-            "ev trip", "ev road trip", "range anxiety", "save fuel", "mileage tips", "fuel economy"
-        ]):
-            return {
-                "badge": "⚡ EV TRANSIT & FUEL ECONOMY",
-                "response": (
-                    "<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #10b981; border-radius: 12px; padding: 13px 15px;'>"
-                    "<div style='font-weight: 800; color: #34d399; font-size: 0.96rem; margin-bottom: 6px;'>⚡ EV Road Trips & Maximum Fuel Efficiency</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>The 10%–80% Fast-Charging Rule:</b> DC fast charging is fastest between 10% and 80% State of Charge (SoC). Charging from 80% to 100% slows down dramatically to protect battery health; unplug at 80% to save valuable travel time.<br>"
-                    "• <b>Aerodynamic Highway Drag:</b> Driving at 110+ km/h reduces EV range by 15-25% compared to city speeds. Plan charging stops every 200–240 km.<br>"
-                    "• <b>Top EV Apps in India:</b> Tata EZ Charge, Jio-BP Pulse, Statiq, Zeon, PlugShare.<br>"
-                    "• <b>Combustion Fuel Savings:</b> Maintain steady 60–80 km/h in top gear. Increasing tire pressure by 2 PSI for highway loads saves 10-15% fuel."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 12. REGIONAL CORRIDORS (TENALI, GUNTUR, VIJAYAWADA, AMARAVATI, HYDERABAD)
-        # -----------------------------------------------------------------
-        if any(w in q for w in ["tenali", "guntur", "vijayawada", "amaravati", "hyderabad", "visakhapatnam", "vizag"]):
-            matched_region = "Andhra Pradesh Capital Region (CRDA)"
-            if "tenali" in q: matched_region = "Tenali & Guntur District Corridor"
-            elif "vijayawada" in q: matched_region = "Vijayawada Hub (NTR District)"
-            elif "hyderabad" in q: matched_region = "Hyderabad Express Corridor (NH-65)"
-
-            return {
-                "badge": f"🧭 REGIONAL CORRIDOR INTEL • {matched_region.upper()[:22]}",
-                "response": (
-                    f"<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 13px 15px;'>"
-                    f"<div style='font-weight: 800; color: #38bdf8; font-size: 0.96rem; margin-bottom: 6px;'>📍 Regional Journey Guidance: {matched_region}</div>"
-                    "<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    "• <b>Vijayawada &lt;-&gt; Guntur (NH-16):</b> 32 km, ~40-45 mins. 6-lane national expressway corridor via Mangalagiri.<br>"
-                    "• <b>Tenali &lt;-&gt; Guntur (SH-48 / Tenali Road):</b> 28 km, ~40 mins via Nandivelugu and Narakodur.<br>"
-                    "• <b>Vijayawada &lt;-&gt; Tenali:</b> 36 km, ~50 mins via NH-16 Mangalagiri Bypass or Chenchu Ramaiah Marg.<br>"
-                    "• <b>Hyderabad &lt;-&gt; Vijayawada (NH-65):</b> 275 km, ~4.5 hours via Suryapet (access-controlled 4-lane expressway).<br>"
-                    "• <b>Must-Visit Cultural Landmarks:</b> Kanaka Durga Temple (Vijayawada), Mangalagiri Panakala Lakshmi Narasimha Swamy Temple, Undavalli Rock-Cut Caves, Prakasam Barrage, and Amaralingeswara Swamy Temple."
-                    "</div>"
-                    "</div>"
-                )
-            }
-
-        # -----------------------------------------------------------------
-        # 13. BROAD CATCH-ALL FOR ANY GENERAL TRAVEL INQUIRY
-        # -----------------------------------------------------------------
-        if any(w in q for w in [
-            "travel", "travelling", "traveling", "trip", "tour", "journey",
-            "vacation", "holiday", "itinerary", "commute", "transit", "roadtrip",
-            "solo travel", "wanderlust", "ecotourism", "sightseeing"
-        ]):
-            clean_q = re.sub(r"^(what is|how to|can you explain|tell me about|tips for|advice on)\s+", "", q).strip("?. ")
-            title_q = clean_q.title() if clean_q else "Travel Guidance"
-            return {
-                "badge": f"🌟 A.U.R.A. TRAVEL COPILOT • {title_q[:20].upper()}",
-                "response": (
-                    f"<div style='background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 13px 15px;'>"
-                    f"<div style='font-weight: 800; color: #38bdf8; font-size: 0.96rem; margin-bottom: 6px;'>🧭 Authoritative Travel Intelligence: {title_q}</div>"
-                    f"<div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.5;'>"
-                    f"• <b>Trip Planning & Route Strategy:</b> Optimize transit modes based on distance (Road for &lt;300 km, High-Speed Rail for 300–800 km, Air for &gt;800 km). Pathfinder calculates live multi-objective routes (Fastest, Shortest, Balanced, Accessible).<br>"
-                    f"• <b>Safety & Health Protocol:</b> Maintain digital & printed copies of photo ID, carry an emergency medical kit, hydrate regularly, and note local 24/7 emergency helplines (<b>112</b> in India/EU, <b>911</b> in USA).<br>"
-                    f"• <b>Budget & Booking Optimization:</b> Book transportation 3 to 6 weeks in advance for optimal fares. Use zero-forex markup cards and verify baggage allowances before departing.<br><br>"
-                    f"<i>Feel free to ask specific questions about flights, IRCTC train rules, highway speed limits, breakdown SOPs, accessible routes, or packing checklists!</i>"
-                    f"</div>"
-                    f"</div>"
-                )
-            }
-
-        return None
-

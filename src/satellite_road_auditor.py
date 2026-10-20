@@ -65,7 +65,7 @@ class SatelliteRoadAuditor:
                 real_blockages_count=0,
                 real_hazards_count=0,
                 satellite_pass_time=current_time_str,
-                corridor_summary="Single point or empty corridor. Satellite pass confirms zero route blockages."
+                corridor_summary="Single point or empty corridor. No physical infrastructure barriers detected in checked coordinates."
             )
 
         # Compute bounding envelope
@@ -182,7 +182,7 @@ class SatelliteRoadAuditor:
         is_clear = (total_obs == 0)
 
         if is_clear:
-            summary = "Satellite corridor audit verified 100% clear. Zero road blockages or hazardous spills detected on surveyed route."
+            summary = "Satellite corridor audit verified clear of reported physical blockages. No road closures detected on surveyed route."
             status = "NOMINAL_CLEAR"
         else:
             summary = f"Satellite audit detected {len(real_blockages)} verified road blockage(s) and {len(real_hazards)} hazard(s) along route corridor."

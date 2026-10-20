@@ -246,7 +246,9 @@ def build_google_maps_javascript_html(
     map_type: str = "hybrid",
     height_px: int = 720,
     api_key: Optional[str] = None,
-    traveler_avatar: str = "walk"
+    traveler_avatar: str = "walk",
+    route_polylines: Optional[List[Dict[str, Any]]] = None,
+    ai_road_report: Optional[Dict[str, Any]] = None
 ) -> str:
     """
     Builds the official Google Maps JavaScript API HTML & JavaScript container component.
@@ -265,9 +267,32 @@ def build_google_maps_javascript_html(
 
     # Prepare serialized JSON data for safe embedding
     saved_locs_json = json.dumps(saved_locations or [])
-    amenities_json = json.dumps(amenities or [])
+    
+    # Ensure all 8 categories are represented with verified real-world amenities
+    merged_amenities = list(amenities or [])
+    existing_facility_keys = {
+        (f.get("name") or "").lower() for f in merged_amenities
+    }
+    try:
+        from src.facilities_service import VERIFIED_FACILITIES_DATABASE, generate_worldwide_facilities_for_location
+        for vf in VERIFIED_FACILITIES_DATABASE:
+            k = (vf.get("name") or "").lower()
+            if k not in existing_facility_keys:
+                merged_amenities.append(vf)
+                existing_facility_keys.add(k)
+        for wwf in generate_worldwide_facilities_for_location(center_lat, center_lon, "all"):
+            k = (wwf.get("name") or "").lower()
+            if k not in existing_facility_keys:
+                merged_amenities.append(wwf)
+                existing_facility_keys.add(k)
+    except Exception:
+        pass
+
+    amenities_json = json.dumps(merged_amenities)
     route_poly_json = json.dumps(route_polyline or [])
+    route_polylines_json = json.dumps(route_polylines or [])
     hazards_json = json.dumps(hazards or [])
+    ai_road_report_json = json.dumps(ai_road_report or {})
 
     orig_json = json.dumps({
         "lat": origin_coords[0],
@@ -523,6 +548,220 @@ def build_google_maps_javascript_html(
             box-shadow: 0 0 18px rgba(245, 158, 11, 0.7);
             color: #ffffff;
             transform: translateY(-1px);
+        }}
+
+        /* Autocomplete suggestions dropdown */
+        .pac-autocomplete-dropdown {{
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(56, 189, 248, 0.45);
+            border-radius: 10px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.25);
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            scrollbar-width: thin;
+        }}
+        .pac-autocomplete-dropdown.open {{
+            display: flex !important;
+        }}
+        .pac-autocomplete-item {{
+            padding: 9px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.15s ease;
+        }}
+        .pac-autocomplete-item:hover, .pac-autocomplete-item.selected {{
+            background: rgba(56, 189, 248, 0.18);
+        }}
+        .pac-autocomplete-icon {{
+            font-size: 16px;
+            flex-shrink: 0;
+        }}
+        .pac-autocomplete-text {{
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+        }}
+        .pac-autocomplete-title {{
+            font-size: 0.80rem;
+            font-weight: 800;
+            color: #f8fafc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }}
+        .pac-autocomplete-sub {{
+            font-size: 0.68rem;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }}
+
+        /* Nearby-Place Category Results Panel */
+        .gmap-category-panel {{
+            position: absolute;
+            bottom: 24px;
+            left: 14px;
+            width: 360px;
+            max-width: calc(100% - 28px);
+            max-height: 400px;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(56, 189, 248, 0.4);
+            border-radius: 14px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.2);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: categoryPanelSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }}
+        .gmap-category-panel.open {{
+            display: flex !important;
+        }}
+        @keyframes categoryPanelSlideUp {{
+            0% {{ opacity: 0; transform: translateY(16px) scale(0.97); }}
+            100% {{ opacity: 1; transform: translateY(0) scale(1); }}
+        }}
+        .category-panel-header {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(30, 41, 59, 0.6);
+        }}
+        .category-panel-title-wrap {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }}
+        .cat-panel-icon {{
+            font-size: 20px;
+        }}
+        .cat-panel-title {{
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #f8fafc;
+        }}
+        .cat-panel-count {{
+            font-size: 0.72rem;
+            color: #38bdf8;
+            font-weight: 600;
+        }}
+        .cat-panel-clear-btn {{
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        .cat-panel-clear-btn:hover {{
+            background: #ef4444;
+            color: #ffffff;
+        }}
+        .cat-panel-subfilters {{
+            display: flex;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            overflow-x: auto;
+        }}
+        .cat-subfilter-btn {{
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #cbd5e1;
+            font-size: 0.70rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }}
+        .cat-subfilter-btn.active {{
+            background: #0284c7;
+            border-color: #38bdf8;
+            color: #ffffff;
+        }}
+        .cat-panel-body {{
+            padding: 10px 12px;
+            overflow-y: auto;
+            max-height: 290px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            scrollbar-width: thin;
+        }}
+        .cat-result-card {{
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 9px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }}
+        .cat-result-card:hover {{
+            background: rgba(56, 189, 248, 0.12);
+            border-color: #38bdf8;
+            transform: translateX(2px);
+        }}
+        .cat-result-top {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }}
+        .cat-result-name {{
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #f1f5f9;
+        }}
+        .cat-result-badge {{
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }}
+        .cat-result-addr {{
+            font-size: 0.72rem;
+            color: #94a3b8;
+            line-height: 1.3;
+        }}
+        .cat-result-meta {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.70rem;
+            color: #cbd5e1;
+            margin-top: 2px;
+        }}
+        .cat-result-dist {{
+            color: #38bdf8;
+            font-weight: 700;
         }}
 
         /* Authentic Google Maps Bottom-Left Layers Switcher & Flyout Drawer */
@@ -1520,15 +1759,16 @@ def build_google_maps_javascript_html(
             <div class="gmap-search-wrapper">
                 <span class="gmap-search-icon">🔍</span>
                 <input id="pac-input" class="gmap-search-input" type="text"
-                       placeholder="Search places, landmarks, saved rooms or coordinates..." />
+                       placeholder="Search places, landmarks, saved rooms or coordinates..." autocomplete="off" />
+                <div id="pac-autocomplete-dropdown" class="pac-autocomplete-dropdown"></div>
             </div>
-            <button class="gmap-btn" id="btn-geolocation" title="Center map at your real location">
+            <button class="gmap-btn" id="btn-geolocation" onclick="window.locateUserGps()" title="Center map at your real GPS location">
                 📍 My Location
             </button>
-            <button class="gmap-btn" id="btn-fit-all" title="Fit all saved locations and routes">
+            <button class="gmap-btn" id="btn-fit-all" onclick="window.fitAllMapBounds()" title="Fit all route alternatives and markers">
                 🎯 Fit Bounds
             </button>
-            <button class="gmap-btn" id="btn-fullscreen" onclick="window.toggleFullScreen()" title="Open Pathfinder map in full screen">
+            <button class="gmap-btn" id="btn-fullscreen" onclick="window.toggleFullScreen()" title="Toggle full screen view">
                 ⛶ Full Screen
             </button>
             <button class="gmap-btn" id="btn-open-layers" onclick="window.toggleLayersDrawer()" title="Map Details & Layers (Traffic, Transit, Satellite, Wildfires)">
@@ -1540,14 +1780,30 @@ def build_google_maps_javascript_html(
         <div class="gmap-filter-bar">
             <span class="gmap-filter-pill" data-filter="SAVED" id="pill-filter-saved" style="display:none;" title="Saved Places"></span>
             <button class="gmap-filter-save-btn" id="btn-quick-save-place" style="display:none;" onclick="window.savePlacePromptFromFilter()"></button>
-            <span class="gmap-filter-pill" data-filter="HOSPITALS">🏥 Hospitals</span>
-            <span class="gmap-filter-pill" data-filter="FUEL">⛽ Fuel/Charging</span>
-            <span class="gmap-filter-pill" data-filter="RESTAURANTS">🍽️ Restaurants</span>
-            <span class="gmap-filter-pill" data-filter="ATMS">🏧 ATM / Banking</span>
-            <span class="gmap-filter-pill" data-filter="POLICE">👮 Police/Rescue</span>
-            <span class="gmap-filter-pill" data-filter="HOTELS">🏨 Hotels</span>
-            <span class="gmap-filter-pill" data-filter="SHELTERS">⛺ Shelters</span>
-            <span class="gmap-filter-pill" data-filter="MALLS">🛍️ Shopping Malls</span>
+            <span class="gmap-filter-pill" data-filter="HOSPITALS" onclick="window.triggerCategorySearch('HOSPITALS')">🏥 Hospitals</span>
+            <span class="gmap-filter-pill" data-filter="FUEL" onclick="window.triggerCategorySearch('FUEL')">⛽ Fuel/Charging</span>
+            <span class="gmap-filter-pill" data-filter="RESTAURANTS" onclick="window.triggerCategorySearch('RESTAURANTS')">🍽️ Restaurants</span>
+            <span class="gmap-filter-pill" data-filter="ATMS" onclick="window.triggerCategorySearch('ATMS')">🏧 ATM / Banking</span>
+            <span class="gmap-filter-pill" data-filter="POLICE" onclick="window.triggerCategorySearch('POLICE')">👮 Police/Rescue</span>
+            <span class="gmap-filter-pill" data-filter="HOTELS" onclick="window.triggerCategorySearch('HOTELS')">🏨 Hotels</span>
+            <span class="gmap-filter-pill" data-filter="SHELTERS" onclick="window.triggerCategorySearch('SHELTERS')">⛺ Shelters</span>
+            <span class="gmap-filter-pill" data-filter="MALLS" onclick="window.triggerCategorySearch('MALLS')">🛍️ Shopping Malls</span>
+        </div>
+
+        <!-- Nearby-Place Category Results Panel -->
+        <div id="gmap-category-panel" class="gmap-category-panel">
+            <div class="category-panel-header">
+                <div class="category-panel-title-wrap">
+                    <span id="cat-panel-icon" class="cat-panel-icon">🏥</span>
+                    <div>
+                        <div id="cat-panel-title" class="cat-panel-title">Nearby Places</div>
+                        <div id="cat-panel-count" class="cat-panel-count">Scanning area...</div>
+                    </div>
+                </div>
+                <button class="cat-panel-clear-btn" onclick="window.clearActiveCategory()" title="Remove category markers and clear panel">✕ Clear</button>
+            </div>
+            <div id="cat-panel-subfilters" class="cat-panel-subfilters" style="display:none;"></div>
+            <div id="cat-panel-body" class="cat-panel-body"></div>
         </div>
 
         <div id="map"></div>
@@ -1750,6 +2006,14 @@ def build_google_maps_javascript_html(
                     </div>
                     <span class="layer-item-label">Air Quality</span>
                 </button>
+
+                <!-- AI Road Intelligence Overlay -->
+                <button class="layer-item-btn" id="layer-btn-ai_road_intel" onclick="window.toggleMapLayer('ai_road_intel')" title="AI Road Surface, Width & Junction Overlays">
+                    <div class="layer-icon-circle" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                        <span style="font-size: 18px;">🛰️</span>
+                    </div>
+                    <span class="layer-item-label">AI Intel</span>
+                </button>
             </div>
 
             <div class="layers-divider"></div>
@@ -1821,9 +2085,11 @@ def build_google_maps_javascript_html(
             origin: {orig_json},
             destination: {dest_json},
             routePolyline: {route_poly_json},
+            routePolylines: {route_polylines_json},
             savedLocations: {saved_locs_json},
             amenities: {amenities_json},
             hazards: {hazards_json},
+            aiRoadReport: {ai_road_report_json},
             hasLiveKey: {str(has_live_key).lower()},
             mapType: "{map_type}",
             travelerAvatarIcon: "{avatar_icon}",
@@ -2198,6 +2464,45 @@ def build_google_maps_javascript_html(
                     }}
                 }}
                 window.showMapToast(isActive ? 'Real-Time Air Quality (AQI) Heatmap Active' : 'Air Quality Heatmap Hidden', '🍃');
+            }} else if (layerName === 'ai_road_intel') {{
+                if (window.lMapInstance) {{
+                    if (isActive) {{
+                        if (!window.leafletAiRoadGroup) {{
+                            window.leafletAiRoadGroup = L.layerGroup();
+                            var obs = (window.GMAP_DATA && window.GMAP_DATA.aiRoadReport && window.GMAP_DATA.aiRoadReport.observations) ? window.GMAP_DATA.aiRoadReport.observations : [];
+                            obs.forEach(function(o) {{
+                                if (o.lat && o.lon) {{
+                                    var iconHtml = '🛣️';
+                                    var borderCol = '#38bdf8';
+                                    if (o.category === 'INTERSECTION') {{
+                                        iconHtml = '🔀';
+                                        borderCol = '#fbbf24';
+                                    }} else if (o.category === 'BRIDGE_CROSSING') {{
+                                        iconHtml = '🌉';
+                                        borderCol = '#34d399';
+                                    }}
+                                    var pin = L.divIcon({{
+                                        className: 'ai-road-pin',
+                                        html: '<div style="background: rgba(15,23,42,0.94); border: 2px solid ' + borderCol + '; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; box-shadow: 0 0 12px ' + borderCol + ';">' + iconHtml + '</div>',
+                                        iconSize: [28, 28],
+                                        iconAnchor: [14, 14]
+                                    }});
+                                    var popupContent = '<div style="font-family:sans-serif; min-width:200px; color:#f8fafc; background:#0f172a; padding:4px;">' +
+                                        '<b style="color:' + borderCol + '; font-size:13px;">' + iconHtml + ' ' + (o.category || 'Road Observation').replace('_', ' ') + '</b><br>' +
+                                        '<span style="font-size:10px; color:#94a3b8;">Coords: ' + o.lat.toFixed(4) + ', ' + o.lon.toFixed(4) + '</span><br>' +
+                                        '<div style="font-size:11px; margin-top:5px; color:#cbd5e1; line-height:1.35;">' + (o.corroboration_notes || '') + '</div>' +
+                                        '<div style="font-size:10px; margin-top:6px; color:' + borderCol + '; font-weight:700;">Status: ' + (o.verification_status || 'AI-detected') + '</div>' +
+                                        '</div>';
+                                    L.marker([o.lat, o.lon], {{ icon: pin }}).bindPopup(popupContent).addTo(window.leafletAiRoadGroup);
+                                }}
+                            }});
+                        }}
+                        window.leafletAiRoadGroup.addTo(window.lMapInstance);
+                    }} else {{
+                        if (window.leafletAiRoadGroup) try {{ window.lMapInstance.removeLayer(window.leafletAiRoadGroup); }} catch(e) {{}}
+                    }}
+                }}
+                window.showMapToast(isActive ? 'AI Road Intelligence & Width Overlays Active' : 'AI Road Overlays Hidden', '🛰️');
             }}
         }};
 
@@ -2917,6 +3222,668 @@ def build_google_maps_javascript_html(
                     statusEl.innerHTML = "⚠️ Geocoding service temporary timeout";
                     setTimeout(function() {{ statusEl.style.display = 'none'; }}, 3000);
                 }});
+        // ----------------------------------------------------
+        // LIVE MAP TOOLBAR & CATEGORY PLATFORM FUNCTIONS
+        // ----------------------------------------------------
+        var activeUserGpsMarker = null;
+        var activeUserGpsAccuracyCircle = null;
+
+        window.locateUserGps = function() {{
+            var geo = (window.parent && window.parent.navigator && window.parent.navigator.geolocation) ? window.parent.navigator.geolocation : navigator.geolocation;
+            var geoBtn = document.getElementById('btn-geolocation');
+            if (!geo) {{
+                window.showMapToast("Geolocation is not supported by your browser/device.", "⚠️");
+                return;
+            }}
+
+            if (geoBtn) geoBtn.innerHTML = '⌛ Locating...';
+            window.showMapToast("Requesting device GPS coordinates...", "🛰️");
+
+            geo.getCurrentPosition(function(pos) {{
+                var uLat = pos.coords.latitude;
+                var uLng = pos.coords.longitude;
+                var acc = pos.coords.accuracy || 10.0;
+
+                if (geoBtn) geoBtn.innerHTML = '📍 My Location';
+                window.showMapToast("Located: " + uLat.toFixed(4) + ", " + uLng.toFixed(4) + " (±" + Math.round(acc) + "m)", "🎯");
+
+                // Update Leaflet map
+                if (window.lMapInstance) {{
+                    window.lMapInstance.setView([uLat, uLng], 16, {{ animate: true, duration: 1.0 }});
+                    if (activeUserGpsMarker) try {{ window.lMapInstance.removeLayer(activeUserGpsMarker); }} catch(e) {{}}
+                    if (activeUserGpsAccuracyCircle) try {{ window.lMapInstance.removeLayer(activeUserGpsAccuracyCircle); }} catch(e) {{}}
+
+                    activeUserGpsAccuracyCircle = L.circle([uLat, uLng], {{
+                        radius: acc,
+                        color: '#0284c7',
+                        weight: 1.5,
+                        fillColor: '#38bdf8',
+                        fillOpacity: 0.15
+                    }}).addTo(window.lMapInstance);
+
+                    var myIcon = L.divIcon({{
+                        className: 'my-loc-pulse',
+                        html: '<div style="width: 24px; height: 24px; border-radius: 50%; background: #0284c7; border: 3px solid #ffffff; box-shadow: 0 0 18px #38bdf8; display: flex; align-items: center; justify-content: center;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #ffffff;"></div></div>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    }});
+                    activeUserGpsMarker = L.marker([uLat, uLng], {{ icon: myIcon, zIndexOffset: 9000 }}).addTo(window.lMapInstance);
+                    activeUserGpsMarker.bindPopup('<div class="iw-title">📍 My Real-Time GPS Location</div><div class="iw-meta">Coordinates: ' + uLat.toFixed(5) + ', ' + uLng.toFixed(5) + '<br>Accuracy: ±' + Math.round(acc) + ' meters</div>').openPopup();
+                }} else if (window.gMap) {{
+                    var posLatLng = new google.maps.LatLng(uLat, uLng);
+                    window.gMap.panTo(posLatLng);
+                    window.gMap.setZoom(16);
+
+                    if (activeUserGpsMarker) try {{ activeUserGpsMarker.setMap(null); }} catch(e) {{}}
+                    if (activeUserGpsAccuracyCircle) try {{ activeUserGpsAccuracyCircle.setMap(null); }} catch(e) {{}}
+
+                    activeUserGpsAccuracyCircle = new google.maps.Circle({{
+                        strokeColor: '#0284c7',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 1.5,
+                        fillColor: '#38bdf8',
+                        fillOpacity: 0.15,
+                        map: window.gMap,
+                        center: posLatLng,
+                        radius: acc
+                    }});
+
+                    activeUserGpsMarker = new google.maps.Marker({{
+                        position: posLatLng,
+                        map: window.gMap,
+                        title: "My Real-Time GPS Location",
+                        icon: {{
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: "#0284c7",
+                            fillOpacity: 1,
+                            strokeColor: "#ffffff",
+                            strokeWeight: 2.5
+                        }},
+                        zIndex: 9000
+                    }});
+                }}
+
+                try {{
+                    if (window.parent && window.parent !== window) {{
+                        window.parent.postMessage({{
+                            type: 'PATHFINDER_GPS_DETECTED',
+                            lat: uLat,
+                            lon: uLng,
+                            acc: acc
+                        }}, '*');
+                    }}
+                }} catch(e) {{}}
+            }}, function(err) {{
+                if (geoBtn) geoBtn.innerHTML = '📍 My Location';
+                var errMsg = "Location permission denied or GPS unavailable.";
+                if (err && err.code === 1) errMsg = "Location access was denied. Please allow location permissions in your browser.";
+                else if (err && err.code === 2) errMsg = "Position unavailable. Device GPS could not be resolved.";
+                else if (err && err.code === 3) errMsg = "GPS request timed out. Please try again.";
+                window.showMapToast(errMsg, "⚠️");
+            }}, {{ enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }});
+        }};
+
+        window.fitAllMapBounds = function() {{
+            var pts = [];
+            var data = window.GMAP_DATA;
+
+            // 1. Origin & Destination
+            if (data && data.origin && data.origin.lat && data.origin.lng) {{
+                pts.push([data.origin.lat, data.origin.lng]);
+            }}
+            if (data && data.destination && data.destination.lat && data.destination.lng) {{
+                pts.push([data.destination.lat, data.destination.lng]);
+            }}
+
+            // 2. Primary Route
+            if (data && data.routePolyline && data.routePolyline.length > 0) {{
+                data.routePolyline.forEach(function(pt) {{ pts.push(pt); }});
+            }}
+
+            // 3. Alternative routes
+            if (data && data.routePolylines && data.routePolylines.length > 0) {{
+                data.routePolylines.forEach(function(alt) {{
+                    if (alt.polyline && alt.polyline.length > 0) {{
+                        alt.polyline.forEach(function(pt) {{ pts.push(pt); }});
+                    }}
+                }});
+            }}
+
+            // 4. Current search marker
+            if (currentSearchMarker) {{
+                if (currentSearchMarker.getLatLng) {{
+                    var ll = currentSearchMarker.getLatLng();
+                    pts.push([ll.lat, ll.lng]);
+                }} else if (currentSearchMarker.getPosition) {{
+                    var p = currentSearchMarker.getPosition();
+                    pts.push([p.lat(), p.lng()]);
+                }}
+            }}
+
+            // 5. Active category markers
+            if (window.activeCategoryLeafletMarkers && window.activeCategoryLeafletMarkers.length > 0) {{
+                window.activeCategoryLeafletMarkers.forEach(function(m) {{
+                    var ll = m.getLatLng();
+                    pts.push([ll.lat, ll.lng]);
+                }});
+            }}
+            if (window.activeCategoryGMapMarkers && window.activeCategoryGMapMarkers.length > 0) {{
+                window.activeCategoryGMapMarkers.forEach(function(m) {{
+                    var p = m.getPosition();
+                    pts.push([p.lat(), p.lng()]);
+                }});
+            }}
+
+            if (pts.length === 0) {{
+                if (data && data.center) {{
+                    if (window.lMapInstance) window.lMapInstance.setView([data.center.lat, data.center.lng], data.zoom || 14);
+                    else if (window.gMap) {{
+                        window.gMap.setCenter(new google.maps.LatLng(data.center.lat, data.center.lng));
+                        window.gMap.setZoom(data.zoom || 14);
+                    }}
+                }}
+                window.showMapToast("Reset to default map view", "🎯");
+                return;
+            }}
+
+            if (pts.length === 1) {{
+                if (window.lMapInstance) {{
+                    window.lMapInstance.setView(pts[0], 15, {{ animate: true }});
+                }} else if (window.gMap) {{
+                    window.gMap.panTo(new google.maps.LatLng(pts[0][0], pts[0][1]));
+                    window.gMap.setZoom(15);
+                }}
+                window.showMapToast("Centered on location", "🎯");
+                return;
+            }}
+
+            if (window.lMapInstance) {{
+                var lBounds = L.latLngBounds(pts);
+                window.lMapInstance.fitBounds(lBounds, {{
+                    paddingTopLeft: [50, 70],
+                    paddingBottomRight: [50, 50],
+                    maxZoom: 16,
+                    animate: true
+                }});
+                window.showMapToast("Fitted bounds to all visible markers & routes", "🎯");
+            }} else if (window.gMap) {{
+                var gBounds = new google.maps.LatLngBounds();
+                pts.forEach(function(p) {{
+                    gBounds.extend(new google.maps.LatLng(p[0], p[1]));
+                }});
+                window.gMap.fitBounds(gBounds, {{ top: 70, bottom: 50, left: 50, right: 50 }});
+                window.showMapToast("Fitted bounds to all visible markers & routes", "🎯");
+            }}
+        }};
+
+        window.initUnifiedPlaceSearch = function() {{
+            var input = document.getElementById('pac-input');
+            var dropdown = document.getElementById('pac-autocomplete-dropdown');
+            if (!input || !dropdown) return;
+
+            var debounceTimer = null;
+
+            input.addEventListener('input', function() {{
+                var q = input.value.trim();
+                clearTimeout(debounceTimer);
+                if (!q || q.length < 2) {{
+                    dropdown.classList.remove('open');
+                    dropdown.innerHTML = '';
+                    return;
+                }}
+
+                debounceTimer = setTimeout(function() {{
+                    var suggestions = [];
+                    var qLower = q.toLowerCase();
+
+                    // Check coordinates
+                    var coordMatch = q.match(/^([-+]?[0-9]*\\.?[0-9]+)[\\s,]+([-+]?[0-9]*\\.?[0-9]+)$/);
+                    if (coordMatch) {{
+                        var cLat = parseFloat(coordMatch[1]);
+                        var cLng = parseFloat(coordMatch[2]);
+                        if (!isNaN(cLat) && !isNaN(cLng) && cLat >= -90 && cLat <= 90 && cLng >= -180 && cLng <= 180) {{
+                            suggestions.push({{
+                                title: "Go to Coordinates: " + cLat.toFixed(4) + ", " + cLng.toFixed(4),
+                                subtitle: "Exact Geographic Coordinates",
+                                icon: "🌐",
+                                lat: cLat,
+                                lng: cLng
+                            }});
+                        }}
+                    }}
+
+                    // Saved locations
+                    var data = window.GMAP_DATA;
+                    if (data && data.savedLocations) {{
+                        data.savedLocations.forEach(function(loc) {{
+                            if (loc.name && loc.name.toLowerCase().indexOf(qLower) !== -1) {{
+                                suggestions.push({{
+                                    title: loc.name,
+                                    subtitle: (loc.section || "Saved Location") + (loc.floor ? (" • Floor " + loc.floor) : ""),
+                                    icon: "⭐",
+                                    lat: loc.latitude,
+                                    lng: loc.longitude
+                                }});
+                            }}
+                        }});
+                    }}
+
+                    // Verified amenities
+                    if (data && data.amenities) {{
+                        data.amenities.forEach(function(f) {{
+                            if (f.name && f.name.toLowerCase().indexOf(qLower) !== -1) {{
+                                suggestions.push({{
+                                    title: f.name,
+                                    subtitle: (f.facility_type || f.category || "Place") + " • " + (f.address || "Verified Location"),
+                                    icon: f.amenity_icon || "📍",
+                                    lat: f.latitude,
+                                    lng: f.longitude
+                                }});
+                            }}
+                        }});
+                    }}
+
+                    // Render local suggestions first
+                    renderDropdownItems(suggestions, q);
+
+                    // Fetch geocoder suggestions if online and query >= 3 chars
+                    if (q.length >= 3) {{
+                        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q))
+                            .then(function(r) {{ return r.json(); }})
+                            .then(function(geoResults) {{
+                                if (geoResults && geoResults.length > 0) {{
+                                    geoResults.forEach(function(gr) {{
+                                        var parts = gr.display_name.split(',');
+                                        var primaryName = parts[0];
+                                        var details = parts.slice(1, 4).join(',').trim();
+                                        suggestions.push({{
+                                            title: primaryName,
+                                            subtitle: details || gr.display_name,
+                                            icon: "🗺️",
+                                            lat: parseFloat(gr.lat),
+                                            lng: parseFloat(gr.lon)
+                                        }});
+                                    }});
+                                    renderDropdownItems(suggestions, q);
+                                }}
+                            }})
+                            .catch(function(e) {{}});
+                    }}
+                }}, 250);
+            }});
+
+            function renderDropdownItems(items, currentQuery) {{
+                if (!items || items.length === 0) {{
+                    dropdown.innerHTML = '<div class="pac-autocomplete-item"><span class="pac-autocomplete-icon">🔍</span><div class="pac-autocomplete-text"><div class="pac-autocomplete-title">Press Enter to search "' + currentQuery + '"</div><div class="pac-autocomplete-sub">Search global geocoding directory</div></div></div>';
+                    dropdown.classList.add('open');
+                    return;
+                }}
+
+                // Deduplicate by title+coords
+                var seen = {{}};
+                var uniqueItems = [];
+                items.forEach(function(it) {{
+                    var key = it.title + '_' + it.lat.toFixed(3) + '_' + it.lng.toFixed(3);
+                    if (!seen[key] && uniqueItems.length < 8) {{
+                        seen[key] = true;
+                        uniqueItems.push(it);
+                    }}
+                }});
+
+                var html = '';
+                uniqueItems.forEach(function(it, idx) {{
+                    html += '<div class="pac-autocomplete-item" data-idx="' + idx + '">' +
+                            '  <span class="pac-autocomplete-icon">' + it.icon + '</span>' +
+                            '  <div class="pac-autocomplete-text">' +
+                            '    <div class="pac-autocomplete-title">' + it.title + '</div>' +
+                            '    <div class="pac-autocomplete-sub">' + it.subtitle + '</div>' +
+                            '  </div>' +
+                            '</div>';
+                }});
+
+                dropdown.innerHTML = html;
+                dropdown.classList.add('open');
+
+                var rowEls = dropdown.querySelectorAll('.pac-autocomplete-item');
+                rowEls.forEach(function(row, i) {{
+                    row.addEventListener('click', function() {{
+                        var selected = uniqueItems[i];
+                        if (selected) {{
+                            input.value = selected.title;
+                            dropdown.classList.remove('open');
+                            window.highlightSearchedLocation(selected.lat, selected.lng, selected.title, selected.subtitle);
+                        }}
+                    }});
+                }});
+            }}
+
+            input.addEventListener('keydown', function(e) {{
+                if (e.key === 'Enter') {{
+                    e.preventDefault();
+                    dropdown.classList.remove('open');
+                    window.handleSearchQuery(input.value);
+                }} else if (e.key === 'Escape') {{
+                    dropdown.classList.remove('open');
+                }}
+            }});
+
+            document.addEventListener('click', function(e) {{
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {{
+                    dropdown.classList.remove('open');
+                }}
+            }});
+        }};
+
+        // ----------------------------------------------------
+        // NEARBY-PLACE CATEGORY ENGINE (ALL 8 CATEGORIES)
+        // ----------------------------------------------------
+        window.activeCategoryKey = null;
+        window.activeCategoryLeafletMarkers = [];
+        window.activeCategoryGMapMarkers = [];
+        window.activeFuelSubfilter = 'ALL';
+
+        var CATEGORY_CONFIG = {{
+            'HOSPITALS': {{ name: 'Hospitals & Medical Care', icon: '🏥', color: '#ef4444', matchTerms: ['hospital', 'medical', 'clinic', 'trauma', 'doctor'] }},
+            'FUEL': {{ name: 'Fuel & EV Charging Stations', icon: '⛽', color: '#10b981', matchTerms: ['petrol', 'fuel', 'charging', 'ev charging', 'gas station', 'supercharger', 'diesel'] }},
+            'RESTAURANTS': {{ name: 'Restaurants & Dining', icon: '🍽️', color: '#ec4899', matchTerms: ['restaurant', 'food', 'dining', 'cafe', 'cafeteria', 'dhaba', 'bakery', 'bistro'] }},
+            'ATMS': {{ name: 'ATMs & Banking Services', icon: '🏧', color: '#06b6d4', matchTerms: ['atm', 'bank', 'banking', 'cash'] }},
+            'POLICE': {{ name: 'Police & Rescue Stations', icon: '👮', color: '#3b82f6', matchTerms: ['police', 'rescue', 'fire', 'emergency', 'station'] }},
+            'HOTELS': {{ name: 'Hotels & Accommodation', icon: '🏨', color: '#a855f7', matchTerms: ['hotel', 'resort', 'lodge', 'stay', 'inn', 'motel'] }},
+            'SHELTERS': {{ name: 'Emergency Shelters & Relief', icon: '⛺', color: '#f97316', matchTerms: ['shelter', 'relief', 'evacuation', 'camp'] }},
+            'MALLS': {{ name: 'Shopping Malls & Centers', icon: '🛍️', color: '#eab308', matchTerms: ['mall', 'shopping', 'store', 'market', 'supermarket', 'plaza'] }}
+        }};
+
+        window.triggerCategorySearch = function(catKey) {{
+            // If already active, toggle off
+            if (window.activeCategoryKey === catKey) {{
+                window.clearActiveCategory();
+                return;
+            }}
+
+            window.activeCategoryKey = catKey;
+            var conf = CATEGORY_CONFIG[catKey] || {{ name: catKey, icon: '📍', color: '#38bdf8', matchTerms: [] }};
+
+            // Update pill styling
+            var pills = document.querySelectorAll('.gmap-filter-pill');
+            pills.forEach(function(p) {{
+                if (p.getAttribute('data-filter') === catKey) p.classList.add('active');
+                else p.classList.remove('active');
+            }});
+
+            var panel = document.getElementById('gmap-category-panel');
+            var panelTitle = document.getElementById('cat-panel-title');
+            var panelIcon = document.getElementById('cat-panel-icon');
+            var panelCount = document.getElementById('cat-panel-count');
+            var panelBody = document.getElementById('cat-panel-body');
+            var subfiltersEl = document.getElementById('cat-panel-subfilters');
+
+            if (panel) panel.classList.add('open');
+            if (panelTitle) panelTitle.innerText = conf.name;
+            if (panelIcon) panelIcon.innerText = conf.icon;
+            if (panelCount) panelCount.innerText = '🔍 Searching verified facilities in corridor...';
+            if (panelBody) panelBody.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;"><div style="font-size: 24px; animation: spin 1s linear infinite;">⏳</div><div style="margin-top: 8px;">Loading verified ' + conf.name + '...</div></div>';
+
+            // Show or hide subfilters for FUEL
+            if (subfiltersEl) {{
+                if (catKey === 'FUEL') {{
+                    subfiltersEl.style.display = 'flex';
+                    window.activeFuelSubfilter = 'ALL';
+                    subfiltersEl.innerHTML = 
+                        '<button class="cat-subfilter-btn active" id="subfilter-fuel-all" onclick="window.setFuelSubfilter(\\'ALL\\')">All (Fuel & EV)</button>' +
+                        '<button class="cat-subfilter-btn" id="subfilter-fuel-petrol" onclick="window.setFuelSubfilter(\\'FUEL_ONLY\\')">⛽ Fuel Only</button>' +
+                        '<button class="cat-subfilter-btn" id="subfilter-fuel-ev" onclick="window.setFuelSubfilter(\\'EV_ONLY\\')">⚡ EV Charging Only</button>';
+                }} else {{
+                    subfiltersEl.style.display = 'none';
+                }}
+            }}
+
+            // Query verified facilities from GMAP_DATA
+            setTimeout(function() {{
+                window.executeCategoryQuery(catKey);
+            }}, 150);
+        }};
+
+        window.setFuelSubfilter = function(subType) {{
+            window.activeFuelSubfilter = subType;
+            var bAll = document.getElementById('subfilter-fuel-all');
+            var bPetrol = document.getElementById('subfilter-fuel-petrol');
+            var bEv = document.getElementById('subfilter-fuel-ev');
+            if (bAll) bAll.classList.toggle('active', subType === 'ALL');
+            if (bPetrol) bPetrol.classList.toggle('active', subType === 'FUEL_ONLY');
+            if (bEv) bEv.classList.toggle('active', subType === 'EV_ONLY');
+            window.executeCategoryQuery('FUEL');
+        }};
+
+        window.executeCategoryQuery = function(catKey) {{
+            var conf = CATEGORY_CONFIG[catKey] || {{ name: catKey, icon: '📍', color: '#38bdf8', matchTerms: [] }};
+            var data = window.GMAP_DATA;
+            var facilities = (data && data.amenities) ? data.amenities : [];
+            var matches = [];
+
+            facilities.forEach(function(f) {{
+                var catStr = ((f.category || '') + ' ' + (f.facility_type || '') + ' ' + (f.name || '')).toLowerCase();
+                var isMatch = false;
+
+                for (var i = 0; i < conf.matchTerms.length; i++) {{
+                    if (catStr.indexOf(conf.matchTerms[i]) !== -1) {{
+                        isMatch = true;
+                        break;
+                    }}
+                }}
+
+                if (isMatch) {{
+                    // Fuel subfilter handling
+                    if (catKey === 'FUEL') {{
+                        var isEv = catStr.indexOf('ev') !== -1 || catStr.indexOf('charg') !== -1;
+                        var isPetrol = catStr.indexOf('petrol') !== -1 || catStr.indexOf('fuel') !== -1 || catStr.indexOf('gas') !== -1 || catStr.indexOf('diesel') !== -1;
+                        if (window.activeFuelSubfilter === 'FUEL_ONLY' && !isPetrol) return;
+                        if (window.activeFuelSubfilter === 'EV_ONLY' && !isEv) return;
+                    }}
+                    matches.push(f);
+                }}
+            }});
+
+            // Deduplicate by name and approximate coords
+            var uniqueMatches = [];
+            var seen = {{}};
+            matches.forEach(function(m) {{
+                var key = (m.name || '').toLowerCase() + '_' + Number(m.latitude).toFixed(3) + '_' + Number(m.longitude).toFixed(3);
+                if (!seen[key]) {{
+                    seen[key] = true;
+                    uniqueMatches.push(m);
+                }}
+            }});
+
+            // Sort by road distance if available
+            uniqueMatches.sort(function(a, b) {{
+                return (Number(a.road_distance_km) || 999) - (Number(b.road_distance_km) || 999);
+            }});
+
+            // Update UI count
+            var panelCount = document.getElementById('cat-panel-count');
+            if (panelCount) {{
+                if (uniqueMatches.length > 0) {{
+                    panelCount.innerText = 'Found ' + uniqueMatches.length + ' verified places along corridor';
+                }} else {{
+                    panelCount.innerText = 'No verified ' + conf.name.toLowerCase() + ' found in this corridor area';
+                }}
+            }}
+
+            // Render markers on map
+            window.removeCategoryMarkersFromMap();
+            var bounds = [];
+
+            uniqueMatches.forEach(function(item, idx) {{
+                bounds.push([item.latitude, item.longitude]);
+                window.plotCategoryMarker(item, conf, idx);
+            }});
+
+            // Render cards in panel
+            window.renderCategoryResults(uniqueMatches, conf);
+
+            // Fit map to show category results
+            if (bounds.length > 0) {{
+                if (window.lMapInstance) {{
+                    var lBounds = L.latLngBounds(bounds);
+                    window.lMapInstance.fitBounds(lBounds, {{
+                        paddingTopLeft: [70, 70],
+                        paddingBottomRight: [360, 50],
+                        maxZoom: 16
+                    }});
+                }} else if (window.gMap) {{
+                    var gBounds = new google.maps.LatLngBounds();
+                    bounds.forEach(function(b) {{ gBounds.extend(new google.maps.LatLng(b[0], b[1])); }});
+                    window.gMap.fitBounds(gBounds, {{ top: 70, bottom: 50, left: 50, right: 360 }});
+                }}
+            }}
+        }};
+
+        window.plotCategoryMarker = function(f, conf, idx) {{
+            var lat = f.latitude;
+            var lng = f.longitude;
+            var iconSym = f.amenity_icon || conf.icon;
+            var isEv = (f.name + ' ' + (f.facility_type || '')).toLowerCase().indexOf('ev') !== -1 || (f.name + ' ' + (f.facility_type || '')).toLowerCase().indexOf('charg') !== -1;
+            if (conf.name.indexOf('Fuel') !== -1 && isEv) {{
+                iconSym = '⚡';
+            }}
+
+            if (window.lMapInstance) {{
+                var fHtml = '<div class="amenity-pin-wrapper">' +
+                            '  <div class="amenity-pin-popover">' + iconSym + ' ' + (f.name || conf.name) + '</div>' +
+                            '  <div class="amenity-pin-bubble" style="background: ' + conf.color + ';">' + iconSym + '</div>' +
+                            '</div>';
+                var mIcon = L.divIcon({{
+                    className: 'facility-marker-div',
+                    html: fHtml,
+                    iconSize: [0, 0]
+                }});
+                var marker = L.marker([lat, lng], {{ icon: mIcon, zIndexOffset: 4000 + idx }}).addTo(window.lMapInstance);
+
+                var popContent = '<div class="iw-title">' + iconSym + ' ' + f.name + '</div>' +
+                                 '<div class="iw-cat">' + (f.facility_type || conf.name) + '</div>' +
+                                 '<div class="iw-meta">' + (f.address || 'Corridor verified') +
+                                 (f.operating_hours ? ('<br>🕒 ' + f.operating_hours) : '') +
+                                 (f.contact_phone ? ('<br>📞 ' + f.contact_phone) : '') +
+                                 '</div>' +
+                                 '<div class="iw-actions">' +
+                                 '<button class="iw-btn" onclick="window.inspectLocationDetails(' + lat + ',' + lng + ', ' + JSON.stringify(f).replace(/"/g, '&quot;') + ')">🔍 View Details</button>' +
+                                 '<button class="iw-btn secondary" onclick="window.lMapInstance.setView([' + lat + ',' + lng + '], 18)">🎯 Zoom In</button>' +
+                                 '</div>';
+
+                marker.bindPopup(popContent);
+                marker.on('click', function() {{
+                    window.inspectLocationDetails(lat, lng, f);
+                }});
+                window.activeCategoryLeafletMarkers.push(marker);
+                f._leafletMarker = marker;
+            }} else if (window.gMap) {{
+                var pos = new google.maps.LatLng(lat, lng);
+                var gMarker = new google.maps.Marker({{
+                    position: pos,
+                    map: window.gMap,
+                    title: f.name,
+                    label: {{
+                        text: iconSym,
+                        fontSize: '18px'
+                    }},
+                    zIndex: 4000 + idx
+                }});
+                gMarker.addListener('click', function() {{
+                    window.inspectLocationDetails(lat, lng, f);
+                }});
+                window.activeCategoryGMapMarkers.push(gMarker);
+                f._gMarker = gMarker;
+            }}
+        }};
+
+        window.renderCategoryResults = function(items, conf) {{
+            var panelBody = document.getElementById('cat-panel-body');
+            if (!panelBody) return;
+
+            if (items.length === 0) {{
+                panelBody.innerHTML = 
+                    '<div style="padding: 28px 16px; text-align: center; color: #94a3b8;">' +
+                    '  <div style="font-size: 32px; margin-bottom: 8px;">📭</div>' +
+                    '  <div style="font-size: 13px; font-weight: 700; color: #f1f5f9;">No verified places found</div>' +
+                    '  <div style="font-size: 11px; margin-top: 4px; color: #64748b;">No ' + conf.name.toLowerCase() + ' registered along this corridor area.</div>' +
+                    '</div>';
+                return;
+            }}
+
+            var html = '';
+            items.forEach(function(item, idx) {{
+                var isEv = (item.name + ' ' + (item.facility_type || '')).toLowerCase().indexOf('ev') !== -1 || (item.name + ' ' + (item.facility_type || '')).toLowerCase().indexOf('charg') !== -1;
+                var badgeLabel = (conf.name.indexOf('Fuel') !== -1 && isEv) ? '⚡ EV Charging' : (item.facility_type || conf.name);
+                var distStr = item.road_distance_km ? (' • ' + Number(item.road_distance_km).toFixed(1) + ' km away') : '';
+                var hoursStr = item.operating_hours ? ('🕒 ' + item.operating_hours) : 'Verified Facility';
+                var phoneStr = item.contact_phone ? (' • 📞 ' + item.contact_phone) : '';
+
+                html += 
+                    '<div class="cat-result-card" onclick="window.focusCategoryResult(' + idx + ')">' +
+                    '  <div class="cat-result-top">' +
+                    '    <span class="cat-result-name">' + (item.amenity_icon || conf.icon) + ' ' + item.name + '</span>' +
+                    '    <span class="cat-result-badge" style="background: rgba(30, 41, 59, 0.8); border: 1px solid ' + conf.color + '; color:' + conf.color + ';">' + badgeLabel + '</span>' +
+                    '  </div>' +
+                    '  <div class="cat-result-addr">' + (item.address || 'Corridor waypoint') + distStr + '</div>' +
+                    '  <div class="cat-result-meta">' +
+                    '    <span>' + hoursStr + phoneStr + '</span>' +
+                    '    <span class="cat-result-dist">🎯 Focus Map</span>' +
+                    '  </div>' +
+                    '</div>';
+            }});
+
+            panelBody.innerHTML = html;
+            window._currentCategoryItems = items;
+        }};
+
+        window.focusCategoryResult = function(idx) {{
+            var items = window._currentCategoryItems;
+            if (!items || !items[idx]) return;
+            var item = items[idx];
+            var lat = item.latitude;
+            var lng = item.longitude;
+
+            if (window.lMapInstance) {{
+                window.lMapInstance.setView([lat, lng], 17, {{ animate: true, duration: 1.0 }});
+                if (item._leafletMarker && item._leafletMarker.openPopup) {{
+                    item._leafletMarker.openPopup();
+                }}
+            }} else if (window.gMap) {{
+                window.gMap.setCenter(new google.maps.LatLng(lat, lng));
+                window.gMap.setZoom(17);
+            }}
+
+            window.inspectLocationDetails(lat, lng, item);
+        }};
+
+        window.removeCategoryMarkersFromMap = function() {{
+            if (window.lMapInstance && window.activeCategoryLeafletMarkers) {{
+                window.activeCategoryLeafletMarkers.forEach(function(m) {{
+                    try {{ window.lMapInstance.removeLayer(m); }} catch(e) {{}}
+                }});
+            }}
+            window.activeCategoryLeafletMarkers = [];
+
+            if (window.activeCategoryGMapMarkers) {{
+                window.activeCategoryGMapMarkers.forEach(function(m) {{
+                    try {{ m.setMap(null); }} catch(e) {{}}
+                }});
+            }}
+            window.activeCategoryGMapMarkers = [];
+        }};
+
+        window.clearActiveCategory = function() {{
+            window.activeCategoryKey = null;
+            var panel = document.getElementById('gmap-category-panel');
+            if (panel) panel.classList.remove('open');
+
+            var pills = document.querySelectorAll('.gmap-filter-pill');
+            pills.forEach(function(p) {{ p.classList.remove('active'); }});
+
+            window.removeCategoryMarkersFromMap();
+            window.fitAllMapBounds();
+            window.showMapToast("Cleared category markers", "✕");
         }};
 
         function initGoogleMapPlatform() {{
@@ -2991,6 +3958,8 @@ def build_google_maps_javascript_html(
                         var pLng = place.geometry.location.lng();
                         window.highlightSearchedLocation(pLat, pLng, place.name || "Selected Place", place.formatted_address || "Google Places Result");
                     }});
+                }} else {{
+                    window.initUnifiedPlaceSearch();
                 }}
 
                 searchInput.addEventListener('keydown', function(e) {{
@@ -3085,47 +4054,84 @@ def build_google_maps_javascript_html(
         }}
 
         function renderRoutePolyline() {{
-            var poly = window.GMAP_DATA.routePolyline;
-            if (!poly || poly.length < 2) return;
+            var polylines = (window.GMAP_DATA.routePolylines && window.GMAP_DATA.routePolylines.length > 0)
+                ? window.GMAP_DATA.routePolylines
+                : (window.GMAP_DATA.routePolyline && window.GMAP_DATA.routePolyline.length >= 2 ? [{{
+                    coordinates: window.GMAP_DATA.routePolyline,
+                    name: 'Primary Route',
+                    color: '#10b981',
+                    weight: 6,
+                    opacity: 0.95,
+                    is_selected: true,
+                    route_id: 'primary'
+                }}] : []);
 
-            var rawCoords = poly.map(function(pt) {{
-                return [parseFloat(pt[0]), parseFloat(pt[1])];
-            }});
+            if (!polylines || polylines.length === 0) return;
 
             var orig = window.GMAP_DATA.origin;
             var dest = window.GMAP_DATA.destination;
 
-            if (orig && orig.lat !== undefined && orig.lng !== undefined) {{
-                var oLat = parseFloat(orig.lat);
-                var oLng = parseFloat(orig.lng);
-                if (Math.abs(rawCoords[0][0] - oLat) > 0.00001 || Math.abs(rawCoords[0][1] - oLng) > 0.00001) {{
-                    rawCoords.unshift([oLat, oLng]);
+            window._gmapRouteObjs = [];
+            var selectedBounds = new google.maps.LatLngBounds();
+            var hasSelection = polylines.some(function(r) {{ return r.is_selected; }});
+
+            polylines.forEach(function(r) {{
+                var coords = (r.coordinates || []).map(function(pt) {{
+                    return [parseFloat(pt[0]), parseFloat(pt[1])];
+                }});
+                if (coords.length < 2) return;
+
+                if (orig && orig.lat !== undefined && orig.lng !== undefined) {{
+                    var oLat = parseFloat(orig.lat);
+                    var oLng = parseFloat(orig.lng);
+                    if (Math.abs(coords[0][0] - oLat) > 0.00001 || Math.abs(coords[0][1] - oLng) > 0.00001) {{
+                        coords.unshift([oLat, oLng]);
+                    }}
                 }}
-            }}
-
-            if (dest && dest.lat !== undefined && dest.lng !== undefined) {{
-                var dLat = parseFloat(dest.lat);
-                var dLng = parseFloat(dest.lng);
-                var lastPt = rawCoords[rawCoords.length - 1];
-                if (Math.abs(lastPt[0] - dLat) > 0.00001 || Math.abs(lastPt[1] - dLng) > 0.00001) {{
-                    rawCoords.push([dLat, dLng]);
+                if (dest && dest.lat !== undefined && dest.lng !== undefined) {{
+                    var dLat = parseFloat(dest.lat);
+                    var dLng = parseFloat(dest.lng);
+                    if (Math.abs(coords[coords.length - 1][0] - dLat) > 0.00001 || Math.abs(coords[coords.length - 1][1] - dLng) > 0.00001) {{
+                        coords.push([dLat, dLng]);
+                    }}
                 }}
-            }}
 
-            window._gmapCurrentRawCoords = rawCoords;
+                var isSel = r.is_selected;
+                var pathCoords = coords.map(function(pt) {{
+                    var ll = new google.maps.LatLng(pt[0], pt[1]);
+                    if (isSel || !hasSelection) selectedBounds.extend(ll);
+                    return ll;
+                }});
 
-            var pathCoords = rawCoords.map(function(pt) {{
-                return new google.maps.LatLng(pt[0], pt[1]);
+                var polyObj = new google.maps.Polyline({{
+                    path: pathCoords,
+                    geodesic: true,
+                    strokeColor: r.color || (isSel ? '#10b981' : '#0ea5e9'),
+                    strokeOpacity: isSel ? 1.0 : (hasSelection ? 0.40 : 0.85),
+                    strokeWeight: isSel ? 8 : (hasSelection ? 3.5 : 5),
+                    zIndex: isSel ? 100 : 50
+                }});
+                polyObj.setMap(gMap);
+
+                google.maps.event.addListener(polyObj, 'click', function() {{
+                    try {{
+                        var targetWin = window.parent || window;
+                        var url = new URL(targetWin.location.href);
+                        url.searchParams.set('focus_route', r.route_id);
+                        targetWin.location.replace(url.toString());
+                    }} catch(e) {{}}
+                }});
+
+                window._gmapRouteObjs.push(polyObj);
+                if (isSel) {{
+                    routePolylineObj = polyObj;
+                    window._gmapCurrentRawCoords = coords;
+                }}
             }});
 
-            routePolylineObj = new google.maps.Polyline({{
-                path: pathCoords,
-                geodesic: true,
-                strokeColor: '#10b981',
-                strokeOpacity: 0.9,
-                strokeWeight: 6
-            }});
-            routePolylineObj.setMap(gMap);
+            if (gMap && !selectedBounds.isEmpty()) {{
+                gMap.fitBounds(selectedBounds);
+            }}
         }}
 
         window._updateGMapRouteStartCoords = function(newLat, newLng) {{
@@ -3497,8 +4503,18 @@ def build_google_maps_javascript_html(
                     if (window.leafletBaseLayer) {{
                         try {{ lMap.removeLayer(window.leafletBaseLayer); }} catch(e) {{}}
                     }}
-                    var newUrl = 'https://mt1.google.com/vt/lyrs=' + newCode + '&x={{x}}&y={{y}}&z={{z}}';
-                    window.leafletBaseLayer = L.tileLayer(newUrl, {{ maxZoom: 20 }}).addTo(lMap);
+                    var newUrl;
+                    var attr = 'Map data &copy; OpenStreetMap contributors';
+                    if (newCode === 'esri' || newCode === 'y' || newCode === 's') {{
+                        newUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}';
+                        attr = 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, USDA, USGS';
+                    }} else if (newCode === 'sentinel') {{
+                        newUrl = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020/default/g/{{z}}/{{y}}/{{x}}.jpg';
+                        attr = 'Sentinel-2 cloudless by EOX IT Services GmbH (Copernicus CC BY 4.0)';
+                    }} else {{
+                        newUrl = 'https://mt1.google.com/vt/lyrs=' + newCode + '&x={{x}}&y={{y}}&z={{z}}';
+                    }}
+                    window.leafletBaseLayer = L.tileLayer(newUrl, {{ maxZoom: 20, attribution: attr }}).addTo(lMap);
                     window.leafletBaseLayer.bringToBack();
                 }};
 
@@ -3581,23 +4597,38 @@ def build_google_maps_javascript_html(
                     fitCount++;
                 }}
 
-                // 3. Render Route Polyline with Direct Connector to Vehicle / Marker Tip
+                // 3. Render Route Polylines with Multi-Alternative Support & Selection Highlighting
                 var activeLeafletRouteGlow = null;
                 var activeLeafletRouteCore = null;
                 var currentLeafletPolyCoords = [];
 
-                if (data.routePolyline && data.routePolyline.length >= 2) {{
-                    currentLeafletPolyCoords = data.routePolyline.map(function(pt) {{
+                var polylines = (data.routePolylines && data.routePolylines.length > 0)
+                    ? data.routePolylines
+                    : (data.routePolyline && data.routePolyline.length >= 2 ? [{{
+                        coordinates: data.routePolyline,
+                        name: 'Primary Route',
+                        color: '#10b981',
+                        weight: 6,
+                        opacity: 0.95,
+                        is_selected: true,
+                        route_id: 'primary'
+                    }}] : []);
+
+                var hasSelection = polylines.some(function(r) {{ return r.is_selected; }});
+                var selectedBoundsL = L.latLngBounds([]);
+
+                polylines.forEach(function(r) {{
+                    var rCoords = (r.coordinates || []).map(function(pt) {{
                         return [parseFloat(pt[0]), parseFloat(pt[1])];
                     }});
+                    if (rCoords.length < 2) return;
 
                     // Connect polyline directly to origin pin needle tip
                     if (data.origin && data.origin.lat !== undefined && data.origin.lng !== undefined) {{
                         var oLat = parseFloat(data.origin.lat);
                         var oLng = parseFloat(data.origin.lng);
-                        var firstPt = currentLeafletPolyCoords[0];
-                        if (Math.abs(firstPt[0] - oLat) > 0.00001 || Math.abs(firstPt[1] - oLng) > 0.00001) {{
-                            currentLeafletPolyCoords.unshift([oLat, oLng]);
+                        if (Math.abs(rCoords[0][0] - oLat) > 0.00001 || Math.abs(rCoords[0][1] - oLng) > 0.00001) {{
+                            rCoords.unshift([oLat, oLng]);
                         }}
                     }}
 
@@ -3605,32 +4636,59 @@ def build_google_maps_javascript_html(
                     if (data.destination && data.destination.lat !== undefined && data.destination.lng !== undefined) {{
                         var dLat = parseFloat(data.destination.lat);
                         var dLng = parseFloat(data.destination.lng);
-                        var lastPt = currentLeafletPolyCoords[currentLeafletPolyCoords.length - 1];
-                        if (Math.abs(lastPt[0] - dLat) > 0.00001 || Math.abs(lastPt[1] - dLng) > 0.00001) {{
-                            currentLeafletPolyCoords.push([dLat, dLng]);
+                        if (Math.abs(rCoords[rCoords.length - 1][0] - dLat) > 0.00001 || Math.abs(rCoords[rCoords.length - 1][1] - dLng) > 0.00001) {{
+                            rCoords.push([dLat, dLng]);
                         }}
                     }}
 
-                    activeLeafletRouteGlow = L.polyline(currentLeafletPolyCoords, {{
-                        color: '#38bdf8',
-                        weight: 8,
-                        opacity: 0.6,
+                    var isSel = r.is_selected;
+                    var strokeCol = r.color || (isSel ? '#10b981' : '#0ea5e9');
+                    var strokeWt = isSel ? 8 : (hasSelection ? 3.5 : 5);
+                    var strokeOp = isSel ? 1.0 : (hasSelection ? 0.40 : 0.85);
+
+                    if (isSel) {{
+                        activeLeafletRouteGlow = L.polyline(rCoords, {{
+                            color: '#38bdf8',
+                            weight: strokeWt + 4,
+                            opacity: 0.5,
+                            lineCap: 'round',
+                            lineJoin: 'round'
+                        }}).addTo(lMap);
+                    }}
+
+                    var pLine = L.polyline(rCoords, {{
+                        color: strokeCol,
+                        weight: strokeWt,
+                        opacity: strokeOp,
+                        dashArray: (isSel || !hasSelection) ? null : '6, 8',
                         lineCap: 'round',
                         lineJoin: 'round'
                     }}).addTo(lMap);
 
-                    activeLeafletRouteCore = L.polyline(currentLeafletPolyCoords, {{
-                        color: '#10b981',
-                        weight: 5,
-                        opacity: 0.95,
-                        lineCap: 'round',
-                        lineJoin: 'round'
-                    }}).addTo(lMap);
+                    pLine.bindTooltip('<b>' + (r.name || 'Route') + '</b>' + (isSel ? ' (Selected)' : '<br><span style="color:#38bdf8;">Click to switch route</span>'));
 
-                    currentLeafletPolyCoords.forEach(function(pt) {{
-                        allFitBounds.extend(pt);
+                    pLine.on('click', function() {{
+                        try {{
+                            var targetWin = window.parent || window;
+                            var url = new URL(targetWin.location.href);
+                            url.searchParams.set('focus_route', r.route_id);
+                            targetWin.location.replace(url.toString());
+                        }} catch(e) {{}}
                     }});
-                    fitCount += 2;
+
+                    if (isSel || !hasSelection) {{
+                        rCoords.forEach(function(pt) {{
+                            selectedBoundsL.extend(pt);
+                            allFitBounds.extend(pt);
+                        }});
+                        fitCount += 2;
+                        currentLeafletPolyCoords = rCoords;
+                        activeLeafletRouteCore = pLine;
+                    }}
+                }});
+
+                if (selectedBoundsL.isValid()) {{
+                    lMap.fitBounds(selectedBoundsL, {{ padding: [40, 40] }});
                 }}
 
                 window._updateLeafletRouteStart = function(newLat, newLng) {{
@@ -3827,16 +4885,8 @@ def build_google_maps_javascript_html(
                     window.inspectLocationDetails(e.latlng.lat, e.latlng.lng, null);
                 }});
 
-                // 11. Search input Enter
-                var searchInput = document.getElementById('pac-input');
-                if (searchInput) {{
-                    searchInput.addEventListener('keydown', function(e) {{
-                        if (e.key === 'Enter') {{
-                            e.preventDefault();
-                            window.handleSearchQuery(searchInput.value);
-                        }}
-                    }});
-                }}
+                // 11. Unified Place Search & Autocomplete
+                window.initUnifiedPlaceSearch();
 
                 // 12. Leaflet Virtual Man Position Updater
                 window.updateVirtualManLeaflet = function(lat, lon, label, avatarIcon, avatarLabel, speedKmh, isReturning, isStopped) {{

@@ -24,7 +24,7 @@ def test_satellite_road_auditor_nominal_clear_route():
     assert res.status == "NOMINAL_CLEAR"
     assert res.real_blockages_count == 0
     assert res.real_hazards_count == 0
-    assert "100% clear" in res.corridor_summary.lower()
+    assert "clear of reported physical blockages" in res.corridor_summary.lower()
 
 
 def test_distance_to_polyline():

@@ -811,7 +811,7 @@ def build_game_journey_html(
                             <button id='btn-dir-forward' class='btn-dir-pill active-dir' onclick='setJourneyDirection("FORWARD")' title='Start to Goal Outbound Route'>
                                 ➡️ Start ➔ Goal ({orig_clean} ➔ {dest_clean})
                             </button>
-                            <button id='btn-dir-return' class='btn-dir-pill' onclick='setJourneyDirection("RETURN")' title='Goal to Start Return Journey in the Same Way'>
+                            <button id='btn-dir-return' class='btn-dir-pill' onclick='setJourneyDirection("RETURN")' title='Goal to Start Return Trip in the Same Way'>
                                 ⬅️ Goal ➔ Start ({dest_clean} ➔ {orig_clean})
                             </button>
                         </div>
@@ -824,37 +824,28 @@ def build_game_journey_html(
                 <div id='hud-progress-meter' style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; color: #38bdf8;'>
                     ⚡ <span id='hud-progress-pct'>{progress_pct}</span>% Journey Progress
                 </div>
-                <button id='btn-sim-traffic' class='btn-hud-ctrl' style='background: rgba(239, 68, 68, 0.22); border-color: #ef4444; color: #fca5a5;' onclick='simulateTrafficStop()' title='Simulate user stopped in traffic or red light'>
-                    🛑 Traffic Stop (0 km/h)
-                </button>
-                <button id='btn-sim-resume' class='btn-hud-ctrl' style='background: rgba(16, 185, 129, 0.22); border-color: #10b981; color: #6ee7b7;' onclick='simulateUserMoving()' title='Simulate user moving in parallel'>
-                    🟢 Move in Parallel
-                </button>
-                <button id='btn-sim-cross' class='btn-hud-ctrl' style='background: rgba(56, 189, 248, 0.22); border-color: #38bdf8; color: #7dd3fc;' onclick='simulateCrossNextStop()' title='Simulate user physically crossing next waypoint'>
-                    🎯 Cross Next Stop
-                </button>
-                <button id='btn-motion-toggle' class='btn-hud-ctrl' onclick='toggleSatelliteMotion()'>
-                    ⏸️ Pause Motion
-                </button>
-                <button id='btn-hud-return' class='btn-hud-ctrl' onclick='setJourneyDirection("RETURN")' title='Runs journey from Goal to Start in the exact same way'>
-                    🔄 Return Trip
-                </button>
-                <button class='btn-hud-ctrl' onclick='restartJourney()'>
-                    🔁 Restart
-                </button>
+                <div style='display: flex; align-items: center; gap: 8px;'>
+                    <button id='btn-sim-traffic' class='btn-hud-ctrl btn-traffic' style='background: rgba(239, 68, 68, 0.22); border-color: #ef4444; color: #fca5a5; font-weight: 800; padding: 6px 14px; border-radius: 6px; cursor: pointer;' onclick='simulateTrafficStop()' title='Traffic Stop — Stop virtual vehicle & companion (0.0 km/h stationary)'>
+                        🛑 Traffic Stop (0 km/h)
+                    </button>
+                    <button id='btn-sim-resume' class='btn-hud-ctrl btn-moving' style='background: rgba(16, 185, 129, 0.22); border-color: #10b981; color: #6ee7b7; font-weight: 800; padding: 6px 14px; border-radius: 6px; cursor: pointer;' onclick='simulateUserMoving()' title='Move in Parallel — Manually start or resume movement'>
+                        🟢 Move in Parallel
+                    </button>
+                    <!-- simulateCrossNextStop / Cross Next Stop internal diagnostic helper -->
+                </div>
             </div>
         </div>
 
         <!-- Real-Time Satellite Motion & Place Detection Banner with Checkmark Progress -->
         <div style='background: rgba(16, 185, 129, 0.10); border: 1px solid rgba(16, 185, 129, 0.28); border-radius: 8px; padding: 7px 14px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;'>
             <div style='display: flex; align-items: center; gap: 8px;'>
-                <span id='satellite-spin-icon' style='font-size: 1.1rem; animation: runnerStride 0.75s infinite alternate ease-in-out;'>{avatar_icon}</span>
+                <span id='satellite-spin-icon' style='font-size: 1.1rem;'>{avatar_icon}</span>
                 <span style='color: #a7f3d0; font-size: 0.78rem; font-weight: 700;'>
-                    Parallel Virtual Companion & Process Status: <b id='satellite-detection-text' style='color: #ffffff;'>Connecting to Live Route GPS...</b>
+                    Parallel Virtual Companion & Process Status: <b id='satellite-detection-text' style='color: #ffffff;'>Stationary at start: {orig_clean} • Press Move in Parallel to start</b>
                 </span>
             </div>
             <div style='font-size: 0.72rem; color: #38bdf8; font-weight: 700; display: flex; align-items: center; gap: 6px;'>
-                <span id='satellite-motion-telemetry' style='color: #34d399;'>🟢 SPEED: {effective_speed_kmh} KM/H • SYNCED</span>
+                <span id='satellite-motion-telemetry' style='color: #38bdf8;'>● 0.0 KM/H • READY TO START (STATIONARY)</span>
             </div>
         </div>
 
@@ -1138,10 +1129,40 @@ def build_game_journey_html(
             }}
         }}
 
-        let isTrafficStopped = false;
-        let userCurrentSpeed = MODE_SPEED_KMH;
+        let isTrafficStopped = true;
+        let userCurrentSpeed = 0.0;
+        let movementState = 'READY'; // 'READY' | 'MOVING' | 'TRAFFIC_STOPPED' | 'ARRIVED'
+
+        function broadcastJourneySync(action, state, stepIdx, speed) {{
+            const m = activeMilestones[stepIdx] || activeMilestones[0];
+            const pct = Math.round((stepIdx / Math.max(1, activeMilestones.length - 1)) * 100);
+            const payload = {{
+                type: 'PATHFINDER_JOURNEY_SYNC',
+                action: action,
+                state: state,
+                step: stepIdx,
+                totalSteps: activeMilestones.length,
+                progressPct: pct,
+                speedKmh: speed,
+                direction: currentDirection,
+                label: m.label,
+                lat: m.lat,
+                lon: m.lon,
+                timestamp: Date.now()
+            }};
+            try {{ window.parent.postMessage(payload, '*'); }} catch(e) {{}}
+            try {{
+                if (window.BroadcastChannel) {{
+                    const bc = new BroadcastChannel('pathfinder_journey_sync');
+                    bc.postMessage(payload);
+                    bc.close();
+                }}
+            }} catch(e) {{}}
+            try {{ localStorage.setItem('pathfinder_journey_sync_state', JSON.stringify(payload)); }} catch(e) {{}}
+        }}
 
         window.simulateTrafficStop = function() {{
+            movementState = 'TRAFFIC_STOPPED';
             isTrafficStopped = true;
             userCurrentSpeed = 0.0;
             if (transitTimer) {{
@@ -1152,7 +1173,7 @@ def build_game_journey_html(
             const telemEl = document.getElementById('satellite-motion-telemetry');
             const m = activeMilestones[currentStep];
             if (detectEl) {{
-                detectEl.innerHTML = "<span style='color:#ef4444;'>🛑 USER STOPPED (0.0 km/h)</span> • <b style='color:#fca5a5;'>Virtual Companion Paused at " + m.label + "</b> (Waiting for user movement...)";
+                detectEl.innerHTML = "<span style='color:#ef4444;'>🛑 USER STOPPED (0.0 km/h)</span> • <b style='color:#fca5a5;'>Virtual Companion Paused at " + m.label + "</b> (Stationary • Press Move in Parallel to resume)";
             }}
             if (telemEl) {{
                 telemEl.innerHTML = "<span style='color:#ef4444; font-weight:800;'>🛑 0.0 KM/H • STOPPED IN TRAFFIC</span>";
@@ -1166,9 +1187,11 @@ def build_game_journey_html(
             if (activeHalo) activeHalo.style.animation = 'none';
 
             broadcastVehiclePosition(m.lat, m.lon, "Stopped at " + m.label, currentStep, 0.0, currentDirection === 'RETURN');
+            broadcastJourneySync('STOP', 'TRAFFIC_STOPPED', currentStep, 0.0);
         }};
 
         window.simulateUserMoving = function(speed) {{
+            movementState = 'MOVING';
             isTrafficStopped = false;
             userCurrentSpeed = (typeof speed === 'number' && speed > 0) ? speed : MODE_SPEED_KMH;
             const detectEl = document.getElementById('satellite-detection-text');
@@ -1195,25 +1218,42 @@ def build_game_journey_html(
             if (activeHalo) activeHalo.style.animation = 'runnerStride 0.75s infinite alternate ease-in-out';
 
             broadcastVehiclePosition(m.lat, m.lon, "Moving towards " + (nextM ? nextM.label : m.label), currentStep, userCurrentSpeed, currentDirection === 'RETURN');
+            broadcastJourneySync('MOVE', 'MOVING', currentStep, userCurrentSpeed);
+
+            // Schedule smooth milestone advance when in simulated parallel movement
+            scheduleNextSimulatedTransitStep();
         }};
 
         window.simulateCrossNextStop = function() {{
             const total = activeMilestones.length;
             if (currentStep < total - 1) {{
-                // User physically crosses into the next milestone coordinate!
                 const targetIdx = currentStep + 1;
-                isTrafficStopped = false;
                 executeMilestoneStep(targetIdx);
             }}
         }};
 
-        function scheduleNextTransitStep() {{
-            // NOTE: Automatic blind timing removed per user requirement!
-            // Step advancement and checkmarks ONLY happen when the real user physically crosses the waypoint coordinate.
+        function scheduleNextSimulatedTransitStep() {{
             if (transitTimer) {{
                 clearTimeout(transitTimer);
                 transitTimer = null;
             }}
+            if (isTrafficStopped || movementState !== 'MOVING') return;
+
+            const total = activeMilestones.length;
+            if (currentStep < total - 1) {{
+                transitTimer = setTimeout(function() {{
+                    if (!isTrafficStopped && movementState === 'MOVING') {{
+                        executeMilestoneStep(currentStep + 1);
+                        if (currentStep < total - 1) {{
+                            scheduleNextSimulatedTransitStep();
+                        }}
+                    }}
+                }}, Math.max(3000, STEP_DURATION_MS));
+            }}
+        }}
+
+        function scheduleNextTransitStep() {{
+            scheduleNextSimulatedTransitStep();
         }}
 
         // =========================================================================
@@ -1228,8 +1268,10 @@ def build_game_journey_html(
             activeMilestones = (currentDirection === "RETURN") ? RETURN_MILESTONES : FORWARD_MILESTONES;
             activePoly = (currentDirection === "RETURN") ? RETURN_POLY : FORWARD_POLY;
             currentStep = 0;
+            movementState = 'READY';
             isMotionPaused = false;
-            isTrafficStopped = false;
+            isTrafficStopped = true;
+            userCurrentSpeed = 0.0;
 
             // Highlight active direction pill
             const btnFwd = document.getElementById('btn-dir-forward');
@@ -1244,10 +1286,7 @@ def build_game_journey_html(
                 }}
             }}
 
-            const btnPause = document.getElementById('btn-motion-toggle');
-            if (btnPause) btnPause.innerText = '⏸️ Pause Motion';
-
-            startTrackingCurrentDirection();
+            initializeStationaryState();
         }};
 
         window.startReturnJourney = function() {{
@@ -1263,12 +1302,7 @@ def build_game_journey_html(
         }};
 
         window.toggleSatelliteMotion = function() {{
-            isMotionPaused = !isMotionPaused;
-            const btn = document.getElementById('btn-motion-toggle');
-            if (btn) {{
-                btn.innerText = isMotionPaused ? '▶️ Resume Motion' : '⏸️ Pause Motion';
-            }}
-            if (isMotionPaused) {{
+            if (movementState === 'MOVING' && !isTrafficStopped) {{
                 window.simulateTrafficStop();
             }} else {{
                 window.simulateUserMoving(MODE_SPEED_KMH);
@@ -1280,15 +1314,23 @@ def build_game_journey_html(
                 clearTimeout(transitTimer);
                 transitTimer = null;
             }}
-            isMotionPaused = false;
-            isTrafficStopped = false;
-            const btn = document.getElementById('btn-motion-toggle');
-            if (btn) btn.innerText = '⏸️ Pause Motion';
-            startTrackingCurrentDirection();
+            currentStep = 0;
+            movementState = 'READY';
+            isTrafficStopped = true;
+            userCurrentSpeed = 0.0;
+            initializeStationaryState();
         }};
 
-        function startTrackingCurrentDirection() {{
+        function initializeStationaryState() {{
             currentStep = 0;
+            movementState = 'READY';
+            isTrafficStopped = true;
+            userCurrentSpeed = 0.0;
+            if (transitTimer) {{
+                clearTimeout(transitTimer);
+                transitTimer = null;
+            }}
+
             const m0 = activeMilestones[0];
             const isRet = (currentDirection === "RETURN");
             renderTrackNodes(0);
@@ -1297,19 +1339,22 @@ def build_game_journey_html(
             const telemEl = document.getElementById('satellite-motion-telemetry');
             if (detectEl) {{
                 detectEl.innerHTML = isRet
-                    ? "Starting return journey from <b>" + m0.label + "</b> to initial departure point..."
-                    : "Virtual Companion standing at start point: <b>" + m0.label + "</b> (Ready to mirror real user in parallel)...";
+                    ? "Stationary at return departure point: <b>" + m0.label + "</b> • Press Move in Parallel to start"
+                    : "Stationary at start point: <b>" + m0.label + "</b> • Press Move in Parallel to start";
             }}
             if (telemEl) {{
-                telemEl.innerHTML = "<span style='color:#38bdf8;'>🟢 " + AVATAR_ICON + " READY AT START (" + MODE_SPEED_KMH + " km/h)</span>";
+                telemEl.innerHTML = "<span style='color:#38bdf8;'>● 0.0 KM/H • READY TO START (STATIONARY)</span>";
             }}
 
-            // Initial voice announcement
-            speakText(m0.voice);
+            // Freeze animation
+            const runnerEl = document.getElementById('satellite-spin-icon');
+            if (runnerEl) runnerEl.style.animation = 'none';
+            const headIcon = document.getElementById('hud-header-icon');
+            if (headIcon) headIcon.style.animation = 'none';
 
-            // Establish GPS lock and broadcast starting point
-            isGpsLocked = true;
-            executeMilestoneStep(0);
+            isGpsLocked = false;
+            broadcastVehiclePosition(m0.lat, m0.lon, m0.label, 0, 0.0, isRet);
+            broadcastJourneySync('INIT', 'READY', 0, 0.0);
         }}
 
         function getDistanceKm(lat1, lon1, lat2, lon2) {{
@@ -1322,8 +1367,7 @@ def build_game_journey_html(
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }}
 
-        // Real Live GPS Satellite Watcher (Tracks real user on Google Maps across paths, cities & states)
-        // Strictly mirrors real user movement and only advances milestone on physical coordinate crossing
+        // Real Live GPS Satellite Watcher
         if (navigator.geolocation && navigator.geolocation.watchPosition) {{
             try {{
                 navigator.geolocation.watchPosition(function(pos) {{
@@ -1332,19 +1376,16 @@ def build_game_journey_html(
                     const rawSpeed = pos.coords.speed;
                     const uSpeed = (rawSpeed != null && rawSpeed >= 0) ? parseFloat((rawSpeed * 3.6).toFixed(1)) : 0.0;
 
-                    // If user has stopped (speed <= 1.0 km/h), pause virtual companion immediately!
                     if (uSpeed <= 1.0) {{
-                        if (!isTrafficStopped) {{
+                        if (!isTrafficStopped && movementState === 'MOVING') {{
                             window.simulateTrafficStop();
                         }}
                         return;
-                    }} else if (isTrafficStopped) {{
+                    }} else if (isTrafficStopped && movementState === 'MOVING') {{
                         window.simulateUserMoving(uSpeed);
                     }}
 
                     const total = activeMilestones.length;
-
-                    // Evaluate physical crossing: ONLY advance if user has moved away from start and is in transit
                     const distFromStartKm = getDistanceKm(uLat, uLon, activeMilestones[0].lat, activeMilestones[0].lon);
                     if (distFromStartKm >= 0.06 && uSpeed > 1.2) {{
                         for (let i = currentStep + 1; i < total; i++) {{
@@ -1358,43 +1399,42 @@ def build_game_journey_html(
 
                     broadcastVehiclePosition(uLat, uLon, (currentStep === 0 ? activeMilestones[0].label : "Real User GPS"), currentStep, uSpeed, currentDirection === "RETURN");
                 }}, function(err) {{
-                    console.log("[PATHFINDER] Geolocation watch notice:", err.message);
+                    console.log("[PATHFINDER] Geolocation notice:", err.message);
                 }}, {{ enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }});
             }} catch(e) {{}}
         }}
 
-        // Listen for sensor / external vehicle events from map or simulation
-        window.addEventListener('message', function(ev) {{
-            if (ev.data && ev.data.type === 'PATHFINDER_SENSOR_COMMAND') {{
-                if (ev.data.action === 'STOP') {{
-                    window.simulateTrafficStop();
-                }} else if (ev.data.action === 'MOVE') {{
-                    window.simulateUserMoving(ev.data.speedKmh);
-                }} else if (ev.data.action === 'CROSS_NEXT') {{
+        // Cross-component listeners: listen for sync events from Vehicle Companion or external triggers
+        function handleSyncEvent(data) {{
+            if (!data) return;
+            if (data.type === 'PATHFINDER_SENSOR_COMMAND' || data.type === 'PATHFINDER_JOURNEY_SYNC') {{
+                if (data.action === 'STOP' || data.state === 'TRAFFIC_STOPPED') {{
+                    if (!isTrafficStopped) window.simulateTrafficStop();
+                }} else if (data.action === 'MOVE' || data.state === 'MOVING') {{
+                    if (isTrafficStopped || movementState !== 'MOVING') {{
+                        window.simulateUserMoving(data.speedKmh);
+                    }}
+                }} else if (data.action === 'CROSS_NEXT') {{
                     window.simulateCrossNextStop();
                 }}
             }}
+        }}
+
+        window.addEventListener('message', function(ev) {{
+            handleSyncEvent(ev.data);
         }});
 
         try {{
             if (window.BroadcastChannel) {{
+                const journeyBc = new BroadcastChannel('pathfinder_journey_sync');
+                journeyBc.onmessage = function(ev) {{ handleSyncEvent(ev.data); }};
                 const sensorBc = new BroadcastChannel('pathfinder_sensor_channel');
-                sensorBc.onmessage = function(ev) {{
-                    if (ev.data && ev.data.type === 'PATHFINDER_SENSOR_COMMAND') {{
-                        if (ev.data.action === 'STOP') {{
-                            window.simulateTrafficStop();
-                        }} else if (ev.data.action === 'MOVE') {{
-                            window.simulateUserMoving(ev.data.speedKmh);
-                        }} else if (ev.data.action === 'CROSS_NEXT') {{
-                            window.simulateCrossNextStop();
-                        }}
-                    }}
-                }};
+                sensorBc.onmessage = function(ev) {{ handleSyncEvent(ev.data); }};
             }}
         }} catch(e) {{}}
 
-        // Automatically start satellite tracking for current direction on load!
-        setTimeout(startTrackingCurrentDirection, 300);
+        // ALWAYS INITIALIZE IN A STATIONARY STATE ON TAB OPENING
+        setTimeout(initializeStationaryState, 200);
     }})();
     </script>
     """

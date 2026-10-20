@@ -15,6 +15,8 @@ import heapq
 import urllib.request
 import urllib.parse
 import json
+import re
+import difflib
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -48,6 +50,10 @@ class RouteOption:
     algorithm_used: str = "A*"
     accessibility_verified: bool = False
     accessibility_notes: str = ""
+    speed_mode: str = "normal"
+    custom_speed_kmh: Optional[float] = None
+    speed_mode_note: str = ""
+    provider_duration_seconds: Optional[float] = None
 
     @property
     def distance_km(self) -> float:
@@ -71,8 +77,281 @@ class RouteOption:
             "is_accessible": self.is_accessible,
             "algorithm_used": self.algorithm_used,
             "accessibility_verified": self.accessibility_verified,
-            "accessibility_notes": self.accessibility_notes
+            "accessibility_notes": self.accessibility_notes,
+            "speed_mode": self.speed_mode,
+            "custom_speed_kmh": self.custom_speed_kmh,
+            "speed_mode_note": self.speed_mode_note,
+            "provider_duration_seconds": self.provider_duration_seconds
         }
+
+
+# =============================================================================
+# ROUTE GEOMETRY & SPATIAL OVERLAP ANALYSIS
+# =============================================================================
+
+TRAVEL_MODE_SPEED_MPS = {
+    TravelMode.DRIVING: 13.88,      # ~50 km/h
+    TravelMode.MOTORCYCLE: 15.27,   # ~55 km/h
+    TravelMode.BUS: 10.5,           # ~38 km/h
+    TravelMode.TRACTOR: 6.94,       # ~25 km/h
+    TravelMode.TRUCK: 11.11,        # ~40 km/h
+    TravelMode.WALKING: 1.38,       # ~5 km/h
+    TravelMode.BICYCLING: 4.5       # ~16 km/h
+}
+
+
+def compute_polyline_distance_m(polyline: List[Tuple[float, float]]) -> float:
+    """
+    Calculates the exact total ground distance along a coordinate polyline in meters
+    by summing Haversine distances between consecutive coordinate pairs.
+    """
+    if not polyline or len(polyline) < 2:
+        return 0.0
+    total = 0.0
+    for i in range(len(polyline) - 1):
+        total += haversine_distance_m(
+            polyline[i][0], polyline[i][1],
+            polyline[i + 1][0], polyline[i + 1][1]
+        )
+    return round(total, 1)
+
+
+def point_to_segment_distance_m(
+    p: Tuple[float, float],
+    a: Tuple[float, float],
+    b: Tuple[float, float]
+) -> float:
+    """
+    Calculates the minimum distance in meters from point p to line segment [a, b].
+    Uses high-precision equirectangular projection centered at point p.
+    """
+    lat_p, lon_p = p
+    lat_a, lon_a = a
+    lat_b, lon_b = b
+
+    cos_lat = math.cos(math.radians(lat_p))
+    ax = (lon_a - lon_p) * 111320.0 * cos_lat
+    ay = (lat_a - lat_p) * 110540.0
+    bx = (lon_b - lon_p) * 111320.0 * cos_lat
+    by = (lat_b - lat_p) * 110540.0
+
+    dx = bx - ax
+    dy = by - ay
+    seg_len_sq = dx * dx + dy * dy
+
+    if seg_len_sq < 1e-8:
+        return math.hypot(ax, ay)
+
+    # Project point P (origin 0,0) onto segment AB
+    t = -(ax * dx + ay * dy) / seg_len_sq
+    t = max(0.0, min(1.0, t))
+
+    closest_x = ax + t * dx
+    closest_y = ay + t * dy
+    return math.hypot(closest_x, closest_y)
+
+
+def sample_polyline(
+    polyline: List[Tuple[float, float]],
+    step_meters: float = 30.0
+) -> List[Tuple[float, float]]:
+    """
+    Generates uniformly spaced sample points along a polyline at ~step_meters intervals,
+    guaranteeing that long straight highway segments are well-represented in spatial comparisons.
+    """
+    if not polyline:
+        return []
+    if len(polyline) == 1:
+        return list(polyline)
+
+    samples = [polyline[0]]
+    for i in range(len(polyline) - 1):
+        p1 = polyline[i]
+        p2 = polyline[i + 1]
+        seg_dist = haversine_distance_m(p1[0], p1[1], p2[0], p2[1])
+        if seg_dist <= step_meters:
+            samples.append(p2)
+        else:
+            num_sub = max(1, int(seg_dist // step_meters))
+            for k in range(1, num_sub + 1):
+                frac = (k * step_meters) / seg_dist
+                if frac < 1.0:
+                    samples.append((
+                        p1[0] + frac * (p2[0] - p1[0]),
+                        p1[1] + frac * (p2[1] - p1[1])
+                    ))
+            samples.append(p2)
+    return samples
+
+
+def calculate_spatial_route_overlap(
+    poly_a: List[Tuple[float, float]],
+    poly_b: List[Tuple[float, float]],
+    tolerance_m: float = 35.0
+) -> float:
+    """
+    Calculates spatial overlap ratio (0.0 to 1.0) between two route coordinate polylines.
+    Uses point-to-segment metric distance. If two routes follow the exact same corridor
+    or highway within tolerance_m, overlap approaches 1.0 (100%).
+    If routes take genuinely distinct arterial corridors, overlap is low (< 0.50).
+    """
+    if not poly_a or not poly_b:
+        return 0.0
+    if len(poly_a) == len(poly_b) and poly_a == poly_b:
+        return 1.0
+
+    samples_a = sample_polyline(poly_a, step_meters=30.0)
+    samples_b = sample_polyline(poly_b, step_meters=30.0)
+    if not samples_a or not samples_b:
+        return 0.0
+
+    segs_b = [(poly_b[i], poly_b[i + 1]) for i in range(len(poly_b) - 1)]
+    segs_a = [(poly_a[i], poly_a[i + 1]) for i in range(len(poly_a) - 1)]
+
+    def min_dist_to_segs(pt, segs):
+        min_d = float("inf")
+        for a, b in segs:
+            d = point_to_segment_distance_m(pt, a, b)
+            if d < min_d:
+                min_d = d
+            if min_d <= 5.0:
+                break
+        return min_d
+
+    shared_a_count = sum(1 for pt in samples_a if min_dist_to_segs(pt, segs_b) <= tolerance_m)
+    shared_b_count = sum(1 for pt in samples_b if min_dist_to_segs(pt, segs_a) <= tolerance_m)
+
+    total_samples = len(samples_a) + len(samples_b)
+    if total_samples == 0:
+        return 0.0
+    return round((shared_a_count + shared_b_count) / total_samples, 4)
+
+
+def calculate_road_segment_overlap(roads_a: List[str], roads_b: List[str]) -> float:
+    """
+    Computes road segment sequence / set overlap between two route road lists.
+    Uses clean string normalization, set Jaccard index, and SequenceMatcher LCS.
+    """
+    def clean(name: str) -> str:
+        return re.sub(r'[^a-z0-9]', '', (name or '').lower())
+
+    clean_a = [clean(r) for r in roads_a if clean(r)]
+    clean_b = [clean(r) for r in roads_b if clean(r)]
+
+    if not clean_a or not clean_b:
+        return 0.0
+
+    set_a = set(clean_a)
+    set_b = set(clean_b)
+    jaccard = len(set_a.intersection(set_b)) / max(len(set_a.union(set_b)), 1)
+
+    matcher = difflib.SequenceMatcher(None, clean_a, clean_b)
+    lcs_ratio = matcher.ratio()
+
+    return round(0.5 * jaccard + 0.5 * lcs_ratio, 4)
+
+
+def verify_route_validity(
+    route: RouteOption,
+    origin_lat: float, origin_lon: float,
+    dest_lat: float, dest_lon: float,
+    tolerance_m: float = 350.0
+) -> Tuple[bool, str]:
+    """
+    Verifies that a route connects the requested origin and destination, has valid geometry,
+    positive metrics, and respects physical road network validity.
+    """
+    if not route or not route.polyline or len(route.polyline) < 2:
+        return False, "Route polyline contains fewer than 2 coordinate points"
+
+    for lat, lon in route.polyline:
+        if math.isnan(lat) or math.isnan(lon) or abs(lat) > 90.0 or abs(lon) > 180.0:
+            return False, f"Invalid GPS coordinates in polyline: ({lat}, {lon})"
+
+    d_start = haversine_distance_m(route.polyline[0][0], route.polyline[0][1], origin_lat, origin_lon)
+    if d_start > tolerance_m:
+        return False, f"Route departure point is {d_start:.1f}m away from requested origin (max {tolerance_m}m)"
+
+    d_end = haversine_distance_m(route.polyline[-1][0], route.polyline[-1][1], dest_lat, dest_lon)
+    if d_end > tolerance_m:
+        return False, f"Route arrival point is {d_end:.1f}m away from requested destination (max {tolerance_m}m)"
+
+    if route.distance_meters <= 0.0:
+        return False, "Route has zero or negative distance"
+    if route.duration_seconds <= 0.0:
+        return False, "Route has zero or negative duration"
+
+    return True, "Valid route"
+
+
+def recalculate_route_metrics(route: RouteOption, mode: Optional[TravelMode] = None) -> RouteOption:
+    """
+    Recalculates distance and duration from the actual returned polyline coordinates and steps.
+    Ensures reported metrics match true physical route geometry.
+    """
+    m = mode or route.mode
+    actual_dist_m = compute_polyline_distance_m(route.polyline)
+
+    if actual_dist_m > 0:
+        if route.distance_meters <= 0.0 or abs(route.distance_meters - actual_dist_m) / max(actual_dist_m, 1.0) > 0.30:
+            route.distance_meters = actual_dist_m
+
+    speed_mps = TRAVEL_MODE_SPEED_MPS.get(m, 13.88)
+    if route.duration_seconds <= 0.0:
+        route.duration_seconds = route.distance_meters / speed_mps
+
+    return route
+
+
+def filter_distinct_routes(
+    routes: List[RouteOption],
+    max_overlap: float = 0.80,
+    origin_coords: Optional[Tuple[float, float]] = None,
+    dest_coords: Optional[Tuple[float, float]] = None
+) -> List[RouteOption]:
+    """
+    Filters a list of candidate routes to keep only genuinely distinct road corridors.
+    Rejects duplicate or nearly identical alternatives where spatial overlap > max_overlap (default 80%)
+    or where road segment sequence overlap > 85% with similar length.
+    If only one distinct route exists, returns a single route list instead of inventing alternatives.
+    """
+    if not routes:
+        return []
+
+    distinct: List[RouteOption] = []
+    for r in routes:
+        if not r or not r.polyline or len(r.polyline) < 2:
+            continue
+
+        if origin_coords and dest_coords:
+            is_valid, _ = verify_route_validity(
+                r, origin_coords[0], origin_coords[1], dest_coords[0], dest_coords[1]
+            )
+            if not is_valid:
+                continue
+
+        recalculate_route_metrics(r)
+
+        is_duplicate = False
+        for existing in distinct:
+            sp_overlap = calculate_spatial_route_overlap(r.polyline, existing.polyline)
+            rd_overlap = calculate_road_segment_overlap(r.summary_roads, existing.summary_roads)
+            len_diff_ratio = abs(r.distance_meters - existing.distance_meters) / max(existing.distance_meters, 1.0)
+
+            # Rejection criteria:
+            # 1. Spatial overlap >= max_overlap (e.g. 80% shared geometry)
+            # 2. Road segment overlap >= 85% with length difference < 5% and spatial overlap >= 70%
+            if sp_overlap >= max_overlap:
+                is_duplicate = True
+                break
+            if rd_overlap >= 0.85 and len_diff_ratio < 0.05 and sp_overlap >= 0.70:
+                is_duplicate = True
+                break
+
+        if not is_duplicate:
+            distinct.append(r)
+
+    return distinct
 
 
 # =============================================================================
@@ -395,7 +674,9 @@ class BaseRoutingProvider:
         origin_lat: float, origin_lon: float,
         dest_lat: float, dest_lon: float,
         mode: TravelMode = TravelMode.DRIVING,
-        require_accessible: bool = False
+        require_accessible: bool = False,
+        speed_mode: str = "normal",
+        custom_speed_kmh: Optional[float] = None
     ) -> List[RouteOption]:
         raise NotImplementedError
 
@@ -405,7 +686,7 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
     Worldwide OpenStreetMap OSRM routing provider.
     Supports driving, walking, and bicycling travel modes across any road network globally.
     """
-    def __init__(self, base_url: Optional[str] = None, timeout_sec: float = 4.0):
+    def __init__(self, base_url: Optional[str] = None, timeout_sec: float = 2.5):
         self.base_url = (base_url or urllib.parse.urlsplit("https://router.project-osrm.org").geturl()).rstrip("/")
         self.timeout_sec = timeout_sec
         self.last_error_message: Optional[str] = None
@@ -415,7 +696,9 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
         origin_lat: float, origin_lon: float,
         dest_lat: float, dest_lon: float,
         mode: TravelMode = TravelMode.DRIVING,
-        require_accessible: bool = False
+        require_accessible: bool = False,
+        speed_mode: str = "normal",
+        custom_speed_kmh: Optional[float] = None
     ) -> List[RouteOption]:
         self.last_error_message = None
         # Profile mapping for OSRM standard endpoints
@@ -429,27 +712,23 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
         coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
         url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=true&steps=true"
 
-        routes = self._fetch_osrm(url, mode, require_accessible, origin_coords=(origin_lat, origin_lon), dest_coords=(dest_lat, dest_lon))
+        routes = self._fetch_osrm(
+            url, mode, require_accessible,
+            origin_coords=(origin_lat, origin_lon),
+            dest_coords=(dest_lat, dest_lon),
+            speed_mode=speed_mode,
+            custom_speed_kmh=custom_speed_kmh
+        )
         if routes:
-            # If only 1 route is returned and straight distance > 3 km, synthesize an alternative corridor
-            # via a slight intermediate waypoint query if feasible
-            if len(routes) == 1 and haversine_distance_m(origin_lat, origin_lon, dest_lat, dest_lon) > 3000.0:
-                mid_lat = (origin_lat + dest_lat) / 2.0
-                mid_lon = (origin_lon + dest_lon) / 2.0
-                delta_lat = dest_lat - origin_lat
-                delta_lon = dest_lon - origin_lon
-                # Perpendicular offset ~8%
-                wp_lat = mid_lat - delta_lon * 0.08
-                wp_lon = mid_lon + delta_lat * 0.08
-                alt_coords = f"{origin_lon:.6f},{origin_lat:.6f};{wp_lon:.6f},{wp_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
-                alt_url = f"{self.base_url}/route/v1/{profile}/{alt_coords}?overview=full&geometries=geojson&alternatives=false&steps=true"
-                alt_routes = self._fetch_osrm(alt_url, mode, require_accessible, origin_coords=(origin_lat, origin_lon), dest_coords=(dest_lat, dest_lon))
-                if alt_routes:
-                    alt_routes[0].name = "Alternative Corridor (Secondary Arterial)"
-                    alt_routes[0].route_id = "OSRM_2"
-                    routes.append(alt_routes[0])
-
-            return routes
+            # Filter genuinely distinct routes from OSRM's native alternatives
+            # Do NOT force an arbitrary midpoint waypoint that synthesizes fake corridors
+            distinct_routes = filter_distinct_routes(
+                routes,
+                max_overlap=0.80,
+                origin_coords=(origin_lat, origin_lon),
+                dest_coords=(dest_lat, dest_lon)
+            )
+            return distinct_routes
 
         return []
 
@@ -459,7 +738,9 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
         mode: TravelMode,
         require_accessible: bool,
         origin_coords: Optional[Tuple[float, float]] = None,
-        dest_coords: Optional[Tuple[float, float]] = None
+        dest_coords: Optional[Tuple[float, float]] = None,
+        speed_mode: str = "normal",
+        custom_speed_kmh: Optional[float] = None
     ) -> List[RouteOption]:
         try:
             req = urllib.request.Request(
@@ -550,6 +831,17 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                                         "modifier": m_mod
                                     })
 
+                            # Determine honest speed mode description
+                            spd_m = (speed_mode or "normal").lower()
+                            if spd_m == "eco":
+                                note = "Eco mode selected: Conservative cruising profile. OSRM provider baseline duration preserved."
+                            elif spd_m == "fast":
+                                note = "Fast mode selected: Prioritizes upper arterial limits where permitted. OSRM provider baseline duration preserved."
+                            elif spd_m == "custom" and custom_speed_kmh:
+                                note = f"Custom speed preference: {custom_speed_kmh:.0f} km/h target. OSRM provider baseline duration preserved; road regulations take precedence."
+                            else:
+                                note = "Standard transit profile with provider baseline duration."
+
                             r_name = names[idx] if idx < len(names) else f"Alternative Route {idx + 1}"
                             route_options.append(RouteOption(
                                 route_id=f"OSRM_{idx + 1}",
@@ -564,7 +856,11 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                                 is_accessible=True,
                                 algorithm_used="Contraction Hierarchies (Global OSRM)",
                                 accessibility_verified=(mode == TravelMode.WALKING and dist_m < 1500.0),
-                                accessibility_notes="Step-free motorized or paved corridor; micro-level sidewalk accessibility unverified on global highway network" if not (mode == TravelMode.WALKING and dist_m < 1500.0) else "Verified Pedestrian Surface"
+                                accessibility_notes="Step-free motorized or paved corridor; micro-level sidewalk accessibility unverified on global highway network" if not (mode == TravelMode.WALKING and dist_m < 1500.0) else "Verified Pedestrian Surface",
+                                speed_mode=spd_m,
+                                custom_speed_kmh=custom_speed_kmh,
+                                speed_mode_note=note,
+                                provider_duration_seconds=dur_s
                             ))
                         return route_options
                     elif code == "NoRoute":
@@ -588,12 +884,13 @@ class RealWorldRouteEngine:
     for campus grounds and local regional corridors.
     """
 
-    def __init__(self, timeout_sec: float = 3.5, provider: Optional[BaseRoutingProvider] = None):
+    def __init__(self, timeout_sec: float = 2.5, provider: Optional[BaseRoutingProvider] = None):
         self.timeout_sec = timeout_sec
         self.graph = RoadNetworkGraph()
         self.algo_selector = SituationalAlgorithmSelector()
         self.provider = provider or OSRMGlobalRoutingProvider(timeout_sec=self.timeout_sec)
         self.last_failure_reason: Optional[str] = None
+        self._route_cache: Dict[Tuple, List[RouteOption]] = {}
 
     def calculate_routes(
         self,
@@ -605,14 +902,34 @@ class RealWorldRouteEngine:
         active_hazard_count: int = 0,
         avoid_tolls: bool = False,
         avoid_highways: bool = False,
-        avoid_ferries: bool = False
+        avoid_ferries: bool = False,
+        speed_mode: str = "normal",
+        custom_speed_kmh: Optional[float] = None
     ) -> List[RouteOption]:
         """
         Calculates 2-3 viable alternative routes connecting origin and destination
         using backend situational algorithm selection and graph pathfinding.
         Supports Google Maps avoidance options: avoid_tolls, avoid_highways, avoid_ferries.
+        Supports Speed Modes: eco, normal, fast, custom.
         """
         self.last_failure_reason = None
+        cache_key = (
+            round(origin_lat, 4), round(origin_lon, 4),
+            round(dest_lat, 4), round(dest_lon, 4),
+            mode.value if hasattr(mode, "value") else str(mode),
+            require_accessible,
+            avoid_tolls, avoid_highways, avoid_ferries,
+            speed_mode,
+            custom_speed_kmh
+        )
+        if cache_key in self._route_cache:
+            return self._route_cache[cache_key]
+
+        def _cache_and_return(routes: List[RouteOption]) -> List[RouteOption]:
+            if routes:
+                self._route_cache[cache_key] = routes
+            return routes
+
         straight_dist_m = haversine_distance_m(origin_lat, origin_lon, dest_lat, dest_lon)
         best_algo, _, _ = self.algo_selector.analyze_and_select_best(
             straight_line_dist_m=straight_dist_m,
@@ -632,16 +949,41 @@ class RealWorldRouteEngine:
         # 1. Try global routing provider (OSRM)
         live_routes = None
         try:
+            import inspect
+            sig = inspect.signature(self.provider.calculate_routes)
+            has_var_kw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+            param_names = set(sig.parameters.keys())
+            p_kwargs = {
+                "mode": mode,
+                "require_accessible": require_accessible,
+            }
+            if has_var_kw or "speed_mode" in param_names:
+                p_kwargs["speed_mode"] = speed_mode
+            if has_var_kw or "custom_speed_kmh" in param_names:
+                p_kwargs["custom_speed_kmh"] = custom_speed_kmh
+
             live_routes = self.provider.calculate_routes(
                 origin_lat, origin_lon, dest_lat, dest_lon,
-                mode=mode, require_accessible=require_accessible
+                **p_kwargs
             )
         except Exception as e:
             self.last_failure_reason = f"Routing provider connection failure: {e}"
             live_routes = []
 
+        if live_routes:
+            live_routes = filter_distinct_routes(
+                live_routes,
+                max_overlap=0.80,
+                origin_coords=(origin_lat, origin_lon),
+                dest_coords=(dest_lat, dest_lon)
+            )
+
+        # If a custom routing provider was explicitly configured, return its distinct routes directly
+        if not isinstance(self.provider, OSRMGlobalRoutingProvider) and live_routes:
+            return _cache_and_return(live_routes)
+
         if live_routes and len(live_routes) >= 2:
-            return live_routes
+            return _cache_and_return(live_routes)
 
         # 2. Regional corridor handling: if within regional bounds, utilize local graph algorithms
         if is_local_regional:
@@ -652,43 +994,58 @@ class RealWorldRouteEngine:
                 preferred_algo=selected_primary_algo,
                 avoid_tolls=avoid_tolls,
                 avoid_highways=avoid_highways,
-                avoid_ferries=avoid_ferries
+                avoid_ferries=avoid_ferries,
+                speed_mode=speed_mode,
+                custom_speed_kmh=custom_speed_kmh
+            )
+            algorithm_routes = filter_distinct_routes(
+                algorithm_routes,
+                max_overlap=0.80,
+                origin_coords=(origin_lat, origin_lon),
+                dest_coords=(dest_lat, dest_lon)
             )
             if live_routes and len(live_routes) == 1:
-                # Combine primary OSRM route with Yen's algorithm alternative bypasses
-                combined = [live_routes[0]]
-                for ar in algorithm_routes:
-                    if ar.name != "Primary Arterial Corridor":
-                        combined.append(ar)
-                return combined
+                # Combine primary OSRM route with distinct Yen's algorithm alternative bypasses
+                combined = [live_routes[0]] + algorithm_routes
+                distinct_combined = filter_distinct_routes(
+                    combined,
+                    max_overlap=0.80,
+                    origin_coords=(origin_lat, origin_lon),
+                    dest_coords=(dest_lat, dest_lon)
+                )
+                return _cache_and_return(distinct_combined)
             elif algorithm_routes:
-                return algorithm_routes
+                return _cache_and_return(algorithm_routes)
 
         # 3. Global route handling (outside regional bounds):
         # If live provider returned at least 1 route, return it
         if live_routes:
-            return live_routes
+            return _cache_and_return(live_routes)
 
         # If outside regional bounds and provider failed or returned NoRoute:
         # DO NOT snap to Guntur / Tenali! Transparently report route unavailability.
         if not is_local_regional:
-            self.last_failure_reason = (
-                "No routable highway or path connection could be found between "
-                f"({origin_lat:.4f}, {origin_lon:.4f}) and ({dest_lat:.4f}, {dest_lon:.4f}). "
-                "Ensure both locations are on a connected road network and not separated by impassable water bodies."
-            )
+            if not self.last_failure_reason:
+                self.last_failure_reason = (
+                    "No routable highway or path connection could be found between "
+                    f"({origin_lat:.4f}, {origin_lon:.4f}) and ({dest_lat:.4f}, {dest_lon:.4f}). "
+                    "Ensure both locations are on a connected road network and not separated by impassable water bodies."
+                )
             return []
 
         # Fallback for local points if graph path is empty
-        return self._calculate_graph_paths(
+        fallback_routes = self._calculate_graph_paths(
             origin_lat, origin_lon, dest_lat, dest_lon,
             mode=mode,
             require_accessible=require_accessible,
             preferred_algo=selected_primary_algo,
             avoid_tolls=avoid_tolls,
             avoid_highways=avoid_highways,
-            avoid_ferries=avoid_ferries
+            avoid_ferries=avoid_ferries,
+            speed_mode=speed_mode,
+            custom_speed_kmh=custom_speed_kmh
         )
+        return _cache_and_return(fallback_routes)
 
     def _calculate_graph_paths(
         self,
@@ -699,7 +1056,9 @@ class RealWorldRouteEngine:
         preferred_algo: str = "Bidirectional A*",
         avoid_tolls: bool = False,
         avoid_highways: bool = False,
-        avoid_ferries: bool = False
+        avoid_ferries: bool = False,
+        speed_mode: str = "normal",
+        custom_speed_kmh: Optional[float] = None
     ) -> List[RouteOption]:
         """
         Genuinely runs Yen's K-Shortest Paths algorithm over the regional road network graph
@@ -745,7 +1104,25 @@ class RealWorldRouteEngine:
             if (dest_lat, dest_lon) != polyline[-1]:
                 polyline.append((dest_lat, dest_lon))
 
-            effective_dur = dur_s / speed_factor
+            spd_m = (speed_mode or "normal").lower()
+            mode_mult = 1.0
+            if spd_m == "eco":
+                mode_mult = 1.15
+                note = "Eco mode selected: Conservative cruising profile. Energy efficiency prioritized."
+            elif spd_m == "fast":
+                mode_mult = 0.88
+                note = "Fast mode selected: Prioritizes upper corridor flow limits where permitted."
+            elif spd_m == "custom" and custom_speed_kmh:
+                custom_mps = max(0.5, custom_speed_kmh / 3.6)
+                base_mps = TRAVEL_MODE_SPEED_MPS.get(mode, 13.88)
+                clamped_mps = max(base_mps * 0.4, min(base_mps * 1.6, custom_mps))
+                mode_mult = base_mps / clamped_mps
+                note = f"Custom target speed preference: {custom_speed_kmh:.0f} km/h (effective {clamped_mps * 3.6:.0f} km/h on regional links)."
+            else:
+                note = "Standard transit profile with autonomous graph travel times."
+
+            raw_dur = dur_s / speed_factor
+            effective_dur = raw_dur * mode_mult
             name = route_names[idx] if idx < len(route_names) else f"Alternative Corridor {idx+1}"
             cur_roads = roads if roads else ["Regional Arterial Road"]
 
@@ -795,8 +1172,20 @@ class RealWorldRouteEngine:
                 is_accessible=is_acc,
                 algorithm_used=algo_name,
                 accessibility_verified=is_acc,
-                accessibility_notes="Verified Regional Graph Segment" if is_acc else "Unverified or Contains Step Hazards"
+                accessibility_notes="Verified Regional Graph Segment" if is_acc else "Unverified or Contains Step Hazards",
+                speed_mode=spd_m,
+                custom_speed_kmh=custom_speed_kmh,
+                speed_mode_note=note,
+                provider_duration_seconds=raw_dur
             ))
+
+        # Filter distinct routes to reject duplicates / identical overlaps
+        routes = filter_distinct_routes(
+            routes,
+            max_overlap=0.80,
+            origin_coords=(origin_lat, origin_lon),
+            dest_coords=(dest_lat, dest_lon)
+        )
 
         # Prioritize non-highway corridors when avoid_highways is enabled
         if avoid_highways and len(routes) > 1:
