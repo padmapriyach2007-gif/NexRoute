@@ -453,10 +453,10 @@ def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult) -
                     {hazard_icon} {audit.hazard_summary}
                 </div>
             </div>
-            <div style='background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 6px 10px;'>
+            <div style='background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 6px 10px; overflow: hidden;'>
                 <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;'>Route Source</div>
-                <div style='font-size: 0.82rem; font-weight: 700; color: #e2e8f0; margin-top: 2px;' title='{audit.route_provider}'>
-                    🧭 {audit.route_provider[:24]}
+                <div style='font-size: 0.82rem; font-weight: 700; color: #e2e8f0; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' title='{audit.route_provider}'>
+                    🧭 {"OSRM (OpenStreetMap)" if "OSRM" in audit.route_provider else audit.route_provider}
                 </div>
             </div>
             <div style='background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 6px 10px;'>
