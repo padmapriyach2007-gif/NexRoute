@@ -15,9 +15,7 @@ import time
 from typing import Dict, List, Tuple, Optional, Any
 import folium
 from folium import plugins
-
-
-# Pre-cached regional landmarks for instant offline operation and test repeatability
+from concurrent.futures import ThreadPoolExecutor
 import re
 
 # Pre-cached regional landmarks, micro-areas, wards, colonies, and campus blocks
@@ -95,26 +93,59 @@ OFFLINE_GEOCODE_CACHE = {
     "pedavadlapudi": {"lat": 16.4150, "lon": 80.6050, "name": "Pedavadlapudi Rural Junction"},
     "kolakaluru": {"lat": 16.2950, "lon": 80.6150, "name": "Kolakaluru Village, Tenali Mandal"},
     "koppuravuru": {"lat": 16.2820, "lon": 80.4880, "name": "Koppuravuru Village, Pedakakani"},
+    "namburu": {"lat": 16.3610, "lon": 80.4980, "name": "Namburu Village Center, Guntur District", "display_name": "Namburu, Pedakakani Mandal, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Namburu", "type": "village"},
+    "namburu, guntur district": {"lat": 16.3610, "lon": 80.4980, "name": "Namburu Village Center, Guntur District", "display_name": "Namburu, Pedakakani Mandal, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Namburu", "type": "village"},
 
-    # Tenali Town Wards, Small Areas & Environs
+    # Tenali Town Wards, Landmarks, Small Areas & Environs
     "morrispet": {"lat": 16.2380, "lon": 80.6450, "name": "Morrispet, Tenali"},
     "chenchupet": {"lat": 16.2450, "lon": 80.6350, "name": "Chenchupet, Tenali"},
     "angalakuduru": {"lat": 16.2280, "lon": 80.6220, "name": "Angalakuduru Village, Tenali"},
     "nazerpet": {"lat": 16.2410, "lon": 80.6480, "name": "Nazerpet, Tenali"},
     "chinaravuru": {"lat": 16.2520, "lon": 80.6550, "name": "Chinaravuru, Tenali"},
     "pinapadu": {"lat": 16.2490, "lon": 80.6290, "name": "Pinapadu, Tenali"},
-    "tenali railway station": {"lat": 16.2395, "lon": 80.6465, "name": "Tenali Junction Railway Station"},
-    "tenali": {"lat": 16.2430, "lon": 80.6400, "name": "Tenali Town, Guntur District"},
-    "bsr enclave": {"lat": 16.23454, "lon": 80.65197, "name": "BSR Enclave, Sarojini Naidu Street, Tenali", "display_name": "BSR Enclave, Sarojini Naidu Street, Tenali, Andhra Pradesh"},
-    "sarojini naidu street": {"lat": 16.23454, "lon": 80.65180, "name": "Sarojini Naidu Street, Tenali", "display_name": "Sarojini Naidu Street, Tenali, Andhra Pradesh"},
+    "tenali railway station": {"lat": 16.2395, "lon": 80.6465, "name": "Tenali Junction Railway Station", "display_name": "Tenali Junction Railway Station, Station Road, Tenali, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "station"},
+    "tenali": {"lat": 16.2430, "lon": 80.6400, "name": "Tenali Town, Guntur District", "display_name": "Tenali, Guntur District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "town"},
+    "tenali, andhra pradesh": {"lat": 16.2430, "lon": 80.6400, "name": "Tenali, Andhra Pradesh", "display_name": "Tenali, Guntur District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "town"},
+    "asta lakshmi temple, tenali": {"lat": 16.2385, "lon": 80.6420, "name": "Sri Asta Lakshmi Temple, Tenali", "display_name": "Sri Asta Lakshmi Temple, Tenali, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "place_of_worship"},
+    "asta lakshmi temple": {"lat": 16.2385, "lon": 80.6420, "name": "Sri Asta Lakshmi Temple, Tenali", "display_name": "Sri Asta Lakshmi Temple, Tenali, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "place_of_worship"},
+    "astalakshmi temple, tenali": {"lat": 16.2385, "lon": 80.6420, "name": "Sri Asta Lakshmi Temple, Tenali", "display_name": "Sri Asta Lakshmi Temple, Tenali, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "place_of_worship"},
+    "astalakshmi temple": {"lat": 16.2385, "lon": 80.6420, "name": "Sri Asta Lakshmi Temple, Tenali", "display_name": "Sri Asta Lakshmi Temple, Tenali, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "place_of_worship"},
+    "bsr enclave": {"lat": 16.23454, "lon": 80.65197, "name": "BSR Enclave, Sarojini Naidu Street, Tenali", "display_name": "BSR Enclave, Sarojini Naidu Street, Tenali, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali"},
+    "sarojini naidu street": {"lat": 16.23454, "lon": 80.65180, "name": "Sarojini Naidu Street, Tenali", "display_name": "Sarojini Naidu Street, Tenali, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali"},
 
-    # Major Regional Cities
-    "vijayawada": {"lat": 16.5062, "lon": 80.6480, "name": "Vijayawada Junction, Andhra Pradesh"},
-    "amaravati": {"lat": 16.5417, "lon": 80.5150, "name": "Amaravati Capital City, Andhra Pradesh"},
-    "hyderabad": {"lat": 17.3850, "lon": 78.4867, "name": "Hyderabad, Telangana"},
-    "delhi": {"lat": 28.6139, "lon": 77.2090, "name": "New Delhi Central, India"},
-    "bangalore": {"lat": 12.9716, "lon": 77.5946, "name": "Bengaluru, Karnataka"},
-    "mumbai": {"lat": 19.0760, "lon": 72.8777, "name": "Mumbai, Maharashtra"}
+    # Campus Specific Locations & Internal POIs with Entrance Reference
+    "the cafeteria, vignan university, vadlamudi": {"lat": 16.2336, "lon": 80.5525, "name": "Vignan Central Cafeteria & Food Court", "display_name": "The Cafeteria, Vignan University, Vadlamudi (Campus Internal POI - nearest road entrance: Main Entrance Arch)", "state": "Andhra Pradesh", "country": "India", "city": "Vadlamudi", "is_campus_internal": True, "campus_entrance": "Vignan University Main Entrance Arch, Vadlamudi Road", "entrance_lat": 16.2325, "entrance_lon": 80.5490, "type": "amenity"},
+    "the cafeteria": {"lat": 16.2336, "lon": 80.5525, "name": "Vignan Central Cafeteria & Food Court", "display_name": "The Cafeteria, Vignan University, Vadlamudi (Campus Internal POI - nearest road entrance: Main Entrance Arch)", "state": "Andhra Pradesh", "country": "India", "city": "Vadlamudi", "is_campus_internal": True, "campus_entrance": "Vignan University Main Entrance Arch, Vadlamudi Road", "entrance_lat": 16.2325, "entrance_lon": 80.5490, "type": "amenity"},
+    "cafeteria": {"lat": 16.2336, "lon": 80.5525, "name": "Vignan Central Cafeteria & Food Court", "display_name": "Vignan Central Cafeteria & Food Court, Vadlamudi (Campus Internal POI - nearest road entrance: Main Entrance Arch)", "state": "Andhra Pradesh", "country": "India", "city": "Vadlamudi", "is_campus_internal": True, "campus_entrance": "Vignan University Main Entrance Arch, Vadlamudi Road", "entrance_lat": 16.2325, "entrance_lon": 80.5490, "type": "amenity"},
+    "canteen": {"lat": 16.2336, "lon": 80.5525, "name": "Vignan Central Canteen & Food Court", "display_name": "Vignan Central Canteen, Vadlamudi (Campus Internal POI - nearest road entrance: Main Entrance Arch)", "state": "Andhra Pradesh", "country": "India", "city": "Vadlamudi", "is_campus_internal": True, "campus_entrance": "Vignan University Main Entrance Arch, Vadlamudi Road", "entrance_lat": 16.2325, "entrance_lon": 80.5490, "type": "amenity"},
+
+    # Regional Towns & Mandals
+    "bapatla": {"lat": 15.9042, "lon": 80.4674, "name": "Bapatla Town & Coastal Beach Center", "display_name": "Bapatla, Bapatla District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Bapatla"},
+    "ponnur": {"lat": 16.0667, "lon": 80.5667, "name": "Ponnur Town & Sakshi Bhavan", "display_name": "Ponnur, Guntur District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Ponnur"},
+    "chirala": {"lat": 15.8246, "lon": 80.3522, "name": "Chirala Textile Hub", "display_name": "Chirala, Bapatla District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Chirala"},
+    "repalle": {"lat": 16.0200, "lon": 80.8500, "name": "Repalle Port Town", "display_name": "Repalle, Bapatla District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Repalle"},
+    "narasaraopet": {"lat": 16.2360, "lon": 80.0499, "name": "Narasaraopet Commercial Center", "display_name": "Narasaraopet, Palnadu District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Narasaraopet"},
+    "sattenapalle": {"lat": 16.3950, "lon": 80.1550, "name": "Sattenapalle Center", "display_name": "Sattenapalle, Palnadu District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Sattenapalle"},
+    "chilakaluripet": {"lat": 16.0892, "lon": 80.1672, "name": "Chilakaluripet NH-16 Hub", "display_name": "Chilakaluripet, Palnadu District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Chilakaluripet"},
+
+    # Major Regional Transit Hubs & Capital Centers
+    "vijayawada": {"lat": 16.5062, "lon": 80.6480, "name": "Vijayawada Junction, Andhra Pradesh", "display_name": "Vijayawada, NTR District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Vijayawada"},
+    "amaravati": {"lat": 16.5417, "lon": 80.5150, "name": "Amaravati Capital City, Andhra Pradesh", "display_name": "Amaravati Capital City, Guntur District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Amaravati"},
+    "hyderabad": {"lat": 17.3850, "lon": 78.4867, "name": "Hyderabad, Telangana", "display_name": "Hyderabad, Telangana, India", "state": "Telangana", "country": "India", "city": "Hyderabad"},
+    "visakhapatnam": {"lat": 17.6868, "lon": 83.2185, "name": "Visakhapatnam Port City", "display_name": "Visakhapatnam, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Visakhapatnam"},
+    "tirupati": {"lat": 13.6288, "lon": 79.4192, "name": "Tirupati Pilgrim City", "display_name": "Tirupati, Tirupati District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Tirupati"},
+    "vignan": {"lat": 16.2335, "lon": 80.5505, "name": "Vignan University (VFSTR), Vadlamudi", "display_name": "Vignan University, Vadlamudi, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Vadlamudi"},
+    "aiims mangalagiri": {"lat": 16.4385, "lon": 80.5750, "name": "AIIMS Mangalagiri Hospital", "display_name": "All India Institute of Medical Sciences (AIIMS), Mangalagiri, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Mangalagiri"},
+    "guntur medical college": {"lat": 16.2980, "lon": 80.4430, "name": "Guntur Medical College & Hospital", "display_name": "Guntur Medical College (GMC), Guntur, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Guntur"},
+    "kanaka durga temple": {"lat": 16.5160, "lon": 80.6055, "name": "Sri Durga Malleswara Swamy Varla Devasthanam", "display_name": "Kanaka Durga Temple, Indrakeeladri, Vijayawada, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Vijayawada"},
+    "prakasam barrage": {"lat": 16.5075, "lon": 80.6080, "name": "Prakasam Barrage Krishna River", "display_name": "Prakasam Barrage, Krishna River, Vijayawada, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Vijayawada"},
+    "gannavaram airport": {"lat": 16.5280, "lon": 80.7980, "name": "Vijayawada International Airport (Gannavaram)", "display_name": "Vijayawada International Airport, Gannavaram, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Gannavaram"},
+    "vijayawada railway station": {"lat": 16.5180, "lon": 80.6200, "name": "Vijayawada Junction Railway Station", "display_name": "Vijayawada Junction Railway Station, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Vijayawada"},
+    "vijayawada bus stand": {"lat": 16.5110, "lon": 80.6280, "name": "Pandit Nehru Bus Station (PNBS), Vijayawada", "display_name": "Pandit Nehru Bus Station, Vijayawada, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Vijayawada"},
+    "undavalli caves": {"lat": 16.4975, "lon": 80.5815, "name": "Undavalli Rock Cut Caves", "display_name": "Undavalli Caves, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Undavalli"},
+    "kotappakonda": {"lat": 16.1420, "lon": 80.0380, "name": "Kotappakonda Temple", "display_name": "Kotappakonda Temple, Palnadu District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Narasaraopet"},
+    "ongole": {"lat": 15.5057, "lon": 80.0499, "name": "Ongole Town Center", "display_name": "Ongole, Prakasam District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Ongole"},
+    "nellore": {"lat": 14.4426, "lon": 79.9865, "name": "Nellore City Center", "display_name": "Nellore, SPSR Nellore District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Nellore"},
 }
 
 
@@ -123,12 +154,13 @@ class MapService:
         self,
         user_agent: str = "PATHFINDER-Global-Nav/2.0 (predictive.adaptive.transit@navigation.org)",
         base_url: Optional[str] = None,
-        timeout_sec: float = 4.0
+        timeout_sec: float = 2.5
     ):
         self.user_agent = user_agent
         self.base_url = (base_url or os.environ.get("NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org")).rstrip("/")
         self.timeout_sec = timeout_sec
         self.cache: Dict[str, Dict[str, Any]] = dict(OFFLINE_GEOCODE_CACHE)
+        self._query_candidates_cache: Dict[str, List[Dict[str, Any]]] = {}
         try:
             from src.google_maps_platform import load_and_georeference_saved_locations
             for loc in load_and_georeference_saved_locations():
@@ -137,16 +169,35 @@ class MapService:
                     "lat": loc["latitude"],
                     "lon": loc["longitude"],
                     "name": loc["name"],
-                    "display_name": f"{loc['name']}, {loc['section']}, Vignan University",
+                    "display_name": f"{loc['name']}, {loc.get('section', 'Campus')}, Vignan University",
                     "country": "India",
                     "state": "Andhra Pradesh"
                 }
         except Exception:
             pass
+
+        # Ingest all regional emergency and civic facilities into geocoder
+        try:
+            from src.facilities_service import CATEGORY_CONFIG
+            for cat_id, cat_info in CATEGORY_CONFIG.items():
+                for fac in cat_info.get("facilities", []):
+                    fac_k = fac["name"].lower().strip()
+                    self.cache[fac_k] = {
+                        "lat": fac["lat"],
+                        "lon": fac["lon"],
+                        "name": fac["name"],
+                        "display_name": f"{fac['name']} ({cat_info.get('label', 'Facility')}), {fac.get('address', 'Regional Sector')}",
+                        "country": "India",
+                        "state": "Andhra Pradesh",
+                        "type": cat_id.lower()
+                    }
+        except Exception:
+            pass
+
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": self.user_agent})
         self._last_request_time = 0.0
-        self._min_request_interval = 0.35  # Comply with OSM Nominatim usage policy
+        self._min_request_interval = 0.20
 
     def _respect_rate_limit(self):
         elapsed = time.time() - self._last_request_time
@@ -169,10 +220,23 @@ class MapService:
         candidates = self.geocode_candidates(query, limit=1)
         return candidates[0] if candidates else None
 
-    def geocode_candidates(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def geocode_candidates(
+        self,
+        query: str,
+        limit: int = 5,
+        origin_coords: Optional[Tuple[float, float]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Disambiguates queries by returning candidate worldwide matches with
-        country, region/state, coordinates, and classification.
+        country, region/state, locality/city, coordinates, campus-internal metadata, and relevance score.
+
+        Resolution Pipeline:
+        1. Direct Coordinate Detection with strict WGS-84 range validation (-90 to +90, -180 to +180).
+        2. Verified Local Gazetteer & Curated POIs with token-overlap matching and internal campus boundary flags.
+        3. Configured Google Maps Geocoding API (when GOOGLE_MAPS_API_KEY is active).
+        4. Worldwide Geocoding Provider (OpenStreetMap Nominatim with respectful rate-limiting).
+        5. High-Precision Small-Place Geocoder (Photon by Komoot with dynamic, non-coercive biasing).
+        6. Locality-Aware Cross-Provider Candidate Ranking & Spatial Deduplication.
         """
         q_raw = query.strip()
         if not q_raw:
@@ -192,12 +256,19 @@ class MapService:
                     return [{
                         "lat": c_lat,
                         "lon": c_lon,
+                        "name": f"Pinpoint ({c_lat:.4f}, {c_lon:.4f})",
                         "display_name": f"Pinpoint Coordinate ({c_lat:.5f}, {c_lon:.5f})",
+                        "address": f"Pinpoint Coordinate ({c_lat:.5f}, {c_lon:.5f})",
                         "country": "Global Coordinates",
                         "state": "",
+                        "city": "",
                         "type": "coordinate",
                         "importance": 1.0,
-                        "source": "COORDINATE_INPUT"
+                        "relevance_score": 1.0,
+                        "provider": "Direct Coordinates",
+                        "provider_id": f"coord_{c_lat:.4f}_{c_lon:.4f}",
+                        "source": "COORDINATE_INPUT",
+                        "is_campus_internal": False
                     }]
                 else:
                     # Out of bounds coordinates: do not fabricate or search text
@@ -205,156 +276,398 @@ class MapService:
             except Exception:
                 return []
 
-        q_norm = q_raw.lower()
+        # Clean query normalization & common transliteration standardization
+        q_clean = re.sub(r"\s+", " ", q_raw).strip()
+        q_norm = q_clean.lower()
+        q_norm_std = q_norm.replace("astalakshmi", "asta lakshmi").replace("ashtalakshmi", "asta lakshmi").replace("ashta lakshmi", "asta lakshmi")
+
+        # Instant Query Cache Check
+        if q_norm in self._query_candidates_cache:
+            return self._query_candidates_cache[q_norm][:limit]
+        if q_norm_std in self._query_candidates_cache:
+            return self._query_candidates_cache[q_norm_std][:limit]
 
         # Handle 'current location' keyword
-        if "current" in q_norm:
-            return [{
+        if "current" in q_norm or "my location" in q_norm or "live location" in q_norm:
+            cur_loc_res = [{
                 "lat": 16.23454,
                 "lon": 80.65197,
                 "display_name": "📍 Current Location",
                 "country": "India",
                 "state": "Andhra Pradesh",
+                "city": "Tenali",
                 "type": "current_location",
                 "importance": 1.0,
-                "source": "CURRENT_LOCATION"
+                "relevance_score": 1.0,
+                "source": "CURRENT_LOCATION",
+                "is_campus_internal": False
             }]
+            self._query_candidates_cache[q_norm] = cur_loc_res
+            return cur_loc_res
+
+        q_tokens = set(re.findall(r"\b[a-zA-Z0-9]{2,}\b", q_norm_std))
+        # Known regional and major global localities for locality-consistency ranking
+        LOCALITY_KEYWORDS = {
+            "tenali", "guntur", "vadlamudi", "vijayawada", "amaravati", "khammam",
+            "hyderabad", "bangalore", "bengaluru", "chennai", "mumbai", "delhi",
+            "kolkata", "bapatla", "chirala", "ponnur", "repalle", "narasaraopet",
+            "sattenapalle", "pedakakani", "namburu", "chebrolu", "cambridge", "london", "tokyo", "paris"
+        }
+        query_explicit_locs = q_tokens.intersection(LOCALITY_KEYWORDS)
+
+        collected_candidates: List[Dict[str, Any]] = []
 
         # ---------------------------------------------------------
-        # TIER 2: Exact & Predictive Matches in Directory (Instant response)
+        # TIER 2: Verified Local Gazetteer & Campus POI Directory
         # ---------------------------------------------------------
-        matched_keys = [k for k in self.cache if k == q_norm]
-        matched_keys += [k for k in self.cache if k != q_norm and (k.startswith(q_norm) or (len(q_norm) >= 3 and q_norm in k))]
+        gazetteer_matches = []
+        for k, v in self.cache.items():
+            k_clean = k.lower().strip()
+            name_clean = v.get("name", "").lower().strip()
+            disp_clean = v.get("display_name", "").lower().strip()
 
-        if matched_keys:
-            cached_results = []
-            for k in matched_keys[:limit]:
-                v = self.cache[k]
-                cached_results.append({
-                    "lat": v["lat"],
-                    "lon": v["lon"],
+            target_tokens = set(re.findall(r"\b[a-zA-Z0-9]{2,}\b", f"{k_clean} {name_clean} {disp_clean}"))
+            token_overlap = len(q_tokens.intersection(target_tokens))
+
+            # Match criteria: exact key, exact name, startswith, or significant token overlap
+            is_exact = (k_clean == q_norm or k_clean == q_norm_std or name_clean == q_norm or name_clean == q_norm_std)
+            is_substring = (len(q_norm_std) >= 3 and (k_clean.startswith(q_norm_std) or q_norm_std in k_clean or q_norm_std in name_clean))
+
+            if is_exact or is_substring or (token_overlap >= max(1, min(len(q_tokens), 2))):
+                # Calculate match score (verified gazetteer has highest confidence)
+                match_score = 1.60 if is_exact else (1.30 if is_substring else 0.85)
+                match_score += 0.08 * token_overlap
+
+                # Locality alignment check
+                if query_explicit_locs:
+                    if query_explicit_locs.intersection(target_tokens):
+                        match_score += 0.25
+                    else:
+                        match_score -= 0.30
+
+                c_item = {
+                    "lat": float(v["lat"]),
+                    "lon": float(v["lon"]),
+                    "name": v.get("name", k.title()),
                     "display_name": v.get("display_name", v.get("name", k.title())),
-                    "country": v.get("country", "Local / Cached"),
-                    "state": v.get("state", ""),
-                    "type": "cached_place",
-                    "importance": 1.0 if k == q_norm else 0.90,
-                    "source": "OFFLINE_CACHE"
-                })
-            if matched_keys[0] == q_norm or len(cached_results) >= limit:
-                return cached_results
+                    "address": v.get("display_name", v.get("name", k.title())),
+                    "country": v.get("country", "India"),
+                    "state": v.get("state", "Andhra Pradesh"),
+                    "city": v.get("city", ""),
+                    "type": v.get("type", "verified_poi"),
+                    "importance": match_score,
+                    "relevance_score": match_score,
+                    "provider": "Verified Local Gazetteer",
+                    "provider_id": f"gazetteer_{k_clean}",
+                    "source": "VERIFIED_GAZETTEER",
+                    "is_campus_internal": bool(v.get("is_campus_internal", False)),
+                    "campus_entrance": v.get("campus_entrance", ""),
+                    "limitation_note": v.get("limitation_note", "")
+                }
+                gazetteer_matches.append((match_score, c_item))
 
-        candidates: List[Dict[str, Any]] = []
+        gazetteer_matches.sort(key=lambda x: x[0], reverse=True)
+
+        # High-confidence campus internal short-circuit (e.g., 'cse block', 'the cafeteria', 'vignan library')
+        is_top_campus_internal = gazetteer_matches and gazetteer_matches[0][1].get("is_campus_internal", False) and gazetteer_matches[0][0] >= 1.50
+        if is_top_campus_internal:
+            final_res = [m[1] for m in gazetteer_matches[:limit]]
+            self._query_candidates_cache[q_norm] = final_res
+            self._query_candidates_cache[q_norm_std] = final_res
+            return final_res
+
+        for _, g_cand in gazetteer_matches[:limit]:
+            collected_candidates.append(g_cand)
 
         # ---------------------------------------------------------
-        # TIER 2.5: Official Google Maps Geocoding API (when key is configured)
+        # TIER 2.5: Official Google Maps Geocoding API (when key is active)
         # ---------------------------------------------------------
         try:
             from src.google_maps_platform import geocode_with_google_api, is_google_maps_key_configured
             if is_google_maps_key_configured():
-                g_res = geocode_with_google_api(q_raw)
+                g_res = geocode_with_google_api(q_clean)
                 if g_res:
-                    return [{
-                        "lat": g_res["lat"],
-                        "lon": g_res["lon"],
-                        "display_name": g_res.get("formatted_address", q_raw),
+                    collected_candidates.append({
+                        "lat": float(g_res["lat"]),
+                        "lon": float(g_res["lon"]),
+                        "name": g_res.get("formatted_address", q_clean).split(",")[0].strip(),
+                        "display_name": g_res.get("formatted_address", q_clean),
                         "country": "",
                         "state": "",
-                        "type": "google_places_geocoded",
-                        "importance": 0.99,
-                        "source": "GOOGLE_MAPS_PLATFORM"
-                    }]
+                        "city": "",
+                        "address": g_res.get("formatted_address", q_clean),
+                        "type": "google_geocoded",
+                        "importance": 0.95,
+                        "relevance_score": 0.95,
+                        "provider": "Google Maps Platform",
+                        "provider_id": f"google_{g_res['lat']:.4f}_{g_res['lon']:.4f}",
+                        "source": "GOOGLE_MAPS_PLATFORM",
+                        "is_campus_internal": False
+                    })
         except Exception:
             pass
 
         # ---------------------------------------------------------
-        # TIER 3: Worldwide Geocoding Provider (OpenStreetMap Nominatim / Photon)
+        # TIER 3 & 3.5: Fast Parallel Worldwide Geocoding (Nominatim + Photon)
         # ---------------------------------------------------------
-        try:
-            self._respect_rate_limit()
-            url = f"{self.base_url}/search"
-            params = {
-                "q": q_raw,
-                "format": "jsonv2",
-                "limit": limit,
-                "addressdetails": 1
-            }
-            resp = self.session.get(url, params=params, timeout=self.timeout_sec)
-            if resp.status_code == 200:
-                results = resp.json()
-                for item in results:
-                    addr = item.get("address", {})
-                    country = addr.get("country", "")
-                    state = addr.get("state", addr.get("region", ""))
-                    city = addr.get("city", addr.get("town", addr.get("village", "")))
-                    c_lat = float(item["lat"])
-                    c_lon = float(item["lon"])
-                    c_entry = {
-                        "lat": c_lat,
-                        "lon": c_lon,
-                        "display_name": item.get("display_name", q_raw),
-                        "country": country,
-                        "state": state,
-                        "city": city,
-                        "type": item.get("type", item.get("category", "place")),
-                        "importance": float(item.get("importance", 0.5)),
-                        "source": "GLOBAL_OSM_NOMINATIM"
-                    }
-                    candidates.append(c_entry)
-                    # Cache top result
-                    if len(candidates) == 1:
-                        self.cache[q_norm] = c_entry
-        except Exception:
-            pass
-
-        if candidates:
-            return candidates
-
-        # ---------------------------------------------------------
-        # TIER 4: Curated Local Substring & Fuzzy Match for Regional Campus Queries
-        # ---------------------------------------------------------
-        # Only fallback to offline cache if query shares tokens with local campus or district
-        q_tokens = set(re.findall(r"\w+", q_norm))
-        if q_tokens:
-            best_match = None
-            max_token_overlap = 0
-            for k, v in self.cache.items():
-                if k == q_norm or (len(q_norm) > 4 and k in q_norm):
-                    return [{
-                        "lat": v["lat"],
-                        "lon": v["lon"],
-                        "display_name": v.get("name", q_raw),
-                        "country": "India",
-                        "state": "Andhra Pradesh",
-                        "type": "regional_alias",
-                        "importance": 0.8,
-                        "source": "REGIONAL_ALIAS"
-                    }]
-
-                k_tokens = set(re.findall(r"\w+", k))
-                name_tokens = set(re.findall(r"\w+", v.get("name", "").lower()))
-                all_candidate_tokens = k_tokens.union(name_tokens)
-                overlap = len(q_tokens.intersection(all_candidate_tokens))
-                if overlap > max_token_overlap and overlap >= min(len(q_tokens), 2):
-                    max_token_overlap = overlap
-                    best_match = v
-
-            if best_match and max_token_overlap >= 2:
-                matched_entry = {
-                    "lat": best_match["lat"],
-                    "lon": best_match["lon"],
-                    "display_name": best_match.get("name", q_raw),
-                    "country": "India",
-                    "state": "Andhra Pradesh",
-                    "type": "fuzzy_regional_match",
-                    "importance": 0.7,
-                    "source": "FUZZY_REGIONAL_MATCH"
+        def _fetch_nominatim() -> List[Dict[str, Any]]:
+            nom_results = []
+            try:
+                self._respect_rate_limit()
+                url = f"{self.base_url}/search"
+                params = {
+                    "q": q_clean,
+                    "format": "jsonv2",
+                    "limit": limit,
+                    "addressdetails": 1
                 }
-                self.cache[q_norm] = matched_entry
-                return [matched_entry]
+                headers = {"User-Agent": self.user_agent}
+                resp = self.session.get(url, params=params, headers=headers, timeout=2.2)
+                if resp.status_code == 200:
+                    for item in resp.json():
+                        addr = item.get("address", {})
+                        country = addr.get("country", "")
+                        state = addr.get("state", addr.get("region", addr.get("province", "")))
+                        city = addr.get("city", addr.get("town", addr.get("village", addr.get("county", addr.get("municipality", "")))))
+                        c_lat = float(item["lat"])
+                        c_lon = float(item["lon"])
 
-        # Explicitly return empty candidate list if query cannot be resolved.
-        # NEVER fabricate or substitute a regional anchor.
-        return []
+                        osm_id_str = str(item.get("osm_id") or item.get("place_id") or "")
+                        osm_type_str = str(item.get("osm_type") or "place")
+                        prov_id = f"osm_{osm_type_str}_{osm_id_str}" if osm_id_str else f"osm_{c_lat:.4f}_{c_lon:.4f}"
+
+                        raw_name = item.get("name")
+                        disp_name = item.get("display_name", q_clean)
+                        if not raw_name:
+                            raw_name = disp_name.split(",")[0].strip() if disp_name else q_clean
+
+                        text_for_eval = (disp_name + " " + city + " " + state + " " + country).lower()
+                        eval_tokens = set(re.findall(r"\b[a-zA-Z0-9]{2,}\b", text_for_eval))
+                        tok_overlap = len(q_tokens.intersection(eval_tokens))
+
+                        rel_score = float(item.get("importance", 0.5)) + 0.1 * tok_overlap
+                        if query_explicit_locs:
+                            if query_explicit_locs.intersection(eval_tokens):
+                                rel_score += 0.35
+                            else:
+                                other_locs = eval_tokens.intersection(LOCALITY_KEYWORDS)
+                                if other_locs and not (query_explicit_locs.intersection(other_locs)):
+                                    rel_score -= 0.60
+
+                        if origin_coords:
+                            dist_deg = ((c_lat - origin_coords[0])**2 + (c_lon - origin_coords[1])**2)**0.5
+                            if dist_deg < 0.5:
+                                rel_score += 0.20
+                            elif dist_deg < 2.5:
+                                rel_score += 0.10
+
+                        nom_results.append({
+                            "lat": c_lat,
+                            "lon": c_lon,
+                            "name": raw_name,
+                            "display_name": disp_name,
+                            "country": country,
+                            "state": state,
+                            "city": city,
+                            "address": disp_name,
+                            "type": item.get("type", item.get("category", "place")),
+                            "importance": float(item.get("importance", 0.5)),
+                            "relevance_score": rel_score,
+                            "provider": "OpenStreetMap Nominatim",
+                            "provider_id": prov_id,
+                            "osm_id": osm_id_str,
+                            "osm_type": osm_type_str,
+                            "source": "GLOBAL_OSM_NOMINATIM",
+                            "is_campus_internal": False
+                        })
+            except Exception:
+                pass
+            return nom_results
+
+        def _fetch_photon() -> List[Dict[str, Any]]:
+            pho_results = []
+            try:
+                photon_url = "https://photon.komoot.io/api/"
+                photon_params: Dict[str, Any] = {
+                    "q": q_clean,
+                    "limit": limit,
+                    "lang": "en"
+                }
+                if origin_coords:
+                    photon_params["lat"] = origin_coords[0]
+                    photon_params["lon"] = origin_coords[1]
+
+                headers = {"User-Agent": self.user_agent}
+                p_resp = self.session.get(photon_url, params=photon_params, headers=headers, timeout=2.2)
+                if p_resp.status_code == 200:
+                    p_data = p_resp.json()
+                    features = p_data.get("features", [])
+                    for f in features:
+                        geom = f.get("geometry", {})
+                        props = f.get("properties", {})
+                        coords = geom.get("coordinates", [])
+                        if len(coords) >= 2:
+                            p_lon = float(coords[0])
+                            p_lat = float(coords[1])
+                            p_name = props.get("name") or q_clean
+                            parts = [p_name]
+                            if props.get("street"):
+                                parts.append(props["street"])
+                            c_city = props.get("city") or props.get("town") or props.get("village") or props.get("county", "")
+                            if c_city and c_city not in parts:
+                                parts.append(c_city)
+                            c_state = props.get("state") or props.get("region", "")
+                            if c_state and c_state not in parts:
+                                parts.append(c_state)
+                            c_country = props.get("country", "")
+                            if c_country and c_country not in parts:
+                                parts.append(c_country)
+                            disp = ", ".join([p for p in parts if p])
+
+                            osm_id_str = str(props.get("osm_id") or "")
+                            osm_type_str = str(props.get("osm_type") or "place")
+                            prov_id = f"photon_{osm_type_str}_{osm_id_str}" if osm_id_str else f"photon_{p_lat:.4f}_{p_lon:.4f}"
+
+                            text_eval = disp.lower()
+                            eval_tokens = set(re.findall(r"\b[a-zA-Z0-9]{2,}\b", text_eval))
+                            tok_overlap = len(q_tokens.intersection(eval_tokens))
+
+                            rel_score = 0.65 + 0.1 * tok_overlap
+                            if query_explicit_locs:
+                                if query_explicit_locs.intersection(eval_tokens):
+                                    rel_score += 0.35
+                                else:
+                                    other_locs = eval_tokens.intersection(LOCALITY_KEYWORDS)
+                                    if other_locs and not (query_explicit_locs.intersection(other_locs)):
+                                        rel_score -= 0.60
+
+                            if origin_coords:
+                                dist_deg = ((p_lat - origin_coords[0])**2 + (p_lon - origin_coords[1])**2)**0.5
+                                if dist_deg < 0.5:
+                                    rel_score += 0.20
+                                elif dist_deg < 2.5:
+                                    rel_score += 0.10
+
+                            pho_results.append({
+                                "lat": p_lat,
+                                "lon": p_lon,
+                                "name": p_name,
+                                "display_name": disp,
+                                "country": c_country,
+                                "state": c_state,
+                                "city": c_city,
+                                "address": disp,
+                                "type": props.get("osm_value", props.get("type", "poi")),
+                                "importance": 0.75,
+                                "relevance_score": rel_score,
+                                "provider": "Photon (Komoot/OSM)",
+                                "provider_id": prov_id,
+                                "osm_id": osm_id_str,
+                                "osm_type": osm_type_str,
+                                "source": "PHOTON_KOMOOT_OSM",
+                                "is_campus_internal": False
+                            })
+            except Exception:
+                pass
+            return pho_results
+
+        # Execute network geocoders in parallel
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            fut_nom = executor.submit(_fetch_nominatim)
+            fut_pho = executor.submit(_fetch_photon)
+            try:
+                nom_cands = fut_nom.result(timeout=2.4)
+                collected_candidates.extend(nom_cands)
+            except Exception:
+                pass
+            try:
+                pho_cands = fut_pho.result(timeout=2.4)
+                collected_candidates.extend(pho_cands)
+            except Exception:
+                pass
+
+        if not collected_candidates:
+            return []
+
+        # ---------------------------------------------------------
+        # TIER 4: Geographic Diversification & Deduplication
+        # ---------------------------------------------------------
+        # Sort by relevance score descending
+        collected_candidates.sort(key=lambda c: c.get("relevance_score", 0.0), reverse=True)
+
+        # Pass 1: Eliminate micro-spatial duplicates (< 500m)
+        spatially_distinct: List[Dict[str, Any]] = []
+        for cand in collected_candidates:
+            is_micro_dup = False
+            for accepted in spatially_distinct:
+                d_lat = abs(cand["lat"] - accepted["lat"])
+                d_lon = abs(cand["lon"] - accepted["lon"])
+                if d_lat < 0.005 and d_lon < 0.005:  # ~500 meters
+                    is_micro_dup = True
+                    if not accepted.get("state") and cand.get("state"):
+                        accepted["state"] = cand["state"]
+                    if not accepted.get("country") and cand.get("country"):
+                        accepted["country"] = cand["country"]
+                    if not accepted.get("city") and cand.get("city"):
+                        accepted["city"] = cand["city"]
+                    break
+            if not is_micro_dup:
+                spatially_distinct.append(cand)
+
+        # Pass 2: Geographic & Administrative Region Diversification
+        # Ensure distinct countries and states/provinces are prioritized so ambiguous queries
+        # (e.g. Hyderabad, India vs. Hyderabad, Pakistan) are both surfaced prominently.
+        region_buckets: Dict[str, List[Dict[str, Any]]] = {}
+        for cand in spatially_distinct:
+            country = (cand.get("country") or "").strip().lower()
+            state = (cand.get("state") or "").strip().lower()
+            region_key = f"{country}_{state}" if state else country
+            if not region_key:
+                region_key = f"{cand['lat']:.1f}_{cand['lon']:.1f}"
+            region_buckets.setdefault(region_key, []).append(cand)
+
+        final_candidates: List[Dict[str, Any]] = []
+        # Round-robin pick from each geographically distinct region first
+        bucket_keys = list(region_buckets.keys())
+        max_depth = max(len(items) for items in region_buckets.values()) if region_buckets else 0
+        for depth in range(max_depth):
+            for rk in bucket_keys:
+                if depth < len(region_buckets[rk]):
+                    cand = region_buckets[rk][depth]
+                    if cand not in final_candidates:
+                        final_candidates.append(cand)
+                    if len(final_candidates) >= limit:
+                        break
+            if len(final_candidates) >= limit:
+                break
+
+        # Final pass: Ensure every candidate has consistent fields & unique stable ID
+        for idx, cand in enumerate(final_candidates):
+            c_name = cand.get("name") or cand.get("display_name", "").split(",")[0].strip()
+            c_name_primary = c_name.split(",")[0].strip()
+            c_city = cand.get("city") or ""
+            c_state = cand.get("state") or ""
+            c_country = cand.get("country") or ""
+            
+            parts = [c_name_primary]
+            if c_city and c_city.lower() != c_name_primary.lower() and c_city.lower() not in [p.lower() for p in parts]:
+                parts.append(c_city)
+            if c_state and c_state.lower() not in [p.lower() for p in parts]:
+                parts.append(c_state)
+            if c_country and c_country.lower() not in [p.lower() for p in parts]:
+                parts.append(c_country)
+            
+            cand["clean_label"] = ", ".join(parts)
+            if not cand.get("provider_id"):
+                cand["provider_id"] = f"cand_{cand['lat']:.4f}_{cand['lon']:.4f}_{idx}"
+
+        # Populate memory cache for future lookups
+        if final_candidates:
+            self.cache[q_norm] = final_candidates[0]
+            self._query_candidates_cache[q_norm] = final_candidates
+            self._query_candidates_cache[q_norm_std] = final_candidates
+
+        return final_candidates
 
     def reverse_geocode(self, lat: float, lon: float) -> str:
         """Translates lat/lon into human-readable landmark or address worldwide."""
@@ -1102,11 +1415,24 @@ class MapService:
                 status = r.get("safety_status", r.get("status", "ROUTE_ELIGIBLE"))
                 rank = r.get("rank", idx + 1)
                 is_eligible = r.get("is_eligible", "ELIGIBLE" in str(status).upper())
+                is_selected = r.get("is_selected", False)
+                has_selection = any(rt.get("is_selected") for rt in routes)
 
                 if not is_eligible or "RESTRICT" in str(status).upper() or "INACCESSIBLE" in str(status).upper():
                     line_color = "#ef4444"  # Muted red for closed routes
                     dash_array = "5, 10"
-                    opacity = 0.55
+                    opacity = 0.85 if is_selected else (0.35 if has_selection else 0.55)
+                    weight = 6 if is_selected else 3.5
+                elif is_selected:
+                    line_color = "#38bdf8" if rank > 1 else "#10b981"  # Vibrant luminous highlight
+                    dash_array = None
+                    opacity = 1.0
+                    weight = 8
+                elif has_selection:
+                    # Muted background alternative when another route is selected
+                    line_color = "#64748b" if rank != 1 else "#059669"
+                    dash_array = "6, 8"
+                    opacity = 0.40
                     weight = 3.5
                 elif rank == 1:
                     line_color = "#10b981"  # Emerald green for Top Recommended route
@@ -1145,14 +1471,18 @@ class MapService:
         # Dynamic Auto Fit-Bounds: Frame map automatically across global routes & waypoints when explicitly enabled
         if auto_fit_bounds:
             all_pts: List[Tuple[float, float]] = []
-            if origin_coords:
-                all_pts.append(origin_coords)
-            if destination_coords:
-                all_pts.append(destination_coords)
-            if routes:
-                for r in routes:
-                    for pt in r.get("polyline", []):
-                        all_pts.append(pt)
+            selected_route = next((r for r in routes if r.get("is_selected")), None) if routes else None
+            if selected_route and selected_route.get("polyline"):
+                all_pts = list(selected_route.get("polyline", []))
+            else:
+                if origin_coords:
+                    all_pts.append(origin_coords)
+                if destination_coords:
+                    all_pts.append(destination_coords)
+                if routes:
+                    for r in routes:
+                        for pt in r.get("polyline", []):
+                            all_pts.append(pt)
 
             if all_pts and len(all_pts) >= 2:
                 lats = [p[0] for p in all_pts]
@@ -1167,7 +1497,7 @@ class MapService:
 
         # 6. Live Google Maps In-Dash Vehicle Navigation Engine directly on Satellite Map (2nd Picture Map)
         if routes:
-            active_r = next((r for r in routes if r.get("rank") == 1 or r.get("is_eligible")), routes[0])
+            active_r = next((r for r in routes if r.get("is_selected")), None) or next((r for r in routes if r.get("rank") == 1 or r.get("is_eligible")), routes[0])
             active_coords = active_r.get("polyline", [])
             route_title = active_r.get("name", "Safe Corridor").split("(")[0].strip()
             avatar_key = str(traveler_avatar).lower()
@@ -1645,6 +1975,7 @@ class MapService:
                     "polyline": r.get("coordinates", []),
                     "rank": r.get("rank", idx),
                     "is_eligible": r.get("is_eligible", True),
+                    "is_selected": r.get("is_selected", False),
                     "safety_status": r.get("status", "ROUTE_ELIGIBLE")
                 })
 

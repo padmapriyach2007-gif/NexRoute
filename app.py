@@ -56,13 +56,43 @@ from src.journey_storyteller import (
     generate_friendly_virtual_guide_turns,
     build_virtual_guide_turns_html
 )
+from src.virtual_3d_walking_guide import (
+    build_3d_walking_guide_html,
+    WalkingGuideState,
+    Route3DGeometryEngine,
+    WalkingGuideAnimationController
+)
+from src.realtime_motion_sync import (
+    build_realtime_motion_hud_html,
+    RealtimeMotionEngine,
+    RealtimeMotionState,
+    LocationObservation
+)
 from src.emergency_radar_ui import (
     generate_google_maps_directions_url,
     filter_facilities_by_category,
     get_facility_status_badge
 )
 from src.virtual_companion_ui import build_virtual_companion_hud_html
+from src.virtual_human_guide import (
+    build_always_visible_virtual_guide_html,
+    VirtualHumanGuideController,
+    HumanGuideState,
+    GuideEventType
+)
 from src.satellite_road_auditor import SatelliteRoadAuditor, SatelliteAuditResult
+from src.satellite_road_cv import (
+    AIRoadIntelligenceController,
+    render_ai_road_intelligence_hud_html,
+    AVAILABLE_SATELLITE_PROVIDERS
+)
+from dataclasses import asdict
+from src.navigation_trust_audit import (
+    NavigationTrustAuditEngine,
+    NavigationTrustAuditResult,
+    render_navigation_trust_audit_card_html,
+    render_navigation_trust_audit_details_html
+)
 from src.google_maps_features import (
     get_google_maps_app_url,
     get_google_maps_loopholes_data,
@@ -87,7 +117,9 @@ from src.places_and_driving_modes import (
     generate_suggested_places_at_location,
     compare_driving_travel_modes,
     render_place_details_card_html,
-    render_driving_mode_cockpit_card_html
+    render_driving_mode_cockpit_card_html,
+    render_cockpit_mode_functionality_hud,
+    render_profile_calculation_details_html
 )
 from src.transit_kinematics import (
     calculate_transit_kinematics,
@@ -700,6 +732,67 @@ st.markdown("""
         padding: 16px !important;
         z-index: 100000000 !important;
     }
+    /* =========================================================================
+       RESPONSIVE & MOBILE-FIRST DESIGN ENHANCEMENTS
+       ========================================================================= */
+    @media (max-width: 992px) {
+        /* Tablet adjustments */
+        .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 6px !important;
+        }
+        .st-key-speed_deck_container div[data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        /* Mobile Touch & Accessibility Standards */
+        .stButton > button {
+            min-height: 44px !important;
+            font-size: 0.86rem !important;
+            touch-action: manipulation !important;
+        }
+        /* Mobile Fleet Deck - 3 column responsive grid */
+        .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 6px !important;
+        }
+        .st-key-fleet_deck_container div[data-testid="stButton"] > button {
+            height: 52px !important;
+            min-height: 52px !important;
+        }
+        /* Mobile Map Viewport Full-Width */
+        iframe[title="streamlit_folium.st_folium"],
+        div[data-testid="stIFrame"] iframe {
+            border-radius: 8px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        /* Mobile Route Cards */
+        .touchable-route-card {
+            padding: 12px !important;
+            margin-bottom: 8px !important;
+        }
+        /* Mobile Tabs navigation */
+        div[data-testid="stTabs"] [role="tab"] {
+            padding: 7px 14px !important;
+            font-size: 0.85rem !important;
+        }
+        /* Chatbot FAB responsive offset */
+        [data-testid="stElementContainer"]:has([data-testid="stPopover"]),
+        div[data-testid="stPopover"],
+        .floating-aura-logo-overlay {
+            bottom: 16px !important;
+            right: 16px !important;
+            width: 56px !important;
+            height: 56px !important;
+        }
+    }
     /* Hide Leaflet bottom attribution bar */
     .leaflet-control-attribution {
         display: none !important;
@@ -795,6 +888,13 @@ if "emergency_service_manager" not in st.session_state:
 # Instantiate Satellite Road Auditor (Verifies real physical barriers and eliminates fake blockages)
 if "satellite_auditor" not in st.session_state:
     st.session_state.satellite_auditor = SatelliteRoadAuditor(enable_live_osm=True)
+
+# Instantiate AI Satellite Road Intelligence Controller (Computer Vision & Road Network Cross-Validation)
+if "ai_road_controller" not in st.session_state:
+    st.session_state.ai_road_controller = AIRoadIntelligenceController(
+        provider_key=st.session_state.get("ai_sat_provider", "esri_world_imagery"),
+        enable_tile_network=True
+    )
 
 # Ensure RoadConditionManager & HazardMap run on authentic live data without fabricated closures
 st.session_state.road_condition_manager.clear_demonstration_data()
@@ -926,38 +1026,114 @@ if "aura_chat_history" not in st.session_state:
     ]
 
 def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
-    """Renders the full interactive A.U.R.A. conversational copilot interface."""
-    st.markdown("<span style='font-size: 0.72rem; font-weight: 700; color: #38bdf8;'>💡 Quick Copilot Prompts:</span>", unsafe_allow_html=True)
-    chip_cols = st.columns(4)
-    chips = [
-        ("⚡ Fastest Route", "What is the fastest route from my location to the destination?"),
-        ("🛡️ Check Hazards", "Are there any active road closures, accidents or flood hazards on my corridor?"),
-        ("🏥 Nearest Hospital", "Where is the nearest 24/7 hospital or trauma care clinic?"),
-        ("🧠 Code & Science", "Explain how A* graph search and predictive navigation work in simple terms.")
-    ]
-    for c_idx, (c_label, c_prompt) in enumerate(chips):
-        with chip_cols[c_idx]:
-            if st.button(c_label, key=f"chip_{key_prefix}_{c_idx}", use_container_width=True):
-                st.session_state.pending_chat_prompt = c_prompt
-                st.rerun()
+    """Renders the upgraded interactive A.U.R.A. conversational copilot interface."""
+    bot = st.session_state.get("pathfinder_bot")
+    active_engine_name = "Intelligent Cognitive Engine (Local)"
+    if bot and hasattr(bot, "llm_client"):
+        p_name = bot.llm_client.active_provider_name
+        if p_name != "builtin":
+            active_engine_name = f"LLM Active ({p_name.upper()})"
 
-    if "pending_chat_prompt" in st.session_state and st.session_state.pending_chat_prompt:
-        chip_q = st.session_state.pop("pending_chat_prompt")
-        st.session_state.aura_chat_history.append({"role": "user", "content": chip_q})
+    head_col1, head_col2 = st.columns([3, 1])
+    with head_col1:
+        st.markdown(
+            f"<div style='font-size: 0.70rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;'>"
+            f"<span>⚡ Active Provider:</span>"
+            f"<span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; font-family: monospace;'>{active_engine_name}</span>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+    with head_col2:
+        if st.button("🗑️ Reset Chat", key=f"btn_reset_chat_{key_prefix}", use_container_width=True, help="Clear active conversation history"):
+            if bot and hasattr(bot, "reset_conversation"):
+                bot.reset_conversation()
+            st.session_state.aura_chat_history = [
+                {
+                    "role": "assistant",
+                    "badge": "⚡ A.U.R.A. RESET",
+                    "content": "✨ *Conversation reset. How can I assist you today? Feel free to ask anything!*"
+                }
+            ]
+            st.rerun()
+
+    st.markdown("<span style='font-size: 0.72rem; font-weight: 700; color: #94a3b8;'>💡 Quick Copilot Categories:</span>", unsafe_allow_html=True)
+    chip_rows = [
+        [
+            ("⚡ Fastest Route", "What is the fastest route from my location to the destination?"),
+            ("🗺️ Compare Routes", "Can you compare the available route alternatives for distance, time, and safety?"),
+            ("🛡️ Check Hazards", "Are there any active road closures, accidents or flood hazards on my corridor?"),
+            ("🌤️ Live Weather", "What is the current weather and temperature at my destination?")
+        ],
+        [
+            ("💻 Code Helper", "Explain how the A* pathfinding algorithm works with a Python code example."),
+            ("✍️ Creative Story", "Write a short, inspiring creative story about a journey through a misty mountain pass."),
+            ("🍽️ Nearby Food", "Recommend the top verified restaurants and dining places near my destination."),
+            ("🏥 Emergency / SOS", "Where is the nearest 24/7 hospital or trauma care clinic?")
+        ]
+    ]
+
+    for row_idx, row_chips in enumerate(chip_rows):
+        cols = st.columns(len(row_chips))
+        for c_idx, (c_label, c_prompt) in enumerate(row_chips):
+            with cols[c_idx]:
+                if st.button(c_label, key=f"chip_{key_prefix}_{row_idx}_{c_idx}", use_container_width=True):
+                    st.session_state.pending_chat_prompt = c_prompt
+                    st.rerun()
+
+    def _execute_chat_turn(query_text: str):
+        st.session_state.aura_chat_history.append({"role": "user", "content": query_text})
         chat_ctx = {
             "start_label": st.session_state.get("user_live_label", "Live Location"),
             "dest_label": st.session_state.get("selected_dest_label", "Destination"),
+            "dest_coords": st.session_state.get("selected_dest_coords", (16.2335, 80.5505)),
+            "current_coords": st.session_state.get("user_live_coords", (16.2335, 80.5505)),
             "active_objective_str": st.session_state.get("active_objective", OptimizationObjective.FASTEST).value,
             "ranked_routes": st.session_state.get("last_ranked_routes", []),
             "active_restrictions": st.session_state.road_condition_manager.get_active_restrictions() if "road_condition_manager" in st.session_state else [],
             "active_hazards": st.session_state.real_hazard_map.get_active_hazards() if "real_hazard_map" in st.session_state else []
         }
-        ans = st.session_state.pathfinder_bot.answer(chip_q, context=chat_ctx)
+        ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx)
         st.session_state.aura_chat_history.append({
             "role": "assistant",
             "content": ans["response"],
             "badge": ans.get("badge", "A.U.R.A. COPILOT")
         })
+
+        # Handle executable actions
+        if "action" in ans and isinstance(ans["action"], dict):
+            act = ans["action"]
+            if act.get("type") == "focus_route":
+                r_id = act.get("route_id")
+                st.session_state.focused_route_id = r_id
+                st.session_state.selected_route_id = r_id
+                st.session_state.auto_fit_bounds = True
+                st.session_state.scroll_to_app_map = True
+                st.session_state.switch_to_nav_tab = True
+                st.toast(f"🎯 Highlighting {act.get('route_name', 'Route')} on Interactive Map!", icon="🧭")
+            elif act.get("type") == "set_destination":
+                st.session_state.selected_dest_coords = act.get("coords")
+                st.session_state.selected_dest_label = act.get("destination_name")
+                st.session_state.pending_dest = act.get("destination_name")
+                st.session_state.scroll_to_app_map = True
+                st.session_state.switch_to_nav_tab = True
+                st.toast(f"🧭 Destination set to {act.get('destination_name')}!", icon="🎯")
+            elif act.get("type") == "calculate_route":
+                if act.get("origin_coords"):
+                    st.session_state.custom_start_coords = act.get("origin_coords")
+                    st.session_state.user_live_coords = act.get("origin_coords")
+                    st.session_state.user_live_label = act.get("origin", "Origin")
+                    st.session_state.start_mode = "Custom Starting Location"
+                if act.get("destination_coords"):
+                    st.session_state.selected_dest_coords = act.get("destination_coords")
+                    st.session_state.selected_dest_label = act.get("destination", "Destination")
+                    st.session_state.pending_dest = act.get("destination", "Destination")
+                st.session_state.scroll_to_app_map = True
+                st.session_state.switch_to_nav_tab = True
+                st.toast(f"🧭 Route calculated: {act.get('origin')} to {act.get('destination')}!", icon="🎯")
+
+    if "pending_chat_prompt" in st.session_state and st.session_state.pending_chat_prompt:
+        chip_q = st.session_state.pop("pending_chat_prompt")
+        _execute_chat_turn(chip_q)
         st.rerun()
 
     c_box = st.container(height=height)
@@ -985,27 +1161,13 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     with st.form(f"aura_form_{key_prefix}", clear_on_submit=True):
         col_in, col_btn = st.columns([4, 1])
         with col_in:
-            u_text = st.text_input("Ask A.U.R.A...", placeholder="Ask A.U.R.A. anything (science, coding, math, writing, routes, safety)...", label_visibility="collapsed", key=f"txt_{key_prefix}")
+            u_text = st.text_input("Ask A.U.R.A...", placeholder="Ask A.U.R.A. anything (science, coding, math, writing, routes, weather, places)...", label_visibility="collapsed", key=f"txt_{key_prefix}")
         with col_btn:
             s_click = st.form_submit_button("Send 🚀", use_container_width=True)
 
     if s_click and u_text and u_text.strip():
         q_str = u_text.strip()
-        st.session_state.aura_chat_history.append({"role": "user", "content": q_str})
-        chat_ctx = {
-            "start_label": st.session_state.get("user_live_label", "Live Location"),
-            "dest_label": st.session_state.get("selected_dest_label", "Destination"),
-            "active_objective_str": st.session_state.get("active_objective", OptimizationObjective.FASTEST).value,
-            "ranked_routes": st.session_state.get("last_ranked_routes", []),
-            "active_restrictions": st.session_state.road_condition_manager.get_active_restrictions() if "road_condition_manager" in st.session_state else [],
-            "active_hazards": st.session_state.real_hazard_map.get_active_hazards() if "real_hazard_map" in st.session_state else []
-        }
-        ans = st.session_state.pathfinder_bot.answer(q_str, context=chat_ctx)
-        st.session_state.aura_chat_history.append({
-            "role": "assistant",
-            "content": ans["response"],
-            "badge": ans.get("badge", "A.U.R.A. COPILOT")
-        })
+        _execute_chat_turn(q_str)
         st.rerun()
 
 # Sidebar: System Status & Multi-Objective Control Panel
@@ -1172,54 +1334,44 @@ with st.sidebar:
 
     access_bar_html = ""
     if cur_tele.get("access_bar"):
-        access_bar_html = f"""
-        <div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-bottom: 2px;">
-                <span>♿ Barrier Evasion Strictness</span>
-                <span style="color: #fbbf24; font-weight: 700;">100% Strict</span>
-            </div>
-            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 9999px; overflow: hidden;">
-                <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #fbbf24, #10b981); border-radius: 9999px;"></div>
-            </div>
-        </div>
-        """
+        access_bar_html = f"""<div style="margin-top: 2px;">
+<div style="display: flex; justify-content: space-between; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-bottom: 2px;">
+<span>♿ Barrier Evasion Strictness</span>
+<span style="color: #fbbf24; font-weight: 700;">{cur_tele['access_bar']}% Strict</span>
+</div>
+<div style="width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 9999px; overflow: hidden;">
+<div style="width: {cur_tele['access_bar']}%; height: 100%; background: linear-gradient(90deg, #fbbf24, #10b981); border-radius: 9999px;"></div>
+</div>
+</div>"""
 
-    st.markdown(f"""
-    <div style="background: rgba(10, 20, 38, 0.72); border: 1px solid {cur_tele['accent']}40; border-radius: 12px; padding: 10px 12px; margin-top: 8px; margin-bottom: 12px; box-shadow: 0 4px 16px {cur_tele['glow']}; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 0.66rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: {cur_tele['accent']}; letter-spacing: 0.05em;">
-                ● ACTIVE STRATEGY
-            </span>
-            <span style="font-size: 0.63rem; color: #94a3b8; font-weight: 600;">AI ROUTE BIAS</span>
-        </div>
-        <div style="font-size: 0.74rem; font-weight: 700; color: #f8fafc; margin-bottom: 5px;">
-            {cur_tele['title']}
-        </div>
-        <div style="font-size: 0.70rem; color: #cbd5e1; line-height: 1.35; margin-bottom: 8px;">
-            {cur_tele['profile']}
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 5px;">
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-bottom: 2px;">
-                    <span>⚡ Speed Optimization Weight</span>
-                    <span style="color: {cur_tele['accent']}; font-weight: 700;">{cur_tele['speed_bar']}%</span>
-                </div>
-                <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 9999px; overflow: hidden;">
-                    <div style="width: {cur_tele['speed_bar']}%; height: 100%; background: linear-gradient(90deg, #38bdf8, {cur_tele['accent']}); border-radius: 9999px;"></div>
-                </div>
-            </div>
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-bottom: 2px;">
-                    <span>📏 Distance Compression Weight</span>
-                    <span style="color: {cur_tele['accent']}; font-weight: 700;">{cur_tele['dist_bar']}%</span>
-                </div>
-                <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 9999px; overflow: hidden;">
-                    <div style="width: {cur_tele['dist_bar']}%; height: 100%; background: linear-gradient(90deg, #a855f7, {cur_tele['accent']}); border-radius: 9999px;"></div>
-                </div>
-            </div>
-            {access_bar_html}
-    </div>
-    """, unsafe_allow_html=True)
+    strategy_card_html = f"""<div style="background: rgba(10, 20, 38, 0.72); border: 1px solid {cur_tele['accent']}40; border-radius: 12px; padding: 10px 12px; margin-top: 8px; margin-bottom: 12px; box-shadow: 0 4px 16px {cur_tele['glow']}; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+<span style="font-size: 0.66rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: {cur_tele['accent']}; letter-spacing: 0.05em;">● ACTIVE STRATEGY</span>
+<span style="font-size: 0.63rem; color: #94a3b8; font-weight: 600;">AI ROUTE BIAS</span>
+</div>
+<div style="font-size: 0.74rem; font-weight: 700; color: #f8fafc; margin-bottom: 5px;">{cur_tele['title']}</div>
+<div style="font-size: 0.70rem; color: #cbd5e1; line-height: 1.35; margin-bottom: 8px;">{cur_tele['profile']}</div>
+<div style="display: flex; flex-direction: column; gap: 5px;">
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-bottom: 2px;">
+<span>⚡ Speed Optimization Weight</span>
+<span style="color: {cur_tele['accent']}; font-weight: 700;">{cur_tele['speed_bar']}%</span>
+</div>
+<div style="width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 9999px; overflow: hidden;">
+<div style="width: {cur_tele['speed_bar']}%; height: 100%; background: linear-gradient(90deg, #38bdf8, {cur_tele['accent']}); border-radius: 9999px;"></div>
+</div>
+</div>
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-bottom: 2px;">
+<span>📏 Distance Compression Weight</span>
+<span style="color: {cur_tele['accent']}; font-weight: 700;">{cur_tele['dist_bar']}%</span>
+</div>
+<div style="width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 9999px; overflow: hidden;">
+<div style="width: {cur_tele['dist_bar']}%; height: 100%; background: linear-gradient(90deg, #a855f7, {cur_tele['accent']}); border-radius: 9999px;"></div>
+</div>
+</div>{access_bar_html}</div>
+</div>"""
+    st.markdown(strategy_card_html, unsafe_allow_html=True)
 
     if "selected_sidebar_category" not in st.session_state:
         st.session_state.selected_sidebar_category = "🌐 All Facilities"
@@ -1602,11 +1754,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Resolve pending programmatic location updates before widget instantiation
-if "pending_orig" in st.session_state:
-    st.session_state.txt_orig = st.session_state.pop("pending_orig")
-if "pending_dest" in st.session_state:
-    st.session_state.txt_dest = st.session_state.pop("pending_dest")
+
 
 # Symmetrical Journey Input Controls with Custom Start & Reset
 
@@ -1905,17 +2053,20 @@ with tab_nav:
         orig_text = st.text_input(
             "🟢 Start Location",
             key="txt_orig",
-            placeholder="🛰️ Type city, address or landmark — or leave empty for GPS...",
-            help="Leave blank to use your live GPS location. Type any custom city, address or landmark to route from there instead."
+            placeholder="🛰️ Type city, village, address or landmark — or leave empty for GPS...",
+            help="Leave blank to use your live GPS location. Type any custom city, village, address, landmark, or coordinates to route from there instead."
         )
         if orig_text and orig_text != st.session_state.last_synced_orig:
             st.session_state.last_synced_orig = orig_text
             clean_low = orig_text.lower().strip()
-            if any(w in clean_low for w in ["current", "satellite", "live", "gps", "📍", "🛰️"]):
+            if any(w in clean_low for w in ["current", "satellite", "live", "gps", "📍", "🛰️", "my location"]):
                 st.session_state.is_custom_start_place = False
+                st.session_state.orig_candidates = []
+                st.session_state.orig_candidates_query = ""
                 CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
                 st.session_state.user_live_coords = CURRENT_BASE
                 st.session_state.user_live_label = detected_label
+                st.session_state.selected_orig_id = "gps_current_hardware"
                 st.session_state.movement_index = 0
                 st.session_state.is_in_transit = False
                 st.session_state.real_location_service.set_manual_location(CURRENT_BASE[0], CURRENT_BASE[1], "Satellite Location")
@@ -1923,25 +2074,118 @@ with tab_nav:
                 st.rerun()
             else:
                 st.session_state.is_custom_start_place = True
-                geo_o = st.session_state.real_map_service.geocode(orig_text)
-                if geo_o:
-                    st.session_state.user_live_coords = (geo_o["lat"], geo_o["lon"])
-                    st.session_state.user_live_label = geo_o.get("display_name", orig_text)
-                    st.session_state.movement_index = 0
-                    st.session_state.is_in_transit = False
-                    st.session_state.user_speed_kmh = 0.0
-                    st.session_state.user_bearing_deg = 0.0
-                    st.session_state.real_location_service.set_manual_location(geo_o["lat"], geo_o["lon"], orig_text)
-                    st.toast(f"📍 Start → {orig_text}", icon="📍")
-                    st.rerun()
+                cands = st.session_state.real_map_service.geocode_candidates(orig_text, limit=5)
+                if cands:
+                    st.session_state.geocoding_orig_error = None
+                    if len(cands) == 1:
+                        # Unique, high-confidence result: convenient direct routing
+                        best = cands[0]
+                        st.session_state.user_live_coords = (best["lat"], best["lon"])
+                        st.session_state.user_live_label = best.get("display_name", orig_text)
+                        st.session_state.selected_orig_id = best.get("provider_id", f"orig_{best['lat']:.4f}_{best['lon']:.4f}")
+                        st.session_state.active_orig_meta = best
+                        st.session_state.orig_candidates = []
+                        st.session_state.orig_candidates_query = ""
+                        st.session_state.movement_index = 0
+                        st.session_state.is_in_transit = False
+                        st.session_state.user_speed_kmh = 0.0
+                        st.session_state.user_bearing_deg = 0.0
+                        st.session_state.real_location_service.set_manual_location(best["lat"], best["lon"], orig_text)
+                        st.session_state._prev_route_sig = None
+                        st.session_state.focused_route_id = "ALL"
+                        st.session_state.selected_route_id = None
+                        st.session_state.auto_fit_bounds = True
+                        st.toast(f"📍 Start → {best.get('city') or orig_text}", icon="📍")
+                        st.rerun()
+                    else:
+                        # Multiple plausible results: require explicit disambiguation before routing
+                        st.session_state.orig_candidates = cands
+                        st.session_state.orig_candidates_query = orig_text
+                        st.session_state.user_live_coords = None
+                        st.session_state.user_live_label = None
+                        st.session_state.selected_orig_id = None
+                        st.session_state.active_orig_meta = None
+                        st.session_state._prev_route_sig = None
+                        st.session_state.focused_route_id = "ALL"
+                        st.session_state.selected_route_id = None
+                        st.toast(f"🔍 Found {len(cands)} matching locations for '{orig_text}'. Please select one below.", icon="🔍")
+                        st.rerun()
                 else:
-                    st.toast(f"⚠️ Could not resolve '{orig_text}'. Using GPS instead.", icon="⚠️")
+                    st.session_state.user_live_coords = None
+                    st.session_state.user_live_label = None
+                    st.session_state.selected_orig_id = None
+                    st.session_state.active_orig_meta = None
+                    st.session_state.orig_candidates = []
+                    st.session_state.orig_candidates_query = ""
+                    st.session_state._prev_route_sig = None
+                    st.session_state.focused_route_id = "ALL"
+                    st.session_state.selected_route_id = None
+                    st.session_state.selected_route_object = None
+                    st.session_state.geocoding_orig_error = f"Could not find coordinates for '{orig_text}'. Please check the place name or enter coordinates (e.g. 16.234, 80.550)."
+                    st.toast(f"⚠️ Could not resolve '{orig_text}'.", icon="⚠️")
+                    st.rerun()
+
         elif not orig_text and st.session_state.get("is_custom_start_place", False):
             st.session_state.is_custom_start_place = False
+            st.session_state.orig_candidates = []
+            st.session_state.orig_candidates_query = ""
+            st.session_state.geocoding_orig_error = None
+            st.session_state._prev_route_sig = None
+            st.session_state.focused_route_id = "ALL"
+            st.session_state.selected_route_id = None
+            st.session_state.auto_fit_bounds = True
             CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
             st.session_state.user_live_coords = CURRENT_BASE
             st.session_state.user_live_label = detected_label
+            st.session_state.selected_orig_id = "gps_current_hardware"
             st.rerun()
+
+        if st.session_state.get("geocoding_orig_error"):
+            st.error(f"⚠️ {st.session_state.geocoding_orig_error}")
+
+        # Interactive Location Disambiguation for Start Location
+        orig_cands = st.session_state.get("orig_candidates", [])
+        if orig_cands and st.session_state.get("orig_candidates_query") == orig_text:
+            st.markdown(
+                f"<div style='background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 8px; padding: 10px 12px; margin: 4px 0 10px 0;'>"
+                f"<div style='font-size:0.82rem; color:#38bdf8; font-weight:700; margin-bottom:6px;'>🔍 Multiple locations match <i>\"{orig_text}\"</i>. Please select your origin:</div>",
+                unsafe_allow_html=True
+            )
+            for c_idx, cand in enumerate(orig_cands):
+                c_name = cand.get("name") or cand.get("display_name", "").split(",")[0].strip()
+                c_state = cand.get("state") or ""
+                c_country = cand.get("country") or ""
+                c_city = cand.get("city") or ""
+                admin_parts = [p for p in [c_city, c_state, c_country] if p]
+                admin_str = ", ".join(admin_parts) if admin_parts else cand.get("display_name", "")
+                btn_caption = f"📍 {c_name} — {admin_str}  •  ({cand['lat']:.4f}, {cand['lon']:.4f})"
+                if cand.get("provider"):
+                    btn_caption += f"  [{cand['provider']}]"
+
+                if st.button(btn_caption, key=f"btn_confirm_orig_{c_idx}", use_container_width=True):
+                    st.session_state.user_live_coords = (cand["lat"], cand["lon"])
+                    st.session_state.user_live_label = cand.get("display_name", c_name)
+                    st.session_state.selected_orig_id = cand.get("provider_id", f"orig_{cand['lat']:.4f}_{cand['lon']:.4f}")
+                    st.session_state.active_orig_meta = cand
+                    st.session_state.pending_orig = cand["display_name"]
+                    st.session_state.last_synced_orig = cand["display_name"]
+                    st.session_state.orig_candidates = []
+                    st.session_state.orig_candidates_query = ""
+                    st.session_state.geocoding_orig_error = None
+                    st.session_state._prev_route_sig = None
+                    st.session_state.focused_route_id = "ALL"
+                    st.session_state.selected_route_id = None
+                    st.session_state.auto_fit_bounds = True
+                    st.session_state.real_location_service.set_manual_location(cand["lat"], cand["lon"], cand["display_name"])
+                    st.toast(f"Confirmed Origin: {c_name} ({admin_str})", icon="✅")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # Campus Internal Location Notice (Phase 2.6)
+        active_orig_meta = st.session_state.get("active_orig_meta")
+        if active_orig_meta and active_orig_meta.get("is_campus_internal"):
+            ent_note = active_orig_meta.get("campus_entrance") or "Campus Main Entrance Gate"
+            st.caption(f"🏛️ **Campus Internal POI:** Vehicular routes navigate to **{ent_note}**. Pedestrian walkways guide inside.")
 
     with col_swap_btn:
         # Single creative circular swap button - no lock button
@@ -1953,31 +2197,47 @@ with tab_nav:
             st.session_state.pending_dest = prev_orig_txt
             c_orig = st.session_state.user_live_coords
             l_orig = st.session_state.user_live_label
+            id_orig = st.session_state.get("selected_orig_id")
+            meta_orig = st.session_state.get("active_orig_meta")
+            id_dest = st.session_state.get("selected_dest_id")
+            meta_dest = st.session_state.get("active_dest_meta")
             if st.session_state.selected_dest_coords:
                 st.session_state.user_live_coords = st.session_state.selected_dest_coords
                 st.session_state.user_live_label = st.session_state.selected_dest_label
+                st.session_state.selected_orig_id = id_dest
+                st.session_state.active_orig_meta = meta_dest
                 st.session_state.is_custom_start_place = True
             st.session_state.selected_dest_coords = c_orig
             st.session_state.selected_dest_label = l_orig
+            st.session_state.selected_dest_id = id_orig
+            st.session_state.active_dest_meta = meta_orig
+            st.session_state.orig_candidates = []
+            st.session_state.orig_candidates_query = ""
+            st.session_state.dest_candidates = []
+            st.session_state.dest_candidates_query = ""
             st.session_state.movement_index = 0
             st.session_state.is_in_transit = False
             st.session_state.user_speed_kmh = 0.0
             st.session_state.user_bearing_deg = 0.0
+            st.session_state._prev_route_sig = None
+            st.session_state.focused_route_id = "ALL"
+            st.session_state.selected_route_id = None
+            st.session_state.auto_fit_bounds = True
             if st.session_state.user_live_coords:
                 st.session_state.real_location_service.set_manual_location(
                     st.session_state.user_live_coords[0],
                     st.session_state.user_live_coords[1],
                     str(st.session_state.user_live_label)
                 )
-            st.toast("🔄 Swapped Start ↔ Destination!", icon="⇄")
+            st.toast("🔄 Swapped Start ↔ Destination!", icon="🔄")
             st.rerun()
 
     with col_dest_in:
         dest_text = st.text_input(
             "🏁 Destination",
             key="txt_dest",
-            placeholder="🗺️ Type destination city, landmark or address — or click map...",
-            help="Type your destination, or click anywhere on the interactive map to set it."
+            placeholder="🗺️ Type destination city, village, landmark or address — or click map...",
+            help="Type your destination city, village, address, landmark, or click anywhere on the interactive map to set it."
         )
         if dest_text and dest_text != st.session_state.last_synced_dest:
             st.session_state.last_synced_dest = dest_text
@@ -1985,85 +2245,201 @@ with tab_nav:
                 CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
                 st.session_state.selected_dest_coords = CURRENT_BASE
                 st.session_state.selected_dest_label = detected_label
+                st.session_state.selected_dest_id = "gps_current_hardware"
+                st.session_state.dest_candidates = []
+                st.session_state.dest_candidates_query = ""
+                st.session_state.geocoding_dest_error = None
+                st.session_state._prev_route_sig = None
+                st.session_state.focused_route_id = "ALL"
+                st.session_state.selected_route_id = None
+                st.session_state.auto_fit_bounds = True
                 st.rerun()
             else:
-                geo_d = st.session_state.real_map_service.geocode(dest_text)
-                if geo_d:
-                    st.session_state.selected_dest_coords = (geo_d["lat"], geo_d["lon"])
-                    st.session_state.selected_dest_label = geo_d.get("display_name", dest_text)
+                c_origin = st.session_state.get("user_live_coords")
+                cands_d = st.session_state.real_map_service.geocode_candidates(dest_text, limit=5, origin_coords=c_origin)
+                if cands_d:
+                    st.session_state.geocoding_dest_error = None
+                    if len(cands_d) == 1:
+                        # Unique, high-confidence place: convenient direct route calculation
+                        best_d = cands_d[0]
+                        st.session_state.selected_dest_coords = (best_d["lat"], best_d["lon"])
+                        st.session_state.selected_dest_label = best_d.get("display_name", dest_text)
+                        st.session_state.selected_dest_id = best_d.get("provider_id", f"dest_{best_d['lat']:.4f}_{best_d['lon']:.4f}")
+                        st.session_state.active_dest_meta = best_d
+                        st.session_state.dest_candidates = []
+                        st.session_state.dest_candidates_query = ""
+                        st.session_state._prev_route_sig = None
+                        st.session_state.focused_route_id = "ALL"
+                        st.session_state.selected_route_id = None
+                        st.session_state.auto_fit_bounds = True
+                        st.session_state.movement_index = 0
+                        st.session_state.is_in_transit = False
+                        st.session_state.user_speed_kmh = 0.0
+                        st.session_state.user_bearing_deg = 0.0
+                        st.toast(f"🏁 Destination → {best_d.get('city') or dest_text}", icon="🏁")
+                        st.rerun()
+                    else:
+                        # Multiple plausible matches: require user to select intended location before routing
+                        st.session_state.dest_candidates = cands_d
+                        st.session_state.dest_candidates_query = dest_text
+                        st.session_state.selected_dest_coords = None
+                        st.session_state.selected_dest_label = None
+                        st.session_state.selected_dest_id = None
+                        st.session_state.active_dest_meta = None
+                        st.session_state._prev_route_sig = None
+                        st.session_state.focused_route_id = "ALL"
+                        st.session_state.selected_route_id = None
+                        st.toast(f"🔍 Found {len(cands_d)} locations for '{dest_text}'. Please select one below.", icon="🔍")
+                        st.rerun()
+                else:
+                    st.session_state.selected_dest_coords = None
+                    st.session_state.selected_dest_label = None
+                    st.session_state.selected_dest_id = None
+                    st.session_state.active_dest_meta = None
+                    st.session_state.dest_candidates = []
+                    st.session_state.dest_candidates_query = ""
+                    st.session_state._prev_route_sig = None
+                    st.session_state.focused_route_id = "ALL"
+                    st.session_state.selected_route_id = None
+                    st.session_state.selected_route_object = None
+                    st.session_state.geocoding_dest_error = f"Could not find coordinates for '{dest_text}'. Please check the place name or click anywhere on the map."
+                    st.toast(f"⚠️ Could not resolve destination '{dest_text}'.", icon="⚠️")
+                    st.rerun()
+
+        if st.session_state.get("geocoding_dest_error"):
+            st.error(f"⚠️ {st.session_state.geocoding_dest_error}")
+
+        # Interactive Location Disambiguation for Destination
+        dest_cands = st.session_state.get("dest_candidates", [])
+        if dest_cands and st.session_state.get("dest_candidates_query") == dest_text:
+            st.markdown(
+                f"<div style='background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 8px; padding: 10px 12px; margin: 4px 0 10px 0;'>"
+                f"<div style='font-size:0.82rem; color:#38bdf8; font-weight:700; margin-bottom:6px;'>🔍 Multiple locations match <i>\"{dest_text}\"</i>. Please select your destination:</div>",
+                unsafe_allow_html=True
+            )
+            for c_idx, cand in enumerate(dest_cands):
+                c_name = cand.get("name") or cand.get("display_name", "").split(",")[0].strip()
+                c_state = cand.get("state") or ""
+                c_country = cand.get("country") or ""
+                c_city = cand.get("city") or ""
+                admin_parts = [p for p in [c_city, c_state, c_country] if p]
+                admin_str = ", ".join(admin_parts) if admin_parts else cand.get("display_name", "")
+                btn_caption = f"🏁 {c_name} — {admin_str}  •  ({cand['lat']:.4f}, {cand['lon']:.4f})"
+                if cand.get("provider"):
+                    btn_caption += f"  [{cand['provider']}]"
+
+                if st.button(btn_caption, key=f"btn_confirm_dest_{c_idx}", use_container_width=True):
+                    st.session_state.selected_dest_coords = (cand["lat"], cand["lon"])
+                    st.session_state.selected_dest_label = cand.get("display_name", c_name)
+                    st.session_state.selected_dest_id = cand.get("provider_id", f"dest_{cand['lat']:.4f}_{cand['lon']:.4f}")
+                    st.session_state.active_dest_meta = cand
+                    st.session_state.pending_dest = cand["display_name"]
+                    st.session_state.last_synced_dest = cand["display_name"]
+                    st.session_state.dest_candidates = []
+                    st.session_state.dest_candidates_query = ""
+                    st.session_state.geocoding_dest_error = None
+                    st.session_state._prev_route_sig = None
+                    st.session_state.focused_route_id = "ALL"
+                    st.session_state.selected_route_id = None
+                    st.session_state.auto_fit_bounds = True
                     st.session_state.movement_index = 0
                     st.session_state.is_in_transit = False
                     st.session_state.user_speed_kmh = 0.0
                     st.session_state.user_bearing_deg = 0.0
+                    st.toast(f"Confirmed Destination: {c_name} ({admin_str})", icon="✅")
                     st.rerun()
-                else:
-                    st.toast(f"⚠️ Could not resolve destination '{dest_text}'. Try entering coordinates or city name.", icon="⚠️")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # Campus Internal Location Notice for Destination (Phase 2.6)
+        active_dest_meta = st.session_state.get("active_dest_meta")
+        if active_dest_meta and active_dest_meta.get("is_campus_internal"):
+            ent_note = active_dest_meta.get("campus_entrance") or "Campus Main Entrance Gate"
+            st.caption(f"🏛️ **Campus Internal POI:** Roads navigate to **{ent_note}**. Internal pedestrian routing guides to building.")
+
+    # Location Resolved Coordinates & Status Indicator Strip
+    c_orig_live = st.session_state.get("user_live_coords")
+    l_orig_live = st.session_state.get("user_live_label") or ("Satellite GPS" if not st.session_state.get("is_custom_start_place") else "Origin")
+    c_dest_live = st.session_state.get("selected_dest_coords")
+    l_dest_live = st.session_state.get("selected_dest_label") or "Destination"
+
+    if c_orig_live and c_dest_live:
+        st.markdown(f"""
+        <div style='background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 7px 14px; margin-top: 6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
+            <div style='display: flex; align-items: center; gap: 14px; font-size: 0.78rem; color: #cbd5e1; flex-wrap: wrap;'>
+                <span>🟢 <b>Start:</b> <span style='color: #38bdf8;'>{str(l_orig_live)[:38]}</span> <code style='font-size: 0.72rem; color: #94a3b8;'>({c_orig_live[0]:.4f}, {c_orig_live[1]:.4f})</code></span>
+                <span style='color: #64748b;'>➔</span>
+                <span>🏁 <b>Destination:</b> <span style='color: #38bdf8;'>{str(l_dest_live)[:38]}</span> <code style='font-size: 0.72rem; color: #94a3b8;'>({c_dest_live[0]:.4f}, {c_dest_live[1]:.4f})</code></span>
+            </div>
+            <div style='font-size: 0.70rem; color: #34d399; font-weight: 700; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);'>
+                ✓ GPS & Coords Synchronized
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    elif c_orig_live and not c_dest_live:
+        st.markdown(f"""
+        <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 6px 12px; margin-top: 6px; margin-bottom: 8px; font-size: 0.76rem; color: #fbbf24; display: flex; align-items: center; gap: 8px;'>
+            <span>📍 Start: <b>{str(l_orig_live)[:45]}</b> ({c_orig_live[0]:.4f}, {c_orig_live[1]:.4f}) • Enter destination above or click on the map to calculate routes</span>
+        </div>
+        """, unsafe_allow_html=True)
 
     # =========================================================================
-    # CREATIVE TRANSIT VEHICLE FLEET SELECTOR (ALL MODES VISIBLE, ZERO SWIPING)
+    # CREATIVE TRANSIT VEHICLE FLEET SELECTOR (EQUAL UNIFORM DECK)
     # =========================================================================
     MODES_CONFIG = {
         "CAR": {
             "icon": "🚗",
             "name": "Car",
-            "speed": "80 km/h",
             "label": "🚗 Car",
             "mode": TravelMode.DRIVING,
-            "desc": "Automobile • Rapid Arterials & Expressways (~80 km/h)",
-            "badge": "🚗 Fast Highway Transit"
+            "desc": "Automobile • Rapid Arterials & Expressways",
+            "badge": "🚗 Highway Transit"
         },
         "BIKE": {
             "icon": "🏍️",
             "name": "Bike",
-            "speed": "65 km/h",
             "label": "🏍️ Bike",
             "mode": TravelMode.MOTORCYCLE,
-            "desc": "Motorcycle / Scooter • Agile Lane Traversal (~65 km/h)",
+            "desc": "Motorcycle / Scooter • Agile Lane Traversal",
             "badge": "🏍️ Agile Transit"
         },
         "BUS": {
             "icon": "🚌",
             "name": "Bus",
-            "speed": "45 km/h",
             "label": "🚌 Bus",
             "mode": TravelMode.BUS,
-            "desc": "Transit Bus • Wide Corridor & Commercial Arterials (~45 km/h)",
+            "desc": "Transit Bus • Wide Corridor & Commercial Arterials",
             "badge": "🚌 Public Transit Corridor"
         },
         "TRUCK": {
             "icon": "🚚",
             "name": "Truck",
-            "speed": "60 km/h",
             "label": "🚚 Truck",
             "mode": TravelMode.TRUCK,
-            "desc": "Heavy Commercial • Industrial Bypass & Broad Highways (~60 km/h)",
+            "desc": "Heavy Commercial • Industrial Bypass & Broad Highways",
             "badge": "🚚 Heavy Transport"
         },
         "TRACTOR": {
             "icon": "🚜",
             "name": "Tractor",
-            "speed": "25 km/h",
             "label": "🚜 Tractor",
             "mode": TravelMode.TRACTOR,
-            "desc": "Rural & Agricultural • Secondary Rural Links & Bunds (~25 km/h)",
+            "desc": "Rural & Agricultural • Secondary Rural Links & Bunds",
             "badge": "🚜 Agro Rural Transit"
         },
         "BICYCLE": {
             "icon": "🚴",
             "name": "Cycle",
-            "speed": "18 km/h",
             "label": "🚴 Bicycle",
             "mode": TravelMode.BICYCLING,
-            "desc": "Bicycle • Step-Free Local Paths & Green Corridors (~18 km/h)",
+            "desc": "Bicycle • Step-Free Local Paths & Green Corridors",
             "badge": "🚴 Eco Cycleway"
         },
         "WALK": {
             "icon": "🚶",
             "name": "Walk",
-            "speed": "5 km/h",
             "label": "🚶 Walk",
             "mode": TravelMode.WALKING,
-            "desc": "Pedestrian • Safe Walkways, Sidewalks & Step-Free Crossings (~5 km/h)",
+            "desc": "Pedestrian • Safe Walkways, Sidewalks & Step-Free Crossings",
             "badge": "🚶 Pedestrian Walkway"
         }
     }
@@ -2091,7 +2467,7 @@ with tab_nav:
             <span>⚡</span> TRAVEL MODE & VEHICLE FLEET:
         </div>
         <div style='font-size: 0.70rem; color: #94a3b8;'>
-            1-Click Instant Transit Switching • Equal Uniform Deck
+            Select Vehicle • Dedicated Routing Profiles
         </div>
     </div>
     <style>
@@ -2111,9 +2487,9 @@ with tab_nav:
     }
     .st-key-fleet_deck_container div[data-testid="stButton"] > button {
         width: 100% !important;
-        height: 76px !important;
-        min-height: 76px !important;
-        max-height: 76px !important;
+        height: 60px !important;
+        min-height: 60px !important;
+        max-height: 60px !important;
         border-radius: 12px !important;
         padding: 6px 2px !important;
         display: flex !important;
@@ -2129,13 +2505,13 @@ with tab_nav:
     }
     .st-key-fleet_deck_container div[data-testid="stButton"] > button div[data-testid="stMarkdownContainer"] p {
         margin: 0 !important;
-        line-height: 1.3 !important;
+        line-height: 1.25 !important;
         font-size: 0.88rem !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 3px !important;
+        gap: 2px !important;
     }
     /* Active Button State (Selected Vehicle) */
     .st-key-fleet_deck_container div[data-testid="stButton"] > button[kind="primary"] {
@@ -2156,22 +2532,32 @@ with tab_nav:
         box-shadow: 0 0 16px rgba(56, 189, 248, 0.30), 0 4px 14px rgba(0, 0, 0, 0.45) !important;
         transform: translateY(-2px) !important;
     }
-    /* Micro Speed Badge Styling */
-    .st-key-fleet_deck_container div[data-testid="stMarkdownContainer"] code {
-        background: rgba(56, 189, 248, 0.12) !important;
-        color: #7dd3fc !important;
-        border: 1px solid rgba(56, 189, 248, 0.28) !important;
-        border-radius: 6px !important;
-        padding: 1px 5px !important;
-        font-size: 0.68rem !important;
-        font-weight: 700 !important;
-        font-family: 'JetBrains Mono', monospace !important;
-        letter-spacing: 0.02em !important;
+
+    /* Speed Mode Selector Styling */
+    .st-key-speed_deck_container div[data-testid="stHorizontalBlock"] {
+        gap: 8px !important;
+        align-items: stretch !important;
     }
-    .st-key-fleet_deck_container button[kind="primary"] div[data-testid="stMarkdownContainer"] code {
-        background: rgba(16, 185, 129, 0.25) !important;
-        color: #a7f3d0 !important;
-        border: 1px solid rgba(16, 185, 129, 0.50) !important;
+    .st-key-speed_deck_container div[data-testid="stColumn"] {
+        min-width: 0 !important;
+        flex: 1 1 0px !important;
+        width: 100% !important;
+    }
+    .st-key-speed_deck_container div[data-testid="stButton"] > button {
+        width: 100% !important;
+        height: 52px !important;
+        min-height: 52px !important;
+        max-height: 52px !important;
+        border-radius: 10px !important;
+        padding: 4px 6px !important;
+        font-size: 0.84rem !important;
+        font-weight: 700 !important;
+        transition: all 0.2s ease !important;
+    }
+    .st-key-speed_deck_container div[data-testid="stButton"] > button[kind="primary"] {
+        background: linear-gradient(180deg, rgba(56, 189, 248, 0.30) 0%, rgba(2, 132, 199, 0.60) 100%) !important;
+        border: 2px solid #38bdf8 !important;
+        box-shadow: 0 0 18px rgba(56, 189, 248, 0.40) !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -2183,7 +2569,7 @@ with tab_nav:
             with m_cols[idx]:
                 is_selected = (m_k == selected_key)
                 btn_type = "primary" if is_selected else "secondary"
-                card_label = f"{m_info['icon']} **{m_info['name']}**\n\n`{m_info['speed']}`"
+                card_label = f"{m_info['icon']}\n\n**{m_info['name']}**"
                 if st.button(card_label, key=f"btn_mode_select_{m_k}", use_container_width=True, type=btn_type):
                     st.session_state.selected_travel_mode = m_k
                     st.session_state.last_selected_mode = m_info["label"]
@@ -2193,6 +2579,96 @@ with tab_nav:
     travel_mode = current_mode_info["mode"]
     travel_mode_str = current_mode_info["label"]
     st.session_state.last_selected_mode = travel_mode_str
+
+    # =========================================================================
+    # SEPARATE SPEED MODE SELECTOR (ECO, NORMAL, FAST, CUSTOM)
+    # =========================================================================
+    SPEED_LIMITS_CONFIG = {
+        "CAR": {"min": 30, "max": 140, "default": 80, "step": 5, "profile": "Motorized Highway & Arterial Automobile"},
+        "BIKE": {"min": 20, "max": 100, "default": 65, "step": 5, "profile": "Motorcycle / Scooter Agile Flow"},
+        "BUS": {"min": 20, "max": 80, "default": 45, "step": 5, "profile": "Commercial Public Transit Bus Corridor"},
+        "TRUCK": {"min": 20, "max": 75, "default": 55, "step": 5, "profile": "Heavy Freight Commercial Vehicle"},
+        "TRACTOR": {"min": 10, "max": 35, "default": 22, "step": 2, "profile": "Agricultural & Rural Secondary Link"},
+        "BICYCLE": {"min": 8, "max": 35, "default": 16, "step": 1, "profile": "Non-Motorized Human-Powered Bicycle"},
+        "WALK": {"min": 2, "max": 8, "default": 5, "step": 1, "profile": "Non-Motorized Pedestrian Sidewalk Pace"}
+    }
+
+    sel_vehicle_key = st.session_state.selected_travel_mode
+    vehicle_limits = SPEED_LIMITS_CONFIG.get(sel_vehicle_key, SPEED_LIMITS_CONFIG["CAR"])
+
+    if "selected_speed_mode" not in st.session_state:
+        st.session_state.selected_speed_mode = "NORMAL"
+
+    if "custom_speed_kmh" not in st.session_state:
+        st.session_state.custom_speed_kmh = vehicle_limits["default"]
+    else:
+        # Validate and clamp custom speed if vehicle changed
+        st.session_state.custom_speed_kmh = max(vehicle_limits["min"], min(vehicle_limits["max"], st.session_state.custom_speed_kmh))
+
+    st.markdown("""
+    <div style='display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 6px;'>
+        <div style='font-size: 0.80rem; font-weight: 800; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;'>
+            <span>🎛️</span> SPEED MODE & TRANSIT PROFILE:
+        </div>
+        <div style='font-size: 0.70rem; color: #94a3b8;'>
+            Adapted to Selected Vehicle • Realistic Speed Limits
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    SPEED_MODES = {
+        "ECO": {"icon": "🌿", "label": "Eco", "desc": "Conservative cruising profile for energy efficiency and reduced drag"},
+        "NORMAL": {"icon": "⚡", "label": "Normal", "desc": "Standard baseline routing and corridor travel-time assumptions"},
+        "FAST": {"icon": "🚀", "label": "Fast", "desc": "Upper permissible corridor speeds where road geometry permits"},
+        "CUSTOM": {"icon": "⚙️", "label": "Custom", "desc": f"Configurable cruising speed preference ({vehicle_limits['min']} - {vehicle_limits['max']} km/h)"}
+    }
+
+    with st.container(key="speed_deck_container"):
+        s_cols = st.columns(4)
+        active_speed_key = st.session_state.selected_speed_mode
+        for s_idx, (s_k, s_info) in enumerate(SPEED_MODES.items()):
+            with s_cols[s_idx]:
+                s_selected = (s_k == active_speed_key)
+                s_btn_type = "primary" if s_selected else "secondary"
+                s_btn_label = f"{s_info['icon']} **{s_info['label']}**"
+                if st.button(s_btn_label, key=f"btn_speed_mode_{s_k}", use_container_width=True, type=s_btn_type):
+                    st.session_state.selected_speed_mode = s_k
+                    st.rerun()
+
+    # Custom Speed Slider & Validation (shown only when Custom mode is selected)
+    if st.session_state.selected_speed_mode == "CUSTOM":
+        st.markdown(f"""
+        <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(167, 139, 250, 0.4); border-radius: 10px; padding: 10px 14px; margin-top: 6px;'>
+            <div style='display: flex; justify-content: space-between; align-items: center;'>
+                <span style='font-size: 0.82rem; font-weight: 800; color: #c4b5fd;'>⚙️ Custom Speed Setting ({current_mode_info['name']}):</span>
+                <span style='font-size: 0.88rem; font-weight: 800; color: #38bdf8; font-family: monospace;'>{st.session_state.custom_speed_kmh} km/h</span>
+            </div>
+            <div style='font-size: 0.72rem; color: #94a3b8; margin-top: 2px;'>
+                Range for {vehicle_limits['profile']}: <b>{vehicle_limits['min']} km/h</b> to <b>{vehicle_limits['max']} km/h</b>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        new_speed = st.slider(
+            label="Configure target cruise speed preference:",
+            min_value=vehicle_limits["min"],
+            max_value=vehicle_limits["max"],
+            value=st.session_state.custom_speed_kmh,
+            step=vehicle_limits["step"],
+            format="%d km/h",
+            key="slider_custom_speed"
+        )
+        if new_speed != st.session_state.custom_speed_kmh:
+            st.session_state.custom_speed_kmh = new_speed
+            st.rerun()
+
+    # Informative Context Badge
+    speed_mode_desc = SPEED_MODES[st.session_state.selected_speed_mode]["desc"]
+    st.markdown(f"""
+    <div style='background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 6px 12px; margin-top: 6px; margin-bottom: 8px; font-size: 0.74rem; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between;'>
+        <span><b>Active Profile:</b> {SPEED_MODES[st.session_state.selected_speed_mode]['icon']} {st.session_state.selected_speed_mode} • {speed_mode_desc}</span>
+        <span style='color: #94a3b8; font-size: 0.68rem;'>Road safety limits & legal constraints take precedence</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 
@@ -2229,18 +2705,40 @@ with tab_nav:
         if not coords_dest and coords_orig:
             coords_dest = coords_orig
     else:
-        # Calculate Candidate Routes between selected origin & destination using backend search
-        candidate_routes = st.session_state.real_route_engine.calculate_routes(
-            coords_orig[0], coords_orig[1],
-            coords_dest[0], coords_dest[1],
-            mode=travel_mode,
-            require_accessible=require_acc,
-            is_in_transit=st.session_state.get("is_in_transit", False),
-            active_hazard_count=active_restr_count,
-            avoid_tolls=st.session_state.get("avoid_tolls", False),
-            avoid_highways=st.session_state.get("avoid_highways", False),
-            avoid_ferries=st.session_state.get("avoid_ferries", False)
+        # Route signature tracking: When origin, destination, mode, or speed settings change, refresh route
+        endpoint_sig = (
+            round(coords_orig[0], 4), round(coords_orig[1], 4),
+            round(coords_dest[0], 4), round(coords_dest[1], 4),
+            travel_mode.value if hasattr(travel_mode, "value") else str(travel_mode),
+            st.session_state.selected_speed_mode,
+            st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else 0,
+            st.session_state.get("avoid_tolls", False),
+            st.session_state.get("avoid_highways", False),
+            st.session_state.get("avoid_ferries", False)
         )
+        if "cached_candidate_routes" not in st.session_state or st.session_state.get("_prev_endpoint_sig") != endpoint_sig:
+            st.session_state._prev_endpoint_sig = endpoint_sig
+            st.session_state.focused_route_id = "ALL"
+            st.session_state.selected_route_id = None
+            st.session_state.selected_route_object = None
+            st.session_state.auto_fit_bounds = True
+            with st.spinner("⚡ Connecting live corridors & calculating optimal routes..."):
+                candidate_routes = st.session_state.real_route_engine.calculate_routes(
+                    coords_orig[0], coords_orig[1],
+                    coords_dest[0], coords_dest[1],
+                    mode=travel_mode,
+                    require_accessible=require_acc,
+                    is_in_transit=st.session_state.get("is_in_transit", False),
+                    active_hazard_count=active_restr_count,
+                    avoid_tolls=st.session_state.get("avoid_tolls", False),
+                    avoid_highways=st.session_state.get("avoid_highways", False),
+                    avoid_ferries=st.session_state.get("avoid_ferries", False),
+                    speed_mode=st.session_state.selected_speed_mode.lower(),
+                    custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None
+                )
+            st.session_state.cached_candidate_routes = candidate_routes
+        else:
+            candidate_routes = st.session_state.cached_candidate_routes
 
         if not candidate_routes:
             fail_msg = getattr(st.session_state.real_route_engine, "last_failure_reason", None) or (
@@ -2265,25 +2763,14 @@ with tab_nav:
         eligible_ranked = [r for r in ranked_routes if r.is_eligible]
         restricted_ranked = [r for r in ranked_routes if not r.is_eligible]
 
-
-
-
-    # Route signature tracking: When origin, destination, or mode changes, always default to "ALL"
-    if coords_orig and coords_dest:
-        route_sig = (
-            round(coords_orig[0], 4), round(coords_orig[1], 4),
-            round(coords_dest[0], 4), round(coords_dest[1], 4),
-            travel_mode, active_obj, require_acc
-        )
-        if st.session_state.get("_prev_route_sig") != route_sig:
-            st.session_state._prev_route_sig = route_sig
-            st.session_state.focused_route_id = "ALL"
-
     # Check query parameters for touchable route card clicks
     if "focus_route" in st.query_params:
         q_route = st.query_params.get("focus_route")
         if q_route:
             st.session_state.focused_route_id = q_route
+            st.session_state.selected_route_id = q_route if q_route != "ALL" else None
+            st.session_state.auto_fit_bounds = True
+            st.session_state.scroll_to_app_map = True
         try:
             del st.query_params["focus_route"]
         except Exception:
@@ -2304,8 +2791,13 @@ with tab_nav:
         target = min(eligible or ranked_routes, key=lambda r: r.effective_distance_km)
         cur_focus = target.route.route_id
     elif st.session_state.focused_route_id == "BALANCED" and ranked_routes:
-        eligible = [r for r in ranked_routes if r.is_eligible]
-        target = eligible[0] if eligible else ranked_routes[0]
+        pool = [r for r in ranked_routes if r.is_eligible] or ranked_routes
+        min_t = min(r.effective_duration_minutes for r in pool)
+        min_d = min(r.effective_distance_km for r in pool)
+        target = min(
+            pool,
+            key=lambda r: 0.50 * (r.effective_duration_minutes / max(0.01, min_t)) + 0.50 * (r.effective_distance_km / max(0.01, min_d))
+        )
         cur_focus = target.route.route_id
     elif st.session_state.focused_route_id == "ACCESSIBLE" and ranked_routes:
         acc = [r for r in ranked_routes if getattr(r.route, "is_accessible", True) and r.is_eligible]
@@ -2316,24 +2808,39 @@ with tab_nav:
     else:
         cur_focus = "ALL"
         st.session_state.focused_route_id = "ALL"
+        st.session_state.selected_route_id = None
 
-    # Build Map Polylines with clean visual hierarchy
+    # Reference active selected route object in session state
+    if cur_focus != "ALL":
+        active_sel_item = next((r for r in ranked_routes if r.route.route_id == cur_focus), None)
+        st.session_state.selected_route_object = active_sel_item.route if active_sel_item else None
+        st.session_state.selected_route_id = cur_focus
+        active_route_item = active_sel_item or (eligible_ranked[0] if eligible_ranked else (ranked_routes[0] if ranked_routes else None))
+    else:
+        st.session_state.selected_route_object = ranked_routes[0].route if ranked_routes else None
+        st.session_state.selected_route_id = None
+        active_route_item = eligible_ranked[0] if eligible_ranked else (ranked_routes[0] if ranked_routes else None)
+
+    # Build Map Polylines with clean visual hierarchy and selection highlighting
     route_polylines = []
     palette = ["#10b981", "#0ea5e9", "#a855f7"]
     for r_item in ranked_routes:
-        # If a particular path is selected, hide all other paths!
-        if cur_focus != "ALL" and r_item.route.route_id != cur_focus:
-            continue
+        is_selected = (cur_focus == r_item.route.route_id)
+        has_selection = (cur_focus != "ALL")
 
         if r_item.is_eligible:
             color = palette[(r_item.rank - 1) % len(palette)]
-            weight = 7 if (cur_focus == r_item.route.route_id or r_item.rank == 1) else 4
-            opacity = 1.0 if (cur_focus == r_item.route.route_id or r_item.rank == 1) else 0.70
+            if has_selection:
+                weight = 8 if is_selected else 3.5
+                opacity = 1.0 if is_selected else 0.40
+            else:
+                weight = 6 if r_item.rank == 1 else 4.5
+                opacity = 0.95 if r_item.rank == 1 else 0.80
             label = f"Rank {r_item.rank}: {r_item.route.name} ({r_item.effective_duration_minutes:.1f} min)"
         else:
             color = "#ef4444"
-            weight = 6 if cur_focus == r_item.route.route_id else 3
-            opacity = 0.90 if cur_focus == r_item.route.route_id else 0.50
+            weight = 6 if is_selected else 3.5
+            opacity = 0.90 if is_selected else 0.40
             label = f"⚠️ RESTRICTED / BLOCKED: {r_item.route.name}"
 
         r_coords = [list(pt) for pt in r_item.route.polyline]
@@ -2352,6 +2859,8 @@ with tab_nav:
             "opacity": opacity,
             "rank": r_item.rank,
             "is_eligible": r_item.is_eligible,
+            "is_selected": is_selected,
+            "route_id": r_item.route.route_id,
             "status": r_item.status.value
         })
 
@@ -2402,7 +2911,9 @@ with tab_nav:
     # Discover Real-World Emergency Services & Safety Amenities along Active Route Corridor
     primary_route_poly = []
     if route_polylines:
-        chosen_r = next((r for r in route_polylines if r.get("is_eligible")), route_polylines[0])
+        chosen_r = next((r for r in route_polylines if r.get("is_selected")), None)
+        if not chosen_r:
+            chosen_r = next((r for r in route_polylines if r.get("is_eligible")), route_polylines[0])
         primary_route_poly = list(chosen_r.get("coordinates", []))
     if not primary_route_poly and coords_orig and coords_dest:
         primary_route_poly = [coords_orig, coords_dest]
@@ -2411,6 +2922,14 @@ with tab_nav:
             primary_route_poly.insert(0, coords_orig)
         if coords_dest and (abs(primary_route_poly[-1][0] - coords_dest[0]) > 0.00001 or abs(primary_route_poly[-1][1] - coords_dest[1]) > 0.00001):
             primary_route_poly.append(coords_dest)
+
+    # Center map on selected route polyline bounding box
+    if primary_route_poly and len(primary_route_poly) >= 2:
+        map_center_lat = (min(p[0] for p in primary_route_poly) + max(p[0] for p in primary_route_poly)) / 2.0
+        map_center_lon = (min(p[1] for p in primary_route_poly) + max(p[1] for p in primary_route_poly)) / 2.0
+    else:
+        map_center_lat = (coords_orig[0] + coords_dest[0]) / 2.0 if coords_orig and coords_dest else 16.2335
+        map_center_lon = (coords_orig[1] + coords_dest[1]) / 2.0 if coords_orig and coords_dest else 80.5505
 
     route_emergency_facilities = st.session_state.emergency_service_manager.get_facilities_along_route(
         polyline=primary_route_poly,
@@ -2431,7 +2950,11 @@ with tab_nav:
         active_category_facilities = get_facilities_for_category(
             category=active_cat_label,
             polyline=primary_route_poly,
-            origin_coords=coords_orig
+            origin_coords=coords_orig,
+            dest_coords=coords_dest,
+            search_mode=st.session_state.get("fac_search_mode", "near_destination"),
+            radius_km=st.session_state.get("fac_radius_km", 10.0),
+            enable_demo_mode=st.session_state.get("enable_demo_mode", False)
         )
 
     all_map_facilities = []
@@ -2442,6 +2965,37 @@ with tab_nav:
 
     # Audit route corridor with Satellite Road Auditor (authenticates real road blockages)
     satellite_audit = st.session_state.satellite_auditor.audit_route_corridor(primary_route_poly)
+
+    # AI Satellite Imagery & Computer-Vision Road Intelligence Analysis
+    ai_road_report_obj = None
+    ai_road_report_dict = None
+    if primary_route_poly and len(primary_route_poly) >= 2:
+        try:
+            active_route_for_cv = None
+            if ranked_routes:
+                if cur_focus != "ALL":
+                    active_route_for_cv = next((r.route for r in ranked_routes if r.route.route_id == cur_focus), ranked_routes[0].route)
+                else:
+                    active_route_for_cv = ranked_routes[0].route
+
+            ai_road_report_obj = st.session_state.ai_road_controller.analyze_corridor(
+                corridor_polyline=primary_route_poly,
+                route_attributes={
+                    "summary_roads": getattr(active_route_for_cv, "summary_roads", []) if active_route_for_cv else [],
+                    "road_type": getattr(active_route_for_cv, "road_type", "primary") if active_route_for_cv else "primary",
+                    "name": getattr(active_route_for_cv, "name", "") if active_route_for_cv else ""
+                },
+                avoidance_prefs={
+                    "avoid_tolls": st.session_state.get("avoid_tolls", False),
+                    "avoid_highways": st.session_state.get("avoid_highways", False),
+                    "avoid_ferries": st.session_state.get("avoid_ferries", False)
+                }
+            )
+            if ai_road_report_obj:
+                ai_road_report_dict = asdict(ai_road_report_obj)
+        except Exception as _e_cv:
+            ai_road_report_obj = None
+            ai_road_report_dict = None
 
     # Generate direct Google Maps mobile & web navigation deep link
     gmaps_nav_url = get_google_maps_app_url(
@@ -2459,34 +3013,99 @@ with tab_nav:
     if "map_display_engine" not in st.session_state:
         st.session_state.map_display_engine = "tactical_satellite"
 
-    # Real Google Maps Platform Viewport & Route Avoidances
-    col_gmap_engine, col_gmap_avoids = st.columns([1.1, 0.9])
-    with col_gmap_engine:
+    # Modern Navigation Map Control Toolbar
+    tb_c1, tb_c2, tb_c3 = st.columns([1.6, 1.0, 1.4], vertical_alignment="center")
+    with tb_c1:
         st.markdown(
-            "<div style='display:flex; align-items:center; gap:8px; padding-top:4px;'>"
-            "<span style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase;'>🗺️ Google Maps Interactive Canvas</span>"
-            "<span style='font-size: 0.70rem; background: rgba(56,189,248,0.14); border: 1px solid rgba(56,189,248,0.4); color: #38bdf8; padding: 2px 8px; border-radius: 12px; font-weight: 700;'>● Layers in Bottom-Left Corner</span>"
+            "<div style='display:flex; align-items:center; gap:8px; margin-bottom: 4px;'>"
+            "<span style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase;'>🗺️ Map Canvas</span>"
+            "<span style='font-size: 0.68rem; background: rgba(56,189,248,0.14); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 2px 6px; border-radius: 4px;'>Full Vector & Satellite</span>"
             "</div>",
             unsafe_allow_html=True
         )
-
-    with col_gmap_avoids:
+        sub_l1, sub_l2, sub_l3 = st.columns(3)
+        cur_engine = st.session_state.get("map_display_engine", "tactical_satellite")
+        with sub_l1:
+            if st.button("🛰️ Satellite", key="btn_style_sat", type="primary" if cur_engine == "tactical_satellite" else "secondary", use_container_width=True):
+                st.session_state.map_display_engine = "tactical_satellite"
+                st.rerun()
+        with sub_l2:
+            if st.button("🗺️ Road", key="btn_style_road", type="primary" if cur_engine == "google_maps_sdk" else "secondary", use_container_width=True):
+                st.session_state.map_display_engine = "google_maps_sdk"
+                st.rerun()
+        with sub_l3:
+            if st.button("⛰️ Terrain", key="btn_style_terr", type="primary" if cur_engine == "google_terrain" else "secondary", use_container_width=True):
+                st.session_state.map_display_engine = "google_terrain"
+                st.rerun()
+    with tb_c2:
+        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+        sub_act1, sub_act2 = st.columns(2)
+        with sub_act1:
+            if st.button("📍 GPS", key="btn_toolbar_gps", use_container_width=True, help="Snap origin to live hardware GPS"):
+                st.session_state.is_custom_start_place = False
+                st.session_state.orig_candidates = []
+                CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
+                st.session_state.user_live_coords = CURRENT_BASE
+                st.session_state.user_live_label = detected_label
+                st.session_state.movement_index = 0
+                st.session_state.is_in_transit = False
+                st.session_state.auto_fit_bounds = True
+                st.session_state.scroll_to_app_map = True
+                st.toast("📍 Re-centered to live GPS", icon="🛰️")
+                st.rerun()
+        with sub_act2:
+            if st.button("🎯 Fit", key="btn_toolbar_fit", use_container_width=True, help="Auto-fit camera view to active route corridor"):
+                st.session_state.auto_fit_bounds = True
+                st.session_state.scroll_to_app_map = True
+                st.rerun()
+    with tb_c3:
+        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
         c_av1, c_av2, c_av3 = st.columns(3)
         with c_av1:
-            new_toll = st.checkbox("Avoid Tolls", value=st.session_state.avoid_tolls, key="chk_avoid_tolls")
+            new_toll = st.checkbox("Tolls", value=st.session_state.avoid_tolls, key="chk_avoid_tolls", help="Avoid Tolls")
             if new_toll != st.session_state.avoid_tolls:
                 st.session_state.avoid_tolls = new_toll
                 st.rerun()
         with c_av2:
-            new_hwy = st.checkbox("Avoid Highways", value=st.session_state.avoid_highways, key="chk_avoid_highways")
+            new_hwy = st.checkbox("Highways", value=st.session_state.avoid_highways, key="chk_avoid_highways", help="Avoid Highways")
             if new_hwy != st.session_state.avoid_highways:
                 st.session_state.avoid_highways = new_hwy
                 st.rerun()
         with c_av3:
-            new_ferry = st.checkbox("Avoid Ferries", value=st.session_state.avoid_ferries, key="chk_avoid_ferries")
+            new_ferry = st.checkbox("Ferries", value=st.session_state.avoid_ferries, key="chk_avoid_ferries", help="Avoid Ferries")
             if new_ferry != st.session_state.avoid_ferries:
                 st.session_state.avoid_ferries = new_ferry
                 st.rerun()
+
+    # Active Route On Map Banner (Shows which route is selected and highlighted)
+    if cur_focus != "ALL":
+        active_sel = next((r for r in ranked_routes if r.route.route_id == cur_focus), None)
+        if active_sel:
+            col_sel_info, col_sel_btn = st.columns([1.6, 0.4])
+            with col_sel_info:
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(15, 23, 42, 0.95) 100%);
+                            border: 1.5px solid #38bdf8; border-radius: 10px; padding: 10px 16px; margin-bottom: 8px;
+                            box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);'>
+                    <div style='display: flex; align-items: center; justify-content: space-between;'>
+                        <div style='display: flex; align-items: center; gap: 8px;'>
+                            <span style='font-size: 1.1rem;'>🎯</span>
+                            <b style='color: #ffffff; font-size: 0.96rem;'>Active on Map: {active_sel.route.name}</b>
+                        </div>
+                        <span style='background: rgba(56,189,248,0.25); color: #38bdf8; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.4);'>SELECTED CORRIDOR</span>
+                    </div>
+                    <div style='color: #cbd5e1; font-size: 0.82rem; margin-top: 4px;'>
+                        ⏱️ <b>{active_sel.effective_duration_minutes:.1f} mins</b> • 📏 <b>{format_distance(active_sel.effective_distance_km, st.session_state.get("distance_unit", "km"))}</b> • 📍 Via {", ".join(active_sel.route.summary_roads[:3]) if active_sel.route.summary_roads else "Direct Corridor"}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_sel_btn:
+                if st.button("🌐 Show All Routes", key="btn_show_all_routes_top", use_container_width=True, type="secondary"):
+                    st.session_state.focused_route_id = "ALL"
+                    st.session_state.selected_route_id = None
+                    st.session_state.auto_fit_bounds = True
+                    st.session_state.scroll_to_app_map = True
+                    st.rerun()
 
     st.markdown("<div id='application-map-viewport'></div>", unsafe_allow_html=True)
 
@@ -2519,27 +3138,29 @@ with tab_nav:
             gmap_type = "terrain"
 
         gmap_html = build_google_maps_javascript_html(
-            center_lat=(coords_orig[0] + coords_dest[0]) / 2.0,
-            center_lon=(coords_orig[1] + coords_dest[1]) / 2.0,
+            center_lat=map_center_lat,
+            center_lon=map_center_lon,
             zoom=st.session_state.map_zoom,
             origin_coords=coords_orig,
             origin_label=st.session_state.get("user_live_label") or st.session_state.get("txt_orig") or "Current Location",
             dest_coords=coords_dest,
             dest_label=st.session_state.get("selected_dest_label") or st.session_state.get("txt_dest") or "Destination",
             route_polyline=primary_route_poly,
-            saved_locations=[],
+            saved_locations=load_and_georeference_saved_locations(),
             amenities=all_map_facilities,
             hazards=hazard_markers,
             map_type=gmap_type,
             height_px=700,
-            traveler_avatar=st.session_state.get("selected_travel_mode", "WALK").lower()
+            traveler_avatar=st.session_state.get("selected_travel_mode", "WALK").lower(),
+            route_polylines=route_polylines,
+            ai_road_report=ai_road_report_dict
         )
         components.html(gmap_html, height=720)
     else:
         cur_map_style = "google_maps_road"
         folium_map = st.session_state.real_map_service.build_interactive_map(
-            center_lat=(coords_orig[0] + coords_dest[0]) / 2.0,
-            center_lon=(coords_orig[1] + coords_dest[1]) / 2.0,
+            center_lat=map_center_lat,
+            center_lon=map_center_lon,
             zoom_start=st.session_state.map_zoom,
             origin_coords=coords_orig,
             dest_coords=coords_dest,
@@ -3069,55 +3690,212 @@ with tab_nav:
             </span>
         </div>
         """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div style='background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-left: 4px solid #10b981;
-                    border-radius: 8px; padding: 7px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;'>
-            <div style='display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #34d399;'>
-                <span>🛡️</span>
-                <span><b>Safety Verified:</b> All travel corridors are open and clear with zero active hazards.</span>
-            </div>
-            <span style='color: #64748b; font-size: 0.72rem; font-weight: 600;'>100% CLEAR</span>
+    # Navigation Trust Audit (Compact Verified Route Information Card for Selected Route)
+    if active_route_item and active_route_item.route:
+        active_route_poly = getattr(active_route_item.route, "polyline", [])
+        if active_route_poly and len(active_route_poly) >= 2:
+            active_satellite_audit = st.session_state.satellite_auditor.audit_route_corridor(active_route_poly)
+        else:
+            active_satellite_audit = satellite_audit
+
+        trust_audit_res = NavigationTrustAuditEngine.audit_route(
+            route=active_route_item.route,
+            active_hazards=active_hazards,
+            active_restrictions=active_restrictions,
+            satellite_audit=active_satellite_audit,
+            hazard_data_available=True,
+            corridor_buffer_m=40.0
+        )
+        st.markdown(render_navigation_trust_audit_card_html(trust_audit_res), unsafe_allow_html=True)
+        with st.expander("🔍 View Route Verification Details & Technical Limitations", expanded=False):
+            st.markdown(render_navigation_trust_audit_details_html(trust_audit_res), unsafe_allow_html=True)
+
+        # =====================================================================
+        # AI ROAD INTELLIGENCE & SATELLITE SURFACE ANALYSIS DASHBOARD
+        # =====================================================================
+        disp_ai_report = ai_road_report_obj
+        if active_route_poly and active_route_poly != primary_route_poly and len(active_route_poly) >= 2:
+            try:
+                disp_ai_report = st.session_state.ai_road_controller.analyze_corridor(
+                    corridor_polyline=active_route_poly,
+                    route_attributes={
+                        "summary_roads": getattr(active_route_item.route, "summary_roads", []),
+                        "road_type": getattr(active_route_item.route, "road_type", "primary"),
+                        "name": getattr(active_route_item.route, "name", "")
+                    },
+                    avoidance_prefs={
+                        "avoid_tolls": st.session_state.get("avoid_tolls", False),
+                        "avoid_highways": st.session_state.get("avoid_highways", False),
+                        "avoid_ferries": st.session_state.get("avoid_ferries", False)
+                    }
+                )
+            except Exception:
+                disp_ai_report = ai_road_report_obj
+
+        if disp_ai_report is not None:
+            with st.expander("🛰️ AI Road Intelligence & Satellite Surface Analysis", expanded=False):
+                # Satellite Source & Provenance Bar
+                st.markdown("""
+                <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;'>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em;'>
+                        🛰️ Satellite Imagery Provider & Calibrated Computer Vision
+                    </div>
+                    <span style='font-size: 0.70rem; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 2px 6px; border-radius: 4px;'>
+                        ODbL / CC BY 4.0 Compliant
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
+
+                col_sat1, col_sat2 = st.columns([1.2, 1.0])
+                with col_sat1:
+                    prov_keys = list(AVAILABLE_SATELLITE_PROVIDERS.keys())
+                    prov_names = [AVAILABLE_SATELLITE_PROVIDERS[k].name for k in prov_keys]
+                    curr_p_idx = prov_keys.index(st.session_state.get("ai_sat_provider", "esri_world_imagery")) if st.session_state.get("ai_sat_provider") in prov_keys else 0
+                    sel_prov_name = st.selectbox(
+                        "Satellite Imagery Source",
+                        options=prov_names,
+                        index=curr_p_idx,
+                        key="sel_sat_imagery_provider",
+                        help="Legitimate satellite & aerial imagery provider with documented licensing, attribution, and spatial calibration."
+                    )
+                    sel_prov_key = prov_keys[prov_names.index(sel_prov_name)]
+                    if sel_prov_key != st.session_state.get("ai_sat_provider"):
+                        st.session_state.ai_sat_provider = sel_prov_key
+                        st.session_state.ai_road_controller.set_provider(sel_prov_key)
+                        st.rerun()
+
+                with col_sat2:
+                    p_meta = AVAILABLE_SATELLITE_PROVIDERS[st.session_state.get("ai_sat_provider", "esri_world_imagery")]
+                    st.markdown(f"""
+                    <div style='background: rgba(15,23,42,0.7); border: 1px solid rgba(56,189,248,0.25); border-radius: 8px; padding: 8px 12px; font-size: 0.75rem; color: #94a3b8;'>
+                        <div><b>Capture Freshness:</b> <span style='color: #38bdf8;'>{p_meta.freshness_note}</span></div>
+                        <div><b>Attribution:</b> {p_meta.attribution}</div>
+                        <div><b>Licensing:</b> <span style='color: #a78bfa;'>{p_meta.license}</span></div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # Avoidance Preferences Cross-Validation Advisory
+                if disp_ai_report.avoidance_compliance.get("warnings"):
+                    for w in disp_ai_report.avoidance_compliance["warnings"]:
+                        st.markdown(f"""
+                        <div style='background: rgba(245,158,11,0.12); border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 6px; font-size: 0.78rem; color: #fbbf24; margin: 6px 0;'>
+                            ⚠️ <b>Avoidance Limitation:</b> {w}
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # High-Tech Telemetry HUD
+                st.markdown(render_ai_road_intelligence_hud_html(disp_ai_report), unsafe_allow_html=True)
+
+                # Detected Features Structured Ledger
+                st.markdown("<div style='font-size: 0.82rem; font-weight: 700; color: #f1f5f9; margin-top: 12px; margin-bottom: 6px;'>📍 Georeferenced Detections & Corroboration Audit</div>", unsafe_allow_html=True)
+                for feat in disp_ai_report.detected_features:
+                    is_corrob = "Corroborated" in feat.verification_status
+                    is_unver = "unverified" in feat.verification_status
+                    status_color = "#10b981" if is_corrob else ("#38bdf8" if is_unver else "#f59e0b")
+                    badge_bg = "rgba(16,185,129,0.15)" if is_corrob else ("rgba(56,189,248,0.15)" if is_unver else "rgba(245,158,11,0.15)")
+                    
+                    st.markdown(f"""
+                    <div style='background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.15); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; font-size: 0.78rem;'>
+                        <div style='display: flex; justify-content: space-between; align-items: center;'>
+                            <span style='font-weight: 700; color: #e2e8f0;'>{feat.feature_id.upper()} • {feat.category.replace('_', ' ').title()}</span>
+                            <span style='background: {badge_bg}; color: {status_color}; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem;'>{feat.verification_status}</span>
+                        </div>
+                        <div style='color: #94a3b8; margin-top: 3px;'>
+                            📍 Coordinate: <code>{feat.coordinates[0]:.5f}, {feat.coordinates[1]:.5f}</code> | Confidence: <b>{feat.confidence*100:.1f}%</b> | Source: <em>{feat.imagery_source}</em>
+                        </div>
+                        <div style='color: #cbd5e1; margin-top: 3px;'>
+                            {feat.details}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+    # =========================================================================
+    # MULTI-OBJECTIVE ROUTING SEGMENTED SELECTOR (MAIN PAGE & MOBILE ADAPTIVE)
+    # =========================================================================
+    st.markdown("""
+    <div style='display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 6px;'>
+        <div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;'>
+            <span>🎯</span> ROUTING OBJECTIVE & CANDIDATE RANKING:
         </div>
-        """, unsafe_allow_html=True)
+        <div style='font-size: 0.70rem; color: #94a3b8;'>
+            Select Priority • Instant Map Synchronization
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Display Route Recommendation Cards:
-    # If cur_focus != "ALL", ONLY display that specific route and hide all others!
-    if cur_focus != "ALL":
-        displayed_routes = [r for r in ranked_routes if r.route.route_id == cur_focus]
-        if not displayed_routes:
-            displayed_routes = ranked_routes
-    else:
-        displayed_routes = ranked_routes
+    obj_cols = st.columns(5)
+    obj_buttons = [
+        ("ALL", "🌐 All Routes", "Displays all candidate road corridors simultaneously", "ALL", None),
+        ("FASTEST", "⚡ Fastest", "Minimizes travel duration based on speed limits", "FASTEST", OptimizationObjective.FASTEST),
+        ("SHORTEST", "📏 Shortest", "Minimizes physical ground road distance", "SHORTEST", OptimizationObjective.SHORTEST),
+        ("BALANCED", "⚖️ Balanced", "Optimal 50/50 balance between time and distance", "BALANCED", OptimizationObjective.BALANCED),
+        ("ACCESSIBLE", "♿ Accessible", "Prioritizes step-free paths and accessible corridors", "ACCESSIBLE", OptimizationObjective.ACCESSIBLE),
+    ]
 
-    if cur_focus != "ALL" and len(displayed_routes) == 1:
-        col_banner, col_unhide = st.columns([1.5, 0.5])
-        with col_banner:
-            st.markdown(f"""
-            <div style='background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px;
-                        padding: 8px 14px; display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: #38bdf8; font-weight: 700;'>
-                <span>🎯</span> Showing <b>{displayed_routes[0].route.name}</b> only. Remaining routes are hidden.
-            </div>
-            """, unsafe_allow_html=True)
-        with col_unhide:
-            if st.button("🌐 Unhide All Routes", use_container_width=True, type="primary", key="btn_unhide_routes"):
-                st.session_state.focused_route_id = "ALL"
+    for o_idx, (o_key, o_label, o_help, o_focus, o_enum) in enumerate(obj_buttons):
+        with obj_cols[o_idx]:
+            if o_key == "ALL":
+                is_active_obj = (st.session_state.get("focused_route_id") == "ALL")
+            else:
+                is_active_obj = (st.session_state.get("focused_route_id") == o_focus) or (
+                    st.session_state.get("active_objective") == o_enum and st.session_state.get("focused_route_id") != "ALL"
+                )
+            btn_t = "primary" if is_active_obj else "secondary"
+            if st.button(o_label, key=f"btn_main_obj_{o_key}", use_container_width=True, type=btn_t, help=o_help):
+                if o_enum is not None:
+                    st.session_state.active_objective = o_enum
+                st.session_state.focused_route_id = o_focus
+                if o_focus == "ALL":
+                    st.session_state.selected_route_id = None
+                st.session_state.auto_fit_bounds = True
+                st.session_state.scroll_to_app_map = True
                 st.rerun()
 
+    # Informative disclaimer for ACCESSIBLE routing limitation
+    if active_obj == OptimizationObjective.ACCESSIBLE or st.session_state.get("focused_route_id") == "ACCESSIBLE":
+        if active_route_item and not (getattr(active_route_item.route, "accessibility_verified", False) or getattr(active_route_item, "accessibility_verified", False)):
+            st.markdown("""
+            <div style='background: rgba(245, 158, 11, 0.10); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 8px 14px; margin-top: 8px; margin-bottom: 8px;'>
+                <div style='display: flex; align-items: center; gap: 8px;'>
+                    <span style='font-size: 1.1rem;'>♿</span>
+                    <b style='color: #fbbf24; font-size: 0.82rem;'>Provider Accessibility Data Limitation</b>
+                </div>
+                <div style='color: #cbd5e1; font-size: 0.74rem; margin-top: 3px; line-height: 1.4;'>
+                    Public road network routing (OSRM) does not publish certified curb-cut, ramp slope, or tactile paving attributes. Route selected prioritizes paved motorable roadways, but step-free pedestrian access is unverified on general road networks.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Display Route Recommendation Cards:
+    # Always keep ALL candidate routes visible side-by-side and interactive
+    displayed_routes = ranked_routes
     num_routes = len(displayed_routes)
+    primary_ref = next((r for r in ranked_routes if r.rank == 1), ranked_routes[0]) if ranked_routes else None
+
+    # Compute fastest and shortest candidates from the actual candidate set
+    fastest_candidate = min(ranked_routes, key=lambda r: r.effective_duration_minutes) if ranked_routes else None
+    shortest_candidate = min(ranked_routes, key=lambda r: r.effective_distance_km) if ranked_routes else None
+
     if num_routes > 0:
         card_cols = st.columns(min(num_routes, 3))
         for idx, r_item in enumerate(displayed_routes):
             with card_cols[idx % min(num_routes, 3)]:
                 is_active = (cur_focus == r_item.route.route_id)
-                target_focus = "ALL" if is_active else r_item.route.route_id
+                target_focus = r_item.route.route_id
                 short_name = r_item.route.name.split("(")[0].strip()
 
-                is_safe_route = getattr(r_item, "is_safe", True) and r_item.is_eligible
+                is_safe_route = getattr(r_item, "is_safe", True) and r_item.is_eligible and len(getattr(r_item, "detected_hazards", [])) == 0
                 if is_safe_route:
-                    safety_badge = "<span style='background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>🛡️ SAFE TO TRAVEL</span>"
-                    card_border = "#10b981" if r_item.rank == 1 else "#38bdf8"
-                    rank_badge = "⭐ RECOMMENDED" if r_item.rank == 1 else f"Alternative {r_item.rank}"
+                    safety_badge = "<span style='background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>🛡️ NO REPORTED HAZARDS</span>"
+                    card_border = "#10b981" if is_active else "#38bdf8"
+                    if len(ranked_routes) == 1:
+                        rank_badge = "⭐ SOLE ROUTE"
+                    elif r_item == fastest_candidate and r_item == shortest_candidate:
+                        rank_badge = "⭐ FASTEST & SHORTEST"
+                    elif r_item.rank == 1:
+                        rank_badge = "⭐ BEST MATCH"
+                    else:
+                        rank_badge = f"Alternative {r_item.rank}"
                 elif not getattr(r_item, "is_safe", True):
                     safety_badge = "<span style='background: rgba(239, 68, 68, 0.25); color: #f87171; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>⚠️ BLOCKED EN ROUTE</span>"
                     card_border = "#ef4444"
@@ -3131,21 +3909,33 @@ with tab_nav:
                 if is_active:
                     map_status_badge = "<span style='background: rgba(14, 165, 233, 0.35); color: #38bdf8; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1.5px solid #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);'>🎯 ACTIVE ON MAP</span>"
                     card_opacity = "1.0"
-                    card_extra_border = f"border-left: 5px solid {card_border}; border-top: 1.5px solid #38bdf8; border-right: 1.5px solid #38bdf8; border-bottom: 1.5px solid #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.45);"
-                elif cur_focus == "ALL":
-                    map_status_badge = "<span style='background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.70rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>✓ ON MAP</span>"
-                    card_opacity = "1.0"
-                    card_extra_border = f"border-left: 5px solid {card_border};"
+                    card_extra_border = f"border-left: 5px solid {card_border}; border-top: 2px solid #38bdf8; border-right: 2px solid #38bdf8; border-bottom: 2px solid #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.45); background: rgba(14, 165, 233, 0.12);"
                 else:
-                    map_status_badge = "<span style='background: rgba(100, 116, 139, 0.15); color: #94a3b8; font-size: 0.70rem; font-weight: 600; padding: 2px 6px; border-radius: 4px;'>HIDDEN ON MAP</span>"
-                    card_opacity = "0.55"
-                    card_extra_border = "border-left: 5px solid rgba(100, 116, 139, 0.4);"
+                    map_status_badge = "<span style='background: rgba(100, 116, 139, 0.20); color: #cbd5e1; font-size: 0.70rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>CANDIDATE</span>"
+                    card_opacity = "0.90"
+                    card_extra_border = f"border-left: 5px solid {card_border}; border-top: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08);"
 
                 cur_unit = st.session_state.get("distance_unit", "km")
                 dist_display = format_distance(r_item.effective_distance_km, cur_unit)
 
+                # Calculate accurate delta differences vs Primary Route 1
+                if primary_ref and r_item.rank > 1:
+                    delta_dist = r_item.effective_distance_km - primary_ref.effective_distance_km
+                    delta_dur = r_item.effective_duration_minutes - primary_ref.effective_duration_minutes
+                    sign_dist = "+" if delta_dist >= 0 else "-"
+                    sign_dur = "+" if delta_dur >= 0 else "-"
+                    dur_color = "#34d399" if delta_dur < -0.05 else ("#94a3b8" if abs(delta_dur) <= 0.2 else "#fbbf24")
+                    dist_color = "#34d399" if delta_dist < -0.05 else ("#94a3b8" if abs(delta_dist) <= 0.1 else "#38bdf8")
+                    diff_pill = f"<span style='background: rgba(255, 255, 255, 0.08); font-size: 0.74rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.12);'><b style='color: {dur_color};'>⏱️ {sign_dur}{abs(delta_dur):.1f} min</b> &nbsp;|&nbsp; <b style='color: {dist_color};'>📏 {sign_dist}{format_distance(abs(delta_dist), cur_unit)}</b></span>"
+                elif len(ranked_routes) == 1:
+                    diff_pill = "<span style='background: rgba(16, 185, 129, 0.18); color: #34d399; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>✓ SOLE ROUTE</span>"
+                else:
+                    diff_pill = "<span style='background: rgba(16, 185, 129, 0.22); color: #34d399; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);'>⭐ FASTEST BASELINE</span>"
+
                 if is_safe_route:
-                    if r_item.rank == 1:
+                    if len(ranked_routes) == 1:
+                        creative_takeaway = "💡 <b>Single Direct Route:</b> This is the only distinct physical road corridor connecting origin and destination."
+                    elif r_item.rank == 1:
                         creative_takeaway = "💡 <b>Recommended Choice:</b> Optimal balance of transit speed and clear, uninterrupted pavement."
                     else:
                         creative_takeaway = "💡 <b>Alternative Bypass:</b> Secondary viable option with open traffic flow."
@@ -3156,14 +3946,30 @@ with tab_nav:
                 feature_chips = []
                 if is_safe_route:
                     feature_chips.append("<span style='background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>⚡ Clear Corridor</span>")
+                    if r_item == fastest_candidate:
+                        feature_chips.append("<span style='background: rgba(56, 189, 248, 0.22); color: #7dd3fc; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>⏱️ Fastest</span>")
+                    if r_item == shortest_candidate:
+                        feature_chips.append("<span style='background: rgba(168, 85, 247, 0.22); color: #c084fc; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>📏 Shortest</span>")
                     if r_item.route.is_accessible:
-                        feature_chips.append("<span style='background: rgba(52, 211, 153, 0.12); color: #34d399; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>♿ Step-Free</span>")
+                        if getattr(r_item.route, "accessibility_verified", False) or getattr(r_item, "accessibility_verified", False):
+                            feature_chips.append("<span style='background: rgba(52, 211, 153, 0.15); color: #34d399; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>♿ Step-Free</span>")
+                        else:
+                            feature_chips.append("<span style='background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>♿ Paved Road</span>")
                 else:
                     feature_chips.append("<span style='background: rgba(239, 68, 68, 0.15); color: #f87171; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>⚠️ Impassable</span>")
                     feature_chips.append("<span style='background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>🔄 Detour Active</span>")
 
                 chips_html = " ".join(feature_chips)
-                via_roads = ", ".join(r_item.route.summary_roads[:2]) if r_item.route.summary_roads else "Direct Corridor"
+
+                # Identify distinct roads unique to this alternative route
+                if primary_ref and r_item.rank > 1 and primary_ref.route.summary_roads:
+                    distinct_roads = [rd for rd in r_item.route.summary_roads if rd and rd not in primary_ref.route.summary_roads]
+                    if distinct_roads:
+                        via_roads_html = f"<b style='color: #38bdf8;'>{', '.join(distinct_roads[:2])}</b> <span style='color: #64748b;'>(via {', '.join(r_item.route.summary_roads[:2])})</span>"
+                    else:
+                        via_roads_html = f"<span style='color: #94a3b8;'>{', '.join(r_item.route.summary_roads[:2]) if r_item.route.summary_roads else 'Direct Corridor'}</span>"
+                else:
+                    via_roads_html = f"<span style='color: #94a3b8;'>{', '.join(r_item.route.summary_roads[:2]) if r_item.route.summary_roads else 'Direct Corridor'}</span>"
 
                 mode_str = str(getattr(r_item.route.mode, "value", r_item.route.mode)).upper()
                 if "TRACTOR" in mode_str:
@@ -3180,12 +3986,12 @@ with tab_nav:
                     vehicle_badge = "🚗 Driving Car"
 
                 # Render 100% Clickable & Touch-Selectable Route Card
-                route_card_html = f"""<a href="/?focus_route={target_focus}" target="_top" class="touchable-route-link" title="{r_item.route.name}">
+                route_card_html = f"""<a href="#application-map-viewport" class="touchable-route-link" data-target-focus="{target_focus}" title="{r_item.route.name}">
     <div class="touchable-route-card" data-path-idx="{idx + 1}" data-route-id="{r_item.route.route_id}" data-target-focus="{target_focus}"
     style='background: rgba(10, 20, 38, 0.75); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255,255,255,0.08); {card_extra_border}
-    border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 4px 18px rgba(0,0,0,0.35);
-    opacity: {card_opacity};'>
+    {card_extra_border}
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    opacity: {card_opacity}; cursor: pointer;'>
     <div style='display: flex; justify-content: space-between; align-items: center;'>
     <b style='color: #f1f5f9; font-size: 0.96rem;'>{r_item.route.name}</b>
     <div style='display: flex; align-items: center; gap: 8px;'>
@@ -3197,19 +4003,39 @@ with tab_nav:
     {safety_badge}
     <div>{chips_html}</div>
     </div>
-    <div style='display: flex; gap: 14px; font-size: 0.90rem; color: #cbd5e1; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 6px;'>
+    <div style='display: flex; align-items: center; justify-content: space-between; font-size: 0.90rem; color: #cbd5e1; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 6px;'>
+    <div style='display: flex; gap: 14px;'>
     <span>⏱️ <b>{r_item.effective_duration_minutes:.1f} mins</b></span>
     <span>📏 <b>{dist_display}</b></span>
+    </div>
+    <div>{diff_pill}</div>
     </div>
     <div style='font-size: 0.80rem; color: #93c5fd; margin-bottom: 8px; line-height: 1.4;'>
     {creative_takeaway}
     </div>
     <div style='font-size: 0.72rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px;'>
-    📍 Via: <span style='color: #94a3b8;'>{via_roads}</span>
+    📍 Via: {via_roads_html}
     </div>
     </div>
     </a>"""
                 st.markdown("\n".join(line.strip() for line in route_card_html.splitlines() if line.strip()), unsafe_allow_html=True)
+
+                # Dedicated Native Select / Highlight Control
+                if is_active:
+                    if st.button("🎯 Active on Map • Show All Routes", key=f"btn_route_sel_{r_item.route.route_id}_{idx}", type="primary", use_container_width=True):
+                        st.session_state.focused_route_id = "ALL"
+                        st.session_state.selected_route_id = None
+                        st.session_state.auto_fit_bounds = True
+                        st.session_state.scroll_to_app_map = True
+                        st.rerun()
+                else:
+                    if st.button("🗺️ Select Route & View on Map", key=f"btn_route_sel_{r_item.route.route_id}_{idx}", type="secondary", use_container_width=True):
+                        st.session_state.focused_route_id = r_item.route.route_id
+                        st.session_state.selected_route_id = r_item.route.route_id
+                        st.session_state.selected_route_object = r_item.route
+                        st.session_state.auto_fit_bounds = True
+                        st.session_state.scroll_to_app_map = True
+                        st.rerun()
 
         # Invisible bridge component: binds clicks on the cards directly to Streamlit route selection
         import streamlit.components.v1 as components
@@ -3228,9 +4054,18 @@ with tab_nav:
                         card.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
-                            const targetFocus = card.getAttribute('data-target-focus');
-                            if (targetFocus) {
-                                window.parent.location.href = "/?focus_route=" + targetFocus;
+                            // Directly click the button in the same column
+                            const col = card.closest('[data-testid="column"]');
+                            const btn = col ? col.querySelector('button') : null;
+                            if (btn) {
+                                btn.click();
+                            } else {
+                                const targetFocus = card.getAttribute('data-target-focus');
+                                if (targetFocus) {
+                                    const url = new URL(window.parent.location.href);
+                                    url.searchParams.set("focus_route", targetFocus);
+                                    window.parent.location.replace(url.toString());
+                                }
                             }
                         });
                     });
@@ -3268,7 +4103,10 @@ with tab_nav:
         base_duration_mins=base_dur,
         origin_name=origin_display if 'origin_display' in locals() else "Origin",
         dest_name=dest_display if 'dest_display' in locals() else "Destination",
-        has_hazards_on_fastest=has_hazards
+        has_hazards_on_fastest=has_hazards,
+        ranked_routes=ranked_routes if 'ranked_routes' in locals() else None,
+        active_hazards=active_hazards if 'active_hazards' in locals() else None,
+        active_restrictions=active_restrictions if 'active_restrictions' in locals() else None
     )
 
     best_mode_id = driving_comparison["best_mode_id"]
@@ -3374,141 +4212,205 @@ with tab_nav:
                     type="primary" if (is_best or is_active) else "secondary"
                 ):
                     st.session_state.selected_driving_mode = mode["mode_id"]
-                    st.toast(f"Engaged {mode['title']} in Cockpit!", icon=mode["icon"])
+                    # Synchronize route selection and interactive map highlighting
+                    if mode.get("route_id"):
+                        st.session_state.focused_route_id = mode["route_id"]
+                        st.session_state.selected_route_id = mode["route_id"]
+                        matching_r = next((r.route for r in ranked_routes if r.route.route_id == mode["route_id"]), None)
+                        if matching_r:
+                            st.session_state.selected_route_object = matching_r
+                        st.session_state.auto_fit_bounds = True
+                        st.session_state.scroll_to_app_map = True
+                    st.toast(f"Engaged {mode['title']} on route {mode.get('route_id', 'corridor')}!", icon=mode["icon"])
                     st.rerun()
 
+    # Render Live Interactive Cockpit Mode Functionality HUD
+    active_mode_obj = next(
+        (m for m in driving_comparison["modes"] if m["mode_id"] == st.session_state.selected_driving_mode),
+        driving_comparison["modes"][0]
+    )
+    st.markdown(
+        render_cockpit_mode_functionality_hud(
+            mode_id=st.session_state.selected_driving_mode,
+            orig_coords=coords_orig if 'coords_orig' in locals() else None,
+            dest_coords=coords_dest if 'coords_dest' in locals() else None,
+            orig_name=origin_display if 'origin_display' in locals() else "Origin",
+            dest_name=dest_display if 'dest_display' in locals() else "Destination",
+            distance_km=active_mode_obj.get("distance_km", base_dist),
+            mode_info=active_mode_obj
+        ),
+        unsafe_allow_html=True
+    )
+
+    # Data-Quality Audit: View calculation details & statistical provenance
+    with st.expander("🔬 View Calculation Details & Statistical Provenance", expanded=False):
+        audit_cols = st.columns(len(driving_comparison["modes"]))
+        for col_idx, m_item in enumerate(driving_comparison["modes"]):
+            with audit_cols[col_idx]:
+                st.markdown(f"<b>{m_item['title']}</b>", unsafe_allow_html=True)
 
 with tab_guide:
     st.markdown("### 🚗 Virtual Guide & Interactive 3D Journey Simulation")
     if "active_route_item" in locals() and active_route_item:
-                # =========================================================================
-                # AI VOICE ASSISTANT: DETAILED ROUTE ANALYSIS & SPOKEN BRIEFING
-                # =========================================================================
-                clean_route_name = active_route_item.route.name.split("(")[0].strip()
-                if len(active_hazards) > 0 or len(active_restrictions) > 0:
-                    hazard_detour_phrase = f"safely evading {len(active_hazards) + len(active_restrictions)} verified corridor obstacle(s)"
-                else:
-                    hazard_detour_phrase = "corridor verified 100% open with zero road blockages on satellite pass"
+        clean_route_name = active_route_item.route.name.split("(")[0].strip()
+        if len(active_hazards) > 0 or len(active_restrictions) > 0:
+            hazard_detour_phrase = f"safely evading {len(active_hazards) + len(active_restrictions)} verified corridor obstacle(s)"
+        else:
+            hazard_detour_phrase = "corridor clear of reported road closures or hazards on current satellite pass"
 
-                # Maneuver Steps List
-                steps = getattr(active_route_item.route, "steps", [])
-                if not steps:
-                    roads_list = active_route_item.route.summary_roads or ["Regional Main Road"]
-                    steps = [
-                        {"step_num": 1, "icon": "🟢", "instruction": f"Head out on {roads_list[0]}", "road": roads_list[0], "distance_m": active_route_item.route.distance_meters / max(len(roads_list), 1)},
-                        {"step_num": 2, "icon": "🏁", "instruction": "Arrive at destination safe terminal", "road": roads_list[-1], "distance_m": 0}
-                    ]
+        # Maneuver Steps List
+        steps = getattr(active_route_item.route, "steps", [])
+        if not steps:
+            roads_list = active_route_item.route.summary_roads or ["Regional Main Road"]
+            steps = [
+                {"step_num": 1, "icon": "🟢", "instruction": f"Head out on {roads_list[0]}", "road": roads_list[0], "distance_m": active_route_item.route.distance_meters / max(len(roads_list), 1)},
+                {"step_num": 2, "icon": "🏁", "instruction": "Arrive at destination safe terminal", "road": roads_list[-1], "distance_m": 0}
+            ]
 
-                # =========================================================================
-                # GAME JOURNEY STEPPER: INTERACTIVE JUMPING CHECKPOINT PROGRESSION
-                # =========================================================================
-                route_coords = getattr(active_route_item.route, "polyline", []) or getattr(active_route_item.route, "coordinates", [])
-                route_total_dist_km = float(getattr(active_route_item.route, "distance_km", 0.0) or (getattr(active_route_item.route, "distance_meters", 0.0) / 1000.0) or 1.0)
+        # Route coordinates & distances
+        route_coords = getattr(active_route_item.route, "polyline", []) or getattr(active_route_item.route, "coordinates", [])
+        route_total_dist_km = float(getattr(active_route_item.route, "distance_km", 0.0) or (getattr(active_route_item.route, "distance_meters", 0.0) / 1000.0) or 1.0)
 
-                origin_display = st.session_state.get("user_live_label", "Starting Point")
-                dest_display = st.session_state.get("selected_dest_label", "Destination")
+        origin_display = st.session_state.get("user_live_label", "Starting Point")
+        dest_display = st.session_state.get("selected_dest_label", "Destination")
 
-                # Dynamically extract milestones for ANY global coordinates
-                journey_milestones = extract_journey_game_milestones(
-                    origin_label=origin_display,
-                    dest_label=dest_display,
-                    polyline=route_coords,
-                    steps=steps,
-                    total_distance_km=route_total_dist_km
-                )
+        # Dynamically extract milestones for ANY global coordinates
+        journey_milestones = extract_journey_game_milestones(
+            origin_label=origin_display,
+            dest_label=dest_display,
+            polyline=route_coords,
+            steps=steps,
+            total_distance_km=route_total_dist_km
+        )
 
-                # Manage step state keyed to active route
-                route_game_key = f"game_step_{active_route_item.route.route_id}"
-                if route_game_key not in st.session_state:
-                    st.session_state[route_game_key] = 0
+        # Manage step state keyed to active route
+        route_game_key = f"game_step_{active_route_item.route.route_id}"
+        if route_game_key not in st.session_state:
+            st.session_state[route_game_key] = 0
 
-                cur_game_idx = st.session_state[route_game_key]
-                cur_game_idx = max(0, min(cur_game_idx, len(journey_milestones) - 1))
+        cur_game_idx = st.session_state[route_game_key]
+        cur_game_idx = max(0, min(cur_game_idx, len(journey_milestones) - 1))
 
-                # Automatic Satellite Motion & Milestone Crossing Detection
-                user_current_pt = coords_orig if coords_orig else detected_coords
-                auto_step_idx, newly_crossed_m, detected_place_summary = detect_crossed_milestones(
-                    user_coords=user_current_pt,
-                    current_step=cur_game_idx,
-                    milestones=journey_milestones,
-                    polyline=route_coords
-                )
+        # Automatic Satellite Motion & Milestone Crossing Detection
+        user_current_pt = coords_orig if coords_orig else detected_coords
+        auto_step_idx, newly_crossed_m, detected_place_summary = detect_crossed_milestones(
+            user_coords=user_current_pt,
+            current_step=cur_game_idx,
+            milestones=journey_milestones,
+            polyline=route_coords
+        )
 
-                # Automatically advance checkpoint if user crossed any stop during travel!
-                if auto_step_idx > cur_game_idx:
-                    cur_game_idx = auto_step_idx
-                    st.session_state[route_game_key] = auto_step_idx
-                    if newly_crossed_m:
-                        st.toast(f"🏃 Satellite GPS: Crossed {newly_crossed_m.label}! Character hopped forward.", icon="🎯")
+        # Automatically advance checkpoint if user crossed any stop during travel!
+        if auto_step_idx > cur_game_idx:
+            cur_game_idx = auto_step_idx
+            st.session_state[route_game_key] = auto_step_idx
+            if newly_crossed_m:
+                st.toast(f"🏃 Satellite GPS: Crossed {newly_crossed_m.label}! Character hopped forward.", icon="🎯")
 
-                st.session_state[route_game_key] = cur_game_idx
+        st.session_state[route_game_key] = cur_game_idx
 
-                # Render Game Journey HUD with parallel virtual companion & process banner
-                game_avatar = st.session_state.get("selected_travel_mode", "WALK").lower()
-                is_user_moving = float(st.session_state.get("user_speed_kmh", 0.0)) > 1.0 or bool(st.session_state.get("is_in_transit", False))
-                game_html = build_game_journey_html(
-                    milestones=journey_milestones,
-                    current_step=cur_game_idx,
-                    traveler_avatar=game_avatar,
-                    auto_voice=False,
-                    detected_place=detected_place_summary,
-                    is_moving=is_user_moving,
-                    user_speed_kmh=st.session_state.get("user_speed_kmh", 0.0),
-                    polyline=route_coords,
-                    auto_drive=False
-                )
-                components.html(game_html, height=340)
+        friendly_turns = generate_friendly_virtual_guide_turns(
+            steps=steps,
+            origin=origin_display,
+            destination=dest_display,
+            travel_mode=travel_mode_str
+        )
 
-                st.markdown("""
-                <div style='background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 8px 16px; margin-top: 4px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
-                    <div style='display: flex; align-items: center; gap: 8px; font-size: 0.80rem; color: #a7f3d0;'>
-                        <span>🛰️</span>
-                        <span><b>Autonomous Satellite Transit Detection:</b> Continuous real-time GPS & motion tracking evading obstacles on satellite view.</span>
-                    </div>
-                    <span style='background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);'>
-                        ● LIVE SATELLITE SYNC
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
+        # =========================================================================
+        # SECTION 1 — VIRTUAL RUNNER & ROUTE PROCESS BANNER
+        # =========================================================================
+        st.markdown("#### 🏃 Section 1: Virtual Runner & Route Process Banner")
+        game_avatar = st.session_state.get("selected_travel_mode", "WALK").lower()
+        # Initial state must always be stationary until user explicitly clicks Move in Parallel
+        is_user_moving = bool(st.session_state.get("virtual_guide_moving", False))
+        guide_speed_kmh = float(st.session_state.get("user_speed_kmh", 0.0)) if is_user_moving else 0.0
 
+        game_html = build_game_journey_html(
+            milestones=journey_milestones,
+            current_step=cur_game_idx,
+            traveler_avatar=game_avatar,
+            auto_voice=False,
+            detected_place=detected_place_summary,
+            is_moving=is_user_moving,
+            user_speed_kmh=guide_speed_kmh,
+            polyline=route_coords,
+            auto_drive=False
+        )
+        components.html(game_html, height=340)
 
-                # =========================================================================
-                # VIRTUAL GUIDE'S VISUAL PICTURE FLOW PROCESS (FOR EVERY TRAVELER)
-                # =========================================================================
-                friendly_turns = generate_friendly_virtual_guide_turns(
-                    steps=steps,
-                    origin=origin_display,
-                    destination=dest_display,
-                    travel_mode=travel_mode_str
-                )
-                turns_guide_html = build_virtual_guide_turns_html(
-                    friendly_turns=friendly_turns,
-                    origin=origin_display,
-                    destination=dest_display,
-                    travel_mode=travel_mode_str
-                )
-                components.html(turns_guide_html, height=720)
+        # =========================================================================
+        # SECTION 2 — VIRTUAL VEHICLE COMPANION (EXPANDED BY DEFAULT)
+        # =========================================================================
+        st.markdown("#### 🚗 Section 2: Virtual Vehicle Companion")
+        companion_hud = build_virtual_companion_hud_html(
+            session_id=f"SESS_{route_game_key}",
+            origin_name=origin_display,
+            dest_name=dest_display,
+            travel_mode=travel_mode_str.lower(),
+            initial_state="MOVING" if is_user_moving else "ROUTE_READY",
+            polyline=route_coords,
+            steps=friendly_turns,
+            current_speed_kmh=guide_speed_kmh,
+            total_distance_m=route_total_dist_km * 1000.0,
+            current_step_idx=cur_game_idx
+        )
+        components.html(companion_hud, height=315)
 
-                # =========================================================================
-                # LIVE VIRTUAL TRAVEL COMPANION (15-STATE SYNCHRONIZED TRACKING HUD)
-                # =========================================================================
-                with st.expander("🚶‍♂️ Live Virtual Travel Companion & Navigation State Machine", expanded=True):
-                    companion_hud = build_virtual_companion_hud_html(
-                        session_id=f"SESS_{route_game_key}",
-                        origin_name=origin_display,
-                        dest_name=dest_display,
-                        travel_mode=travel_mode_str.lower(),
-                        initial_state="MOVING" if is_user_moving else "ROUTE_READY",
-                        polyline=route_coords,
-                        steps=friendly_turns,
-                        current_speed_kmh=st.session_state.get("user_speed_kmh", 0.0),
-                        total_distance_m=route_total_dist_km * 1000.0,
-                        current_step_idx=cur_game_idx
-                    )
-                    components.html(companion_hud, height=440)
+        # =========================================================================
+        # SECTION 3 — VIRTUAL GUIDE & REALISTIC 3D SCENE
+        # =========================================================================
+        st.markdown("#### 🧑‍✈️ Section 3: Virtual Human Guide & Realistic 3D Scenery")
+        always_visible_guide_tab_html = build_always_visible_virtual_guide_html(
+            origin_name=origin_display,
+            dest_name=dest_display,
+            polyline=route_coords,
+            steps=friendly_turns if friendly_turns else steps,
+            travel_mode=travel_mode_str.lower(),
+            total_distance_m=route_total_dist_km * 1000.0,
+            current_speed_kmh=guide_speed_kmh,
+            current_step_idx=cur_game_idx,
+            is_live_gps=bool(guide_speed_kmh > 0 and not st.session_state.get("is_simulation_mode", True)),
+            session_id=f"GUIDE_TAB_{route_game_key}"
+        )
+        components.html(always_visible_guide_tab_html, height=460)
+
+        # =========================================================================
+        # SECTION 4 — ADDITIONAL ROUTE DETAILS & MANEUVERS
+        # =========================================================================
+        with st.expander("📖 Section 4: Additional Route Details, Landmark Storybook & Maneuvers", expanded=False):
+            turns_guide_html = build_virtual_guide_turns_html(
+                friendly_turns=friendly_turns,
+                origin=origin_display,
+                destination=dest_display,
+                travel_mode=travel_mode_str
+            )
+            components.html(turns_guide_html, height=620)
 
     else:
-        st.info("🧭 Please select origin and destination in the Navigation tab to start the Virtual Guide.")
+        # Standby Virtual Human Guide when no route is active yet
+        origin_standby_disp = st.session_state.get("user_live_label", "Starting Point")
+        dest_standby_disp = st.session_state.get("selected_dest_label", "Destination")
+        nav_mode_str = st.session_state.get("selected_travel_mode", "CAR").lower()
+        st.markdown("#### 🏃 Section 1: Virtual Runner & Route Process Banner")
+        st.info("🧭 Select an origin and destination in the Navigation tab to initialize your Virtual Runner & Route Process Banner.")
+        st.markdown("#### 🚗 Section 2: Virtual Vehicle Companion")
+        st.info("🚗 Companion HUD will activate when a route is configured.")
+        st.markdown("#### 🧑‍✈️ Section 3: Virtual Guide Scene")
+        always_visible_standby_html = build_always_visible_virtual_guide_html(
+            origin_name=origin_standby_disp,
+            dest_name=dest_standby_disp,
+            polyline=[],
+            steps=[],
+            travel_mode=nav_mode_str,
+            total_distance_m=0.0,
+            current_speed_kmh=0.0,
+            current_step_idx=0,
+            is_live_gps=False,
+            session_id="STANDBY_GUIDE_TAB"
+        )
+        components.html(always_visible_standby_html, height=460)
+
+        st.info("🧭 Select an origin and destination in the Navigation tab to synchronize live corridor turns and checkpoints with your Virtual Guide.")
         if st.button("🧭 Go to Navigation Tab & Select Route", key="btn_guide_redirect_nav", type="primary"):
             st.session_state.target_tab = "nav"
             st.session_state.scroll_to_app_map = True
@@ -3551,6 +4453,58 @@ with tab_facilities:
     if cat_quick_pills and cat_quick_pills != st.session_state.get("selected_sidebar_category"):
         st.session_state.selected_sidebar_category = cat_quick_pills
         st.rerun()
+
+    # Dynamic Facility Search Mode & Radius Controls
+    f_bar_c1, f_bar_c2, f_bar_c3 = st.columns([1.5, 1.2, 0.8])
+    with f_bar_c1:
+        f_modes = {
+            "near_destination": "📍 Near Destination",
+            "near_origin": "🛫 Near Origin",
+            "along_route": "🛣️ Along Route Corridor",
+            "near_map": "🗺️ Near Map Center"
+        }
+        cur_f_mode = st.session_state.get("fac_search_mode", "near_destination")
+        sel_mode_val = st.selectbox(
+            "Search Proximity Anchor:",
+            options=list(f_modes.values()),
+            index=list(f_modes.keys()).index(cur_f_mode) if cur_f_mode in f_modes else 0,
+            key="sel_fac_proximity_anchor_box"
+        )
+        res_f_mode = next(k for k, v in f_modes.items() if v == sel_mode_val)
+        if res_f_mode != st.session_state.get("fac_search_mode"):
+            st.session_state.fac_search_mode = res_f_mode
+            st.rerun()
+
+    with f_bar_c2:
+        rad_options = [3.0, 5.0, 10.0, 20.0, 35.0]
+        cur_rad_val = st.session_state.get("fac_radius_km", 10.0)
+        c_idx_rad = rad_options.index(cur_rad_val) if cur_rad_val in rad_options else 2
+        sel_rad_val = st.selectbox(
+            "Search Radius:",
+            options=rad_options,
+            index=c_idx_rad,
+            format_func=lambda r: f"Within {r:.0f} km",
+            key="sel_fac_radius_select_box"
+        )
+        if sel_rad_val != st.session_state.get("fac_radius_km"):
+            st.session_state.fac_radius_km = sel_rad_val
+            st.rerun()
+
+    with f_bar_c3:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        if st.button("🔄 Refresh", key="btn_refresh_facilities_live", use_container_width=True, help="Re-query live OpenStreetMap POIs"):
+            st.rerun()
+
+    # Recompute active category facilities with selected proximity mode and radius
+    active_category_facilities = get_facilities_for_category(
+        category=cur_cat_name,
+        polyline=primary_route_poly,
+        origin_coords=coords_orig,
+        dest_coords=coords_dest,
+        search_mode=st.session_state.get("fac_search_mode", "near_destination"),
+        radius_km=st.session_state.get("fac_radius_km", 10.0),
+        enable_demo_mode=st.session_state.get("enable_demo_mode", False)
+    )
 
     # Find category info
     matched_cat_enum = FacilityCategory.ALL_FACILITIES
@@ -3705,6 +4659,11 @@ with tab_facilities:
                         st.session_state.selected_dest_coords = (fac_sos["latitude"], fac_sos["longitude"])
                         st.session_state.selected_dest_label = fac_sos["name"]
                         st.session_state.pending_dest = fac_sos["name"]
+                        st.session_state.last_synced_dest = fac_sos["name"]
+                        st.session_state.txt_dest = fac_sos["name"]
+                        st.session_state.selected_dest_id = fac_sos.get("facility_id", "sos_fac")
+                        st.session_state.dest_candidates = []
+                        st.session_state.dest_candidates_query = ""
                         st.session_state.movement_index = 0
                         st.session_state.is_in_transit = False
                         st.session_state.user_speed_kmh = 0.0
@@ -3712,6 +4671,7 @@ with tab_facilities:
                         st.session_state.auto_fit_bounds = True
                         st.session_state.show_emergency_amenities_on_map = True
                         st.session_state.scroll_to_app_map = True
+                        st.session_state.switch_to_nav_tab = True
                         st.toast(f"🧭 Routed to {fac_sos['name']} on Application Maps!", icon="🚨")
                         st.rerun()
                 with sos_act2:
@@ -3752,6 +4712,11 @@ with tab_facilities:
                         st.session_state.selected_dest_coords = (custom_f["latitude"], custom_f["longitude"])
                         st.session_state.selected_dest_label = custom_f["name"]
                         st.session_state.pending_dest = custom_f["name"]
+                        st.session_state.last_synced_dest = custom_f["name"]
+                        st.session_state.txt_dest = custom_f["name"]
+                        st.session_state.selected_dest_id = custom_f.get("facility_id", "custom_fac")
+                        st.session_state.dest_candidates = []
+                        st.session_state.dest_candidates_query = ""
                         st.session_state.movement_index = 0
                         st.session_state.is_in_transit = False
                         st.session_state.user_speed_kmh = 0.0
@@ -3760,6 +4725,7 @@ with tab_facilities:
                         st.session_state.auto_fit_bounds = True
                         st.session_state.show_category_facilities_on_map = True
                         st.session_state.scroll_to_app_map = True
+                        st.session_state.switch_to_nav_tab = True
                         st.toast(f"🧭 Routing to {custom_f['name']} — displaying all candidate routes on Application Maps!", icon="🔍")
                         st.rerun()
 
@@ -3774,12 +4740,20 @@ with tab_facilities:
             with grid_cols[idx % 3]:
                 f_phone = fac.get("contact_phone")
                 f_phone_display = f"<div style='font-size: 0.72rem; color: #38bdf8; margin-top: 4px;'>📞 {f_phone}</div>" if f_phone else ""
-                f_rating = fac.get("rating", "4.5 ⭐")
+
+                f_rating_val = fac.get("rating")
+                if f_rating_val is not None:
+                    f_rating_display = f"<span style='color: #f59e0b; font-weight: 700;'>★ {f_rating_val:.1f}</span>"
+                else:
+                    f_rating_display = "<span style='color: #94a3b8; font-style: italic;'>Rating unavailable</span>"
+
+                f_source = fac.get("data_source", "OpenStreetMap Live POI")
+                f_status = fac.get("verification_status", "OSM Mapped POI")
 
                 st.markdown(f"""
                 <div style='background: rgba(10, 20, 38, 0.80); border: 1.5px solid {cat_info["border_badge"]};
                             border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column;
-                            justify-content: space-between; min-height: 220px; box-shadow: 0 4px 16px rgba(0,0,0,0.35);'>
+                            justify-content: space-between; min-height: 230px; box-shadow: 0 4px 16px rgba(0,0,0,0.35);'>
                     <div>
                         <div style='display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;'>
                             <div style='font-size: 1.35rem;'>{fac.get("amenity_icon", cat_info["icon"])}</div>
@@ -3798,23 +4772,29 @@ with tab_facilities:
                         <div style='font-size: 0.72rem; color: #cbd5e1; margin-top: 4px;'>
                             <b>Hours:</b> <span style='color: #a7f3d0;'>{fac.get("operating_hours", "Open")}</span>
                         </div>
-                        <div style='font-size: 0.72rem; color: #f59e0b; margin-top: 2px;'>
-                            <b>Rating:</b> {f_rating}
+                        <div style='font-size: 0.72rem; margin-top: 2px;'>
+                            <b>Rating:</b> {f_rating_display}
                         </div>
                         {f_phone_display}
                     </div>
                     <div style='font-size: 0.66rem; color: #64748b; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 4px;'>
-                        📍 {fac.get("address", "Transit Corridor")}
+                        📍 {fac.get("address", "Transit Corridor")}<br/>
+                        <span style='color: #38bdf8;'>● {f_source} • {f_status}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                col_act1, col_act2 = st.columns([1, 1])
+                col_act1, col_act2, col_act3 = st.columns([1.1, 1.0, 0.9])
                 with col_act1:
                     if st.button("🧭 Route Here", key=f"btn_cat_route_{fac.get('facility_id', idx)}", use_container_width=True, type="primary"):
                         st.session_state.selected_dest_coords = (fac["latitude"], fac["longitude"])
                         st.session_state.selected_dest_label = fac["name"]
                         st.session_state.pending_dest = fac["name"]
+                        st.session_state.last_synced_dest = fac["name"]
+                        st.session_state.txt_dest = fac["name"]
+                        st.session_state.selected_dest_id = fac.get("facility_id", f"fac_{idx}")
+                        st.session_state.dest_candidates = []
+                        st.session_state.dest_candidates_query = ""
                         st.session_state.movement_index = 0
                         st.session_state.is_in_transit = False
                         st.session_state.user_speed_kmh = 0.0
@@ -3827,6 +4807,16 @@ with tab_facilities:
                         st.toast(f"🧭 Routing to {fac['name']} on Pathfinder Map!", icon="🗺️")
                         st.rerun()
                 with col_act2:
+                    if st.button("📍 Focus Map", key=f"btn_cat_focus_{fac.get('facility_id', idx)}", use_container_width=True):
+                        st.session_state.map_center_lat = fac["latitude"]
+                        st.session_state.map_center_lon = fac["longitude"]
+                        st.session_state.map_zoom = 16
+                        st.session_state.auto_fit_bounds = False
+                        st.session_state.scroll_to_app_map = True
+                        st.session_state.switch_to_nav_tab = True
+                        st.toast(f"📍 Centered map on {fac['name']}", icon="🗺️")
+                        st.rerun()
+                with col_act3:
                     if f_phone:
                         if st.button("📞 Call", key=f"btn_cat_call_{fac.get('facility_id', idx)}", use_container_width=True):
                             st.session_state.active_simulated_call = {
@@ -3838,7 +4828,7 @@ with tab_facilities:
                             st.rerun()
                     else:
                         if "Emergency" in cur_cat_name or "🚨" in cur_cat_name:
-                            if st.button("📞 Call 112", key=f"btn_cat_call_112_{fac.get('facility_id', idx)}", use_container_width=True):
+                            if st.button("📞 112", key=f"btn_cat_call_112_{fac.get('facility_id', idx)}", use_container_width=True):
                                 st.session_state.active_simulated_call = {
                                     "name": f"{fac['name']} (Emergency Line)",
                                     "phone": nat_emergency["primary_sos"],
@@ -3846,7 +4836,7 @@ with tab_facilities:
                                 }
                                 st.rerun()
                         else:
-                            if st.button("📞 Inquire", key=f"btn_cat_inq_{fac.get('facility_id', idx)}", use_container_width=True):
+                            if st.button("ℹ️ Info", key=f"btn_cat_inq_{fac.get('facility_id', idx)}", use_container_width=True):
                                 st.session_state.active_simulated_call = {
                                     "name": fac["name"],
                                     "phone": "Transit Information",
@@ -3859,12 +4849,31 @@ with tab_facilities:
 with tab_places:
     st.markdown("### 🌟 Suggested Places & Highlights Near Location")
     # =========================================================================
-    # SUGGESTED PLACES & HIGHLIGHTS AT LOCATION (WITH GOOGLE MAPS REDIRECTION)
+    # SUGGESTED PLACES & HIGHLIGHTS AT LOCATION (DYNAMIC LIVE POIS)
     # =========================================================================
     st.markdown("---")
-    ref_lat = coords_orig[0] if coords_orig else detected_coords[0]
-    ref_lon = coords_orig[1] if coords_orig else detected_coords[1]
-    ref_label = st.session_state.get("user_live_label", "Current Location").replace("📍", "").strip()
+    
+    # Priority: Destination if selected, otherwise Origin / Current Location
+    focus_target = "Destination" if coords_dest else "Origin"
+    if coords_dest and coords_orig:
+        col_focus1, col_focus2 = st.columns([1.5, 3])
+        with col_focus1:
+            focus_target = st.radio("Explore POIs Around:", ["Destination", "Origin"], horizontal=True, key="places_explore_anchor")
+    
+    if focus_target == "Destination" and coords_dest:
+        ref_lat = coords_dest[0]
+        ref_lon = coords_dest[1]
+        raw_dest_name = st.session_state.get("selected_dest_label") or dest_text or "Destination"
+        ref_label = raw_dest_name.replace("📍", "").strip()
+    elif coords_orig:
+        ref_lat = coords_orig[0]
+        ref_lon = coords_orig[1]
+        raw_orig_name = st.session_state.get("selected_orig_label") or orig_text or st.session_state.get("user_live_label", "Origin")
+        ref_label = raw_orig_name.replace("📍", "").strip()
+    else:
+        ref_lat = detected_coords[0]
+        ref_lon = detected_coords[1]
+        ref_label = st.session_state.get("user_live_label", "Current Location").replace("📍", "").strip()
 
     suggested_places = generate_suggested_places_at_location(
         lat=ref_lat,
@@ -3881,38 +4890,56 @@ with tab_places:
                     SUGGESTED PLACES & HIGHLIGHTS NEAR {ref_label.upper()}
                 </div>
                 <div style='font-size: 0.74rem; color: #94a3b8;'>
-                    Top-rated sights, culinary spots, and services. Click any place to redirect to official Google Maps information.
+                    Verified points of interest, cultural landmarks, and culinary highlights near your selected {focus_target.lower()}.
                 </div>
             </div>
         </div>
         <span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;'>
-            ● LIVE GOOGLE MAPS DIRECTORY
+            ● LIVE GEOGRAPHIC POI DIRECTORY
         </span>
     </div>
     """, unsafe_allow_html=True)
 
-    sug_cols = st.columns(3)
-    for idx, place in enumerate(suggested_places):
-        col_idx = idx % 3
-        with sug_cols[col_idx]:
-            st.markdown(render_place_details_card_html(place), unsafe_allow_html=True)
-            clean_name = place['name']
-            for prefix in [ref_label, ref_label.split(',')[0]]:
-                clean_name = clean_name.replace(prefix, '').strip(' -–,')
-            if not clean_name or len(clean_name) < 3:
+    if not suggested_places:
+        st.info(f"ℹ️ No points of interest or cultural highlights found within the immediate radius of {ref_label}. Select a different destination or explore nearby facilities.")
+    else:
+        sug_cols = st.columns(3)
+        for idx, place in enumerate(suggested_places):
+            col_idx = idx % 3
+            with sug_cols[col_idx]:
+                st.markdown(render_place_details_card_html(place), unsafe_allow_html=True)
                 clean_name = place['name']
-            if len(clean_name) > 28:
-                clean_name = clean_name[:26] + "..."
-            if st.button(f"🧭 Route to {clean_name} on Map", key=f"btn_nav_sug_{place['place_id']}", use_container_width=True, type="primary"):
-                st.session_state.selected_dest_coords = (place["latitude"], place["longitude"])
-                st.session_state.selected_dest_label = place["name"]
-                st.session_state.pending_dest = place["name"]
-                st.session_state.movement_index = 0
-                st.session_state.is_in_transit = False
-                st.session_state.scroll_to_app_map = True
-                st.session_state.switch_to_nav_tab = True
-                st.toast(f"🧭 Routing to {place['name']} on Pathfinder Map!", icon="🎯")
-                st.rerun()
+                for prefix in [ref_label, ref_label.split(',')[0]]:
+                    clean_name = clean_name.replace(prefix, '').strip(' -–,')
+                if not clean_name or len(clean_name) < 3:
+                    clean_name = place['name']
+                if len(clean_name) > 22:
+                    clean_name = clean_name[:20] + "..."
+                
+                bcol1, bcol2 = st.columns(2)
+                with bcol1:
+                    if st.button("🧭 Route Here", key=f"btn_nav_sug_{place['place_id']}", use_container_width=True, type="primary"):
+                        st.session_state.selected_dest_coords = (place["latitude"], place["longitude"])
+                        st.session_state.selected_dest_label = place["name"]
+                        st.session_state.last_synced_dest = place["name"]
+                        st.session_state.pending_dest = place["name"]
+                        st.session_state.txt_dest = place["name"]
+                        st.session_state.movement_index = 0
+                        st.session_state.is_in_transit = False
+                        st.session_state.scroll_to_app_map = True
+                        st.session_state.switch_to_nav_tab = True
+                        st.toast(f"🧭 Destination set to {place['name']}!", icon="🎯")
+                        st.rerun()
+                with bcol2:
+                    if st.button("📍 Focus Map", key=f"btn_focus_sug_{place['place_id']}", use_container_width=True):
+                        st.session_state.map_center_lat = place["latitude"]
+                        st.session_state.map_center_lon = place["longitude"]
+                        st.session_state.map_zoom = 16
+                        st.session_state.auto_fit_bounds = False
+                        st.session_state.scroll_to_app_map = True
+                        st.session_state.switch_to_nav_tab = True
+                        st.toast(f"📍 Centered map on {place['name']}", icon="🗺️")
+                        st.rerun()
 
 # =========================================================================
 # FLOATING CIRCULAR CHATBOT: A.U.R.A. (Adaptive User Route Assistant)
