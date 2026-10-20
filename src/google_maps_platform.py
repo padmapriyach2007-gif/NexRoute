@@ -3222,6 +3222,8 @@ def build_google_maps_javascript_html(
                     statusEl.innerHTML = "⚠️ Geocoding service temporary timeout";
                     setTimeout(function() {{ statusEl.style.display = 'none'; }}, 3000);
                 }});
+        }};
+
         // ----------------------------------------------------
         // LIVE MAP TOOLBAR & CATEGORY PLATFORM FUNCTIONS
         // ----------------------------------------------------
@@ -4518,12 +4520,18 @@ def build_google_maps_javascript_html(
                     window.leafletBaseLayer.bringToBack();
                 }};
 
+                var cartoFallback = L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png', {{
+                    subdomains: 'abcd',
+                    maxZoom: 20
+                }});
+
                 var osmFallback = L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
                     maxZoom: 19
                 }});
 
                 baseMapLayer.on('tileerror', function() {{
-                    if (!lMap.hasLayer(osmFallback)) osmFallback.addTo(lMap);
+                    if (!lMap.hasLayer(cartoFallback)) cartoFallback.addTo(lMap);
+                    else if (!lMap.hasLayer(osmFallback)) osmFallback.addTo(lMap);
                 }});
 
                 setTimeout(function() {{ lMap.invalidateSize(); }}, 200);
