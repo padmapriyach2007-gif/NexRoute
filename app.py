@@ -4233,6 +4233,24 @@ with tab_nav:
     best_mode_id = driving_comparison["best_mode_id"]
     best_reason = driving_comparison["best_reason"]
 
+    eco_mode_obj = next((m for m in driving_comparison["modes"] if m["mode_id"] == "DRIVE_ECO"), {})
+    eco_savings = eco_mode_obj.get("savings_pct", 15.0)
+
+    if best_mode_id == "DRIVE_ECO":
+        localized_best_reason = t("cockpit.verdict_eco", savings=eco_savings)
+    elif best_mode_id == "DRIVE_SAFEST":
+        localized_best_reason = t("cockpit.verdict_safest")
+    elif best_mode_id == "DRIVE_TOLL_FREE":
+        localized_best_reason = t("cockpit.verdict_toll_free")
+    elif best_mode_id == "DRIVE_EV":
+        localized_best_reason = t("cockpit.verdict_ev")
+    else:
+        localized_best_reason = t("cockpit.verdict_fastest")
+
+    cockpit_title = t("cockpit.title")
+    cockpit_sub = t("cockpit.subtitle")
+    ai_verdict_lbl = t("cockpit.ai_verdict")
+
     # Automotive Cockpit Header Banner
     st.markdown(f"""
     <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%);
@@ -4245,10 +4263,10 @@ with tab_nav:
             </div>
             <div>
                 <div style='font-size: 1.05rem; font-weight: 900; color: #f8fafc; letter-spacing: 0.03em; text-transform: uppercase;'>
-                    AUTOMOTIVE COCKPIT DRIVE SELECTOR & AI STRATEGY
+                    {cockpit_title}
                 </div>
                 <div style='font-size: 0.74rem; color: #94a3b8; margin-top: 2px;'>
-                    5 calibrated powertrain & routing profiles • Dynamic speed, energy, and safety trade-off telemetry
+                    {cockpit_sub}
                 </div>
             </div>
         </div>
@@ -4256,10 +4274,10 @@ with tab_nav:
             <span style='display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399;'></span>
             <div>
                 <div style='font-size: 0.66rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.05em;'>
-                    ⭐ AI COPILOT VERDICT
+                    ⭐ {ai_verdict_lbl}
                 </div>
                 <div style='font-size: 0.76rem; color: #f1f5f9; font-weight: 700; margin-top: 1px;'>
-                    {best_reason}
+                    {localized_best_reason}
                 </div>
             </div>
         </div>
@@ -4325,7 +4343,7 @@ with tab_nav:
             with dm_cols[idx]:
                 card_html = render_driving_mode_cockpit_card_html(mode, is_active=is_active, is_best=is_best)
                 st.markdown(card_html, unsafe_allow_html=True)
-                btn_label = "✓ Engaged" if is_active else ("⚡ Engage Best" if is_best else "Engage Mode")
+                btn_label = f"✓ {t('cockpit.engaged')}" if is_active else (f"⚡ {t('cockpit.engage_best')}" if is_best else t("cockpit.engage_mode"))
                 if st.button(
                     btn_label,
                     key=f"btn_mode_{mode['mode_id']}",
@@ -4363,12 +4381,7 @@ with tab_nav:
         unsafe_allow_html=True
     )
 
-    # Data-Quality Audit: View calculation details & statistical provenance
-    with st.expander("🔬 View Calculation Details & Statistical Provenance", expanded=False):
-        audit_cols = st.columns(len(driving_comparison["modes"]))
-        for col_idx, m_item in enumerate(driving_comparison["modes"]):
-            with audit_cols[col_idx]:
-                st.markdown(f"<b>{m_item['title']}</b>", unsafe_allow_html=True)
+
 
 with tab_guide:
     st.markdown(f"### 🚗 {t('guide.title')}")

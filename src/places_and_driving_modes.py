@@ -279,137 +279,131 @@ def render_cockpit_mode_functionality_hud(
     # Base Google Maps URL
     gmaps_base = f"https://www.google.com/maps/dir/?api=1&origin={orig_str}&destination={dest_str}&travelmode=driving"
 
+    try:
+        from src.i18n import t
+    except ImportError:
+        def t(k, **kw): return k
+
     if mode_id == "DRIVE_TOLL_FREE":
         gmaps_active_url = f"{gmaps_base}&avoid=tolls"
-        mode_title = "💰 Toll-Free & Budget Drive Mode Active"
+        mode_title = f"💰 {t('cockpit.toll_free_hud_title')}"
         accent = "#fbbf24"
         features_list = [
-            ("🪙 Zero FASTag Charges", "Toll plazas like Kaza & NH-16 bypasses excluded automatically.", "#fbbf24"),
-            ("🛣️ Service Arterial Routing", "Transits via high-quality state arterial links.", "#38bdf8"),
-            ("💵 Budget Ledger Saved", f"₹{85 if distance_km > 15 else 45} estimated toll fees preserved.", "#34d399"),
-            ("🗺️ Google Maps Flag", "Google Maps launched with <code>&avoid=tolls</code> directive.", "#a855f7")
+            ("🪙 Zero FASTag Charges", t('cockpit.toll_free_title'), "#fbbf24"),
+            ("🛣️ Service Arterial Routing", t('cockpit.toll_badge'), "#38bdf8"),
+            ("💵 Budget Ledger Saved", f"₹{85 if distance_km > 15 else 45} {t('cockpit.fuel_label')}", "#34d399"),
+            ("🗺️ Google Maps Flag", "Google Maps (&avoid=tolls)", "#a855f7")
         ]
-        action_label = "🪙 Launch Google Maps (Tolls Excluded Mode)"
+        action_label = f"🪙 {t('cockpit.toll_action')}"
         extra_hud = f"""
         <div style='background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🪙</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #fbbf24;'>FASTag Toll Exemption Active</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>Verified route bypasses all automated toll plazas with zero electronic fee deduction.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #fbbf24;'>{t('cockpit.toll_badge')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.verdict_toll_free')}</div>
                 </div>
             </div>
-            <span style='background: #fbbf24; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>100% TOLL-FREE</span>
+            <span style='background: #fbbf24; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.toll_badge')}</span>
         </div>
         """
 
     elif mode_id == "DRIVE_EV":
         gmaps_active_url = f"https://www.google.com/maps/search/ev+charging+station+near+{dest_str}"
-        mode_title = "⚡ EV Optimal Drive & Charging Corridor Active"
+        mode_title = f"⚡ {t('cockpit.ev_hud_title')}"
         accent = "#06b6d4"
         kwh_est = round(distance_km * 0.15, 2)
         battery_pct = max(2, round((kwh_est / 40.0) * 100))
         features_list = [
-            ("🔋 Battery Consumption", f"~{kwh_est} kWh ({battery_pct}% of 40 kWh pack)", "#06b6d4"),
-            ("⚡ En-Route Superchargers", "Tata Power EZ Charge & Ather Grid indexed on route", "#38bdf8"),
-            ("🔄 Regenerative Descent", "Elevation downhill recovery adds +4% range buffer", "#34d399"),
-            ("🔌 Live Charging Nav", "1-click direct navigation to nearest 60kW DC fast charger", "#c084fc")
+            ("🔋 Battery Consumption", f"~{kwh_est} kWh ({battery_pct}% {t('cockpit.battery')})", "#06b6d4"),
+            ("⚡ En-Route Superchargers", t('cockpit.ev_action'), "#38bdf8"),
+            ("🔄 Regenerative Descent", "+4% range buffer", "#34d399"),
+            ("🔌 Live Charging Nav", t('cockpit.ev_hud_title'), "#c084fc")
         ]
-        action_label = "⚡ Find En-Route EV Superchargers in Google Maps"
+        action_label = f"⚡ {t('cockpit.ev_action')}"
         extra_hud = f"""
         <div style='background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px;'>
             <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;'>
-                <span style='font-size: 0.82rem; font-weight: 800; color: #06b6d4;'>⚡ En-Route EV Charging Hubs</span>
-                <span style='font-size: 0.70rem; color: #94a3b8;'>CCS2 & Type-2 Available</span>
+                <span style='font-size: 0.82rem; font-weight: 800; color: #06b6d4;'>⚡ {t('cockpit.ev_title')}</span>
+                <span style='font-size: 0.70rem; color: #94a3b8;'>Battery: 40 kWh</span>
             </div>
-            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;'>
-                <div style='background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 6px 10px;'>
-                    <div style='font-size: 0.74rem; font-weight: 700; color: #f8fafc;'>⚡ Tata Power EZ Charge</div>
-                    <div style='font-size: 0.68rem; color: #34d399;'>60kW DC Fast • 2 Available • 1.8 km</div>
-                </div>
-                <div style='background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 6px 10px;'>
-                    <div style='font-size: 0.74rem; font-weight: 700; color: #f8fafc;'>🔋 Ather Grid Fast Point</div>
-                    <div style='font-size: 0.68rem; color: #38bdf8;'>Point-to-Point Hub • 3.4 km</div>
-                </div>
-                <div style='background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 6px 10px;'>
-                    <div style='font-size: 0.74rem; font-weight: 700; color: #f8fafc;'>⚡ Relux Electric Station</div>
-                    <div style='font-size: 0.68rem; color: #a855f7;'>Dual CCS2 • 24/7 Lounge • 5.1 km</div>
-                </div>
+            <div style='background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 8px 12px; font-size: 0.74rem; color: #e2e8f0;'>
+                🔋 {kwh_est} kWh • {t('cockpit.arrival_soc')}: {90 - battery_pct}%
             </div>
         </div>
         """
 
     elif mode_id == "DRIVE_ECO":
         gmaps_active_url = gmaps_base
-        mode_title = "🌿 Eco & Fuel-Saver Drive Mode Active"
+        mode_title = f"🌿 {t('cockpit.eco_hud_title')}"
         accent = "#34d399"
         fuel_saved = round(distance_km * 0.022, 2)
         co2_saved = round(fuel_saved * 2.31, 2)
         features_list = [
-            ("🌱 Fuel Burn Reduction", f"Saves ~{fuel_saved} Liters (-23% vs aggressive)", "#34d399"),
-            ("🌍 Carbon Emissions Cut", f"-{co2_saved} kg CO₂ emissions prevented", "#10b981"),
-            ("🎯 Throttle Sweet-Spot", "Cruising speed governed at optimal 55-60 km/h", "#38bdf8"),
-            ("🛑 Stop-and-Go Elimination", "Prefers free-flowing bypasses over traffic signals", "#fbbf24")
+            (t('cockpit.eco_feat1_title'), t('cockpit.eco_feat1_desc', saved=fuel_saved, pct=23), "#34d399"),
+            (t('cockpit.eco_feat2_title'), t('cockpit.eco_feat2_desc', co2=co2_saved), "#10b981"),
+            (t('cockpit.eco_feat3_title'), t('cockpit.eco_feat3_desc'), "#38bdf8"),
+            (t('cockpit.eco_feat4_title'), t('cockpit.eco_feat4_desc'), "#fbbf24")
         ]
-        action_label = "🌱 Launch Google Maps with Eco-Pacing"
+        action_label = f"🌱 {t('cockpit.eco_action')}"
         extra_hud = f"""
         <div style='background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🌱</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #34d399;'>Eco-Score: 98 / 100 • Low Carbon Profile</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>Steady speed profiling minimizes transmission shifts and brake thermal wear.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #34d399;'>{t('cockpit.eco_score_banner')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.eco_score_desc')}</div>
                 </div>
             </div>
-            <span style='background: #34d399; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>ECO OPTIMIZED</span>
+            <span style='background: #34d399; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.eco_badge')}</span>
         </div>
         """
 
     elif mode_id == "DRIVE_SAFEST":
         gmaps_active_url = gmaps_base
-        mode_title = "🛡️ Safest Hazard-Free Drive Mode Active"
+        mode_title = f"🛡️ {t('cockpit.safest_hud_title')}"
         accent = "#10b981"
         features_list = [
-            ("🛡️ 100% Hazard Shield", "Active road closures & construction hard-excluded", "#10b981"),
-            ("🛰️ Satellite Verification", "Path confirmed 100% open on latest imagery pass", "#38bdf8"),
-            ("🚨 Emergency SOS Armed", "One-tap connection to national 112 / regional teams", "#ef4444"),
-            ("💡 Street Lighting Check", "Well-lit divided dual carriageways prioritized", "#fbbf24")
+            ("🛡️ 100% Hazard Shield", t('cockpit.safest_title'), "#10b981"),
+            ("🛰️ Satellite Verification", t('cockpit.clear_hazards'), "#38bdf8"),
+            ("🚨 Emergency SOS Armed", "112 Helpline", "#ef4444"),
+            ("💡 Street Lighting Check", t('cockpit.safest_title'), "#fbbf24")
         ]
-        action_label = "🛡️ Launch Google Maps Verified Safe Route"
+        action_label = f"🛡️ {t('cockpit.safest_action')}"
         extra_hud = f"""
         <div style='background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🛡️</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #10b981;'>Corridor Safety Rating: 100% Certified</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>Zero risk exposure: Flooded low-lying culverts and single-lane bottlenecks eliminated.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #10b981;'>{t('cockpit.safe_badge')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.clear_hazards')}</div>
                 </div>
             </div>
-            <span style='background: #10b981; color: #ffffff; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>100% SAFE PASS</span>
+            <span style='background: #10b981; color: #ffffff; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.safe_badge')}</span>
         </div>
         """
 
     else:  # DRIVE_FASTEST
         gmaps_active_url = gmaps_base
-        mode_title = "⚡ Fastest Highway Drive Mode Active"
+        mode_title = f"⚡ {t('cockpit.fastest_hud_title')}"
         accent = "#38bdf8"
         features_list = [
-            ("🏎️ Express Highway Routing", "Routes exclusively via multi-lane NH & SH corridors", "#38bdf8"),
-            ("⏱️ Minimum ETA Guarantee", "Calculated for high continuous cruise speeds (80-90 km/h)", "#34d399"),
-            ("🚦 Congestion Bypass", "Auto-reroutes around congested municipal market centers", "#fbbf24"),
-            ("🗺️ Google Maps Live Traffic", "Synchronized directly with real-time Google live traffic", "#a855f7")
+            ("🏎️ Express Highway Routing", t('cockpit.fastest_title'), "#38bdf8"),
+            ("⏱️ Minimum ETA Guarantee", t('cockpit.earliest_arrival'), "#34d399"),
+            ("🚦 Congestion Bypass", t('cockpit.fastest_title'), "#fbbf24"),
+            ("🗺️ Google Maps Live Traffic", "Google Maps Live", "#a855f7")
         ]
-        action_label = "🏎️ Launch Google Maps High-Speed Highway Route"
+        action_label = f"🏎️ {t('cockpit.fastest_action')}"
         extra_hud = f"""
         <div style='background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🏎️</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8;'>Maximum Throughput • Express Mode</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>High-speed expressway corridors prioritized with minimal signal deceleration.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8;'>{t('cockpit.fast_badge')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.earliest_arrival')}</div>
                 </div>
             </div>
-            <span style='background: #38bdf8; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>FASTEST ETA</span>
+            <span style='background: #38bdf8; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.fast_badge')}</span>
         </div>
         """
 

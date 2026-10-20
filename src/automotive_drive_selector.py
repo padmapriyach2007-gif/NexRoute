@@ -617,6 +617,14 @@ def render_driving_mode_cockpit_card_html(
     mode_id = mode.get("mode_id", "")
     accent = mode.get("badge_color", "#38bdf8")
 
+    try:
+        from src.i18n import t
+    except ImportError:
+        def t(k, **kw): return k
+
+    mode_id = mode.get("mode_id", "")
+    accent = mode.get("badge_color", "#38bdf8")
+
     if is_best:
         border_color = "#10b981"
         glow = "rgba(16, 185, 129, 0.40)"
@@ -632,36 +640,73 @@ def render_driving_mode_cockpit_card_html(
 
     card_shadow = f"0 0 24px {glow}" if (is_active or is_best) else "0 6px 20px rgba(0, 0, 0, 0.4)"
 
-    clean_title = mode.get("title", "")
+    title_map = {
+        "DRIVE_FASTEST": t("cockpit.fastest_title"),
+        "DRIVE_ECO": t("cockpit.eco_title"),
+        "DRIVE_SAFEST": t("cockpit.safest_title"),
+        "DRIVE_TOLL_FREE": t("cockpit.toll_free_title"),
+        "DRIVE_EV": t("cockpit.ev_title")
+    }
+    clean_title = title_map.get(mode_id) or mode.get("title", "")
     for ico in ["⚡", "🌿", "🌱", "🛡️", "💰", "🪙", "🔋", "🏎️", "🚗"]:
         clean_title = clean_title.replace(ico, "").strip()
+
+    lbl_powertrain = t("cockpit.powertrain")
+    lbl_standby = t("cockpit.standby")
+    lbl_best = t("cockpit.ai_best_choice")
+    lbl_engaged = t("cockpit.engaged")
+    lbl_rec = t("cockpit.recommended")
+    lbl_active = t("cockpit.active_drive")
+    dur_mins_label = t("cockpit.mins")
+    lbl_speed_prof = t("cockpit.speed_profile")
+    lbl_hazard_stat = t("cockpit.hazard_status")
+    lbl_clear = t("cockpit.clear_hazards") if mode.get("hazard_count", 0) == 0 else mode.get("safety_rating", "Clear")
+
+    if mode_id == "DRIVE_FASTEST":
+        stat_display = f"{mode.get('speed_avg_kmh', 0)} km/h ({mode.get('duration_minutes', 0)} {dur_mins_label})"
+        strength_display = f"{t('cockpit.earliest_arrival')} • {mode.get('speed_avg_kmh', 0)} km/h"
+    elif mode_id == "DRIVE_ECO":
+        stat_display = f"{mode.get('fuel_liters', 0)} L ({t('cockpit.eco_throttle')})"
+        strength_display = t('cockpit.eco_strength_steady')
+    elif mode_id == "DRIVE_SAFEST":
+        stat_display = f"{mode.get('hazard_count', 0)} {t('cockpit.reported_hazards')}"
+        strength_display = t('cockpit.safest_corridor_cleared')
+    elif mode_id == "DRIVE_TOLL_FREE":
+        stat_display = f"₹{mode.get('toll_cost_inr', 0)} {t('cockpit.fastag_toll')}"
+        strength_display = f"₹{mode.get('toll_cost_inr', 0)} {t('cockpit.fastag_toll')} • {t('cockpit.fuel_label')} ₹{round(mode.get('fuel_liters', 0) * 102)}"
+    elif mode_id == "DRIVE_EV":
+        stat_display = f"{mode.get('energy_kwh', 0)} kWh (~{mode.get('battery_used_pct', 3)}% {t('cockpit.battery')})"
+        strength_display = f"{mode.get('energy_kwh', 0)} kWh • {t('cockpit.arrival_soc')} {mode.get('arrival_soc_pct', 90)}%"
+    else:
+        stat_display = mode.get("stat_text", "")
+        strength_display = mode.get("key_strength", "")
 
     if is_best and is_active:
         status_ribbon = (
             "<div style='height: 22px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; overflow: hidden;'>"
-            "<span style='background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid #10b981; font-size: 0.58rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;'>⭐ AI BEST CHOICE</span>"
-            "<span style='color: #10b981; font-size: 0.60rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;'><span style='display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; box-shadow:0 0 6px #10b981;'></span>ENGAGED</span>"
+            f"<span style='background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid #10b981; font-size: 0.58rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;'>⭐ {lbl_best}</span>"
+            f"<span style='color: #10b981; font-size: 0.60rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;'><span style='display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; box-shadow:0 0 6px #10b981;'></span>{lbl_engaged}</span>"
             "</div>"
         )
     elif is_best:
         status_ribbon = (
             "<div style='height: 22px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; overflow: hidden;'>"
-            "<span style='background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid #10b981; font-size: 0.58rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;'>⭐ AI BEST CHOICE</span>"
-            "<span style='color: #64748b; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.03em;'>RECOMMENDED</span>"
+            f"<span style='background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid #10b981; font-size: 0.58rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;'>⭐ {lbl_best}</span>"
+            f"<span style='color: #64748b; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.03em;'>{lbl_rec}</span>"
             "</div>"
         )
     elif is_active:
         status_ribbon = (
             f"<div style='height: 22px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; overflow: hidden;'>"
-            f"<span style='background: rgba(56, 189, 248, 0.20); color: {accent}; border: 1px solid {accent}; font-size: 0.58rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;'>● ENGAGED</span>"
-            f"<span style='color: {accent}; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.03em;'>ACTIVE DRIVE</span>"
+            f"<span style='background: rgba(56, 189, 248, 0.20); color: {accent}; border: 1px solid {accent}; font-size: 0.58rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;'>● {lbl_engaged}</span>"
+            f"<span style='color: {accent}; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.03em;'>{lbl_active}</span>"
             f"</div>"
         )
     else:
         status_ribbon = (
             "<div style='height: 22px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; overflow: hidden;'>"
-            "<span style='color: #64748b; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;'>POWERTRAIN</span>"
-            "<span style='color: #475569; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.03em;'>STANDBY</span>"
+            f"<span style='color: #64748b; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;'>{lbl_powertrain}</span>"
+            f"<span style='color: #475569; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.03em;'>{lbl_standby}</span>"
             "</div>"
         )
 
@@ -700,17 +745,17 @@ def render_driving_mode_cockpit_card_html(
             </div>
             <div style='background: rgba(0, 0, 0, 0.40); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; border: 1px solid rgba(255, 255, 255, 0.08); height: 54px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center;'>
                 <div style='display: flex; align-items: baseline; justify-content: space-between;'>
-                    <span style='font-size: 1.20rem; font-weight: 900; color: {accent}; line-height: 1;'>{mode.get("duration_minutes", 0)} <span style='font-size: 0.68rem; font-weight: 700; color: #94a3b8;'>mins</span></span>
+                    <span style='font-size: 1.20rem; font-weight: 900; color: {accent}; line-height: 1;'>{mode.get("duration_minutes", 0)} <span style='font-size: 0.68rem; font-weight: 700; color: #94a3b8;'>{dur_mins_label}</span></span>
                     <span style='font-size: 0.74rem; font-weight: 700; color: #e2e8f0;'>{mode.get("distance_km", 0)} km</span>
                 </div>
                 <div style='font-size: 0.65rem; color: #94a3b8; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
-                    {mode.get("stat_icon", "🚗")} <b style='color: #f1f5f9;'>{mode.get("stat_text", "")}</b>
+                    {mode.get("stat_icon", "🚗")} <b style='color: #f1f5f9;'>{stat_display}</b>
                 </div>
             </div>
             <div style='display: flex; flex-direction: column; gap: 5px; margin-bottom: 6px; height: 38px; justify-content: center;'>
                 <div>
                     <div style='display: flex; justify-content: space-between; font-size: 0.58rem; color: #94a3b8; font-weight: 700;'>
-                        <span>SPEED PROFILE</span>
+                        <span>{lbl_speed_prof}</span>
                         <span style='color: {accent}; font-family: monospace;'>{mode.get("speed_pct", 75)}%</span>
                     </div>
                     <div style='height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 2px;'>
@@ -719,8 +764,8 @@ def render_driving_mode_cockpit_card_html(
                 </div>
                 <div>
                     <div style='display: flex; justify-content: space-between; font-size: 0.58rem; color: #94a3b8; font-weight: 700;'>
-                        <span>HAZARD STATUS</span>
-                        <span style='color: {"#10b981" if mode.get("hazard_count", 0) == 0 else "#f59e0b"}; font-family: monospace;'>{mode.get("safety_rating", "Clear")}</span>
+                        <span>{lbl_hazard_stat}</span>
+                        <span style='color: {"#10b981" if mode.get("hazard_count", 0) == 0 else "#f59e0b"}; font-family: monospace;'>{lbl_clear}</span>
                     </div>
                     <div style='height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 2px;'>
                         <div style='width: {mode.get("safety_pct", 100)}%; height: 100%; background: {"#10b981" if mode.get("hazard_count", 0) == 0 else "#f59e0b"}; border-radius: 2px;'></div>
@@ -729,7 +774,7 @@ def render_driving_mode_cockpit_card_html(
             </div>
         </div>
         <div style='font-size: 0.64rem; color: #cbd5e1; line-height: 1.25; height: 32px; min-height: 32px; max-height: 32px; display: flex; align-items: center; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.08); overflow: hidden;'>
-            {mode.get("key_strength", "")}
+            {strength_display}
         </div>
     </div>
     """
@@ -753,6 +798,11 @@ def render_cockpit_mode_functionality_hud(
     dest_str = f"{dest_coords[0]:.5f},{dest_coords[1]:.5f}" if dest_coords else urllib.parse.quote_plus(dest_name)
     gmaps_base = f"https://www.google.com/maps/dir/?api=1&origin={orig_str}&destination={dest_str}&travelmode=driving"
 
+    try:
+        from src.i18n import t
+    except ImportError:
+        def t(k, **kw): return k
+
     mode_info = mode_info or {}
     fuel_l = mode_info.get("fuel_liters", round(distance_km * 0.070, 2))
     energy_kwh = mode_info.get("energy_kwh", round(distance_km * 0.150, 2))
@@ -760,49 +810,49 @@ def render_cockpit_mode_functionality_hud(
 
     if mode_id == "DRIVE_TOLL_FREE":
         gmaps_active_url = f"{gmaps_base}&avoid=tolls"
-        mode_title = "💰 Toll-Free & Budget Drive Mode Active"
+        mode_title = f"💰 {t('cockpit.toll_free_hud_title')}"
         accent = "#fbbf24"
         features_list = [
-            ("🪙 Highway Toll Exclusion", "Routes via service roads & public state highways.", "#fbbf24"),
-            ("🛣️ Arterial Network Access", "Transits via high-throughput bypass connections.", "#38bdf8"),
-            ("💵 Budget Ledger Preserved", f"Saves toll plaza fees (Fuel est: {fuel_l} L).", "#34d399"),
-            ("🗺️ Google Maps Direct Link", "Google Maps configured with <code>&avoid=tolls</code> directive.", "#a855f7")
+            ("🪙 Zero FASTag Charges", t('cockpit.toll_free_title'), "#fbbf24"),
+            ("🛣️ Service Arterial Routing", t('cockpit.toll_badge'), "#38bdf8"),
+            ("💵 Budget Ledger Saved", f"₹{85 if distance_km > 15 else 45} {t('cockpit.fuel_label')}", "#34d399"),
+            ("🗺️ Google Maps Flag", "Google Maps (&avoid=tolls)", "#a855f7")
         ]
-        action_label = "🪙 Launch Google Maps (Tolls Excluded Mode)"
+        action_label = f"🪙 {t('cockpit.toll_action')}"
         extra_hud = f"""
         <div style='background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🪙</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #fbbf24;'>Toll Avoidance Pacing Active</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>Verified corridor avoids expressway FASTag electronic toll plazas.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #fbbf24;'>{t('cockpit.toll_badge')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.verdict_toll_free')}</div>
                 </div>
             </div>
-            <span style='background: #fbbf24; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>TOLL-FREE ROUTE</span>
+            <span style='background: #fbbf24; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.toll_badge')}</span>
         </div>
         """
 
     elif mode_id == "DRIVE_EV":
         gmaps_active_url = f"https://www.google.com/maps/search/ev+charging+station+near+{dest_str}"
-        mode_title = "⚡ EV Optimal Drive & Battery Corridor Active"
+        mode_title = f"⚡ {t('cockpit.ev_hud_title')}"
         accent = "#06b6d4"
         battery_pct = mode_info.get("battery_used_pct", max(2, round((energy_kwh / 40.0) * 100, 1)))
         arr_soc = mode_info.get("arrival_soc_pct", 90.0 - battery_pct)
         features_list = [
-            ("🔋 Battery Energy Draw", f"~{energy_kwh} kWh (~{battery_pct}% of 40 kWh pack)", "#06b6d4"),
-            ("⚡ Projected Arrival SoC", f"{arr_soc}% remaining charge at destination", "#38bdf8"),
-            ("🔄 Regenerative Braking", "Downhill and deceleration recovery factor active", "#34d399"),
-            ("🔌 Charging Hub Search", "Direct link to locate en-route DC fast charging points", "#c084fc")
+            ("🔋 Battery Energy Draw", f"~{energy_kwh} kWh (~{battery_pct}% {t('cockpit.battery')})", "#06b6d4"),
+            ("⚡ Projected Arrival SoC", f"{arr_soc}% {t('cockpit.arrival_soc')}", "#38bdf8"),
+            ("🔄 Regenerative Braking", "+4% range buffer", "#34d399"),
+            ("🔌 Charging Hub Search", t('cockpit.ev_action'), "#c084fc")
         ]
-        action_label = "⚡ Find En-Route EV Charging Hubs in Google Maps"
+        action_label = f"⚡ {t('cockpit.ev_action')}"
         extra_hud = f"""
         <div style='background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px;'>
             <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                <span style='font-size: 0.82rem; font-weight: 800; color: #06b6d4;'>⚡ EV Charging Prerequisites & Telemetry</span>
-                <span style='font-size: 0.70rem; color: #94a3b8;'>Battery Pack: {round(energy_kwh / max(0.01, battery_pct / 100.0), 0) if battery_pct else 40.0:.0f} kWh</span>
+                <span style='font-size: 0.82rem; font-weight: 800; color: #06b6d4;'>⚡ {t('cockpit.ev_title')}</span>
+                <span style='font-size: 0.70rem; color: #94a3b8;'>Battery Pack: 40 kWh</span>
             </div>
             <div style='font-size: 0.76rem; color: #e2e8f0; line-height: 1.45; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 8px 12px;'>
-                <div>🔋 <b>Projected Consumption:</b> {round(energy_kwh, 2)} kWh (~{battery_pct}% of battery pack) • <b>Arrival SoC:</b> {arr_soc}%</div>
+                <div>🔋 <b>{t('cockpit.ev_title')}:</b> {round(energy_kwh, 2)} kWh • <b>{t('cockpit.arrival_soc')}:</b> {arr_soc}%</div>
                 <div style='color: #94a3b8; font-size: 0.70rem; margin-top: 4px;'>ℹ️ Multi-stop en-route fast charge scheduling requires an active Open Charge Map or OCPP provider key. Route is optimized for battery pacing within safe driving range without intermediate stops.</div>
             </div>
         </div>
@@ -810,76 +860,76 @@ def render_cockpit_mode_functionality_hud(
 
     elif mode_id == "DRIVE_ECO":
         gmaps_active_url = gmaps_base
-        mode_title = "🌿 Eco & Fuel-Saver Drive Mode Active"
+        mode_title = f"🌿 {t('cockpit.eco_hud_title')}"
         accent = "#34d399"
         savings_pct = mode_info.get("savings_pct", 15.0)
         co2_val = mode_info.get("co2_kg", round(fuel_l * 2.31, 2))
         features_list = [
-            ("🌱 Fuel Consumption", f"~{fuel_l} Liters ({savings_pct}% saved vs baseline)", "#34d399"),
-            ("🌍 Carbon Emissions", f"~{co2_val} kg CO₂ trip emissions", "#10b981"),
-            ("🎯 Optimal Cruising Velocity", f"Average transit pacing: {speed_avg} km/h", "#38bdf8"),
-            ("🛑 Stop-and-Go Mitigation", "Prefers continuous momentum road segments", "#fbbf24")
+            (t('cockpit.eco_feat1_title'), t('cockpit.eco_feat1_desc', saved=fuel_l, pct=savings_pct), "#34d399"),
+            (t('cockpit.eco_feat2_title'), t('cockpit.eco_feat2_desc', co2=co2_val), "#10b981"),
+            (t('cockpit.eco_feat3_title'), t('cockpit.eco_feat3_desc'), "#38bdf8"),
+            (t('cockpit.eco_feat4_title'), t('cockpit.eco_feat4_desc'), "#fbbf24")
         ]
-        action_label = "🌱 Launch Google Maps with Eco-Pacing"
+        action_label = f"🌱 {t('cockpit.eco_action')}"
         extra_hud = f"""
         <div style='background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🌱</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #34d399;'>Eco-Calibrated Throttle Profile Active</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>Smooth torque deployment minimizes transmission gear hunting and fuel burn.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #34d399;'>{t('cockpit.eco_score_banner')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.eco_score_desc')}</div>
                 </div>
             </div>
-            <span style='background: #34d399; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>ECO OPTIMIZED</span>
+            <span style='background: #34d399; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.eco_badge')}</span>
         </div>
         """
 
     elif mode_id == "DRIVE_SAFEST":
         gmaps_active_url = gmaps_base
-        mode_title = "🛡️ Safest Hazard-Aware Drive Mode Active"
+        mode_title = f"🛡️ {t('cockpit.safest_hud_title')}"
         accent = "#10b981"
         hz_cnt = mode_info.get("hazard_count", 0)
         features_list = [
-            ("🛡️ Corridor Obstacle Check", f"{hz_cnt} reported hazards in checked area", "#10b981"),
-            ("🛰️ Infrastructure Tags", "Evaluated against OSM gates, bollards & construction", "#38bdf8"),
-            ("🚨 Emergency SOS Armed", "Immediate connection to emergency services HUD", "#ef4444"),
-            ("🛣️ High-Standard Road Class", "Prioritizes verified primary and secondary highways", "#fbbf24")
+            ("🛡️ 100% Hazard Shield", t('cockpit.safest_title'), "#10b981"),
+            ("🛰️ Satellite Verification", t('cockpit.clear_hazards'), "#38bdf8"),
+            ("🚨 Emergency SOS Armed", "112 Helpline", "#ef4444"),
+            ("🛣️ High-Standard Road Class", t('cockpit.safest_title'), "#fbbf24")
         ]
-        action_label = "🛡️ Launch Google Maps Verified Safe Route"
+        action_label = f"🛡️ {t('cockpit.safest_action')}"
         extra_hud = f"""
         <div style='background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🛡️</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #10b981;'>Hazard-Aware Route Protection Active</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>Active incident registries and road restrictions evaluated along path.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #10b981;'>{t('cockpit.safe_badge')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.clear_hazards')}</div>
                 </div>
             </div>
-            <span style='background: #10b981; color: #ffffff; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>PROTECTION ACTIVE</span>
+            <span style='background: #10b981; color: #ffffff; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.safe_badge')}</span>
         </div>
         """
 
     else:  # DRIVE_FASTEST
         gmaps_active_url = gmaps_base
-        mode_title = "⚡ Fastest Highway Drive Mode Active"
+        mode_title = f"⚡ {t('cockpit.fastest_hud_title')}"
         accent = "#38bdf8"
         features_list = [
-            ("🏎️ Express Highway Routing", "Prioritizes arterial bypasses and express routes", "#38bdf8"),
-            ("⏱️ Minimum ETA Strategy", f"Estimated trip duration: {mode_info.get('duration_minutes', 15.0)} mins", "#34d399"),
-            ("🚦 Average Cruise Speed", f"Full-trip modeled velocity: {speed_avg} km/h", "#fbbf24"),
-            ("🗺️ Google Maps Live Sync", "Direct deep link with origin and destination coordinates", "#a855f7")
+            ("🏎️ Express Highway Routing", t('cockpit.fastest_title'), "#38bdf8"),
+            ("⏱️ Minimum ETA Strategy", t('cockpit.earliest_arrival'), "#34d399"),
+            ("🚦 Average Cruise Speed", f"{speed_avg} km/h", "#fbbf24"),
+            ("🗺️ Google Maps Live Sync", "Google Maps", "#a855f7")
         ]
-        action_label = "🏎️ Launch Google Maps High-Speed Route"
+        action_label = f"🏎️ {t('cockpit.fastest_action')}"
         extra_hud = f"""
         <div style='background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🏎️</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8;'>Maximum Throughput • Express Mode</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>High-speed expressway corridors prioritized with minimal signal delays.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8;'>{t('cockpit.fast_badge')}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.earliest_arrival')}</div>
                 </div>
             </div>
-            <span style='background: #38bdf8; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>FASTEST ETA</span>
+            <span style='background: #38bdf8; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.fast_badge')}</span>
         </div>
         """
 
