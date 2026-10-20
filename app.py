@@ -4429,39 +4429,103 @@ with tab_nav:
         (m for m in driving_comparison["modes"] if m["mode_id"] == st.session_state.selected_driving_mode),
         driving_comparison["modes"][0]
     )
-    st.markdown(
-        render_cockpit_mode_functionality_hud(
-            mode_id=st.session_state.selected_driving_mode,
-            orig_coords=coords_orig if 'coords_orig' in locals() else None,
-            dest_coords=coords_dest if 'coords_dest' in locals() else None,
-            orig_name=origin_display if 'origin_display' in locals() else "Origin",
-            dest_name=dest_display if 'dest_display' in locals() else "Destination",
-            distance_km=active_mode_obj.get("distance_km", base_dist),
-            mode_info=active_mode_obj
-        ),
-        unsafe_allow_html=True
+    hud_data = render_cockpit_mode_functionality_hud(
+        mode_id=st.session_state.selected_driving_mode,
+        orig_coords=coords_orig if 'coords_orig' in locals() else None,
+        dest_coords=coords_dest if 'coords_dest' in locals() else None,
+        orig_name=origin_display if 'origin_display' in locals() else "Origin",
+        dest_name=dest_display if 'dest_display' in locals() else "Destination",
+        distance_km=active_mode_obj.get("distance_km", base_dist),
+        mode_info=active_mode_obj,
+        return_components=True
     )
 
-    col_act_launch, col_act_space = st.columns([1.6, 0.4])
-    with col_act_launch:
-        btn_action_text = f"🎯 Launch {active_mode_obj.get('title', 'Driving Mode')} in Pathfinder Maps"
-        if st.button(
-            btn_action_text,
-            key="btn_launch_active_mode_pathfinder",
-            type="primary",
-            use_container_width=True
-        ):
-            if active_mode_obj.get("route_id"):
-                st.session_state.focused_route_id = active_mode_obj["route_id"]
-                st.session_state.selected_route_id = active_mode_obj["route_id"]
-                matching_r = next((r.route for r in ranked_routes if r.route.route_id == active_mode_obj["route_id"]), None)
-                if matching_r:
-                    st.session_state.selected_route_object = matching_r
-            st.session_state.selected_driving_mode = active_mode_obj["mode_id"]
-            st.session_state.auto_fit_bounds = True
-            st.session_state.scroll_to_app_map = True
-            st.toast(f"🚀 Launched {active_mode_obj.get('title')} in Pathfinder Maps!", icon=active_mode_obj.get("icon", "🌱"))
-            st.rerun()
+    accent = hud_data["accent"]
+    action_label = hud_data["action_label"]
+    mode_title = hud_data["mode_title"]
+    gmaps_active_url = hud_data["gmaps_active_url"]
+    feat_items_html = hud_data["feat_items_html"]
+    extra_hud = hud_data["extra_hud"]
+
+    # Inject HUD styling and 2nd pic button appearance
+    st.markdown(f"""
+    <style>
+    div[data-testid="stVerticalBlock"]:has(> div.st-key-cockpit_hud_card),
+    div.st-key-cockpit_hud_card {{
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.90) 100%) !important;
+        border: 2px solid {accent} !important;
+        border-radius: 14px !important;
+        padding: 16px 20px !important;
+        margin-top: 12px !important;
+        margin-bottom: 16px !important;
+        box-shadow: 0 0 24px rgba(56, 189, 248, 0.25) !important;
+    }}
+    .st-key-btn_launch_active_mode_pathfinder button {{
+        background: linear-gradient(135deg, {accent} 0%, #0284c7 100%) !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        font-size: 0.76rem !important;
+        font-weight: 800 !important;
+        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4) !important;
+        border: none !important;
+        padding: 7px 16px !important;
+        min-height: unset !important;
+        height: auto !important;
+        line-height: 1.4 !important;
+        white-space: nowrap !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }}
+    .st-key-btn_launch_active_mode_pathfinder button:hover {{
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6) !important;
+        transform: translateY(-1px) !important;
+        opacity: 0.95 !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    with st.container(key="cockpit_hud_card"):
+        col_hud_title, col_hud_btn, col_hud_gmaps = st.columns([1.5, 1.4, 0.6], vertical_alignment="center")
+        with col_hud_title:
+            st.markdown(f"""
+                <div style='display: flex; align-items: center; gap: 10px;'>
+                    <span style='display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: {accent}; box-shadow: 0 0 10px {accent};'></span>
+                    <span style='font-size: 0.96rem; font-weight: 900; color: #f8fafc; letter-spacing: 0.02em;'>{mode_title}</span>
+                </div>
+            """, unsafe_allow_html=True)
+        with col_hud_btn:
+            btn_hud_label = f"{action_label} 🎯"
+            if st.button(
+                btn_hud_label,
+                key="btn_launch_active_mode_pathfinder",
+                use_container_width=True
+            ):
+                if active_mode_obj.get("route_id"):
+                    st.session_state.focused_route_id = active_mode_obj["route_id"]
+                    st.session_state.selected_route_id = active_mode_obj["route_id"]
+                    matching_r = next((r.route for r in ranked_routes if r.route.route_id == active_mode_obj["route_id"]), None)
+                    if matching_r:
+                        st.session_state.selected_route_object = matching_r
+                st.session_state.selected_driving_mode = active_mode_obj["mode_id"]
+                st.session_state.auto_fit_bounds = True
+                st.session_state.scroll_to_app_map = True
+                st.toast(f"🚀 Launched {active_mode_obj.get('title')} in Pathfinder Maps!", icon=active_mode_obj.get("icon", "🌱"))
+                st.rerun()
+        with col_hud_gmaps:
+            st.markdown(f"""
+                <div style='text-align: right;'>
+                    <a href='{gmaps_active_url}' target='_blank' style='background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); color: #cbd5e1; text-decoration: none; padding: 7px 12px; border-radius: 8px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;' title='Open in Google Maps'>
+                        Google Maps ↗
+                    </a>
+                </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 10px; margin-bottom: 10px;'>
+                {feat_items_html}
+            </div>
+            {extra_hud}
+        """, unsafe_allow_html=True)
 
 
 

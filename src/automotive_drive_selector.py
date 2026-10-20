@@ -788,8 +788,10 @@ def render_cockpit_mode_functionality_hud(
     orig_name: str = "Start Location",
     dest_name: str = "Destination",
     distance_km: float = 8.5,
-    mode_info: Optional[Dict[str, Any]] = None
-) -> str:
+    mode_info: Optional[Dict[str, Any]] = None,
+    return_components: bool = False,
+    **kwargs: Any
+) -> Any:
     """
     Renders the live interactive Cockpit Mode Functionality HUD showing the active
     mode's real operational features, Google Maps parameters, speed limits, and direct actions.
@@ -965,7 +967,18 @@ def render_cockpit_mode_functionality_hud(
         {extra_hud}
     </div>
     """
-    return "\n".join(line.strip() for line in hud_html.splitlines() if line.strip())
+    clean_html = "\n".join(line.strip() for line in hud_html.splitlines() if line.strip())
+    if return_components:
+        return {
+            "mode_title": mode_title,
+            "accent": accent,
+            "action_label": action_label,
+            "gmaps_active_url": gmaps_active_url,
+            "feat_items_html": feat_items_html,
+            "extra_hud": extra_hud,
+            "full_html": clean_html
+        }
+    return clean_html
 
 
 def render_profile_calculation_details_html(mode: Dict[str, Any]) -> str:
