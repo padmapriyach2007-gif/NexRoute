@@ -2062,10 +2062,10 @@ components.html(f"""
 """, height=0, width=0)
 
 tab_nav, tab_guide, tab_facilities, tab_places = st.tabs([
-    f"🧭 {t('tab.navigation')}",
-    f"🚗 {t('tab.virtual_guide')}",
-    f"🏥 {t('tab.facilities')}",
-    f"🌟 {t('tab.places')}"
+    t("tab.navigation"),
+    t("tab.virtual_guide"),
+    t("tab.facilities"),
+    t("tab.places")
 ])
 
 with tab_nav:
