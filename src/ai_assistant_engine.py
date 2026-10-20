@@ -64,12 +64,13 @@ class LLMClient:
     """
     Manages external LLM provider connections (OpenAI, Gemini, Groq, Anthropic)
     with secure credential extraction, strict timeouts, structured diagnostics,
-    and automatic fallback to the built-in cognitive engine.
+    instant failure caching, and automatic fallback to the built-in cognitive engine.
     """
+    _failed_providers: set = set()
 
-    def __init__(self, provider: str = "auto", timeout: float = 8.0):
+    def __init__(self, provider: str = "auto", timeout: float = 2.0):
         self.provider = provider.lower()
-        self.timeout = timeout
+        self.timeout = min(timeout, 2.0)
         self.active_provider_name: str = "builtin"
         self.last_error: Optional[str] = None
         self.last_error_category: Optional[str] = None
@@ -93,32 +94,32 @@ class LLMClient:
         return None
 
     def _detect_active_provider(self):
-        """Determines the primary available external provider based on valid API keys."""
-        if self.provider in ("gemini", "google"):
+        """Determines the primary available external provider based on valid API keys and past health."""
+        if self.provider in ("gemini", "google") and "gemini" not in LLMClient._failed_providers:
             if self._get_secret_or_env("GEMINI_API_KEY") or self._get_secret_or_env("GOOGLE_API_KEY"):
                 self.active_provider_name = "gemini"
                 return
-        elif self.provider == "openai":
+        elif self.provider == "openai" and "openai" not in LLMClient._failed_providers:
             if self._get_secret_or_env("OPENAI_API_KEY"):
                 self.active_provider_name = "openai"
                 return
-        elif self.provider == "groq":
+        elif self.provider == "groq" and "groq" not in LLMClient._failed_providers:
             if self._get_secret_or_env("GROQ_API_KEY"):
                 self.active_provider_name = "groq"
                 return
-        elif self.provider == "anthropic":
+        elif self.provider == "anthropic" and "anthropic" not in LLMClient._failed_providers:
             if self._get_secret_or_env("ANTHROPIC_API_KEY"):
                 self.active_provider_name = "anthropic"
                 return
 
         # Auto detection order: Gemini -> OpenAI -> Groq -> Anthropic -> Builtin
-        if self._get_secret_or_env("GEMINI_API_KEY") or self._get_secret_or_env("GOOGLE_API_KEY"):
+        if "gemini" not in LLMClient._failed_providers and (self._get_secret_or_env("GEMINI_API_KEY") or self._get_secret_or_env("GOOGLE_API_KEY")):
             self.active_provider_name = "gemini"
-        elif self._get_secret_or_env("OPENAI_API_KEY"):
+        elif "openai" not in LLMClient._failed_providers and self._get_secret_or_env("OPENAI_API_KEY"):
             self.active_provider_name = "openai"
-        elif self._get_secret_or_env("GROQ_API_KEY"):
+        elif "groq" not in LLMClient._failed_providers and self._get_secret_or_env("GROQ_API_KEY"):
             self.active_provider_name = "groq"
-        elif self._get_secret_or_env("ANTHROPIC_API_KEY"):
+        elif "anthropic" not in LLMClient._failed_providers and self._get_secret_or_env("ANTHROPIC_API_KEY"):
             self.active_provider_name = "anthropic"
         else:
             self.active_provider_name = "builtin"
@@ -142,22 +143,29 @@ class LLMClient:
         self.last_error = None
         self.last_error_category = None
 
-        if self.active_provider_name == "openai":
+        current_attempt = self.active_provider_name
+
+        if current_attempt == "openai":
             out, label = self._call_openai(messages, system_prompt, temperature, max_tokens, req_id)
-        elif self.active_provider_name == "gemini":
+        elif current_attempt == "gemini":
             out, label = self._call_gemini(messages, system_prompt, temperature, max_tokens, req_id)
-        elif self.active_provider_name == "groq":
+        elif current_attempt == "groq":
             out, label = self._call_groq(messages, system_prompt, temperature, max_tokens, req_id)
-        elif self.active_provider_name == "anthropic":
+        elif current_attempt == "anthropic":
             out, label = self._call_anthropic(messages, system_prompt, temperature, max_tokens, req_id)
         else:
             out, label = None, "builtin"
+
+        if out is None and current_attempt != "builtin":
+            # Record failed provider so future queries skip it instantly (<0.001s)
+            LLMClient._failed_providers.add(current_attempt)
+            self._detect_active_provider()
 
         duration_ms = round((time.time() - start_time) * 1000, 2)
         success = bool(out is not None)
         log_payload = {
             "request_id": req_id,
-            "provider": self.active_provider_name,
+            "provider": current_attempt,
             "duration_ms": duration_ms,
             "success": success,
             "error_category": self.last_error_category or ("NONE" if success else "NOT_CONFIGURED"),
@@ -190,7 +198,7 @@ class LLMClient:
             return None, "builtin"
         try:
             from openai import OpenAI
-            client = OpenAI(api_key=key, timeout=self.timeout)
+            client = OpenAI(api_key=key, timeout=self.timeout, max_retries=0)
             prompt_msgs = [{"role": "system", "content": system_prompt}] + messages
             completion = client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -214,7 +222,7 @@ class LLMClient:
             return None, "builtin"
         try:
             from groq import Groq
-            client = Groq(api_key=key, timeout=self.timeout)
+            client = Groq(api_key=key, timeout=self.timeout, max_retries=0)
             prompt_msgs = [{"role": "system", "content": system_prompt}] + messages
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
@@ -509,7 +517,53 @@ class BuiltinCognitiveEngine:
         # ---------------------------------------------------------------------
         norm_q = q.replace("whut", "what").replace("artifical", "artificial").replace("inteligence", "intelligence").replace("machin", "machine").replace("lerning", "learning")
 
-        if any(w in norm_q for w in ["what is artificial intelligence", "what is ai", "define artificial intelligence", "explain artificial intelligence", "artificial intelligence"]):
+        target_lang = (ctx.get("language") or "en").lower().strip()
+        if any("\u0C00" <= ch <= "\u0C7F" for ch in q_raw):
+            target_lang = "te"
+        elif any("\u0900" <= ch <= "\u097F" for ch in q_raw):
+            target_lang = "hi"
+        elif any("\u0B80" <= ch <= "\u0BFF" for ch in q_raw):
+            target_lang = "ta"
+        elif any("\u0C80" <= ch <= "\u0CFF" for ch in q_raw):
+            target_lang = "kn"
+        elif any("\u0D00" <= ch <= "\u0D7F" for ch in q_raw):
+            target_lang = "ml"
+        elif any("\u0980" <= ch <= "\u09FF" for ch in q_raw):
+            target_lang = "bn"
+        elif any("\u0900" <= ch <= "\u097F" for ch in q_raw):
+            target_lang = "mr"
+
+        if any(w in norm_q for w in ["what is artificial intelligence", "what is ai", "define artificial intelligence", "explain artificial intelligence", "artificial intelligence", "కృత్రిమ మేధస్సు", "ai అంటే ఏమిటి", "कृत्रिम बुद्धिमत्ता", "செயற்கை நுண்ணறிவு"]):
+            if target_lang == "te":
+                return {
+                    "badge": "🤖 కృత్రిమ మేధస్సు (AI)",
+                    "response": (
+                        "### 🤖 కృత్రిమ మేధస్సు (Artificial Intelligence) సమగ్ర వివరణ\n\n"
+                        "**కృత్రిమ మేధస్సు (AI)** అనేది మానవ ఆలోచనా విధానం, సమస్య పరిష్కార నైపుణ్యం, నిర్ణయాధికారం మరియు అభ్యాస ప్రక్రియలను కంప్యూటర్ వ్యవస్థల ద్వారా స్వయంచాలకంగా సాధించే ఆధునిక కంప్యూటర్ సైన్స్ విభాగం.\n\n"
+                        "#### 🔑 AI యొక్క ముఖ్య విభాగాలు:\n"
+                        "1. **మెషిన్ లెర్నింగ్ (ML):** కంప్యూటర్లను ప్రత్యేకంగా ప్రోగ్రామ్ చేయకుండా, డేటా మరియు గత అనుభవాల ఆధారంగా అంచనాలు వేయడం నేర్పించే విధానం.\n"
+                        "2. **డీప్ లెర్నింగ్ (Deep Learning):** మానవ మెదడులోని న్యూరాన్ల నిర్మాణాన్ని పోలిన బహుళ పొరల కృత్రిమ న్యూరల్ నెట్‌వర్క్‌ల ద్వారా సంక్లిష్ట సమస్యలను పరిష్కరించే సాంకేతికత.\n"
+                        "3. **సహజ భాషా ప్రాసెసింగ్ (NLP):** మానవ భాషలను (తెలుగు, ఇంగ్లీష్ మొదలైనవి) కంప్యూటర్ అర్థం చేసుకుని, అనువదించి, సమాధానాలు రూపొందించే సామర్థ్యం (ఉదా: A.U.R.A. సంభాషణ సహాయకుడు).\n"
+                        "4. **కంప్యూటర్ విజన్ (Computer Vision):** కెమెరా దృశ్యాలు మరియు ఉపగ్రహ చిత్రాలను విశ్లేషించి ప్రమాదాలు, రోడ్డు మూసివేతలు గుర్తించే నేర్పు (PATHFINDER రోడ్డు ఆడిటర్ వంటివి).\n"
+                        "5. **అటానమస్ ప్లానింగ్:** A* అల్గారిథమ్ సహాయంతో అత్యంత సురక్షితమైన మరియు వేగవంతమైన ప్రయాణ మార్గాలను స్వయంప్రతిపత్తితో ఎంపిక చేయడం.\n\n"
+                        "#### 🌍 నిజజీవిత ప్రయోజనాలు:\n"
+                        "వైద్య రంగంలో వ్యాధి నిర్ధారణ, వాతావరణ మార్పుల ముందస్తు హెచ్చరికలు, డ్రైవర్‌లెస్ వాహనాలు మరియు నావిగేషన్ భద్రతలో AI కీలక పాత్ర పోషిస్తోంది."
+                    )
+                }
+            elif target_lang == "hi":
+                return {
+                    "badge": "🤖 कृत्रिम बुद्धिमत्ता (AI)",
+                    "response": (
+                        "### 🤖 कृत्रिम बुद्धिमत्ता (AI) की व्याख्या\n\n"
+                        "**कृत्रिम बुद्धिमत्ता (AI)** कंप्यूटर विज्ञान की वह शाखा है जो ऐसी प्रणालियाँ बनाती है जो मानव बुद्धि के समान सीखने, तर्क करने और समस्याओं को हल करने में सक्षम हों।\n\n"
+                        "#### 🔑 मुख्य घटक:\n"
+                        "1. **मशीन लर्निंग (ML):** डेटा और अनुभवों से स्वचालित रूप से सीखना।\n"
+                        "2. **डीप लर्निंग:** तंत्रिका नेटवर्क (Neural Networks) द्वारा जटिल पैटर्न पहचानना।\n"
+                        "3. **नेचुरल लैंग्वेज प्रोसेसिंग (NLP):** मानव भाषा को समझना और संवाद करना।\n"
+                        "4. **कंप्यूटर विज़न:** छवियों और सड़क स्थितियों का सटीक विश्लेषण।\n\n"
+                        "यह तकनीक सुरक्षित परिवहन, चिकित्सा और विज्ञान में क्रांति ला रही है।"
+                    )
+                }
             return {
                 "badge": "🤖 ARTIFICIAL INTELLIGENCE",
                 "response": (
@@ -526,7 +580,21 @@ class BuiltinCognitiveEngine:
                 )
             }
 
-        if any(w in norm_q for w in ["machine learning in simple words", "explain machine learning simply", "machine learning simple", "what is machine learning"]):
+        if any(w in norm_q for w in ["machine learning in simple words", "explain machine learning simply", "machine learning simple", "what is machine learning", "మెషిన్ లెర్నింగ్", "मशीन लर्निंग"]):
+            if target_lang == "te":
+                return {
+                    "badge": "🧠 మెషిన్ లెర్నింగ్ • సరళ వివరణ",
+                    "response": (
+                        "### 🧠 మెషిన్ లెర్నింగ్ సులువైన మాటల్లో\n\n"
+                        "ఒక చిన్న పిల్లాడికి యాపిల్ పండును 🍎 గుర్తించడం ఎలా నేర్పిస్తామో ఊహించుకోండి.\n\n"
+                        "మీరు అతనికి ప్రతి మిల్లీమీటర్ కొలతలతో కూడిన నియమాల పుస్తకం ఇవ్వరు. బదులుగా **వందలాది యాపిల్ పండ్ల బొమ్మలను చూపిస్తూ**, *\"ఇది యాపిల్\"* అని చెబుతారు.\n\n"
+                        "కొద్ది కాలానికి ఆ పిల్లాడి మెదడు స్వయంగా ఆకారం, రంగు, కాడ వంటి లక్షణాలను గ్రహించి, కొత్త రకం యాపిల్ చూసినా వెంటనే గుర్తుపట్టేస్తుంది!\n\n"
+                        "**మెషిన్ లెర్నింగ్ కూడా అచ్చం అలాగే పనిచేస్తుంది:**\n"
+                        "1. **సాంప్రదాయ ప్రోగ్రామింగ్:** మనిషి రాసిన నియమాలు + డేటా → కంప్యూటర్ ఫలితం ఇస్తుంది.\n"
+                        "2. **మెషిన్ లెర్నింగ్:** వేలాది ఉదాహరణల డేటా → కంప్యూటరే స్వయంగా నియమాలను మరియు విధానాలను నేర్చుకుంటుంది!\n\n"
+                        "అందువల్ల ప్రతి చిన్న నియమాన్ని కోడింగ్ చేయకుండా, అనుభవం ద్వారా కంప్యూటర్ జ్ఞానాన్ని పెంచుకునేలా శిక్షణ ఇస్తాము."
+                    )
+                }
             return {
                 "badge": "🧠 MACHINE LEARNING • SIMPLE",
                 "response": (
@@ -980,6 +1048,35 @@ class BuiltinCognitiveEngine:
         if not clean_topic:
             clean_topic = q_raw.strip("?. ")
         topic_title = clean_topic.title()
+
+        if target_lang == "te":
+            return {
+                "badge": f"💡 A.U.R.A. అవగాహన • {topic_title.upper()[:18]}",
+                "response": (
+                    f"### 💡 **{topic_title}** గురించి సమగ్ర వివరణ\n\n"
+                    f"**1. ముఖ్య భావన (Core Principle):**  \n"
+                    f"**{topic_title}** అనేది ప్రాథమిక సిద్ధాంతాలను నిజజీవిత ఆచరణాత్మక అంశాలతో అనుసంధానించే ముఖ్యమైన అంశం.\n\n"
+                    f"**2. పనిచేసే విధానం & ప్రాముఖ్యత:**  \n"
+                    f"ఆచరణలో, ఇది క్రమబద్ధమైన శాస్త్రీయ లేదా సాంకేతిక నియమాలను అనుసరించి ఖచ్చితమైన మరియు విశ్వసనీయ ఫలితాలను అందిస్తుంది.\n\n"
+                    f"**3. ఆచరణాత్మక ప్రయోజనం:**  \n"
+                    f"{topic_title} ను అర్థం చేసుకోవడం ద్వారా సరైన నిర్ణయాలు తీసుకోవచ్చు, సమస్యలను సమర్థవంతంగా పరిష్కరించవచ్చు.\n\n"
+                    f"*మీకు మరింత వివరణ, ఉదాహరణలు లేదా సూత్రాలు కావాలంటే తప్పకుండా అడగండి!*"
+                )
+            }
+        elif target_lang == "hi":
+            return {
+                "badge": f"💡 A.U.R.A. विश्लेषण • {topic_title.upper()[:18]}",
+                "response": (
+                    f"### 💡 **{topic_title}** की व्याख्या\n\n"
+                    f"**1. मुख्य सिद्धांत (Core Principle):**  \n"
+                    f"**{topic_title}** एक महत्वपूर्ण अवधारणा है जो सैद्धांतिक सिद्धांतों को आधुनिक अनुप्रयोगों से जोड़ती है।\n\n"
+                    f"**2. कार्यप्रणाली व महत्व:**  \n"
+                    f"व्यवहार में, यह नियमों और सिद्धांतों के आधार पर सटीक और विश्वसनीय परिणाम प्रदान करता है।\n\n"
+                    f"**3. व्यावहारिक लाभ:**  \n"
+                    f"{topic_title} को समझकर आप जटिल समस्याओं को हल कर सकते हैं और बेहतर निर्णय ले सकते हैं।\n\n"
+                    f"*यदि आपको कोड उदाहरण, गणितीय सूत्र या सरल व्याख्या चाहिए, तो निसंकोच पूछें!*"
+                )
+            }
 
         return {
             "badge": f"💡 A.U.R.A. REASONING • {topic_title.upper()[:18]}",

@@ -42,7 +42,7 @@ class SatelliteRoadAuditor:
     Identifies only genuine, verifiable road closures, construction zones, or reported hazards.
     """
 
-    def __init__(self, enable_live_osm: bool = True, timeout_sec: float = 3.0):
+    def __init__(self, enable_live_osm: bool = True, timeout_sec: float = 1.0):
         self.enable_live_osm = enable_live_osm
         self.timeout_sec = timeout_sec
         self._cache: Dict[str, Tuple[float, SatelliteAuditResult]] = {}

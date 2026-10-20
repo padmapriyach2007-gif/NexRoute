@@ -368,9 +368,11 @@ class MapService:
 
         gazetteer_matches.sort(key=lambda x: x[0], reverse=True)
 
-        # High-confidence campus internal short-circuit (e.g., 'cse block', 'the cafeteria', 'vignan library')
-        is_top_campus_internal = gazetteer_matches and gazetteer_matches[0][1].get("is_campus_internal", False) and gazetteer_matches[0][0] >= 1.50
-        if is_top_campus_internal:
+        # High-confidence local gazetteer or campus internal short-circuit:
+        # If there is an exact or very high-confidence gazetteer match (e.g. Tenali, Guntur, Vignan, Bapatla, CSE block),
+        # return immediately without waiting for slow external network APIs!
+        is_high_conf_gazetteer = gazetteer_matches and (gazetteer_matches[0][0] >= 1.50 or gazetteer_matches[0][1].get("is_campus_internal", False))
+        if is_high_conf_gazetteer:
             final_res = [m[1] for m in gazetteer_matches[:limit]]
             self._query_candidates_cache[q_norm] = final_res
             self._query_candidates_cache[q_norm_std] = final_res
@@ -422,7 +424,7 @@ class MapService:
                     "addressdetails": 1
                 }
                 headers = {"User-Agent": self.user_agent}
-                resp = self.session.get(url, params=params, headers=headers, timeout=2.2)
+                resp = self.session.get(url, params=params, headers=headers, timeout=1.2)
                 if resp.status_code == 200:
                     for item in resp.json():
                         addr = item.get("address", {})
@@ -498,7 +500,7 @@ class MapService:
                     photon_params["lon"] = origin_coords[1]
 
                 headers = {"User-Agent": self.user_agent}
-                p_resp = self.session.get(photon_url, params=photon_params, headers=headers, timeout=2.2)
+                p_resp = self.session.get(photon_url, params=photon_params, headers=headers, timeout=1.2)
                 if p_resp.status_code == 200:
                     p_data = p_resp.json()
                     features = p_data.get("features", [])

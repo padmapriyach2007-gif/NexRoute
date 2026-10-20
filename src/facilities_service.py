@@ -687,7 +687,7 @@ def fetch_dynamic_osm_facilities(
         )
         headers = {"User-Agent": "PATHFINDER-Intelligence/2.0 (OpenStreetMap Transit Amenities)"}
         req = urllib.request.Request(nom_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=3.5) as resp:
+        with urllib.request.urlopen(req, timeout=1.0) as resp:
             if resp.status == 200:
                 raw_items = json.loads(resp.read().decode("utf-8"))
                 for idx, item in enumerate(raw_items):
@@ -819,8 +819,8 @@ def get_facilities_for_category(
     # In production mode (enable_demo_mode=False): query live dynamic OSM data
     if not enable_demo_mode:
         if search_mode == "along_route" and polyline and len(polyline) >= 2:
-            # Query at quarter, half, and three-quarter corridor milestones
-            sample_indices = [len(polyline) // 4, len(polyline) // 2, (3 * len(polyline)) // 4]
+            # Efficient corridor midpoint query to maximize responsiveness
+            sample_indices = [len(polyline) // 2]
             corridor_facilities: List[Dict[str, Any]] = []
             seen_ids = set()
             
@@ -830,8 +830,8 @@ def get_facilities_for_category(
                     category_key=category,
                     center_lat=anchor[0],
                     center_lon=anchor[1],
-                    radius_km=max(3.0, radius_km * 0.6),
-                    limit=10
+                    radius_km=max(3.0, radius_km * 0.75),
+                    limit=12
                 )
                 for f in f_batch:
                     if f["facility_id"] not in seen_ids:

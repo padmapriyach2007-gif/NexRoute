@@ -1059,37 +1059,37 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     with head_col1:
         st.markdown(
             f"<div style='font-size: 0.70rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;'>"
-            f"<span>⚡ Active Provider:</span>"
+            f"<span>⚡ {t('chat.active_provider')}:</span>"
             f"<span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; font-family: monospace;'>{active_engine_name}</span>"
             f"</div>",
             unsafe_allow_html=True
         )
     with head_col2:
-        if st.button("🗑️ Reset Chat", key=f"btn_reset_chat_{key_prefix}", use_container_width=True, help="Clear active conversation history"):
+        if st.button(t("chat.reset"), key=f"btn_reset_chat_{key_prefix}", use_container_width=True, help="Clear active conversation history"):
             if bot and hasattr(bot, "reset_conversation"):
                 bot.reset_conversation()
             st.session_state.aura_chat_history = [
                 {
                     "role": "assistant",
-                    "badge": "⚡ A.U.R.A. RESET",
-                    "content": "✨ *Conversation reset. How can I assist you today? Feel free to ask anything!*"
+                    "badge": "⚡ A.U.R.A.",
+                    "content": f"✨ *{t('chat.welcome')}*"
                 }
             ]
             st.rerun()
 
-    st.markdown("<span style='font-size: 0.72rem; font-weight: 700; color: #94a3b8;'>💡 Quick Copilot Categories:</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='font-size: 0.72rem; font-weight: 700; color: #94a3b8;'>{t('chat.quick_categories')}</span>", unsafe_allow_html=True)
     chip_rows = [
         [
-            ("⚡ Fastest Route", "What is the fastest route from my location to the destination?"),
-            ("🗺️ Compare Routes", "Can you compare the available route alternatives for distance, time, and safety?"),
-            ("🛡️ Check Hazards", "Are there any active road closures, accidents or flood hazards on my corridor?"),
-            ("🌤️ Live Weather", "What is the current weather and temperature at my destination?")
+            (t("chat.quick_fastest"), "What is the fastest route from my location to the destination?"),
+            (t("chat.quick_compare"), "Can you compare the available route alternatives for distance, time, and safety?"),
+            (t("chat.quick_hazards"), "Are there any active road closures, accidents or flood hazards on my corridor?"),
+            (t("chat.quick_weather"), "What is the current weather and temperature at my destination?")
         ],
         [
-            ("💻 Code Helper", "Explain how the A* pathfinding algorithm works with a Python code example."),
-            ("✍️ Creative Story", "Write a short, inspiring creative story about a journey through a misty mountain pass."),
-            ("🍽️ Nearby Food", "Recommend the top verified restaurants and dining places near my destination."),
-            ("🏥 Emergency / SOS", "Where is the nearest 24/7 hospital or trauma care clinic?")
+            (t("chat.quick_code"), "Explain how the A* pathfinding algorithm works with a Python code example."),
+            (t("chat.quick_story"), "Write a short, inspiring creative story about a journey through a misty mountain pass."),
+            (t("chat.quick_food"), "Recommend the top verified restaurants and dining places near my destination."),
+            (t("chat.quick_emergency"), "Where is the nearest 24/7 hospital or trauma care clinic?")
         ]
     ]
 
@@ -1211,9 +1211,9 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     with st.form(f"aura_form_{key_prefix}", clear_on_submit=True):
         col_in, col_btn = st.columns([4, 1])
         with col_in:
-            u_text = st.text_input("Ask A.U.R.A...", placeholder="Ask A.U.R.A. anything (science, coding, math, writing, routes, weather, places)...", label_visibility="collapsed", key=f"txt_{key_prefix}")
+            u_text = st.text_input(t("chat.title"), placeholder=t("chat.placeholder"), label_visibility="collapsed", key=f"txt_{key_prefix}")
         with col_btn:
-            s_click = st.form_submit_button("Send 🚀", use_container_width=True)
+            s_click = st.form_submit_button(t("chat.send"), use_container_width=True)
 
     if s_click and u_text and u_text.strip():
         q_str = u_text.strip()
@@ -2250,7 +2250,7 @@ with tab_nav:
         if orig_cands and st.session_state.get("orig_candidates_query") == orig_text:
             st.markdown(
                 f"<div style='background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 8px; padding: 10px 12px; margin: 4px 0 10px 0;'>"
-                f"<div style='font-size:0.82rem; color:#38bdf8; font-weight:700; margin-bottom:6px;'>🔍 Multiple locations match <i>\"{orig_text}\"</i>. Please select your origin:</div>",
+                f"<div style='font-size:0.82rem; color:#38bdf8; font-weight:700; margin-bottom:6px;'>🔍 {t('nav.multiple_matches_orig', query=orig_text)}</div>",
                 unsafe_allow_html=True
             )
             for c_idx, cand in enumerate(orig_cands):
@@ -2279,7 +2279,7 @@ with tab_nav:
                     st.session_state.selected_route_id = None
                     st.session_state.auto_fit_bounds = True
                     st.session_state.real_location_service.set_manual_location(cand["lat"], cand["lon"], cand["display_name"])
-                    st.toast(f"Confirmed Origin: {c_name} ({admin_str})", icon="✅")
+                    st.toast(t("nav.confirmed_orig", name=f"{c_name} ({admin_str})"), icon="✅")
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -2416,7 +2416,7 @@ with tab_nav:
         if dest_cands and st.session_state.get("dest_candidates_query") == dest_text:
             st.markdown(
                 f"<div style='background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 8px; padding: 10px 12px; margin: 4px 0 10px 0;'>"
-                f"<div style='font-size:0.82rem; color:#38bdf8; font-weight:700; margin-bottom:6px;'>🔍 Multiple locations match <i>\"{dest_text}\"</i>. Please select your destination:</div>",
+                f"<div style='font-size:0.82rem; color:#38bdf8; font-weight:700; margin-bottom:6px;'>🔍 {t('nav.multiple_matches', query=dest_text)}</div>",
                 unsafe_allow_html=True
             )
             for c_idx, cand in enumerate(dest_cands):
@@ -2448,7 +2448,7 @@ with tab_nav:
                     st.session_state.is_in_transit = False
                     st.session_state.user_speed_kmh = 0.0
                     st.session_state.user_bearing_deg = 0.0
-                    st.toast(f"Confirmed Destination: {c_name} ({admin_str})", icon="✅")
+                    st.toast(t("nav.confirmed_dest", name=f"{c_name} ({admin_str})"), icon="✅")
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -2468,19 +2468,19 @@ with tab_nav:
         st.markdown(f"""
         <div style='background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 7px 14px; margin-top: 6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 14px; font-size: 0.78rem; color: #cbd5e1; flex-wrap: wrap;'>
-                <span>🟢 <b>Start:</b> <span style='color: #38bdf8;'>{str(l_orig_live)[:38]}</span> <code style='font-size: 0.72rem; color: #94a3b8;'>({c_orig_live[0]:.4f}, {c_orig_live[1]:.4f})</code></span>
+                <span>🟢 <b>{t("nav.start_label")}</b> <span style='color: #38bdf8;'>{str(l_orig_live)[:38]}</span> <code style='font-size: 0.72rem; color: #94a3b8;'>({c_orig_live[0]:.4f}, {c_orig_live[1]:.4f})</code></span>
                 <span style='color: #64748b;'>➔</span>
-                <span>🏁 <b>Destination:</b> <span style='color: #38bdf8;'>{str(l_dest_live)[:38]}</span> <code style='font-size: 0.72rem; color: #94a3b8;'>({c_dest_live[0]:.4f}, {c_dest_live[1]:.4f})</code></span>
+                <span>🏁 <b>{t("nav.dest_label")}</b> <span style='color: #38bdf8;'>{str(l_dest_live)[:38]}</span> <code style='font-size: 0.72rem; color: #94a3b8;'>({c_dest_live[0]:.4f}, {c_dest_live[1]:.4f})</code></span>
             </div>
             <div style='font-size: 0.70rem; color: #34d399; font-weight: 700; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);'>
-                ✓ GPS & Coords Synchronized
+                ✓ {t("nav.gps_synced")}
             </div>
         </div>
         """, unsafe_allow_html=True)
     elif c_orig_live and not c_dest_live:
         st.markdown(f"""
         <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 6px 12px; margin-top: 6px; margin-bottom: 8px; font-size: 0.76rem; color: #fbbf24; display: flex; align-items: center; gap: 8px;'>
-            <span>📍 Start: <b>{str(l_orig_live)[:45]}</b> ({c_orig_live[0]:.4f}, {c_orig_live[1]:.4f}) • Enter destination above or click on the map to calculate routes</span>
+            <span>📍 {t("nav.start_label")} <b>{str(l_orig_live)[:45]}</b> ({c_orig_live[0]:.4f}, {c_orig_live[1]:.4f}) • {t("nav.enter_dest_prompt")}</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -2563,15 +2563,20 @@ with tab_nav:
         else:
             st.session_state.selected_travel_mode = "CAR"
 
-    st.markdown("""
+    fleet_title = t('fleet.title')
+    fleet_subtitle = t('fleet.subtitle')
+    st.markdown(f"""
     <div style='display: flex; align-items: center; justify-content: space-between; margin-top: 10px; margin-bottom: 6px;'>
         <div style='font-size: 0.80rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;'>
-            <span>⚡</span> TRAVEL MODE & VEHICLE FLEET:
+            <span>⚡</span> {fleet_title}
         </div>
         <div style='font-size: 0.70rem; color: #94a3b8;'>
-            Select Vehicle • Dedicated Routing Profiles
+            {fleet_subtitle}
         </div>
     </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
     <style>
     /* Creative Equal-Sized Vehicle Fleet Deck */
     .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
@@ -2671,7 +2676,7 @@ with tab_nav:
             with m_cols[idx]:
                 is_selected = (m_k == selected_key)
                 btn_type = "primary" if is_selected else "secondary"
-                card_label = f"{m_info['icon']}\n\n**{m_info['name']}**"
+                card_label = f"{m_info['icon']}\n\n**{t(f'fleet.{m_k.lower()}')}**"
                 if st.button(card_label, key=f"btn_mode_select_{m_k}", use_container_width=True, type=btn_type):
                     st.session_state.selected_travel_mode = m_k
                     st.session_state.last_selected_mode = m_info["label"]
@@ -2679,7 +2684,7 @@ with tab_nav:
 
     current_mode_info = MODES_CONFIG.get(st.session_state.selected_travel_mode, MODES_CONFIG["CAR"])
     travel_mode = current_mode_info["mode"]
-    travel_mode_str = current_mode_info["label"]
+    travel_mode_str = f"{current_mode_info['icon']} {t(f'fleet.{st.session_state.selected_travel_mode.lower()}')}"
     st.session_state.last_selected_mode = travel_mode_str
 
     # =========================================================================
@@ -2707,22 +2712,22 @@ with tab_nav:
         # Validate and clamp custom speed if vehicle changed
         st.session_state.custom_speed_kmh = max(vehicle_limits["min"], min(vehicle_limits["max"], st.session_state.custom_speed_kmh))
 
-    st.markdown("""
+    st.markdown(f"""
     <div style='display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 6px;'>
         <div style='font-size: 0.80rem; font-weight: 800; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;'>
-            <span>🎛️</span> SPEED MODE & TRANSIT PROFILE:
+            <span>🎛️</span> {t('speed.title')}
         </div>
         <div style='font-size: 0.70rem; color: #94a3b8;'>
-            Adapted to Selected Vehicle • Realistic Speed Limits
+            {t('speed.adapted')}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     SPEED_MODES = {
-        "ECO": {"icon": "🌿", "label": "Eco", "desc": "Conservative cruising profile for energy efficiency and reduced drag"},
-        "NORMAL": {"icon": "⚡", "label": "Normal", "desc": "Standard baseline routing and corridor travel-time assumptions"},
-        "FAST": {"icon": "🚀", "label": "Fast", "desc": "Upper permissible corridor speeds where road geometry permits"},
-        "CUSTOM": {"icon": "⚙️", "label": "Custom", "desc": f"Configurable cruising speed preference ({vehicle_limits['min']} - {vehicle_limits['max']} km/h)"}
+        "ECO": {"icon": "🌿", "label": t("speed.eco"), "desc": t("speed.eco_desc")},
+        "NORMAL": {"icon": "⚡", "label": t("speed.normal"), "desc": t("speed.normal_desc")},
+        "FAST": {"icon": "🚀", "label": t("speed.fast"), "desc": t("speed.fast_desc")},
+        "CUSTOM": {"icon": "⚙️", "label": t("speed.custom"), "desc": t("speed.custom_desc", min=vehicle_limits['min'], max=vehicle_limits['max'])}
     }
 
     with st.container(key="speed_deck_container"):
@@ -2742,16 +2747,16 @@ with tab_nav:
         st.markdown(f"""
         <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(167, 139, 250, 0.4); border-radius: 10px; padding: 10px 14px; margin-top: 6px;'>
             <div style='display: flex; justify-content: space-between; align-items: center;'>
-                <span style='font-size: 0.82rem; font-weight: 800; color: #c4b5fd;'>⚙️ Custom Speed Setting ({current_mode_info['name']}):</span>
+                <span style='font-size: 0.82rem; font-weight: 800; color: #c4b5fd;'>{t("speed.custom_setting", mode=current_mode_info['name'])}</span>
                 <span style='font-size: 0.88rem; font-weight: 800; color: #38bdf8; font-family: monospace;'>{st.session_state.custom_speed_kmh} km/h</span>
             </div>
             <div style='font-size: 0.72rem; color: #94a3b8; margin-top: 2px;'>
-                Range for {vehicle_limits['profile']}: <b>{vehicle_limits['min']} km/h</b> to <b>{vehicle_limits['max']} km/h</b>
+                {t("speed.range_for", profile=vehicle_limits['profile'], min=vehicle_limits['min'], max=vehicle_limits['max'])}
             </div>
         </div>
         """, unsafe_allow_html=True)
         new_speed = st.slider(
-            label="Configure target cruise speed preference:",
+            label=t("speed.configure_target"),
             min_value=vehicle_limits["min"],
             max_value=vehicle_limits["max"],
             value=st.session_state.custom_speed_kmh,
@@ -2767,7 +2772,7 @@ with tab_nav:
     speed_mode_desc = SPEED_MODES[st.session_state.selected_speed_mode]["desc"]
     st.markdown(f"""
     <div style='background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 6px 12px; margin-top: 6px; margin-bottom: 8px; font-size: 0.74rem; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between;'>
-        <span><b>Active Profile:</b> {SPEED_MODES[st.session_state.selected_speed_mode]['icon']} {st.session_state.selected_speed_mode} • {speed_mode_desc}</span>
+        <span><b>{t('speed.active_profile')}</b> {SPEED_MODES[st.session_state.selected_speed_mode]['icon']} {SPEED_MODES[st.session_state.selected_speed_mode]['label']} • {speed_mode_desc}</span>
         <span style='color: #94a3b8; font-size: 0.68rem;'>Road safety limits & legal constraints take precedence</span>
     </div>
     """, unsafe_allow_html=True)
@@ -2815,9 +2820,9 @@ with tab_nav:
         <div style='background: rgba(56, 189, 248, 0.10); border: 1.5px solid rgba(56, 189, 248, 0.35);
                     border-radius: 12px; padding: 18px 22px; margin: 14px 0; text-align: center;'>
             <div style='font-size: 2.2rem; margin-bottom: 6px;'>🗺️</div>
-            <div style='color: #7dd3fc; font-weight: 800; font-size: 1.0rem;'>Set Your {_missing_str.title()}</div>
+            <div style='color: #7dd3fc; font-weight: 800; font-size: 1.0rem;'>{t("nav.set_origin_dest")}</div>
             <div style='color: #94a3b8; font-size: 0.84rem; margin-top: 6px;'>
-                Enter a {_missing_str} above or click on the map to start navigating.
+                {t("nav.enter_dest_prompt")}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -2872,7 +2877,7 @@ with tab_nav:
             )
             st.markdown(f"""
             <div style='background: rgba(239, 68, 68, 0.18); border: 1.5px solid #ef4444; border-radius: 10px; padding: 12px 16px; margin: 10px 0;'>
-                <div style='color: #f87171; font-weight: 800; font-size: 0.95rem;'>🚫 ROUTE UNAVAILABLE</div>
+                <div style='color: #f87171; font-weight: 800; font-size: 0.95rem;'>🚫 {t("nav.route_unavailable")}</div>
                 <div style='color: #f1f5f9; font-size: 0.84rem; margin-top: 4px;'>{fail_msg}</div>
             </div>
             """, unsafe_allow_html=True)
@@ -3141,31 +3146,31 @@ with tab_nav:
     tb_c1, tb_c2, tb_c3 = st.columns([1.6, 1.0, 1.4], vertical_alignment="center")
     with tb_c1:
         st.markdown(
-            "<div style='display:flex; align-items:center; gap:8px; margin-bottom: 4px;'>"
-            "<span style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase;'>🗺️ Map Canvas</span>"
-            "<span style='font-size: 0.68rem; background: rgba(56,189,248,0.14); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 2px 6px; border-radius: 4px;'>Full Vector & Satellite</span>"
-            "</div>",
+            f"<div style='display:flex; align-items:center; gap:8px; margin-bottom: 4px;'>"
+            f"<span style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase;'>🗺️ {t('map.canvas')}</span>"
+            f"<span style='font-size: 0.68rem; background: rgba(56,189,248,0.14); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 2px 6px; border-radius: 4px;'>{t('map.full_vector_satellite')}</span>"
+            f"</div>",
             unsafe_allow_html=True
         )
         sub_l1, sub_l2, sub_l3 = st.columns(3)
         cur_engine = st.session_state.get("map_display_engine", "tactical_satellite")
         with sub_l1:
-            if st.button("🛰️ Satellite", key="btn_style_sat", type="primary" if cur_engine == "tactical_satellite" else "secondary", use_container_width=True):
+            if st.button(f"🛰️ {t('map.satellite')}", key="btn_style_sat", type="primary" if cur_engine == "tactical_satellite" else "secondary", use_container_width=True):
                 st.session_state.map_display_engine = "tactical_satellite"
                 st.rerun()
         with sub_l2:
-            if st.button("🗺️ Road", key="btn_style_road", type="primary" if cur_engine == "google_maps_sdk" else "secondary", use_container_width=True):
+            if st.button(f"🗺️ {t('map.road')}", key="btn_style_road", type="primary" if cur_engine == "google_maps_sdk" else "secondary", use_container_width=True):
                 st.session_state.map_display_engine = "google_maps_sdk"
                 st.rerun()
         with sub_l3:
-            if st.button("⛰️ Terrain", key="btn_style_terr", type="primary" if cur_engine == "google_terrain" else "secondary", use_container_width=True):
+            if st.button(f"⛰️ {t('map.terrain')}", key="btn_style_terr", type="primary" if cur_engine == "google_terrain" else "secondary", use_container_width=True):
                 st.session_state.map_display_engine = "google_terrain"
                 st.rerun()
     with tb_c2:
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
         sub_act1, sub_act2 = st.columns(2)
         with sub_act1:
-            if st.button("📍 GPS", key="btn_toolbar_gps", use_container_width=True, help="Snap origin to live hardware GPS"):
+            if st.button(f"📍 {t('map.snap_gps')}", key="btn_toolbar_gps", use_container_width=True, help="Snap origin to live hardware GPS"):
                 st.session_state.is_custom_start_place = False
                 st.session_state.orig_candidates = []
                 CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
@@ -3175,10 +3180,10 @@ with tab_nav:
                 st.session_state.is_in_transit = False
                 st.session_state.auto_fit_bounds = True
                 st.session_state.scroll_to_app_map = True
-                st.toast("📍 Re-centered to live GPS", icon="🛰️")
+                st.toast(f"📍 {t('map.re_centered_gps')}", icon="🛰️")
                 st.rerun()
         with sub_act2:
-            if st.button("🎯 Fit", key="btn_toolbar_fit", use_container_width=True, help="Auto-fit camera view to active route corridor"):
+            if st.button(f"🎯 {t('map.fit_view')}", key="btn_toolbar_fit", use_container_width=True, help="Auto-fit camera view to active route corridor"):
                 st.session_state.auto_fit_bounds = True
                 st.session_state.scroll_to_app_map = True
                 st.rerun()
@@ -3220,9 +3225,9 @@ with tab_nav:
                     <div style='display: flex; align-items: center; justify-content: space-between;'>
                         <div style='display: flex; align-items: center; gap: 8px;'>
                             <span style='font-size: 1.1rem;'>🎯</span>
-                            <b style='color: #ffffff; font-size: 0.96rem;'>Active on Map: {active_sel.route.name}</b>
+                            <b style='color: #ffffff; font-size: 0.96rem;'>{t('map.active_on_map')} {active_sel.route.name}</b>
                         </div>
-                        <span style='background: rgba(56,189,248,0.25); color: #38bdf8; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.4);'>SELECTED CORRIDOR</span>
+                        <span style='background: rgba(56,189,248,0.25); color: #38bdf8; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.4);'>{t('map.selected_corridor')}</span>
                     </div>
                     <div style='color: #cbd5e1; font-size: 0.82rem; margin-top: 4px;'>
                         ⏱️ <b>{active_sel.effective_duration_minutes:.1f} mins</b> • 📏 <b>{format_distance(active_sel.effective_distance_km, st.session_state.get("distance_unit", "km"))}</b> • 📍 Via {", ".join(active_sel.route.summary_roads[:3]) if active_sel.route.summary_roads else "Direct Corridor"}
@@ -3230,7 +3235,7 @@ with tab_nav:
                 </div>
                 """, unsafe_allow_html=True)
             with col_sel_btn:
-                if st.button("🌐 Show All Routes", key="btn_show_all_routes_top", use_container_width=True, type="secondary"):
+                if st.button(f"🌐 {t('map.show_all_routes')}", key="btn_show_all_routes_top", use_container_width=True, type="secondary"):
                     st.session_state.focused_route_id = "ALL"
                     st.session_state.selected_route_id = None
                     st.session_state.auto_fit_bounds = True
@@ -3646,7 +3651,7 @@ with tab_nav:
             <div class="dispatch-deck-topbar">
                 <div class="dispatch-deck-title">
                     <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8;"></span>
-                    <span>⏱️ TEMPORAL DISPATCH & CORRIDOR TIMEZONE DECK</span>
+                    <span>⏱️ {t('dispatch.title')}</span>
                 </div>
                 <div class="dispatch-world-ticker" title="Live Global Corridor Reference Clocks">
                     <span class="ticker-item"><span class="ticker-city">IST</span> {ist_str}</span>
@@ -3662,19 +3667,19 @@ with tab_nav:
 
             col_dep_pills, col_tz_select, col_dep_info = st.columns([0.33, 0.39, 0.28], vertical_alignment="top")
             with col_dep_pills:
-                st.markdown("""
+                st.markdown(f"""
                 <div class="dispatch-control-label">
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <span>🕒</span>
-                        <span>Scheduled Departure</span>
+                        <span>{t('dispatch.scheduled_departure')}</span>
                     </div>
                     <span class="dispatch-control-chip">OFFSET</span>
                 </div>
                 """, unsafe_allow_html=True)
                 dep_offset = st.pills(
-                    "Scheduled Departure",
+                    t("dispatch.scheduled_departure"),
                     options=[0, 15, 30, 60],
-                    format_func=lambda x: "⚡ Now" if x == 0 else f"+{x}m",
+                    format_func=lambda x: f"⚡ {t('dispatch.now')}" if x == 0 else f"+{x}m",
                     default=0,
                     key="pills_nav_departure_offset",
                     label_visibility="collapsed"
@@ -3687,14 +3692,14 @@ with tab_nav:
                 hour_val = now_in_tz.hour
                 is_day = 6 <= hour_val < 18
                 celestial_icon = "☀️" if is_day else "🌙"
-                period_label = "Day Corridor" if is_day else "Night Corridor"
+                period_label = t("dispatch.day_corridor") if is_day else t("dispatch.night_corridor")
                 period_color = "#fef08a" if is_day else "#a5b4fc"
 
                 st.markdown(f"""
                 <div class="dispatch-control-label">
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <span>🌐</span>
-                        <span>Route Timezone</span>
+                        <span>{t('dispatch.route_timezone')}</span>
                     </div>
                     <span class="dispatch-tz-live-badge" title="Live Corridor Time & Operations Cycle">
                         <span class="live-blink-dot"></span>
@@ -3708,7 +3713,7 @@ with tab_nav:
                     st.session_state.selected_timezone = "Asia/Kolkata"
                 cur_tz_idx = tz_keys.index(st.session_state.selected_timezone) if st.session_state.selected_timezone in tz_keys else 0
                 chosen_tz = st.selectbox(
-                    "Route Timezone",
+                    t("dispatch.route_timezone"),
                     options=tz_keys,
                     format_func=lambda k: TIMEZONE_CATALOG[k]["label"],
                     index=cur_tz_idx,
@@ -3717,11 +3722,11 @@ with tab_nav:
                 )
                 st.session_state.selected_timezone = chosen_tz
             with col_dep_info:
-                st.markdown("""
+                st.markdown(f"""
                 <div class="dispatch-control-label" style="justify-content: flex-end;">
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <span>⚡</span>
-                        <span>Active Telemetry Profile</span>
+                        <span>{t('dispatch.active_telemetry')}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -3928,13 +3933,13 @@ with tab_nav:
     # =========================================================================
     # MULTI-OBJECTIVE ROUTING SEGMENTED SELECTOR (MAIN PAGE & MOBILE ADAPTIVE)
     # =========================================================================
-    st.markdown("""
+    st.markdown(f"""
     <div style='display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 6px;'>
         <div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;'>
-            <span>🎯</span> ROUTING OBJECTIVE & CANDIDATE RANKING:
+            <span>🎯</span> {t('nav.routing_objective')}
         </div>
         <div style='font-size: 0.70rem; color: #94a3b8;'>
-            Select Priority • Instant Map Synchronization
+            {t('nav.routing_priority_sub')}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -4002,32 +4007,32 @@ with tab_nav:
 
                 is_safe_route = getattr(r_item, "is_safe", True) and r_item.is_eligible and len(getattr(r_item, "detected_hazards", [])) == 0
                 if is_safe_route:
-                    safety_badge = "<span style='background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>🛡️ NO REPORTED HAZARDS</span>"
+                    safety_badge = f"<span style='background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>🛡️ {t('route.no_hazards')}</span>"
                     card_border = "#10b981" if is_active else "#38bdf8"
                     if len(ranked_routes) == 1:
-                        rank_badge = "⭐ SOLE ROUTE"
+                        rank_badge = f"⭐ {t('route.sole_route')}"
                     elif r_item == fastest_candidate and r_item == shortest_candidate:
-                        rank_badge = "⭐ FASTEST & SHORTEST"
+                        rank_badge = f"⭐ {t('route.fastest_shortest')}"
                     elif r_item.rank == 1:
-                        rank_badge = "⭐ BEST MATCH"
+                        rank_badge = f"⭐ {t('route.best_match')}"
                     else:
-                        rank_badge = f"Alternative {r_item.rank}"
+                        rank_badge = t("route.alternative", rank=r_item.rank)
                 elif not getattr(r_item, "is_safe", True):
-                    safety_badge = "<span style='background: rgba(239, 68, 68, 0.25); color: #f87171; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>⚠️ BLOCKED EN ROUTE</span>"
+                    safety_badge = f"<span style='background: rgba(239, 68, 68, 0.25); color: #f87171; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>⚠️ {t('route.blocked_en_route')}</span>"
                     card_border = "#ef4444"
                     rank_badge = "RESTRICTED (HAZARD)"
                 else:
-                    safety_badge = "<span style='background: rgba(245, 158, 11, 0.25); color: #fbbf24; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>🚧 ROAD CLOSURE</span>"
+                    safety_badge = f"<span style='background: rgba(245, 158, 11, 0.25); color: #fbbf24; font-size: 0.70rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>🚧 {t('route.road_closure')}</span>"
                     card_border = "#ef4444"
                     rank_badge = "RESTRICTED (CLOSURE)"
 
                 # Map Presentation Status Indicator & Visual Focus
                 if is_active:
-                    map_status_badge = "<span style='background: rgba(14, 165, 233, 0.35); color: #38bdf8; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1.5px solid #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);'>🎯 ACTIVE ON MAP</span>"
+                    map_status_badge = f"<span style='background: rgba(14, 165, 233, 0.35); color: #38bdf8; font-size: 0.70rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1.5px solid #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);'>🎯 {t('route.active_on_map')}</span>"
                     card_opacity = "1.0"
                     card_extra_border = f"border-left: 5px solid {card_border}; border-top: 2px solid #38bdf8; border-right: 2px solid #38bdf8; border-bottom: 2px solid #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.45); background: rgba(14, 165, 233, 0.12);"
                 else:
-                    map_status_badge = "<span style='background: rgba(100, 116, 139, 0.20); color: #cbd5e1; font-size: 0.70rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>CANDIDATE</span>"
+                    map_status_badge = f"<span style='background: rgba(100, 116, 139, 0.20); color: #cbd5e1; font-size: 0.70rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>{t('route.candidate')}</span>"
                     card_opacity = "0.90"
                     card_extra_border = f"border-left: 5px solid {card_border}; border-top: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08);"
 
@@ -4044,36 +4049,36 @@ with tab_nav:
                     dist_color = "#34d399" if delta_dist < -0.05 else ("#94a3b8" if abs(delta_dist) <= 0.1 else "#38bdf8")
                     diff_pill = f"<span style='background: rgba(255, 255, 255, 0.08); font-size: 0.74rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.12);'><b style='color: {dur_color};'>⏱️ {sign_dur}{abs(delta_dur):.1f} min</b> &nbsp;|&nbsp; <b style='color: {dist_color};'>📏 {sign_dist}{format_distance(abs(delta_dist), cur_unit)}</b></span>"
                 elif len(ranked_routes) == 1:
-                    diff_pill = "<span style='background: rgba(16, 185, 129, 0.18); color: #34d399; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>✓ SOLE ROUTE</span>"
+                    diff_pill = f"<span style='background: rgba(16, 185, 129, 0.18); color: #34d399; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;'>✓ {t('route.sole_route')}</span>"
                 else:
-                    diff_pill = "<span style='background: rgba(16, 185, 129, 0.22); color: #34d399; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);'>⭐ FASTEST BASELINE</span>"
+                    diff_pill = f"<span style='background: rgba(16, 185, 129, 0.22); color: #34d399; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);'>⭐ {t('route.fastest_baseline')}</span>"
 
                 if is_safe_route:
                     if len(ranked_routes) == 1:
-                        creative_takeaway = "💡 <b>Single Direct Route:</b> This is the only distinct physical road corridor connecting origin and destination."
+                        creative_takeaway = f"💡 {t('route.single_direct_desc')}"
                     elif r_item.rank == 1:
-                        creative_takeaway = "💡 <b>Recommended Choice:</b> Optimal balance of transit speed and clear, uninterrupted pavement."
+                        creative_takeaway = f"💡 {t('route.recommended_choice_desc')}"
                     else:
-                        creative_takeaway = "💡 <b>Alternative Bypass:</b> Secondary viable option with open traffic flow."
+                        creative_takeaway = f"💡 {t('route.alternative_bypass_desc')}"
                 else:
                     closure_name = r_item.rejection_reasons[0].split("(")[0].replace("Road restriction:", "").replace("Active Hazard:", "").strip() if r_item.rejection_reasons else "Road closure"
-                    creative_takeaway = f"⛔ <b>Impassable:</b> Confirmed blockage at {closure_name}."
+                    creative_takeaway = f"⛔ {t('route.impassable_desc', closure=closure_name)}"
 
                 feature_chips = []
                 if is_safe_route:
-                    feature_chips.append("<span style='background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>⚡ Clear Corridor</span>")
+                    feature_chips.append(f"<span style='background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>⚡ {t('route.clear_corridor')}</span>")
                     if r_item == fastest_candidate:
-                        feature_chips.append("<span style='background: rgba(56, 189, 248, 0.22); color: #7dd3fc; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>⏱️ Fastest</span>")
+                        feature_chips.append(f"<span style='background: rgba(56, 189, 248, 0.22); color: #7dd3fc; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>⏱️ {t('route.fastest')}</span>")
                     if r_item == shortest_candidate:
-                        feature_chips.append("<span style='background: rgba(168, 85, 247, 0.22); color: #c084fc; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>📏 Shortest</span>")
+                        feature_chips.append(f"<span style='background: rgba(168, 85, 247, 0.22); color: #c084fc; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>📏 {t('route.shortest')}</span>")
                     if r_item.route.is_accessible:
                         if getattr(r_item.route, "accessibility_verified", False) or getattr(r_item, "accessibility_verified", False):
-                            feature_chips.append("<span style='background: rgba(52, 211, 153, 0.15); color: #34d399; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>♿ Step-Free</span>")
+                            feature_chips.append(f"<span style='background: rgba(52, 211, 153, 0.15); color: #34d399; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>♿ {t('route.step_free')}</span>")
                         else:
-                            feature_chips.append("<span style='background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>♿ Paved Road</span>")
+                            feature_chips.append(f"<span style='background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>♿ {t('route.paved_road')}</span>")
                 else:
-                    feature_chips.append("<span style='background: rgba(239, 68, 68, 0.15); color: #f87171; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>⚠️ Impassable</span>")
-                    feature_chips.append("<span style='background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>🔄 Detour Active</span>")
+                    feature_chips.append(f"<span style='background: rgba(239, 68, 68, 0.15); color: #f87171; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>⚠️ {t('route.impassable')}</span>")
+                    feature_chips.append(f"<span style='background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;'>🔄 {t('route.detour_active')}</span>")
 
                 chips_html = " ".join(feature_chips)
 
@@ -4138,14 +4143,14 @@ with tab_nav:
 
                 # Dedicated Native Select / Highlight Control
                 if is_active:
-                    if st.button("🎯 Active on Map • Show All Routes", key=f"btn_route_sel_{r_item.route.route_id}_{idx}", type="primary", use_container_width=True):
+                    if st.button(f"🎯 {t('route.active_on_map')} • {t('map.show_all_routes')}", key=f"btn_route_sel_{r_item.route.route_id}_{idx}", type="primary", use_container_width=True):
                         st.session_state.focused_route_id = "ALL"
                         st.session_state.selected_route_id = None
                         st.session_state.auto_fit_bounds = True
                         st.session_state.scroll_to_app_map = True
                         st.rerun()
                 else:
-                    if st.button("🗺️ Select Route & View on Map", key=f"btn_route_sel_{r_item.route.route_id}_{idx}", type="secondary", use_container_width=True):
+                    if st.button(f"🗺️ {t('nav.select_route_map')}", key=f"btn_route_sel_{r_item.route.route_id}_{idx}", type="secondary", use_container_width=True):
                         st.session_state.focused_route_id = r_item.route.route_id
                         st.session_state.selected_route_id = r_item.route.route_id
                         st.session_state.selected_route_object = r_item.route
@@ -4366,7 +4371,7 @@ with tab_nav:
                 st.markdown(f"<b>{m_item['title']}</b>", unsafe_allow_html=True)
 
 with tab_guide:
-    st.markdown("### 🚗 Virtual Guide & Interactive 3D Journey Simulation")
+    st.markdown(f"### 🚗 {t('guide.title')}")
     if "active_route_item" in locals() and active_route_item:
         clean_route_name = active_route_item.route.name.split("(")[0].strip()
         if len(active_hazards) > 0 or len(active_restrictions) > 0:
@@ -4511,7 +4516,7 @@ with tab_guide:
         st.markdown(f"#### 🏃 {t('guide.section1_title')}")
         st.info(f"🧭 {t('nav.all_routes_desc')}")
         st.markdown(f"#### 🚗 {t('guide.section2_title')}")
-        st.info("🚗 Companion HUD will activate when a route is configured.")
+        st.info(f"🚗 {t('guide.companion_standby')}")
         st.markdown(f"#### 🧑‍✈️ {t('guide.section3_title')}")
         always_visible_standby_html = build_always_visible_virtual_guide_html(
             origin_name=origin_standby_disp,
@@ -4565,15 +4570,15 @@ with tab_facilities:
     fac_labels = {
         "🌐 All Facilities": t('fac.all'),
         "🏥 Hospitals": t('fac.hospitals'),
-        "⛺ Shelters": "⛺ Shelters",
+        "⛺ Shelters": t('fac.shelters'),
         "👮 Police/Rescue": t('fac.police'),
         "⛽ Fuel/Charging": t('fac.fuel'),
-        "🚨 Emergency Radar": "🚨 Emergency Radar",
+        "🚨 Emergency Radar": t('fac.radar'),
         "🍽️ Restaurants": t('fac.food'),
-        "🏨 Hotels": "🏨 Hotels",
+        "🏨 Hotels": t('fac.hotels'),
         "🏧 ATM / Banking": t('fac.atm'),
-        "🛍️ Shopping Malls": "🛍️ Shopping Malls",
-        "🔍 Custom Search": "🔍 Custom Search",
+        "🛍️ Shopping Malls": t('fac.shopping'),
+        "🔍 Custom Search": t('fac.custom_search'),
     }
 
     cat_quick_pills = st.pills(
@@ -4591,14 +4596,14 @@ with tab_facilities:
     f_bar_c1, f_bar_c2, f_bar_c3 = st.columns([1.5, 1.2, 0.8])
     with f_bar_c1:
         f_modes = {
-            "near_destination": "📍 Near Destination",
-            "near_origin": "🛫 Near Origin",
-            "along_route": "🛣️ Along Route Corridor",
-            "near_map": "🗺️ Near Map Center"
+            "near_destination": t('fac.near_dest'),
+            "near_origin": t('fac.near_orig'),
+            "along_route": t('fac.along_route'),
+            "near_map": t('fac.near_map')
         }
         cur_f_mode = st.session_state.get("fac_search_mode", "near_destination")
         sel_mode_val = st.selectbox(
-            "Search Proximity Anchor:",
+            t("fac.search_anchor"),
             options=list(f_modes.values()),
             index=list(f_modes.keys()).index(cur_f_mode) if cur_f_mode in f_modes else 0,
             key="sel_fac_proximity_anchor_box"
@@ -4613,10 +4618,10 @@ with tab_facilities:
         cur_rad_val = st.session_state.get("fac_radius_km", 10.0)
         c_idx_rad = rad_options.index(cur_rad_val) if cur_rad_val in rad_options else 2
         sel_rad_val = st.selectbox(
-            "Search Radius:",
+            t("fac.search_radius"),
             options=rad_options,
             index=c_idx_rad,
-            format_func=lambda r: f"Within {r:.0f} km",
+            format_func=lambda r: t("fac.within_km", radius=f"{r:.0f}"),
             key="sel_fac_radius_select_box"
         )
         if sel_rad_val != st.session_state.get("fac_radius_km"):
@@ -4625,7 +4630,7 @@ with tab_facilities:
 
     with f_bar_c3:
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-        if st.button("🔄 Refresh", key="btn_refresh_facilities_live", use_container_width=True, help="Re-query live OpenStreetMap POIs"):
+        if st.button(t("fac.refresh"), key="btn_refresh_facilities_live", use_container_width=True, help="Re-query live OpenStreetMap POIs"):
             st.rerun()
 
     # Recompute active category facilities with selected proximity mode and radius
@@ -4655,9 +4660,9 @@ with tab_facilities:
         em_is_active = st.session_state.emergency_radar_active or bool(st.session_state.get("active_sos_type"))
 
         radar_status_badge = (
-            "<span style='color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.74rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);'>● EMERGENCY RADAR ACTIVE</span>"
+            f"<span style='color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.74rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);'>{t('fac.radar_active')}</span>"
             if em_is_active else
-            "<span style='color: #64748b; background: rgba(255, 255, 255, 0.04); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.74rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;'>○ RADAR STANDBY</span>"
+            f"<span style='color: #64748b; background: rgba(255, 255, 255, 0.04); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.74rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;'>{t('fac.radar_standby')}</span>"
         )
 
         st.markdown(f"""
@@ -4670,12 +4675,12 @@ with tab_facilities:
                     <div>
                         <div style='display: flex; align-items: center; gap: 8px;'>
                             <b style='color: #f1f5f9; font-size: 0.98rem; letter-spacing: 0.02em;'>
-                                EMERGENCY ASSISTANCE & SURROUNDING SAFETY RADAR
+                                {t('fac.emergency_title')}
                             </b>
                             {radar_status_badge}
                         </div>
                         <div style='font-size: 0.74rem; color: #94a3b8; margin-top: 2px;'>
-                            Real-time corridor scan • Direct Google Maps navigation & verified safe havens along your journey
+                            {t('fac.emergency_subtitle')}
                         </div>
                     </div>
                 </div>
@@ -4686,32 +4691,32 @@ with tab_facilities:
         # Emergency Action Buttons Dock (Screenshot 2)
         dock_c1, dock_c2, dock_c3, dock_c4, dock_c5 = st.columns([1.1, 1, 1, 1, 1])
         with dock_c1:
-            toggle_btn_label = "🛡️ Hide Radar" if em_is_active else "🚨 Emergency Radar"
+            toggle_btn_label = f"🛡️ {t('fac.hide_radar')}" if em_is_active else f"🚨 {t('fac.radar')}"
             if st.button(toggle_btn_label, key="btn_toggle_emergency_radar", use_container_width=True, type="primary" if not em_is_active else "secondary"):
                 st.session_state.emergency_radar_active = not em_is_active
                 if not st.session_state.emergency_radar_active:
                     st.session_state.active_sos_type = None
                 st.rerun()
         with dock_c2:
-            if st.button("🩺 Medical SOS", key="btn_dock_sos_med", help="Instant dispatch to nearest trauma hospital", use_container_width=True):
+            if st.button(t("fac.sos_medical"), key="btn_dock_sos_med", help="Instant dispatch to nearest trauma hospital", use_container_width=True):
                 st.session_state.active_sos_type = "MEDICAL"
                 st.session_state.emergency_radar_active = True
                 st.session_state.selected_sidebar_category = "🚨 Emergency Radar"
                 st.rerun()
         with dock_c3:
-            if st.button("👮 Police SOS", key="btn_dock_sos_police", help="Instant dispatch to nearest police post & ERSS 112", use_container_width=True):
+            if st.button(t("fac.sos_police"), key="btn_dock_sos_police", help="Instant dispatch to nearest police post & ERSS 112", use_container_width=True):
                 st.session_state.active_sos_type = "POLICE"
                 st.session_state.emergency_radar_active = True
                 st.session_state.selected_sidebar_category = "🚨 Emergency Radar"
                 st.rerun()
         with dock_c4:
-            if st.button("🔥 Hazard SOS", key="btn_dock_sos_disaster", help="Emergency guidance to nearest cyclone shelter", use_container_width=True):
+            if st.button(t("fac.sos_hazard"), key="btn_dock_sos_disaster", help="Emergency guidance to nearest cyclone shelter", use_container_width=True):
                 st.session_state.active_sos_type = "DISASTER"
                 st.session_state.emergency_radar_active = True
                 st.session_state.selected_sidebar_category = "🚨 Emergency Radar"
                 st.rerun()
         with dock_c5:
-            if st.button("⛽ Breakdown SOS", key="btn_dock_sos_fuel", help="Find nearest highway fuel & fast EV charger", use_container_width=True):
+            if st.button(t("fac.sos_breakdown"), key="btn_dock_sos_fuel", help="Find nearest highway fuel & fast EV charger", use_container_width=True):
                 st.session_state.active_sos_type = "STRANDED"
                 st.session_state.emergency_radar_active = True
                 st.session_state.selected_sidebar_category = "🚨 Emergency Radar"
@@ -4731,10 +4736,10 @@ with tab_facilities:
                         <div style='display: flex; align-items: center; gap: 8px;'>
                             <span style='font-size: 1.5rem;'>📡</span>
                             <b style='color: #34d399; font-size: 1.05rem; letter-spacing: 0.02em;'>
-                                SIMULATED EMERGENCY DISPATCH CALL (SAFE TEST MODE)
+                                {t('fac.sim_call_title')}
                             </b>
                             <span style='background: rgba(16, 185, 129, 0.2); color: #6ee7b7; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid #10b981;'>
-                                🟢 RADIO LINK CONNECTED
+                                {t('fac.radio_connected')}
                             </span>
                         </div>
                         <div style='color: #f1f5f9; font-size: 0.90rem; margin-top: 6px;'>
@@ -4750,7 +4755,7 @@ with tab_facilities:
 
             c_hangup1, c_hangup2 = st.columns([1, 2])
             with c_hangup1:
-                if st.button("🔴 Hang Up / End Simulation Test", key="btn_end_sim_call", use_container_width=True):
+                if st.button(t("fac.hang_up"), key="btn_end_sim_call", use_container_width=True):
                     st.session_state.active_simulated_call = None
                     st.toast("Simulation test ended safely.", icon="📞")
                     st.rerun()
@@ -4987,26 +4992,28 @@ with tab_places:
     st.markdown("---")
     
     # Priority: Destination if selected, otherwise Origin / Current Location
-    focus_target = "Destination" if coords_dest else "Origin"
+    dest_str_label = t("nav.destination")
+    orig_str_label = t("nav.starting_point")
+    focus_target = dest_str_label if coords_dest else orig_str_label
     if coords_dest and coords_orig:
         col_focus1, col_focus2 = st.columns([1.5, 3])
         with col_focus1:
-            focus_target = st.radio("Explore POIs Around:", ["Destination", "Origin"], horizontal=True, key="places_explore_anchor")
+            focus_target = st.radio(t("fac.explore_anchor"), [dest_str_label, orig_str_label], horizontal=True, key="places_explore_anchor")
     
-    if focus_target == "Destination" and coords_dest:
+    if (focus_target == dest_str_label or focus_target == "Destination") and coords_dest:
         ref_lat = coords_dest[0]
         ref_lon = coords_dest[1]
-        raw_dest_name = st.session_state.get("selected_dest_label") or dest_text or "Destination"
+        raw_dest_name = st.session_state.get("selected_dest_label") or dest_text or t("nav.destination")
         ref_label = raw_dest_name.replace("📍", "").strip()
     elif coords_orig:
         ref_lat = coords_orig[0]
         ref_lon = coords_orig[1]
-        raw_orig_name = st.session_state.get("selected_orig_label") or orig_text or st.session_state.get("user_live_label", "Origin")
+        raw_orig_name = st.session_state.get("selected_orig_label") or orig_text or st.session_state.get("user_live_label", t("nav.starting_point"))
         ref_label = raw_orig_name.replace("📍", "").strip()
     else:
         ref_lat = detected_coords[0]
         ref_lon = detected_coords[1]
-        ref_label = st.session_state.get("user_live_label", "Current Location").replace("📍", "").strip()
+        ref_label = st.session_state.get("user_live_label", t("nav.my_location")).replace("📍", "").strip()
 
     suggested_places = generate_suggested_places_at_location(
         lat=ref_lat,
@@ -5020,15 +5027,15 @@ with tab_places:
             <span style='font-size: 1.4rem;'>📍</span>
             <div>
                 <div style='font-size: 1.05rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.02em;'>
-                    SUGGESTED PLACES & HIGHLIGHTS NEAR {ref_label.upper()}
+                    {t('places.title')} • {ref_label.upper()}
                 </div>
                 <div style='font-size: 0.74rem; color: #94a3b8;'>
-                    Verified points of interest, cultural landmarks, and culinary highlights near your selected {focus_target.lower()}.
+                    {t('places.subtitle', destination=ref_label)}
                 </div>
             </div>
         </div>
         <span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;'>
-            ● LIVE GEOGRAPHIC POI DIRECTORY
+            ● {t('places.title')}
         </span>
     </div>
     """, unsafe_allow_html=True)

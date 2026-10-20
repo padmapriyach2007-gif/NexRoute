@@ -946,7 +946,29 @@ class RealWorldRouteEngine:
         dist_dest_to_region = haversine_distance_m(dest_lat, dest_lon, regional_center[0], regional_center[1])
         is_local_regional = (dist_orig_to_region <= 45000.0 and dist_dest_to_region <= 45000.0)
 
-        # 1. Try global routing provider (OSRM)
+        # 1. Regional corridor handling: if within regional bounds, utilize instant local graph algorithms (0.1s response)
+        if is_local_regional:
+            algorithm_routes = self._calculate_graph_paths(
+                origin_lat, origin_lon, dest_lat, dest_lon,
+                mode=mode,
+                require_accessible=require_accessible,
+                preferred_algo=selected_primary_algo,
+                avoid_tolls=avoid_tolls,
+                avoid_highways=avoid_highways,
+                avoid_ferries=avoid_ferries,
+                speed_mode=speed_mode,
+                custom_speed_kmh=custom_speed_kmh
+            )
+            algorithm_routes = filter_distinct_routes(
+                algorithm_routes,
+                max_overlap=0.80,
+                origin_coords=(origin_lat, origin_lon),
+                dest_coords=(dest_lat, dest_lon)
+            )
+            if algorithm_routes and len(algorithm_routes) >= 2:
+                return _cache_and_return(algorithm_routes)
+
+        # 2. Try global routing provider (OSRM) with fast fallback
         live_routes = None
         try:
             import inspect

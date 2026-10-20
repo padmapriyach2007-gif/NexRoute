@@ -232,27 +232,31 @@ class PathfinderChatbot:
             return global_res
 
         # ---------------------------------------------------------------------
-        # 6. CONTEXTUAL MULTILINGUAL GREETINGS & RESPONSES
+        # 6. CONTEXTUAL MULTILINGUAL GREETINGS & INTRODUCTIONS
         # ---------------------------------------------------------------------
-        if is_telugu and (any(w in raw_query for w in ["నమస్కారం", "హలో", "ఎలా ఉన్నావు", "సహాయపడగలరు", "నమస్తే", "మీరు ఎవరు"]) or any(w in q for w in ["namaskaram", "hello", "hi"]) or app_lang == "te"):
+        is_greeting_or_intro = any(w in q for w in [
+            "hello", "hi", "hey", "who are you", "who r u", "help me", "what can you do", "introduce yourself"
+        ])
+
+        if is_telugu and (is_greeting_or_intro or any(w in raw_query for w in ["నమస్కారం", "హలో", "ఎలా ఉన్నావు", "సహాయపడగలరు", "నమస్తే", "మీరు ఎవరు", "నీవు ఎవరు"]) or any(w in q for w in ["namaskaram"])):
             return self._handle_telugu_query(raw_query, q, ctx)
 
-        if is_hindi and (any(w in raw_query for w in ["नमस्ते", "हैलो", "कैसे हो", "प्रणाम", "आप कौन हैं"]) or any(w in q for w in ["namaste", "hello", "hi"]) or app_lang == "hi"):
+        if is_hindi and (is_greeting_or_intro or any(w in raw_query for w in ["नमस्ते", "हैलो", "कैसे हो", "प्रणाम", "आप कौन हैं", "तुम कौन हो"]) or any(w in q for w in ["namaste"])):
             return self._handle_hindi_query(raw_query, q, ctx)
 
-        if is_tamil and (any(w in raw_query for w in ["வணக்கம்", "ஹலோ", "யார்"]) or any(w in q for w in ["vanakkam", "hello", "hi"]) or app_lang == "ta"):
+        if is_tamil and (is_greeting_or_intro or any(w in raw_query for w in ["வணக்கம்", "ஹலோ", "யார்"]) or any(w in q for w in ["vanakkam"])):
             return self._handle_tamil_query(raw_query, q, ctx)
 
-        if is_kannada and (any(w in raw_query for w in ["ನಮಸ್ಕಾರ", "ಹಲೋ", "ಯಾರು"]) or any(w in q for w in ["namaskara", "hello", "hi"]) or app_lang == "kn"):
+        if is_kannada and (is_greeting_or_intro or any(w in raw_query for w in ["ನಮಸ್ಕಾರ", "ಹಲೋ", "ಯಾರು"]) or any(w in q for w in ["namaskara"])):
             return self._handle_kannada_query(raw_query, q, ctx)
 
-        if is_malayalam and (any(w in raw_query for w in ["നമസ്കാരം", "ഹലോ", "ആരാണ്"]) or any(w in q for w in ["namaskaram", "hello", "hi"]) or app_lang == "ml"):
+        if is_malayalam and (is_greeting_or_intro or any(w in raw_query for w in ["നമസ്കാരം", "ഹലോ", "ആരാണ്"]) or any(w in q for w in ["namaskaram"])):
             return self._handle_malayalam_query(raw_query, q, ctx)
 
-        if is_bengali and (any(w in raw_query for w in ["নমস্কার", "হ্যালো", "কে"]) or any(w in q for w in ["nomoshkar", "hello", "hi"]) or app_lang == "bn"):
+        if is_bengali and (is_greeting_or_intro or any(w in raw_query for w in ["নমস্কার", "হ্যালো", "কে"]) or any(w in q for w in ["nomoshkar"])):
             return self._handle_bengali_query(raw_query, q, ctx)
 
-        if is_marathi and (any(w in raw_query for w in ["नमस्कार", "हॅलो", "कोण"]) or any(w in q for w in ["namaskar", "hello", "hi"]) or app_lang == "mr"):
+        if is_marathi and (is_greeting_or_intro or any(w in raw_query for w in ["नमस्कार", "हॅलो", "कोण"]) or any(w in q for w in ["namaskar"])):
             return self._handle_marathi_query(raw_query, q, ctx)
 
         # ---------------------------------------------------------------------
@@ -306,7 +310,6 @@ class PathfinderChatbot:
                     "response": llm_out
                 }
             else:
-                # LLM call failed (Auth error, rate limit, timeout)
                 err_cat = self.llm_client.last_error_category or "API_ERROR"
                 err_prefix = ""
                 if err_cat == "AUTH_ERROR":
@@ -812,7 +815,7 @@ class PathfinderChatbot:
         """Fetches live weather from Open-Meteo for any referenced place or current destination."""
         weather_triggers = ["weather", "temperature", "forecast", "is it raining", "climate", "rainfall"]
         if any(w in q for w in weather_triggers) and not any(w in q for w in ["under the weather", "weather the storm"]):
-            match_loc = re.search(r"(?:in|at|for|around)\s+([a-zA-Z\s]+)", q)
+            match_loc = re.search(r"\b(?:in|at|for|around)\b\s+([a-zA-Z\s]+)", q)
             cand_raw = match_loc.group(1).strip("?. ") if match_loc else None
             if not cand_raw or cand_raw.lower() in ["there", "that destination", "that place", "destination", "here", "my location"]:
                 cand_raw = ctx.get("dest_label") or getattr(self.conv_manager, "last_destination", None) or self.last_destination or "Local Area"
