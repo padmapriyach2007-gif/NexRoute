@@ -1865,7 +1865,11 @@ class MapService:
                                         pUrl.searchParams.set("gps_lat", uLat.toFixed(6));
                                         pUrl.searchParams.set("gps_lon", uLon.toFixed(6));
                                         pUrl.searchParams.set("gps_acc", acc.toFixed(1));
-                                        targetWin.location.replace(pUrl.toString());
+                                        try {{
+                                            if (targetWin.history && targetWin.history.replaceState) {{
+                                                targetWin.history.replaceState(null, '', pUrl.toString());
+                                            }}
+                                        }} catch(e) {{}}
                                     }}
                                 }} catch(e) {{}}
                             }}

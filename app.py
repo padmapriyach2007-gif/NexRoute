@@ -1568,7 +1568,28 @@ components.html(f"""
             }} catch(e) {{}}
 
             // Lock satellite GPS on startup immediately, and update when moved > 8 meters
-            if (!hasGps || (distMoved > 8.0 && (now - lastSync) > 4000)) {{
+            if (!hasGps) {{
+                var alreadyLocked = false;
+                try {{
+                    alreadyLocked = targetWin.sessionStorage.getItem('_pathfinder_gps_initial_locked') === '1';
+                }} catch(e) {{}}
+                if (!alreadyLocked) {{
+                    try {{
+                        targetWin.sessionStorage.setItem('_pathfinder_gps_initial_locked', '1');
+                    }} catch(e) {{}}
+                    window._lastPathfinderGpsSync = now;
+                    url.searchParams.set("gps_lat", lat.toFixed(6));
+                    url.searchParams.set("gps_lon", lon.toFixed(6));
+                    url.searchParams.set("gps_acc", acc.toFixed(1));
+                    url.searchParams.set("gps_spd", spd.toFixed(1));
+                    url.searchParams.set("gps_hdg", hdg.toFixed(1));
+                    try {{
+                        targetWin.location.replace(url.toString());
+                    }} catch(e) {{
+                        window.location.replace(url.toString());
+                    }}
+                }}
+            }} else if (distMoved > 8.0 && (now - lastSync) > 4000) {{
                 window._lastPathfinderGpsSync = now;
                 url.searchParams.set("gps_lat", lat.toFixed(6));
                 url.searchParams.set("gps_lon", lon.toFixed(6));
@@ -1576,10 +1597,10 @@ components.html(f"""
                 url.searchParams.set("gps_spd", spd.toFixed(1));
                 url.searchParams.set("gps_hdg", hdg.toFixed(1));
                 try {{
-                    targetWin.location.replace(url.toString());
-                }} catch(e) {{
-                    window.location.replace(url.toString());
-                }}
+                    if (targetWin.history && targetWin.history.replaceState) {{
+                        targetWin.history.replaceState(null, '', url.toString());
+                    }}
+                }} catch(e) {{}}
             }}
         }} catch(e) {{
             console.warn("[PATHFINDER] Parent GPS sync error:", e);
