@@ -2,7 +2,7 @@
 Google Maps Parity Suite & Next-Gen Loophole Resolver Module for P.A.T.H.F.I.N.D.E.R.
 Provides:
 1. Google Maps Direct Reference Toolbar (Basemap switcher, Avoid Tolls/Highways/Ferries, 1-Click Mobile App Deep-Sync, Explore Along Route).
-2. 'PATHFINDER: The Next Step of Google Maps' Loophole Resolver Deck (5 critical real-world loopholes solved).
+2. 'NEXROUTE: The Next Step of Google Maps' Loophole Resolver Deck (5 critical real-world loopholes solved).
 """
 
 from typing import Any, Dict, List, Optional, Tuple
@@ -11,16 +11,22 @@ from src.emergency_radar_ui import generate_google_maps_directions_url
 
 
 def get_google_maps_app_url(
-    origin_lat: float,
-    origin_lon: float,
-    dest_lat: float,
-    dest_lon: float,
+    origin_lat: Optional[float],
+    origin_lon: Optional[float],
+    dest_lat: Optional[float],
+    dest_lon: Optional[float],
     travel_mode: str = "driving",
     avoid_tolls: bool = False,
     avoid_highways: bool = False,
     avoid_ferries: bool = False
 ) -> str:
     """Returns direct Google Maps turn-by-turn navigation URL for browser or native app deep-link."""
+    if origin_lat is None or origin_lon is None or dest_lat is None or dest_lon is None:
+        if dest_lat is not None and dest_lon is not None:
+            return f"https://www.google.com/maps/search/?api=1&query={dest_lat},{dest_lon}"
+        if origin_lat is not None and origin_lon is not None:
+            return f"https://www.google.com/maps/search/?api=1&query={origin_lat},{origin_lon}"
+        return "https://www.google.com/maps"
     return generate_google_maps_directions_url(
         origin_lat=origin_lat,
         origin_lon=origin_lon,
@@ -36,7 +42,7 @@ def get_google_maps_app_url(
 def get_google_maps_loopholes_data() -> List[Dict[str, Any]]:
     """
     Returns structured data for the 5 fatal real-world Google Maps loopholes
-    and how PATHFINDER solves them as the next evolution of navigation.
+    and how NEXROUTE solves them as the next evolution of navigation.
     """
     return [
         {
@@ -138,7 +144,7 @@ def build_google_maps_toolbar_html(
 
 
 def build_loopholes_deck_html(loopholes: List[Dict[str, Any]]) -> str:
-    """Builds the 'PATHFINDER: The Next Step of Google Maps' visual loophole comparison grid."""
+    """Builds the 'NEXROUTE: The Next Step of Google Maps' visual loophole comparison grid."""
     cards_html = ""
     for item in loopholes:
         cards_html += f"""
@@ -156,7 +162,7 @@ def build_loopholes_deck_html(loopholes: List[Dict[str, Any]]) -> str:
                     <div style='font-size: 0.72rem; color: #cbd5e1; line-height: 1.35; margin-top: 2px;'>{item["google_maps_gap"]}</div>
                 </div>
                 <div style='background: rgba(16, 185, 129, 0.08); border-left: 3px solid #10b981; padding: 6px 8px; border-radius: 4px;'>
-                    <span style='font-size: 0.66rem; color: #34d399; font-weight: 800; text-transform: uppercase;'>PATHFINDER Next Step:</span>
+                    <span style='font-size: 0.66rem; color: #34d399; font-weight: 800; text-transform: uppercase;'>NEXROUTE Next Step:</span>
                     <div style='font-size: 0.72rem; color: #e2e8f0; line-height: 1.35; margin-top: 2px;'>{item["pathfinder_solution"]}</div>
                 </div>
             </div>

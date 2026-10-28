@@ -10,7 +10,7 @@ Exposes validated tools around actual application functions:
 5. update_route_preferences (Avoid tolls, highways, ferries)
 6. get_current_journey_status (Telemetry, active corridor, ETA)
 7. get_live_weather (Open-Meteo real-time atmospheric data)
-8. explain_feature (Truthful explanation of PATHFINDER capabilities)
+8. explain_feature (Truthful explanation of NEXROUTE capabilities)
 """
 
 import re
@@ -31,7 +31,7 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "calculate_route",
-            "description": "Calculates an optimal, hazard-free navigation route between an origin and destination using PATHFINDER's real routing engine.",
+            "description": "Calculates an optimal, hazard-free navigation route between an origin and destination using NEXROUTE's real routing engine.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -166,7 +166,7 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "explain_feature",
-            "description": "Explains PATHFINDER's verified mathematical routing, obstacle avoidance, or safety features.",
+            "description": "Explains NEXROUTE's verified mathematical routing, obstacle avoidance, or safety features.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -176,6 +176,38 @@ TOOL_SCHEMAS = [
                     }
                 },
                 "required": ["feature_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_convoy_status",
+            "description": "Checks the live positions, distances, and movement status of other users/vehicles in a shared convoy or group room.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "room_code": {
+                        "type": "string",
+                        "description": "Optional convoy or group room code (defaults to the active room, e.g. 'DEMO-CONVOY' or 'CONVOY-1')."
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_traffic_and_movement_intelligence",
+            "description": "Queries real-time verified traffic intelligence, crowd density, vehicle speeds, queue lengths, and sensor fusion status for monitored road corridors or indoor building zones.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_or_corridor": {
+                        "type": "string",
+                        "description": "The specific road corridor (e.g. 'SEG_EXPRESSWAY_01', 'SEG_GUNTUR_BYPASS') or indoor zone (e.g. 'ZONE_ENTRANCE_NORTH', 'ZONE_MALL_ATRIUM')."
+                    }
+                }
             }
         }
     }
@@ -237,10 +269,63 @@ class PathfinderToolExecutor:
             return self._tool_get_live_weather(args, ctx, lang)
         elif tool_name == "explain_feature":
             return self._tool_explain_feature(args, ctx, lang)
+        elif tool_name == "get_convoy_status":
+            return self._tool_get_convoy_status(args, ctx, lang)
+        elif tool_name == "get_traffic_and_movement_intelligence":
+            return self._tool_get_traffic_and_movement_intelligence(args, ctx, lang)
         else:
             return {
                 "badge": "⚠️ TOOL ERROR",
-                "response": f"Unknown tool requested: '{tool_name}'. Available tools: calculate_route, search_nearby_facilities, get_route_alternatives, compare_routes, update_route_preferences, get_live_weather, get_current_journey_status.",
+                "response": f"Unknown tool requested: '{tool_name}'. Available tools: calculate_route, search_nearby_facilities, get_route_alternatives, compare_routes, update_route_preferences, get_live_weather, get_current_journey_status, get_convoy_status, get_traffic_and_movement_intelligence.",
+                "success": False
+            }
+
+    # -------------------------------------------------------------------------
+    # Tool 9: get_traffic_and_movement_intelligence
+    # -------------------------------------------------------------------------
+    def _tool_get_traffic_and_movement_intelligence(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        """Queries verified live camera vision and physical sensor fusion data without hallucination."""
+        try:
+            from src.backend.traffic.traffic_service import PathfinderTrafficService
+            svc = PathfinderTrafficService.get_instance()
+            zone = args.get("zone_or_corridor", "SEG_EXPRESSWAY_01")
+            fused = svc.fusion_engine.fuse(zone_id=zone)
+            adv = svc.get_route_traffic_advisory()
+
+            disagreements_str = "None (Consensus optimal)" if not fused.active_disagreements else "; ".join(fused.active_disagreements)
+            speed_val = fused.measured_speed_kmh if fused.measured_speed_kmh is not None else fused.estimated_speed_kmh
+
+            resp_lines = [
+                f"🚦 **Real-Time Traffic & Movement Intelligence Report ({fused.zone_id}):**",
+                f"• **Environment:** {fused.environment_type}",
+                f"• **Pedestrians Active:** {fused.pedestrian_count} ({fused.people_per_min:.1f} / min)",
+                f"• **Vehicles Active:** {fused.vehicle_count} ({fused.vehicles_per_min:.1f} / min)",
+                f"• **Speed:** {speed_val} km/h (Nominal Free-Flow: {fused.free_flow_speed_kmh} km/h)",
+                f"• **Queue Length:** {fused.queue_length} vehicles",
+                f"• **Occupancy:** {fused.occupancy_pct:.1f}%",
+                f"• **Congestion Status:** {fused.congestion_level} ({fused.congestion_explanation})",
+                f"• **Sensor Confidence:** {int(fused.aggregate_confidence * 100)}%",
+                f"• **Sensor Disagreements:** {disagreements_str}",
+                f"• **Routing Advisory:** {adv['advisory_message']}"
+            ]
+
+            return {
+                "badge": "🚦 TRAFFIC INTELLIGENCE",
+                "response": "\n".join(resp_lines),
+                "success": True,
+                "data": {
+                    "zone_id": fused.zone_id,
+                    "congestion_level": fused.congestion_level,
+                    "pedestrian_count": fused.pedestrian_count,
+                    "vehicle_count": fused.vehicle_count,
+                    "speed_kmh": speed_val,
+                    "reroute_recommended": adv["reroute_recommended"]
+                }
+            }
+        except Exception as e:
+            return {
+                "badge": "⚠️ TRAFFIC ERROR",
+                "response": f"Unable to fetch live traffic sensor telemetry: {str(e)}",
                 "success": False
             }
 
@@ -435,8 +520,34 @@ class PathfinderToolExecutor:
         if sel_idx is not None and sel_idx >= 1:
             idx = min(sel_idx - 1, len(routes) - 1)
             target_r = routes[idx]
-            roads = ", ".join(target_r.route.summary_roads[:2]) if getattr(target_r.route, "summary_roads", None) else "Corridor"
+            roads = ", ".join(target_r.route.summary_roads[:2]) if getattr(target_r.route, "summary_roads", None) else "Direct Corridor"
             r_name = target_r.route.name
+            
+            # Format duration
+            dur_mins = target_r.effective_duration_minutes
+            if dur_mins >= 60:
+                h = int(dur_mins // 60)
+                m = int(round(dur_mins % 60))
+                dur_str = f"{h}h {m}m" if m > 0 else f"{h}h"
+            else:
+                dur_str = f"{int(round(dur_mins))} mins"
+
+            # Determine mode icon
+            mode_val = str(getattr(target_r.route, "mode", "driving")).lower()
+            mode_icon = "🚗"
+            if "flight" in mode_val or "air" in mode_val:
+                mode_icon = "✈️"
+            elif "water" in mode_val or "ferry" in mode_val:
+                mode_icon = "🚢"
+            elif "walk" in mode_val:
+                mode_icon = "🚶"
+            elif "bicycl" in mode_val:
+                mode_icon = "🚴"
+            elif "motorcycle" in mode_val or "bike" in mode_val:
+                mode_icon = "🏍️"
+            elif "bus" in mode_val:
+                mode_icon = "🚌"
+
             action = {
                 "type": "focus_route",
                 "route_id": target_r.route.route_id,
@@ -445,23 +556,48 @@ class PathfinderToolExecutor:
             return {
                 "badge": f"🎯 ROUTE {idx + 1} FOCUS",
                 "response": (
-                    f"### 🗺️ Route {idx + 1}: **{r_name}**\n\n"
+                    f"### {mode_icon} Route {idx + 1}: **{r_name}**\n\n"
                     f"• **Distance:** **{target_r.effective_distance_km:.1f} km**\n"
-                    f"• **Duration:** **~{target_r.effective_duration_minutes:.0f} mins**\n"
-                    f"• **Via Roads:** {roads}\n\n"
-                    f"🎯 I have highlighted this corridor on your interactive map!"
+                    f"• **Estimated Duration:** **{dur_str}**\n"
+                    f"• **Corridor / Roads:** {roads}\n"
+                    f"• **Provider:** {getattr(target_r.route, 'provider_attribution', 'OSRM Global Transit')}\n\n"
+                    f"🎯 Highlighting Route {idx + 1} on the interactive world map!"
                 ),
                 "action": action,
                 "success": True
             }
 
-        # Overview of available alternatives
+        # Overview of all available alternatives (up to 6)
         lines = []
-        for i, r in enumerate(routes[:3]):
-            lines.append(f"• **Route {i + 1} ({r.route.name}):** {r.effective_distance_km:.1f} km • ~{r.effective_duration_minutes:.0f} mins")
+        for i, r in enumerate(routes[:6]):
+            dur_m = r.effective_duration_minutes
+            if dur_m >= 60:
+                h = int(dur_m // 60)
+                m = int(round(dur_m % 60))
+                dur_s = f"{h}h {m}m" if m > 0 else f"{h}h"
+            else:
+                dur_s = f"{int(round(dur_m))}m"
+
+            mode_val = str(getattr(r.route, "mode", "driving")).lower()
+            icon = "🚗"
+            if "flight" in mode_val or "air" in mode_val:
+                icon = "✈️"
+            elif "water" in mode_val or "ferry" in mode_val:
+                icon = "🚢"
+            elif "walk" in mode_val:
+                icon = "🚶"
+            elif "bicycl" in mode_val:
+                icon = "🚴"
+            elif "motorcycle" in mode_val or "bike" in mode_val:
+                icon = "🏍️"
+            elif "bus" in mode_val:
+                icon = "🚌"
+
+            lines.append(f"• **{icon} Route {i + 1} ({r.route.name}):** {r.effective_distance_km:.1f} km • ~{dur_s}")
+
         return {
             "badge": "🗺️ ROUTE ALTERNATIVES",
-            "response": "### 🗺️ Available Candidate Corridors:\n\n" + "\n".join(lines) + "\n\nSay *'Show the second route on the map'* to inspect any alternative.",
+            "response": f"### 🗺️ Available Worldwide Corridors ({len(routes[:6])} found):\n\n" + "\n".join(lines) + "\n\nSay *'Show Route 2 on map'* or *'Compare all routes'* to examine detailed trade-offs.",
             "success": True
         }
 
@@ -477,21 +613,77 @@ class PathfinderToolExecutor:
                 "success": False
             }
 
-        r1 = routes[0]
-        r2 = routes[1]
-        diff_km = r2.effective_distance_km - r1.effective_distance_km
-        diff_min = r2.effective_duration_minutes - r1.effective_duration_minutes
+        def format_dur(dur_mins):
+            if dur_mins >= 60:
+                h = int(dur_mins // 60)
+                m = int(round(dur_mins % 60))
+                return f"{h}h {m}m" if m > 0 else f"{h}h"
+            return f"{int(round(dur_mins))}m"
+
+        def get_mode_icon(route_item):
+            mode_val = str(getattr(route_item.route, "mode", "driving")).lower()
+            if "flight" in mode_val or "air" in mode_val:
+                return "✈️ Flight"
+            elif "water" in mode_val or "ferry" in mode_val:
+                return "🚢 Waterway"
+            elif "walk" in mode_val:
+                return "🚶 Walk"
+            elif "bicycl" in mode_val:
+                return "🚴 Cycle"
+            elif "motorcycle" in mode_val or "bike" in mode_val:
+                return "🏍️ Bike"
+            elif "bus" in mode_val:
+                return "🚌 Bus"
+            return "🚗 Drive"
+
+        # Build comparison table for up to 6 routes
+        rows = []
+        for i, r in enumerate(routes[:6]):
+            mode_badge = get_mode_icon(r)
+            dur_str = format_dur(r.effective_duration_minutes)
+            dist_str = f"{r.effective_distance_km:.1f} km"
+            
+            # Cost estimate
+            mode_val = str(getattr(r.route, "mode", "driving")).lower()
+            if "flight" in mode_val or "air" in mode_val:
+                cost_str = f"~${int(r.effective_distance_km * 0.12 + 65)} (Fare)"
+            elif "water" in mode_val or "ferry" in mode_val:
+                cost_str = f"~${int(r.effective_distance_km * 0.25 + 15)} (Ferry)"
+            elif "walk" in mode_val or "bicycl" in mode_val:
+                cost_str = "Free"
+            else:
+                liters = r.effective_distance_km * 0.08
+                cost_str = f"~₹{int(liters * 105)} Fuel"
+
+            provider = getattr(r.route, "provider_attribution", "OSRM Engine").split("•")[0].strip()
+            rows.append(f"| **Route {i + 1}** ({r.route.name[:20]}) | {mode_badge} | {dist_str} | **{dur_str}** | {cost_str} | {provider} |")
+
+        table_md = (
+            "| Route Option | Mode | Distance | Est. Time | Est. Cost | Provider |\n"
+            "| :--- | :--- | :--- | :--- | :--- | :--- |\n" +
+            "\n".join(rows)
+        )
+
+        # Intelligent trade-off highlights
+        fastest_r = min(routes[:6], key=lambda x: x.effective_duration_minutes)
+        shortest_r = min(routes[:6], key=lambda x: x.effective_distance_km)
+        
+        verdict = []
+        verdict.append(f"• 🚀 **Fastest Corridor:** **{fastest_r.route.name}** ({format_dur(fastest_r.effective_duration_minutes)})")
+        if shortest_r.route.route_id != fastest_r.route.route_id:
+            verdict.append(f"• 📏 **Shortest Distance:** **{shortest_r.route.name}** ({shortest_r.effective_distance_km:.1f} km)")
+        
+        has_flight = any("flight" in str(getattr(r.route, "mode", "")).lower() for r in routes[:6])
+        if has_flight:
+            verdict.append("• ✈️ **Airway Option Available:** For long-distance inter-city or international travel, Great-Circle air routes provide substantial time savings over surface transport.")
 
         return {
-            "badge": "🗺️ ROUTE COMPARISON ANALYSIS",
+            "badge": "🗺️ MULTI-ROUTE COMPARISON",
             "response": (
-                f"### 🗺️ Route Comparison Analysis\n\n"
-                f"| Metric | **{r1.route.name} (Primary)** | **{r2.route.name} (Alternative)** |\n"
-                f"| :--- | :--- | :--- |\n"
-                f"| **Distance** | **{r1.effective_distance_km:.1f} km** | {r2.effective_distance_km:.1f} km ({abs(diff_km):.1f} km {'longer' if diff_km > 0 else 'shorter'}) |\n"
-                f"| **Duration** | **~{r1.effective_duration_minutes:.0f} mins** | ~{r2.effective_duration_minutes:.0f} mins ({abs(diff_min):.0f} mins {'slower' if diff_min > 0 else 'faster'}) |\n"
-                f"| **Safety** | Verified Open | Verified Open |\n\n"
-                f"You can switch between corridors by saying *\"Show the second route on the map\"* or clicking its card above."
+                f"### 🗺️ Real-Time Global Multi-Route Comparison\n\n"
+                f"{table_md}\n\n"
+                f"**Key Recommendations:**\n" + "\n".join(verdict) + "\n\n"
+                f"💡 Select any route card above or tell me *'Show Route 2'* to view turns and highlight it on the map."
             ),
             "success": True
         }
@@ -610,6 +802,52 @@ class PathfinderToolExecutor:
             }
         else:
             return {
-                "badge": "🧭 PATHFINDER SYSTEM OVERVIEW",
+                "badge": "🧭 NEXROUTE SYSTEM OVERVIEW",
                 "response": "### 🧭 PATHFINDER Autonomous Navigation\nPATHFINDER is an intelligent multi-objective transit platform featuring dynamic route optimization (Fastest, Shortest, Balanced, Accessible), live hazard evasion, satellite computer vision analysis, and A.U.R.A. AI copilot."
+            }
+
+    # -------------------------------------------------------------------------
+    # Tool 9: get_convoy_status
+    # -------------------------------------------------------------------------
+    def _tool_get_convoy_status(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        try:
+            from src.fleet_live_service import get_fleet_live_service
+            fleet = get_fleet_live_service()
+            room = str(args.get("room_code") or ctx.get("convoy_room_code") or "DEMO-CONVOY").strip().upper()
+            user_coords = ctx.get("user_coords") or ctx.get("start_coords") or (16.2335, 80.5505)
+            user_id = ctx.get("fleet_user_id")
+
+            members = fleet.get_room_members(
+                room_code=room,
+                exclude_user_id=user_id,
+                reference_lat=user_coords[0],
+                reference_lon=user_coords[1]
+            )
+
+            if not members:
+                return {
+                    "badge": f"👥 CONVOY ROOM • {room}",
+                    "response": f"### 👥 Convoy Room: **{room}**\n\nNo other active members found in this room right now. You can invite friends, family, or fleet drivers to join using room code **`{room}`**.",
+                    "success": True
+                }
+
+            lines = [f"### 👥 Live Convoy Status: **{room}** ({len(members)} Active Peers)\n"]
+            for m in members:
+                dist_str = m.get("relative_location_str") or m.get("distance_label") or "Nearby"
+                lines.append(f"- **{m.get('avatar', '🚗')} {m['display_name']}** ({m.get('role', 'Member').capitalize()}):")
+                lines.append(f"  • **Distance & Direction:** {dist_str}")
+                lines.append(f"  • **Speed:** {m.get('speed_kmh', 0.0):.1f} km/h")
+                lines.append(f"  • **Status:** {m.get('status_msg', 'Active')}")
+                lines.append(f"  • **Last Active:** {m.get('last_seen_str', 'Just now')}")
+
+            return {
+                "badge": f"👥 CONVOY ROOM • {room}",
+                "response": "\n".join(lines),
+                "success": True
+            }
+        except Exception as e:
+            return {
+                "badge": "👥 CONVOY ROOM",
+                "response": f"Unable to fetch convoy status: {e}",
+                "success": False
             }

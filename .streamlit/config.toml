@@ -9,8 +9,8 @@ font = "sans serif"
 headless = true
 enableCORS = false
 enableXsrfProtection = false
-runOnSave = false
-fileWatcherType = "none"
+runOnSave = true
+fileWatcherType = "auto"
 
 [client]
 showErrorDetails = "full"

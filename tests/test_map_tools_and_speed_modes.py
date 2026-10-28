@@ -12,7 +12,7 @@ from src.route_engine import RealWorldRouteEngine, RouteOption, OSRMGlobalRoutin
 def get_app_configs():
     app_code = Path("app.py").read_text(encoding="utf-8")
     m1 = re.search(r'(MODES_CONFIG\s*=\s*\{.*?\}\n\s*\})', app_code, re.DOTALL)
-    m2 = re.search(r'(SPEED_LIMITS_CONFIG\s*=\s*\{.*?\n\s*\})', app_code, re.DOTALL)
+    m2 = re.search(r'(SPEED_LIMITS_CONFIG\s*=\s*\{.*?\}\n\s*\})', app_code, re.DOTALL)
     ns = {"TravelMode": TravelMode}
     if m1:
         exec(m1.group(1), ns)

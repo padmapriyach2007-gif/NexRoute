@@ -73,6 +73,11 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Database locks and journals
+*.db-wal
+*.db-shm
+*.db-journal
+
 # Nested submodule/copy folder
 PATHFINDER/
 

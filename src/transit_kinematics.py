@@ -339,24 +339,56 @@ def calculate_transit_kinematics(
     )
 
 
-def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
+def render_transit_kinematics_hud_html(kin: TransitKinematics, lang: Optional[str] = None) -> str:
     """
     Renders a stunning Cyber-Glassmorphic HUD displaying accurate vehicle speed,
     calibrated travel duration, departure time, and arrival ETA.
     """
+    try:
+        from src.i18n import t, get_current_language
+        actual_lang = lang or get_current_language()
+    except Exception:
+        actual_lang = lang or "en"
+        def t(k, default="", lang=None): return default
+
     p = kin.profile
     border_col = p["border_color"]
     glow_bg = p["bg_glow"]
     theme_col = p["color"]
+
+    # Localize departure label if "Now"
+    dep_label = kin.departure_pill_label
+    if "Now" in dep_label:
+        dep_label = f"⚡ {t('dispatch.now', lang=actual_lang, default='Now')}"
+
+    # Localize ETA badge (e.g. Arrives Next Day (+1d) or Same-Day Arrival)
+    eta_badge = kin.eta_badge_str
+    if "Next Day" in eta_badge:
+        eta_badge = t("hud.arrives_next_day", lang=actual_lang, default="Arrives Next Day (+1d)")
+    elif "Same-Day" in eta_badge:
+        eta_badge = t("hud.same_day_arrive", lang=actual_lang, default="Same-Day Arrival")
+
+    # Localize vehicle name
+    veh_name_disp = t(f"fleet.{kin.vehicle_name.lower()}", lang=actual_lang, default=kin.vehicle_name)
 
     day_offset_badge = ""
     if kin.eta_day_offset_str:
         day_offset_badge = f"""
         <span style='background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5);
                      font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; margin-left: 6px; letter-spacing: 0.04em;'>
-            {kin.eta_day_offset_str}
+            {t("hud.arrives_next_day", lang=actual_lang, default=kin.eta_day_offset_str)}
         </span>
         """
+
+    hud_title = t("hud.kinematics_title", lang=actual_lang, default="TRANSIT KINEMATICS & REAL-TIME ARRIVAL HUD")
+    corridor_physics_lbl = t("hud.corridor_physics", lang=actual_lang, default="Corridor Physics:")
+    departure_time_lbl = t("hud.departure_time", lang=actual_lang, default="DEPARTURE TIME")
+    live_satellite_clock_lbl = t("hud.live_satellite_clock", lang=actual_lang, default="Live Satellite Clock")
+    speed_time_lbl = t("hud.speed_and_time", lang=actual_lang, default="SPEED & ACCURATE TIME")
+    cruise_lbl = t("hud.cruise", lang=actual_lang, default="Cruise:")
+    calibrated_physics_lbl = t("hud.calibrated_physics", lang=actual_lang, default="Calibrated Physics")
+    eta_lbl = t("hud.eta", lang=actual_lang, default="ESTIMATED ARRIVAL (ETA)")
+    total_leg_lbl = t("hud.total_leg", lang=actual_lang, default="Total Leg:")
 
     raw_html = f"""
 <div style='
@@ -378,17 +410,17 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
                 background: {theme_col}; box-shadow: 0 0 10px {theme_col};
             '></span>
             <span style='font-size: 0.76rem; font-weight: 900; color: #f8fafc; letter-spacing: 0.08em; text-transform: uppercase;'>
-                ⚡ TRANSIT KINEMATICS & REAL-TIME ARRIVAL HUD
+                ⚡ {hud_title}
             </span>
             <span style='
                 background: {glow_bg}; color: {theme_col}; border: 1px solid {border_col};
                 font-size: 0.72rem; font-weight: 800; padding: 2px 9px; border-radius: 12px;
             '>
-                {kin.vehicle_emoji} {kin.vehicle_name}
+                {kin.vehicle_emoji} {veh_name_disp}
             </span>
         </div>
         <div style='font-size: 0.72rem; color: #94a3b8; display: flex; align-items: center; gap: 6px;'>
-            <span>Corridor Physics:</span>
+            <span>{corridor_physics_lbl}</span>
             <span style='color: #f1f5f9; font-weight: 600;'>{p["desc"].split("•")[0].strip()}</span>
         </div>
     </div>
@@ -404,7 +436,7 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
             <div>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
                     <span style='font-size: 0.70rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;'>
-                        🕒 DEPARTURE TIME
+                        🕒 {departure_time_lbl}
                     </span>
                     <div style='display: flex; align-items: center; gap: 4px;'>
                         <span style='
@@ -417,7 +449,7 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
                             background: rgba(56, 189, 248, 0.16); color: #38bdf8; font-size: 0.68rem; font-weight: 800;
                             padding: 1px 7px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);
                         '>
-                            {kin.departure_pill_label}
+                            {dep_label}
                         </span>
                     </div>
                 </div>
@@ -432,11 +464,11 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
             </div>
             <div style='margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08); font-size: 0.70rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;'>
                 <span>{kin.timezone_label.split("•")[0].strip()}</span>
-                <span id='hud-live-satellite-clock' style='color: #34d399; font-weight: 700;'>● Live Satellite Clock</span>
+                <span id='hud-live-satellite-clock' style='color: #34d399; font-weight: 700;'>● {live_satellite_clock_lbl}</span>
             </div>
         </div>
 
-        <!-- Segment 2: Vehicle Speed & Accurate Travel Duration (CORE REQUEST) -->
+        <!-- Segment 2: Vehicle Speed & Accurate Travel Duration -->
         <div style='
             background: rgba(10, 18, 35, 0.65); border: 1.5px solid {border_col};
             border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;
@@ -445,7 +477,7 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
             <div>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
                     <span style='font-size: 0.70rem; font-weight: 800; color: {theme_col}; text-transform: uppercase; letter-spacing: 0.05em;'>
-                        ⚡ SPEED & ACCURATE TIME
+                        ⚡ {speed_time_lbl}
                     </span>
                     <span style='
                         background: {glow_bg}; color: {theme_col}; font-size: 0.68rem; font-weight: 800;
@@ -466,8 +498,8 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
             </div>
 
             <div style='margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08); font-size: 0.70rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;'>
-                <span>Cruise: <b style='color: #f1f5f9;'>{kin.speed_range_str}</b></span>
-                <span style='color: {theme_col}; font-weight: 700;'>Calibrated Physics</span>
+                <span>{cruise_lbl} <b style='color: #f1f5f9;'>{kin.speed_range_str}</b></span>
+                <span style='color: {theme_col}; font-weight: 700;'>{calibrated_physics_lbl}</span>
             </div>
         </div>
 
@@ -479,7 +511,7 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
             <div>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
                     <span style='font-size: 0.70rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.05em;'>
-                        🎯 ESTIMATED ARRIVAL (ETA)
+                        🎯 {eta_lbl}
                     </span>
                     <div style='display: flex; align-items: center; gap: 4px;'>
                         <span style='
@@ -492,7 +524,7 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
                             background: rgba(16, 185, 129, 0.16); color: #34d399; font-size: 0.68rem; font-weight: 800;
                             padding: 1px 7px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);
                         '>
-                            ● {kin.eta_badge_str}
+                            ● {eta_badge}
                         </span>
                     </div>
                 </div>
@@ -509,7 +541,7 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics) -> str:
             </div>
 
             <div style='margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08); font-size: 0.70rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;'>
-                <span>Total Leg: <b style='color: #38bdf8;'>{kin.distance_formatted}</b></span>
+                <span>{total_leg_lbl} <b style='color: #38bdf8;'>{kin.distance_formatted}</b></span>
                 <span style='color: #cbd5e1;'>{kin.energy_estimate_str}</span>
             </div>
         </div>

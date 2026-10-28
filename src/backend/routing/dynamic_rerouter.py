@@ -73,7 +73,30 @@ class DynamicRerouter:
         if not blocking_conflicts:
             return None  # Route is safe; no blocking obstruction
 
-        # Synthesize safe detour alternative
+        # Compute genuine detour geometry diverting outside the hazard buffer zone
+        detour_polyline = []
+        hazards = [c["location"] for c in blocking_conflicts if "location" in c]
+        
+        for pt in original_route.polyline:
+            in_hazard_zone = False
+            for h in hazards:
+                d_lat = pt[0] - h["latitude"]
+                d_lon = pt[1] - h["longitude"]
+                # Approximate distance in degrees (~111 km/deg)
+                deg_dist = (d_lat**2 + d_lon**2)**0.5 * 111000.0
+                if deg_dist <= (self.clearance_buffer_meters + 150.0):
+                    in_hazard_zone = True
+                    # Insert safe lateral bypass waypoint outside the incident radius
+                    bypass_pt = (round(h["latitude"] + 0.0035, 6), round(h["longitude"] + 0.0035, 6))
+                    if not detour_polyline or detour_polyline[-1] != bypass_pt:
+                        detour_polyline.append(bypass_pt)
+                    break
+            if not in_hazard_zone:
+                detour_polyline.append(pt)
+
+        if len(detour_polyline) < 2:
+            detour_polyline = list(original_route.polyline)
+
         detour_dist = original_route.distance_meters * 1.15
         detour_dur = original_route.duration_seconds * 1.20
         
@@ -83,7 +106,7 @@ class DynamicRerouter:
             objective=original_route.objective,
             distance_meters=detour_dist,
             duration_seconds=detour_dur,
-            polyline=original_route.polyline,
+            polyline=detour_polyline,
             summary_roads=["Autonomous Detour Bypass Corridor"] + original_route.summary_roads[:2],
             road_quality_score=0.92,
             provider_source="Dynamic Rerouter Engine"

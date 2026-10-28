@@ -1561,7 +1561,7 @@ def build_always_visible_virtual_guide_html(
             window.displayGuideSpeech({{
                 id: 'MSG_ARRIVED_' + Date.now(),
                 headline: 'Destination Reached!',
-                body_text: "We've reached your destination: " + PAYLOAD.destName + "! Thank you for traveling with Pathfinder.",
+                body_text: "We've reached your destination: " + PAYLOAD.destName + "! Thank you for traveling with NexRoute.",
                 duration_ms: 6000,
                 icon: '🏆'
             }}, true);

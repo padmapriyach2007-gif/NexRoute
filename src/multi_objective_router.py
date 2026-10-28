@@ -18,7 +18,7 @@ from src.road_condition_manager import RoadConditionManager
 from src.hazard_map import HazardMap
 
 
-class RouteEligibilityStatus(Enum):
+class RouteEligibilityStatus(str, Enum):
     ELIGIBLE = "ROUTE_ELIGIBLE"
     RESTRICTED_CLOSURE = "ROUTE_RESTRICTED_CLOSURE"
     HAZARD_BLOCKED = "ROUTE_HAZARD_BLOCKED"
@@ -92,7 +92,12 @@ class MultiObjectiveRouter:
         self,
         candidate_routes: List[RouteOption],
         objective: OptimizationObjective = OptimizationObjective.FASTEST,
-        require_accessible: bool = False
+        require_accessible: bool = False,
+        avoid_tolls: bool = False,
+        avoid_highways: bool = False,
+        avoid_ferries: bool = False,
+        *args,
+        **kwargs
     ) -> List[RankedRoute]:
         """
         Ranks candidate routes using the normalized multi-objective scoring model:
@@ -117,18 +122,20 @@ class MultiObjectiveRouter:
         # 2. First Pass: Apply Traffic Delays & Detect Hard Restrictions
         evaluated_items = []
         for r in candidate_routes:
-            # Check traffic delays
-            extra_delay_sec, matched_traffic = self.condition_manager.calculate_traffic_delay_seconds(r.summary_roads)
+            # Check traffic delays and road restrictions (skip ground road obstacles for high-altitude flights)
+            if r.mode == TravelMode.FLIGHT:
+                extra_delay_sec, matched_traffic = 0.0, []
+                conflicts, hard_closures = [], []
+                hazard_conflicts = []
+            else:
+                extra_delay_sec, matched_traffic = self.condition_manager.calculate_traffic_delay_seconds(r.summary_roads)
+                conflicts = self.condition_manager.check_route_restrictions(r.polyline)
+                hard_closures = [c for c in conflicts if c["is_hard_closure"]]
+                hazard_conflicts = []
+                if self.hazard_map:
+                    hazard_conflicts = self.hazard_map.check_route_hazards(r.polyline, safety_buffer_m=60.0)
+
             total_duration_sec = r.duration_seconds + extra_delay_sec
-
-            # Check road restrictions (closures, roadwork)
-            conflicts = self.condition_manager.check_route_restrictions(r.polyline)
-            hard_closures = [c for c in conflicts if c["is_hard_closure"]]
-
-            # Check spatial hazards (fire, chemical leaks, floods, structural collapse)
-            hazard_conflicts = []
-            if self.hazard_map:
-                hazard_conflicts = self.hazard_map.check_route_hazards(r.polyline, safety_buffer_m=60.0)
 
             reasons = []
             is_eligible = True
@@ -155,6 +162,35 @@ class MultiObjectiveRouter:
                 status = RouteEligibilityStatus.INACCESSIBLE
                 reasons.append("Non-accessible pathway (contains stairs or barriers)")
 
+            # Check Avoidance Constraints (Tolls, Highways, Ferries)
+            toll_kw = ("toll", "expressway", "turnpike", "fastag", "nh16", "nh-16", "tollway", "toll plaza", "peaje", "maut")
+            hwy_kw = ("highway", "expressway", "motorway", "freeway", "nh ", "nh-", "ah45", "interstate", "autobahn", "autoroute")
+            ferry_kw = ("ferry", "water ferry", "boat", "car ferry")
+
+            has_ferry = any(any(fk in (rd or "").lower() for fk in ferry_kw) for rd in r.summary_roads) or any(
+                any(fk in ((st.get("instruction", "") or "") + " " + (st.get("road", "") or "")).lower() for fk in ferry_kw)
+                for st in r.steps
+            )
+            has_tolls = any(any(tk in (rd or "").lower() for tk in toll_kw) for rd in r.summary_roads) or any(
+                any(tk in ((st.get("instruction", "") or "") + " " + (st.get("road", "") or "")).lower() for tk in toll_kw)
+                for st in r.steps
+            )
+            has_highways = any(any(hk in (rd or "").lower() for hk in hwy_kw) for rd in r.summary_roads) or any(
+                any(hk in ((st.get("instruction", "") or "") + " " + (st.get("road", "") or "")).lower() for hk in hwy_kw)
+                for st in r.steps
+            )
+
+            avoidance_penalty = 0.0
+            if avoid_ferries and has_ferry:
+                avoidance_penalty += 20.0
+                reasons.append("Contains water ferry link (avoid ferries active)")
+            if avoid_tolls and has_tolls:
+                avoidance_penalty += 5.0
+                reasons.append("Contains toll plazas / expressway (avoid tolls active)")
+            if avoid_highways and has_highways:
+                avoidance_penalty += 3.5
+                reasons.append("Contains major highway corridor (avoid highways active)")
+
             evaluated_items.append({
                 "route": r,
                 "is_eligible": is_eligible,
@@ -165,34 +201,41 @@ class MultiObjectiveRouter:
                 "hazards": hazard_conflicts,
                 "traffic": matched_traffic,
                 "duration_min": total_duration_sec / 60.0,
-                "distance_km": r.distance_km
+                "distance_km": r.distance_km,
+                "has_tolls": has_tolls,
+                "has_highways": has_highways,
+                "has_ferry": has_ferry,
+                "avoidance_penalty": avoidance_penalty
             })
 
-        # 3. Normalization Baseline (min time and min distance among eligible routes)
+        # 3. Normalization Baseline (min/max time and distance among eligible routes)
         eligible_items = [item for item in evaluated_items if item["is_eligible"]]
-        if eligible_items:
-            min_time = min(item["duration_min"] for item in eligible_items)
-            min_dist = min(item["distance_km"] for item in eligible_items)
-            max_time = max(item["duration_min"] for item in eligible_items)
-        else:
-            # Fallback when all routes are restricted
-            min_time = min(item["duration_min"] for item in evaluated_items)
-            min_dist = min(item["distance_km"] for item in evaluated_items)
-            max_time = max(item["duration_min"] for item in evaluated_items)
+        ref_items = eligible_items if eligible_items else evaluated_items
+        min_time = min(item["duration_min"] for item in ref_items)
+        min_dist = min(item["distance_km"] for item in ref_items)
+        max_time = max(item["duration_min"] for item in ref_items)
+        max_dist = max(item["distance_km"] for item in ref_items)
 
         # Protect against division by zero
         min_time = max(0.1, min_time)
         min_dist = max(0.1, min_dist)
+        max_time = max(0.1, max_time)
+        max_dist = max(0.1, max_dist)
 
         # 4. Compute Normalized Composite Scores
         for item in evaluated_items:
-            norm_time = item["duration_min"] / min_time
-            norm_dist = item["distance_km"] / min_dist
+            if objective == OptimizationObjective.BALANCED:
+                # Exact formula: 0.5 * (Route Travel Time / Longest Travel Time) + 0.5 * (Route Distance / Longest Distance)
+                norm_time = item["duration_min"] / max_time
+                norm_dist = item["distance_km"] / max_dist
+                score = 0.5 * norm_time + 0.5 * norm_dist + item["avoidance_penalty"]
+            else:
+                norm_time = item["duration_min"] / min_time
+                norm_dist = item["distance_km"] / min_dist
+                score = w_time * norm_time + w_dist * norm_dist + item["avoidance_penalty"]
 
             if not item["is_eligible"]:
                 score = 999.0 + norm_time
-            else:
-                score = w_time * norm_time + w_dist * norm_dist
             item["score"] = score
 
         # 5. Sort: Eligible first by score, then ineligible
@@ -236,6 +279,19 @@ class MultiObjectiveRouter:
                     total_delay = sum(tc.delay_minutes for tc in item["traffic"])
                     trade_offs.append(f"🚗 Contains +{round(total_delay, 1)} mins traffic delay")
 
+                if avoid_tolls:
+                    if not item["has_tolls"]:
+                        trade_offs.append("🛡️ 100% Toll-free budget route (bypasses FASTag plazas)")
+                    else:
+                        trade_offs.append("💳 Contains toll plaza / expressway charges")
+                if avoid_highways:
+                    if not item["has_highways"]:
+                        trade_offs.append("🌿 Highway-free local scenic byway")
+                    else:
+                        trade_offs.append("🛣️ Uses multi-lane highway corridor")
+                if avoid_ferries and not item["has_ferry"]:
+                    trade_offs.append("🌊 Continuous overland link (ferries excluded)")
+
             # Build Objective Explanation
             if not item["is_eligible"]:
                 explanation = f"Excluded: {'; '.join(item['reasons'])}"
@@ -254,6 +310,11 @@ class MultiObjectiveRouter:
             else:
                 explanation = f"Alternative Option: {trade_offs[0]} | {trade_offs[1]}."
 
+            acc_verified = getattr(r, "accessibility_verified", False)
+            acc_notes = getattr(r, "accessibility_notes", "")
+            if not acc_verified:
+                acc_notes = "Accessibility information unavailable."
+
             ranked_routes.append(RankedRoute(
                 route=r,
                 rank=rank_idx,
@@ -271,8 +332,8 @@ class MultiObjectiveRouter:
                 is_safe=item["is_safe"],
                 recommendation_explanation=explanation,
                 key_trade_offs=trade_offs,
-                accessibility_verified=getattr(r, "accessibility_verified", False),
-                accessibility_notes=getattr(r, "accessibility_notes", "")
+                accessibility_verified=acc_verified,
+                accessibility_notes=acc_notes
             ))
 
         return ranked_routes

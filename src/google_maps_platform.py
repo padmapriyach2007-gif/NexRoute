@@ -248,7 +248,9 @@ def build_google_maps_javascript_html(
     api_key: Optional[str] = None,
     traveler_avatar: str = "walk",
     route_polylines: Optional[List[Dict[str, Any]]] = None,
-    ai_road_report: Optional[Dict[str, Any]] = None
+    ai_road_report: Optional[Dict[str, Any]] = None,
+    fleet_members: Optional[List[Dict[str, Any]]] = None,
+    **kwargs
 ) -> str:
     """
     Builds the official Google Maps JavaScript API HTML & JavaScript container component.
@@ -323,6 +325,7 @@ def build_google_maps_javascript_html(
     route_polylines_json = json.dumps(route_polylines or [])
     hazards_json = json.dumps(hazards or [])
     ai_road_report_json = json.dumps(ai_road_report or {})
+    fleet_members_json = json.dumps(fleet_members or [])
 
     orig_json = json.dumps({
         "lat": origin_coords[0],
@@ -374,9 +377,11 @@ def build_google_maps_javascript_html(
 
     is_init_road = ("ROAD" in mt_upper)
     is_init_terrain = ("TERRAIN" in mt_upper)
-    is_init_sat = not is_init_road and not is_init_terrain
+    is_init_pure_sat = ("SATELLITE" in mt_upper and "HYBRID" not in mt_upper)
+    is_init_hybrid = not is_init_road and not is_init_terrain and not is_init_pure_sat
     cls_card_road = "active" if is_init_road else ""
-    cls_card_sat = "active" if is_init_sat else ""
+    cls_card_sat = "active" if is_init_pure_sat else ""
+    cls_card_hybrid = "active" if is_init_hybrid else ""
     cls_btn_terrain = "active" if is_init_terrain else ""
 
     script_tag = (
@@ -1538,21 +1543,31 @@ def build_google_maps_javascript_html(
         .pf-clean-badge-pill {{
             display: inline-flex !important;
             align-items: center !important;
-            gap: 6px !important;
-            padding: 5px 12px !important;
-            border-radius: 20px !important;
+            gap: 4px !important;
+            padding: 3px 8px !important;
+            max-width: 160px !important;
+            overflow: hidden !important;
+            border-radius: 12px !important;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-            font-size: 11px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.04em !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.02em !important;
             text-transform: uppercase !important;
             white-space: nowrap !important;
-            word-break: keep-all !important;
-            margin-bottom: 5px !important;
+            margin-bottom: 3px !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.75) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.75) !important;
+        }}
+        .pf-clean-badge-text {{
+            font-weight: 700 !important;
+            letter-spacing: 0.02em !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 130px !important;
+            display: inline-block !important;
         }}
 
         .pf-clean-badge-pill.start {{
@@ -1584,18 +1599,9 @@ def build_google_maps_javascript_html(
         }}
 
         .pf-clean-badge-icon {{
-            font-size: 13px !important;
+            font-size: 12px !important;
             display: inline-flex !important;
             align-items: center !important;
-            flex-shrink: 0 !important;
-        }}
-
-        .pf-clean-badge-text {{
-            font-weight: 800 !important;
-            letter-spacing: 0.04em !important;
-            white-space: nowrap !important;
-            word-break: keep-all !important;
-            display: inline-block !important;
             flex-shrink: 0 !important;
         }}
 
@@ -1780,6 +1786,178 @@ def build_google_maps_javascript_html(
         .amenity-pin-bubble:hover {{
             transform: scale(1.18);
         }}
+
+        /* =========================================================================
+           FEATURE 3: Map Compass & Precision Orientation Controls HUD
+           ========================================================================= */
+        .gmap-compass-container {{
+            position: absolute;
+            top: 110px;
+            right: 16px;
+            z-index: 1005;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: auto;
+            user-select: none;
+        }}
+        .gmap-compass-rose {{
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(56, 189, 248, 0.5);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 14px rgba(56, 189, 248, 0.25);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            outline: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+        .gmap-compass-rose:hover {{
+            transform: scale(1.08);
+            border-color: #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+        }}
+        .gmap-compass-rose:active {{
+            transform: scale(0.96);
+        }}
+        .gmap-compass-dial {{
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .compass-cardinal {{
+            position: absolute;
+            font-size: 8px;
+            font-weight: 900;
+            color: #94a3b8;
+            letter-spacing: 0.02em;
+        }}
+        .compass-cardinal.compass-n {{
+            top: 3px;
+            color: #ef4444;
+            font-weight: 900;
+            font-size: 9px;
+            text-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+        }}
+        .compass-cardinal.compass-s {{ bottom: 3px; }}
+        .compass-cardinal.compass-e {{ right: 4px; }}
+        .compass-cardinal.compass-w {{ left: 4px; }}
+
+        .compass-needle-wrap {{
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-origin: 50% 50%;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }}
+        .compass-needle-north {{
+            position: absolute;
+            top: 8px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 14px solid #ef4444;
+            filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.8));
+        }}
+        .compass-needle-pivot {{
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1.5px solid #0284c7;
+            box-shadow: 0 0 6px #38bdf8;
+            z-index: 2;
+        }}
+        .compass-needle-south {{
+            position: absolute;
+            bottom: 8px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 14px solid #38bdf8;
+            filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.7));
+        }}
+        .gmap-compass-readout {{
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #7dd3fc;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 8px;
+            padding: 2px 6px;
+            white-space: nowrap;
+            letter-spacing: 0.03em;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }}
+        .gmap-compass-controls {{
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 3px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }}
+        .compass-ctrl-btn {{
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #cbd5e1;
+            font-size: 0.72rem;
+            font-weight: 800;
+            width: 28px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }}
+        .compass-ctrl-btn:hover {{
+            background: rgba(56, 189, 248, 0.25);
+            border-color: #38bdf8;
+            color: #ffffff;
+        }}
+        .compass-ctrl-btn.active {{
+            background: #0284c7;
+            border-color: #38bdf8;
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+        }}
+
+        @media (max-width: 768px) {{
+            .gmap-compass-container {{
+                top: 105px;
+                right: 10px;
+            }}
+            .gmap-compass-rose {{
+                width: 42px;
+                height: 42px;
+            }}
+            .gmap-compass-controls {{
+                flex-direction: row;
+            }}
+        }}
     </style>
 </head>
 <body>
@@ -1810,7 +1988,8 @@ def build_google_maps_javascript_html(
         <div class="gmap-filter-bar">
             <span class="gmap-filter-pill" data-filter="SAVED" id="pill-filter-saved" style="display:none;" title="Saved Places"></span>
             <button class="gmap-filter-save-btn" id="btn-quick-save-place" style="display:none;" onclick="window.savePlacePromptFromFilter()"></button>
-            <span class="gmap-filter-pill" data-filter="HOSPITALS" onclick="window.triggerCategorySearch('HOSPITALS')">🏥 Hospitals</span>
+            <span class="gmap-filter-pill" data-filter="HOSPITALS" onclick="window.triggerCategorySearch('HOSPITALS')">🏥 Hospitals & Clinics</span>
+            <span class="gmap-filter-pill" data-filter="SUPERMARKETS" onclick="window.triggerCategorySearch('SUPERMARKETS')">🛒 Supermarkets</span>
             <span class="gmap-filter-pill" data-filter="FUEL" onclick="window.triggerCategorySearch('FUEL')">⛽ Fuel/Charging</span>
             <span class="gmap-filter-pill" data-filter="RESTAURANTS" onclick="window.triggerCategorySearch('RESTAURANTS')">🍽️ Restaurants</span>
             <span class="gmap-filter-pill" data-filter="ATMS" onclick="window.triggerCategorySearch('ATMS')">🏧 ATM / Banking</span>
@@ -1836,7 +2015,64 @@ def build_google_maps_javascript_html(
             <div id="cat-panel-body" class="cat-panel-body"></div>
         </div>
 
+        <!-- Interactive Map Compass with North-Up & Precision Orientation Controls -->
+        <div id="gmap-compass-container" class="gmap-compass-container" title="Map Compass & Orientation">
+            <button id="gmap-compass-rose" class="gmap-compass-rose" onclick="window.resetMapNorthUp()" title="Reset Map Orientation to North-Up (0°)">
+                <div id="gmap-compass-dial" class="gmap-compass-dial">
+                    <div class="compass-cardinal compass-n">N</div>
+                    <div class="compass-cardinal compass-s">S</div>
+                    <div class="compass-cardinal compass-e">E</div>
+                    <div class="compass-cardinal compass-w">W</div>
+                    <div class="compass-needle-wrap" id="compass-needle-wrap">
+                        <div class="compass-needle-north"></div>
+                        <div class="compass-needle-pivot"></div>
+                        <div class="compass-needle-south"></div>
+                    </div>
+                </div>
+            </button>
+            <div id="gmap-compass-readout" class="gmap-compass-readout">0° N</div>
+            <div class="gmap-compass-controls">
+                <button class="compass-ctrl-btn" onclick="window.rotateMapOrientation(-15)" title="Rotate Counter-Clockwise (-15°)">⟲</button>
+                <button class="compass-ctrl-btn" onclick="window.resetMapNorthUp()" title="Reset North-Up (0°)">▲</button>
+                <button class="compass-ctrl-btn" onclick="window.rotateMapOrientation(15)" title="Rotate Clockwise (+15°)">⟳</button>
+                <button class="compass-ctrl-btn" id="btn-device-heading-mode" onclick="window.toggleDeviceHeadingMode()" title="Follow GPS / Sensor Heading">🧭</button>
+            </div>
+        </div>
+
+        <!-- Map-Picking Mode HUD Banner -->
+        <div id="map-picking-hud" style="display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 99999; background: linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(30,58,138,0.96) 100%); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(56,189,248,0.35); align-items: center; gap: 14px; pointer-events: auto;">
+            <span style="font-size: 22px;" id="map-picking-hud-icon">📍</span>
+            <div>
+                <div style="font-weight: 800; font-size: 13px; color: #38bdf8;" id="map-picking-hud-title">MAP-PICKING MODE ACTIVE</div>
+                <div style="font-size: 11px; color: #cbd5e1;" id="map-picking-hud-desc">Tap anywhere on the map to set location</div>
+            </div>
+            <button onclick="window.cancelMapPickingMode()" style="background: rgba(239,68,68,0.25); border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;">✕ Cancel</button>
+        </div>
+
+        <!-- Map-Picking Confirmation Card -->
+        <div id="map-picking-card" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; width: min(90vw, 440px); background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(20,35,65,0.96) 100%); border: 2px solid #38bdf8; border-radius: 14px; padding: 14px 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.7), 0 0 24px rgba(56,189,248,0.3); pointer-events: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 13px; font-weight: 800; color: #38bdf8;" id="map-pick-confirm-badge">🎯 CONFIRM LOCATION</span>
+                <span style="font-size: 11px; color: #94a3b8;" id="map-pick-coords-text">16.2335, 80.5505</span>
+            </div>
+            <div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 4px;" id="map-pick-name-text">Selected Place Name</div>
+            <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 12px; line-height: 1.3;" id="map-pick-addr-text">Address details...</div>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="window.confirmPickedLocation()" id="map-pick-confirm-btn" style="flex: 1.2; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: 1.5px solid #34d399; color: #ffffff; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 800; cursor: pointer;">
+                    ✅ Confirm Location
+                </button>
+                <button onclick="window.cancelMapPickingMode()" style="flex: 0.8; background: rgba(239,68,68,0.2); border: 1.5px solid #ef4444; color: #fca5a5; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                    ✕ Cancel
+                </button>
+            </div>
+        </div>
+
         <div id="map"></div>
+        <div id="gmap-tile-loading" style="display: none; position: absolute; top: 14px; right: 85px; z-index: 1000; background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 20px; padding: 4px 12px; font-size: 0.72rem; font-weight: 700; color: #38bdf8; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.6); pointer-events: none;">
+            <div style="width: 10px; height: 10px; border: 2px solid #38bdf8; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+            <span>Loading Tiles...</span>
+        </div>
+
 
         <!-- Live Map Tools Overlays (AQI, Traffic, Distance Ruler, Toast, Modals) -->
         <div id="gmap-hud-toast"></div>
@@ -1939,9 +2175,14 @@ def build_google_maps_javascript_html(
                     <div class="place-details-row"><span>🛡️</span><span id="place-drawer-safety">Satellite Verified Hazard-Free Passage</span></div>
                 </div>
                 <div class="place-action-btns">
-                    <button id="place-btn-dest" class="place-btn-primary" onclick="window.setClickedPlaceAsDest()">
-                        🚀 Set as Destination & Route
-                    </button>
+                    <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px;">
+                        <button id="place-btn-start" class="place-btn-secondary" onclick="window.setClickedPlaceAsStart()" style="flex: 1; background: rgba(16, 185, 129, 0.2); border: 1.5px solid #10b981; color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 8px; cursor: pointer;">
+                            🟢 Set as Start
+                        </button>
+                        <button id="place-btn-dest" class="place-btn-primary" onclick="window.setClickedPlaceAsDest()" style="flex: 1; padding: 10px; border-radius: 8px; cursor: pointer;">
+                            🏁 Set as Dest
+                        </button>
+                    </div>
                     <button id="place-btn-save-fav" class="place-btn-secondary" onclick="window.saveInspectedPlaceToFavourites()" style="background: rgba(245, 158, 11, 0.2); border: 1.5px solid #f59e0b; color: #fbbf24; font-weight: 800; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
                         <span id="place-btn-save-icon">⭐</span> <span id="place-btn-save-text">Save to Favourites</span>
                     </button>
@@ -2074,7 +2315,13 @@ def build_google_maps_javascript_html(
                     </div>
                     <span class="layer-type-name">Default</span>
                 </div>
-                <div class="layer-type-card {cls_card_sat}" id="maptype-card-satellite" onclick="window.switchMapType('satellite')" title="High-Resolution Satellite Imagery">
+                <div class="layer-type-card {cls_card_hybrid}" id="maptype-card-hybrid" onclick="window.switchMapType('hybrid')" title="Google Maps Hybrid Satellite with Labels">
+                    <div class="layer-type-preview type-satellite-preview" style="position: relative;">
+                        <span style="position: absolute; bottom: 2px; right: 3px; font-size: 9px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));">🏷️</span>
+                    </div>
+                    <span class="layer-type-name">Hybrid</span>
+                </div>
+                <div class="layer-type-card {cls_card_sat}" id="maptype-card-satellite" onclick="window.switchMapType('satellite')" title="Pure Photorealistic Satellite Imagery">
                     <div class="layer-type-preview type-satellite-preview"></div>
                     <span class="layer-type-name">Satellite</span>
                 </div>
@@ -2123,8 +2370,27 @@ def build_google_maps_javascript_html(
             hasLiveKey: {str(has_live_key).lower()},
             mapType: "{map_type}",
             travelerAvatarIcon: "{avatar_icon}",
-            travelerAvatarLabel: "{avatar_label}"
+            travelerAvatarLabel: "{avatar_label}",
+            fleetMembers: {fleet_members_json},
+            mapPickingMode: "{kwargs.get('map_picking_mode') or ''}",
+            isCustomOrigin: {str(bool(kwargs.get("is_custom_origin", False))).lower()},
+            autoFitBounds: {str(bool(kwargs.get("auto_fit_bounds", True))).lower()}
         }};
+
+        if (window.GMAP_DATA && window.GMAP_DATA.mapPickingMode) {{
+            window.activeMapPickingTarget = window.GMAP_DATA.mapPickingMode;
+            setTimeout(function() {{
+                var hud = document.getElementById('map-picking-hud');
+                var hudIcon = document.getElementById('map-picking-hud-icon');
+                var hudTitle = document.getElementById('map-picking-hud-title');
+                var hudDesc = document.getElementById('map-picking-hud-desc');
+                var isOrig = (window.activeMapPickingTarget === 'orig');
+                if (hudIcon) hudIcon.innerText = isOrig ? "🟢" : "🏁";
+                if (hudTitle) hudTitle.innerText = isOrig ? "START SELECTION MODE" : "DESTINATION SELECTION MODE";
+                if (hudDesc) hudDesc.innerText = isOrig ? "Tap or drag to set your start." : "Tap or drag to set your destination.";
+                if (hud) hud.style.display = 'flex';
+            }}, 200);
+        }}
     </script>
 
     {script_tag}
@@ -2136,6 +2402,20 @@ def build_google_maps_javascript_html(
         var activeFilter = "ALL";
         var routePolylineObj = null;
         var currentSearchMarker = null;
+
+        // Helper for concise pointer labels (<= 14 chars)
+        function getCompactPointerLabel(raw, fallbackPrefix) {{
+            if (!raw) return fallbackPrefix;
+            var s = String(raw).replace(/^[🟢🏁📍🛰️🚶🚗✈️]+\\s*/, '').trim();
+            s = s.replace(/^(?:START|DEST|ORIGIN|TARGET)\\s*[•\-\:]?\\s*/i, '').trim();
+            var head = s.split(',')[0].split('(')[0].trim();
+            if (!head || /^(?:current location|selected start|selected destination|origin|target|custom start|custom destination)$/i.test(head)) {{
+                return fallbackPrefix;
+            }}
+            if (head.length > 14) head = head.substring(0, 13).trim() + '…';
+            return fallbackPrefix + ' • ' + head;
+        }}
+        window.getCompactPointerLabel = getCompactPointerLabel;
 
         // Authentic Google Maps Layers & Map Style Manager
         var activeMapType = "{map_type}".toLowerCase().indexOf("road") !== -1 ? "roadmap" : ("{map_type}".toLowerCase().indexOf("terrain") !== -1 ? "terrain" : "satellite");
@@ -2199,10 +2479,12 @@ def build_google_maps_javascript_html(
             activeMapType = type;
             var defaultCard = document.getElementById('maptype-card-default');
             var satCard = document.getElementById('maptype-card-satellite');
+            var hybridCard = document.getElementById('maptype-card-hybrid');
             var terrainBtn = document.getElementById('layer-btn-terrain');
 
             if (defaultCard) defaultCard.classList.toggle('active', type === 'roadmap');
             if (satCard) satCard.classList.toggle('active', type === 'satellite');
+            if (hybridCard) hybridCard.classList.toggle('active', type === 'hybrid');
             if (terrainBtn) terrainBtn.classList.toggle('active', type === 'terrain');
 
             if (window.gMap) {{
@@ -2211,22 +2493,22 @@ def build_google_maps_javascript_html(
                 }} else if (type === 'terrain') {{
                     window.gMap.setMapTypeId(google.maps.MapTypeId.TERRAIN);
                 }} else if (type === 'satellite') {{
-                    window.gMap.setMapTypeId(showLabels ? google.maps.MapTypeId.HYBRID : google.maps.MapTypeId.SATELLITE);
+                    window.gMap.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+                }} else if (type === 'hybrid') {{
+                    window.gMap.setMapTypeId(google.maps.MapTypeId.HYBRID);
                 }}
             }}
 
             if (window.setLeafletBaseLayer) {{
-                var code = 'y';
-                if (type === 'roadmap') code = 'm';
-                else if (type === 'terrain') code = 'p';
-                else if (type === 'satellite') code = showLabels ? 'y' : 's';
-                window.setLeafletBaseLayer(code);
+                window.setLeafletBaseLayer(type);
             }}
 
             if (type === 'roadmap') {{
                 window.showMapToast('Switched to Standard Roadmap Basemap', '🗺️');
             }} else if (type === 'satellite') {{
-                window.showMapToast('Switched to High-Resolution Satellite View', '🛰️');
+                window.showMapToast('Switched to Genuine Satellite Imagery', '🛰️');
+            }} else if (type === 'hybrid') {{
+                window.showMapToast('Hybrid Satellite with Road Labels Active', '🏷️');
             }} else if (type === 'terrain') {{
                 window.showMapToast('Topographic Terrain Basemap Active', '⛰️');
             }}
@@ -2941,20 +3223,248 @@ def build_google_maps_javascript_html(
                 }});
         }};
 
+        window.safeNavigateParent = function(paramsObj) {{
+            try {{
+                var pWin = window.parent || window.top;
+                var pDoc = (pWin && pWin.document) ? pWin.document : null;
+
+                function setReactInput(inputEl, val) {{
+                    if (!inputEl) return false;
+                    try {{
+                        var nativeSetter = Object.getOwnPropertyDescriptor(pWin.HTMLInputElement.prototype, 'value')?.set
+                            || Object.getOwnPropertyDescriptor(inputEl.__proto__, 'value')?.set;
+                        if (nativeSetter) {{
+                            nativeSetter.call(inputEl, val);
+                        }} else {{
+                            inputEl.value = val;
+                        }}
+                        inputEl.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        inputEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        return true;
+                    }} catch(eSet) {{
+                        console.warn("[safeNavigateParent] Input dispatch notice:", eSet);
+                        return false;
+                    }}
+                }}
+
+                // 1. Direct seamless updates to parent inputs without disruptive page refresh
+                if (pDoc && (paramsObj.orig_lat || paramsObj.picked_target === 'orig')) {{
+                    var lat = paramsObj.orig_lat || paramsObj.picked_lat;
+                    var lon = paramsObj.orig_lon || paramsObj.picked_lon;
+                    var name = paramsObj.orig_name || paramsObj.picked_name || "Selected Location";
+                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\\s*/, '').trim();
+                    var valToSet = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
+
+                    var input = pDoc.querySelector('input[aria-label*="Starting Point"]')
+                        || pDoc.querySelector('input[placeholder*="Search Location — My Location"]')
+                        || pDoc.querySelector('input[placeholder*="Search location"]')
+                        || pDoc.querySelector('input[data-testid*="txt_orig"]');
+                    if (input) {{
+                        setReactInput(input, valToSet);
+                        input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                    }}
+                    window.showMapToast('🟢 Starting Point set to: ' + cleanName, '🟢');
+                }} else if (pDoc && (paramsObj.dest_lat || paramsObj.picked_target === 'dest')) {{
+                    var lat = paramsObj.dest_lat || paramsObj.picked_lat;
+                    var lon = paramsObj.dest_lon || paramsObj.picked_lon;
+                    var name = paramsObj.dest_name || paramsObj.picked_name || "Destination";
+                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\\s*/, '').trim();
+                    var valToSet = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
+
+                    var input = pDoc.querySelector('input[aria-label*="Destination"]')
+                        || pDoc.querySelector('input[placeholder*="Search Destination"]')
+                        || pDoc.querySelector('input[data-testid*="txt_dest"]');
+                    if (input) {{
+                        setReactInput(input, valToSet);
+                        input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                    }}
+                    window.showMapToast('🏁 Destination set to: ' + cleanName, '🏁');
+
+                // Trigger seamless recalculation via Find Routes button in parent document
+                setTimeout(function() {{
+                    try {{
+                        var btns = Array.from(pDoc.querySelectorAll('button'));
+                        var findBtn = btns.find(function(b) {{
+                            return b.innerText && (b.innerText.indexOf('Find Routes') !== -1 || b.innerText.indexOf('🚀') !== -1);
+                        }});
+                        if (findBtn) {{
+                            findBtn.click();
+                        }}
+                    }} catch(eFind) {{}}
+                }}, 220);
+                }} else if (paramsObj.cancel_pick) {{
+                    var hud = document.getElementById('map-picking-hud');
+                    var card = document.getElementById('map-picking-card');
+                    if (hud) hud.style.display = 'none';
+                    if (card) card.style.display = 'none';
+                }}
+
+                // 2. Silently synchronize URL searchParams via history.replaceState (ZERO page reload)
+                try {{
+                    if (pWin && pWin.location && pWin.history && pWin.history.replaceState) {{
+                        var url = new URL(pWin.location.href);
+                        for (var k in paramsObj) {{
+                            if (paramsObj.hasOwnProperty(k) && paramsObj[k] !== undefined && paramsObj[k] !== null) {{
+                                url.searchParams.set(k, paramsObj[k]);
+                            }}
+                        }}
+                        pWin.history.replaceState(null, '', url.toString());
+                    }}
+                }} catch(eHist) {{}}
+            }} catch(err) {{
+                console.warn("[safeNavigateParent] Navigation error:", err);
+            }}
+        }};
+
+        window.setClickedPlaceAsStart = function() {{
+            if (!window.inspectedLocation) return;
+            var lat = window.inspectedLocation.lat;
+            var lng = window.inspectedLocation.lng;
+            var name = window.inspectedLocation.name || "Selected Starting Point";
+            window.safeNavigateParent({{
+                "orig_lat": Number(lat).toFixed(6),
+                "orig_lon": Number(lng).toFixed(6),
+                "orig_name": name
+            }});
+        }};
+
         window.setClickedPlaceAsDest = function() {{
             if (!window.inspectedLocation) return;
             var lat = window.inspectedLocation.lat;
             var lng = window.inspectedLocation.lng;
             var name = window.inspectedLocation.name || "Selected Destination";
-            try {{
-                if (window.top && window.top !== window) {{
-                    window.top.location.href = "/?dest_lat=" + lat + "&dest_lon=" + lng + "&dest_name=" + encodeURIComponent(name) + "#application-map-viewport";
-                }} else {{
-                    window.location.search = "dest_lat=" + lat + "&dest_lon=" + lng + "&dest_name=" + encodeURIComponent(name);
-                }}
-            }} catch(e) {{
-                window.location.search = "dest_lat=" + lat + "&dest_lon=" + lng + "&dest_name=" + encodeURIComponent(name);
+            window.safeNavigateParent({{
+                "dest_lat": Number(lat).toFixed(6),
+                "dest_lon": Number(lng).toFixed(6),
+                "dest_name": name
+            }});
+        }};
+
+        var pickedMapMarker = null;
+        var pendingMapPickData = null;
+
+        window.handleMapPickingClick = function(lat, lng) {{
+            var target = window.activeMapPickingTarget || 'orig';
+            var isOrig = (target === 'orig');
+            var card = document.getElementById('map-picking-card');
+            var badgeEl = document.getElementById('map-pick-confirm-badge');
+            var coordsEl = document.getElementById('map-pick-coords-text');
+            var nameEl = document.getElementById('map-pick-name-text');
+            var addrEl = document.getElementById('map-pick-addr-text');
+            var btnEl = document.getElementById('map-pick-confirm-btn');
+
+            if (badgeEl) badgeEl.innerHTML = isOrig ? "🟢 CONFIRM STARTING POINT" : "🏁 CONFIRM DESTINATION";
+            if (coordsEl) coordsEl.innerText = Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
+            if (btnEl) btnEl.innerText = isOrig ? "✅ Confirm Starting Point" : "✅ Confirm Destination";
+            if (nameEl) nameEl.innerText = "Resolving Address...";
+            if (addrEl) addrEl.innerText = "Querying geographic database...";
+            if (card) card.style.display = 'block';
+
+            if (window.lMapInstance) {{
+                if (pickedMapMarker) window.lMapInstance.removeLayer(pickedMapMarker);
+                var pickIcon = L.divIcon({{
+                    className: 'pf-picking-pin',
+                    html: '<div style="background:' + (isOrig ? '#10b981' : '#f43f5e') + '; width:26px; height:26px; border-radius:50%; border:2.5px solid #fff; box-shadow:0 0 14px ' + (isOrig ? '#10b981' : '#f43f5e') + '; display:flex; align-items:center; justify-content:center; font-size:13px; animation:markerDotPulse 1.2s infinite ease-in-out;">' + (isOrig ? '🟢' : '🏁') + '</div>',
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                }});
+                pickedMapMarker = L.marker([lat, lng], {{ icon: pickIcon, zIndexOffset: 9999 }}).addTo(window.lMapInstance);
             }}
+
+            pendingMapPickData = {{
+                target: target,
+                lat: lat,
+                lon: lng,
+                name: (isOrig ? "Custom Start" : "Custom Dest") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")",
+                address: "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5)
+            }};
+
+            var revUrl = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1';
+            fetch(revUrl, {{ headers: {{ 'Accept-Language': 'en' }} }})
+                .then(function(res) {{ return res.json(); }})
+                .then(function(data) {{
+                    if (data && (data.display_name || data.name)) {{
+                        var resolvedName = data.name || (data.address ? (data.address.road || data.address.suburb || data.address.city || data.display_name.split(',')[0]) : "Map Location");
+                        var resolvedAddr = data.display_name || resolvedName;
+                        if (nameEl) nameEl.innerText = resolvedName;
+                        if (addrEl) addrEl.innerText = resolvedAddr;
+                        pendingMapPickData.name = resolvedName;
+                        pendingMapPickData.address = resolvedAddr;
+                    }} else {{
+                        if (nameEl) nameEl.innerText = (isOrig ? "Selected Start Point" : "Selected Destination");
+                        if (addrEl) addrEl.innerText = "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
+                    }}
+                }})
+                .catch(function() {{
+                    if (nameEl) nameEl.innerText = (isOrig ? "Selected Start Point" : "Selected Destination");
+                    if (addrEl) addrEl.innerText = "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
+                }});
+        }};
+
+        window.confirmPickedLocation = function() {{
+            if (!pendingMapPickData) return;
+            var target = pendingMapPickData.target;
+            var lat = pendingMapPickData.lat;
+            var lon = pendingMapPickData.lon;
+            var name = pendingMapPickData.name;
+            window.safeNavigateParent({{
+                "picked_target": target,
+                "picked_lat": Number(lat).toFixed(6),
+                "picked_lon": Number(lon).toFixed(6),
+                "picked_name": name
+            }});
+        }};
+
+        window.handleMarkerDragEnd = function(target, lat, lng) {{
+            var isOrig = (target === 'orig');
+            var txtEl = document.getElementById(isOrig ? 'gmap-virtual-man-text' : 'gmap-dest-man-text');
+            var prefix = isOrig ? "START" : "DEST";
+            if (txtEl) txtEl.innerText = prefix + " • " + Number(lat).toFixed(2) + ", " + Number(lng).toFixed(2);
+
+            var revUrl = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1';
+            fetch(revUrl, {{ headers: {{ 'Accept-Language': 'en' }} }})
+                .then(function(res) {{ return res.json(); }})
+                .then(function(data) {{
+                    var resolvedName = "";
+                    if (data && (data.display_name || data.name)) {{
+                        resolvedName = data.name || (data.address ? (data.address.road || data.address.suburb || data.address.city || data.display_name.split(',')[0]) : "Map Location");
+                    }} else {{
+                        resolvedName = (isOrig ? "Selected Start" : "Selected Destination") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")";
+                    }}
+                    var shortLbl = (typeof getCompactPointerLabel === 'function')
+                        ? getCompactPointerLabel(resolvedName, prefix)
+                        : (prefix + " • " + resolvedName.substring(0, 13));
+                    if (txtEl) txtEl.innerText = shortLbl;
+
+                    window.safeNavigateParent({{
+                        "picked_target": target,
+                        "picked_lat": Number(lat).toFixed(6),
+                        "picked_lon": Number(lng).toFixed(6),
+                        "picked_name": resolvedName
+                    }});
+                }})
+                .catch(function() {{
+                    var fallbackName = (isOrig ? "Custom Start" : "Custom Dest") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")";
+                    window.safeNavigateParent({{
+                        "picked_target": target,
+                        "picked_lat": Number(lat).toFixed(6),
+                        "picked_lon": Number(lng).toFixed(6),
+                        "picked_name": fallbackName
+                    }});
+                }});
+        }};
+
+        window.cancelMapPickingMode = function() {{
+            var hud = document.getElementById('map-picking-hud');
+            var card = document.getElementById('map-picking-card');
+            if (hud) hud.style.display = 'none';
+            if (card) card.style.display = 'none';
+            window.activeMapPickingTarget = null;
+            if (pickedMapMarker && window.lMapInstance) {{
+                window.lMapInstance.removeLayer(pickedMapMarker);
+                pickedMapMarker = null;
+            }}
+            window.safeNavigateParent({{ "cancel_pick": "1" }});
         }};
 
         window.saveInspectedPlaceToFavourites = function() {{
@@ -2995,10 +3505,9 @@ def build_google_maps_javascript_html(
             // Notify parent window to persist in Left Sidebar
             try {{
                 var saveUrl = "/?save_fav_name=" + encodeURIComponent(name) + "&save_fav_lat=" + lat + "&save_fav_lng=" + lng + "&save_fav_cat=" + encodeURIComponent(cat) + "#application-map-viewport";
-                if (window.top && window.top !== window) {{
-                    window.top.location.href = saveUrl;
-                }} else {{
-                    window.location.search = "save_fav_name=" + encodeURIComponent(name) + "&save_fav_lat=" + lat + "&save_fav_lng=" + lng;
+                var pWin = window.parent || window.top;
+                if (pWin && pWin.history && pWin.history.replaceState) {{
+                    pWin.history.replaceState(null, '', saveUrl);
                 }}
             }} catch(e) {{}}
         }};
@@ -3145,7 +3654,7 @@ def build_google_maps_javascript_html(
                 }});
                 currentSearchMarker = L.marker([lat, lng], {{ icon: searchIcon }}).addTo(window.lMapInstance);
                 var popupContent = '<div class="iw-title">🔍 ' + name + '</div>' +
-                                   '<div class="iw-cat">Pathfinder Live Map Pinpoint</div>' +
+                                   '<div class="iw-cat">NexRoute Live Map Pinpoint</div>' +
                                    '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(5) + ', Lon: ' + Number(lng).toFixed(5) + '</div>' +
                                    '<div class="iw-actions">' +
                                    '<button class="iw-btn" onclick="window.toggleFullScreen(true)">⛶ Full Screen View</button>' +
@@ -3167,7 +3676,7 @@ def build_google_maps_javascript_html(
                     icon: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png'
                 }});
                 var content = '<div class="iw-title">🔍 ' + name + '</div>' +
-                              '<div class="iw-cat">Pathfinder Live Map Pinpoint</div>' +
+                              '<div class="iw-cat">NexRoute Live Map Pinpoint</div>' +
                               '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(5) + ', Lon: ' + Number(lng).toFixed(5) + '</div>' +
                               '<div class="iw-actions">' +
                               '<button class="iw-btn" onclick="window.toggleFullScreen(true)">⛶ Full Screen View</button>' +
@@ -3229,7 +3738,7 @@ def build_google_maps_javascript_html(
                 statusEl.style.cssText = 'position:absolute; top:60px; left:14px; z-index:9999; background:rgba(15,23,42,0.95); border:1.5px solid #38bdf8; border-radius:8px; padding:7px 14px; font-size:12px; color:#38bdf8; font-weight:700; box-shadow:0 4px 20px rgba(0,0,0,0.6);';
                 document.getElementById('gmap-container').appendChild(statusEl);
             }}
-            statusEl.innerHTML = "🔍 Locating " + q + " on Pathfinder Map...";
+            statusEl.innerHTML = "🔍 Locating " + q + " on NexRoute Map...";
             statusEl.style.display = 'block';
 
             fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q))
@@ -3345,6 +3854,13 @@ def build_google_maps_javascript_html(
                             acc: acc
                         }}, '*');
                     }}
+                    if (window.safeNavigateParent) {{
+                        window.safeNavigateParent({{
+                            'gps_lat': Number(uLat).toFixed(6),
+                            'gps_lon': Number(uLng).toFixed(6),
+                            'detect_gps': '1'
+                        }});
+                    }}
                 }} catch(e) {{}}
             }}, function(err) {{
                 if (geoBtn) geoBtn.innerHTML = '📍 My Location';
@@ -3455,11 +3971,20 @@ def build_google_maps_javascript_html(
             if (!input || !dropdown) return;
 
             var debounceTimer = null;
+            var activeAbortController = null;
+            var selectedItemIndex = -1;
+            var currentSuggestions = [];
 
             input.addEventListener('input', function() {{
                 var q = input.value.trim();
                 clearTimeout(debounceTimer);
+                selectedItemIndex = -1;
+
                 if (!q || q.length < 2) {{
+                    if (activeAbortController) {{
+                        activeAbortController.abort();
+                        activeAbortController = null;
+                    }}
                     dropdown.classList.remove('open');
                     dropdown.innerHTML = '';
                     return;
@@ -3469,99 +3994,143 @@ def build_google_maps_javascript_html(
                     var suggestions = [];
                     var qLower = q.toLowerCase();
 
-                    // Check coordinates
-                    var coordMatch = q.match(/^([-+]?[0-9]*\\.?[0-9]+)[\\s,]+([-+]?[0-9]*\\.?[0-9]+)$/);
+                    // 1. Direct Geographic Coordinates Check (e.g. 16.2335, 80.5505)
+                    var coordMatch = q.match(/^([-+]?[0-9]*\\.[0-9]+|[0-9]+)[\\s,]+([-+]?[0-9]*\\.[0-9]+|[0-9]+)$/);
                     if (coordMatch) {{
                         var cLat = parseFloat(coordMatch[1]);
                         var cLng = parseFloat(coordMatch[2]);
                         if (!isNaN(cLat) && !isNaN(cLng) && cLat >= -90 && cLat <= 90 && cLng >= -180 && cLng <= 180) {{
                             suggestions.push({{
-                                title: "Go to Coordinates: " + cLat.toFixed(4) + ", " + cLng.toFixed(4),
-                                subtitle: "Exact Geographic Coordinates",
+                                title: "Go to Coordinates: " + cLat.toFixed(5) + ", " + cLng.toFixed(5),
+                                subtitle: "Valid Physical Coordinates [-90, 90], [-180, 180]",
                                 icon: "🌐",
                                 lat: cLat,
-                                lng: cLng
+                                lng: cLng,
+                                category: "Coordinates"
                             }});
                         }}
                     }}
 
-                    // Saved locations
+                    // 2. Saved tour and campus locations (instant local gazetteer)
                     var data = window.GMAP_DATA;
                     if (data && data.savedLocations) {{
                         data.savedLocations.forEach(function(loc) {{
                             if (loc.name && loc.name.toLowerCase().indexOf(qLower) !== -1) {{
                                 suggestions.push({{
                                     title: loc.name,
-                                    subtitle: (loc.section || "Saved Location") + (loc.floor ? (" • Floor " + loc.floor) : ""),
+                                    subtitle: (loc.section || "Saved Location") + (loc.floor ? (" • Floor " + loc.floor) : "") + " • Campus Landmark",
                                     icon: "⭐",
                                     lat: loc.latitude,
-                                    lng: loc.longitude
+                                    lng: loc.longitude,
+                                    category: "Saved Location"
                                 }});
                             }}
                         }});
                     }}
 
-                    // Verified amenities
+                    // 3. Verified facilities & civic amenities
                     if (data && data.amenities) {{
                         data.amenities.forEach(function(f) {{
                             if (f.name && f.name.toLowerCase().indexOf(qLower) !== -1) {{
                                 suggestions.push({{
                                     title: f.name,
-                                    subtitle: (f.facility_type || f.category || "Place") + " • " + (f.address || "Verified Location"),
+                                    subtitle: (f.facility_type || f.category || "Place") + " • " + (f.address || "Verified Amenity"),
                                     icon: f.amenity_icon || "📍",
                                     lat: f.latitude,
-                                    lng: f.longitude
+                                    lng: f.longitude,
+                                    category: f.facility_type || "Facility"
                                 }});
                             }}
                         }});
                     }}
 
-                    // Render local suggestions first
+                    // Render local high-confidence matches immediately
+                    currentSuggestions = suggestions;
                     renderDropdownItems(suggestions, q);
 
-                    // Fetch geocoder suggestions if online and query >= 3 chars
+                    // 4. Online Geocoding via Photon with request aborting
                     if (q.length >= 3) {{
-                        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q))
+                        if (activeAbortController) {{
+                            activeAbortController.abort();
+                        }}
+                        activeAbortController = new AbortController();
+                        var sig = activeAbortController.signal;
+
+                        var centerLat = (data && data.center) ? data.center.lat : 16.2335;
+                        var centerLng = (data && data.center) ? data.center.lng : 80.5505;
+                        var photonUrl = 'https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lat=' + centerLat + '&lon=' + centerLng;
+
+                        fetch(photonUrl, {{ signal: sig }})
                             .then(function(r) {{ return r.json(); }})
-                            .then(function(geoResults) {{
-                                if (geoResults && geoResults.length > 0) {{
-                                    geoResults.forEach(function(gr) {{
-                                        var parts = gr.display_name.split(',');
-                                        var primaryName = parts[0];
-                                        var details = parts.slice(1, 4).join(',').trim();
-                                        suggestions.push({{
-                                            title: primaryName,
-                                            subtitle: details || gr.display_name,
-                                            icon: "🗺️",
-                                            lat: parseFloat(gr.lat),
-                                            lng: parseFloat(gr.lon)
-                                        }});
+                            .then(function(pData) {{
+                                if (pData && pData.features && pData.features.length > 0) {{
+                                    pData.features.forEach(function(feat) {{
+                                        var props = feat.properties || {{}};
+                                        var geom = feat.geometry || {{}};
+                                        var coords = geom.coordinates || [];
+                                        if (coords.length >= 2) {{
+                                            var pLng = parseFloat(coords[0]);
+                                            var pLat = parseFloat(coords[1]);
+                                            if (pLat >= -90 && pLat <= 90 && pLng >= -180 && pLng <= 180) {{
+                                                var pName = props.name || q;
+                                                var parts = [];
+                                                if (props.street) parts.push(props.street);
+                                                var cLoc = props.city || props.town || props.village || props.county || "";
+                                                if (cLoc && cLoc !== pName) parts.push(cLoc);
+                                                if (props.state) parts.push(props.state);
+                                                if (props.country) parts.push(props.country);
+
+                                                var catIcon = "🗺️";
+                                                var osmVal = (props.osm_value || props.osm_key || "").toLowerCase();
+                                                if (osmVal.indexOf("hospital") !== -1 || osmVal.indexOf("clinic") !== -1) catIcon = "🏥";
+                                                else if (osmVal.indexOf("station") !== -1 || osmVal.indexOf("railway") !== -1) catIcon = "🚆";
+                                                else if (osmVal.indexOf("aerodrome") !== -1 || osmVal.indexOf("airport") !== -1) catIcon = "✈️";
+                                                else if (osmVal.indexOf("university") !== -1 || osmVal.indexOf("college") !== -1) catIcon = "🎓";
+                                                else if (osmVal.indexOf("restaurant") !== -1 || osmVal.indexOf("food") !== -1) catIcon = "🍽️";
+
+                                                suggestions.push({{
+                                                    title: pName,
+                                                    subtitle: parts.join(", ") || (props.country || "Global Result"),
+                                                    icon: catIcon,
+                                                    lat: pLat,
+                                                    lng: pLng,
+                                                    category: props.osm_value || "Place"
+                                                }});
+                                            }}
+                                        }}
                                     }});
+                                    currentSuggestions = suggestions;
                                     renderDropdownItems(suggestions, q);
                                 }}
                             }})
-                            .catch(function(e) {{}});
+                            .catch(function(err) {{
+                                if (err.name !== 'AbortError') {{
+                                    console.log("[PATHFINDER] Autocomplete lookup note:", err.message);
+                                }}
+                            }});
                     }}
-                }}, 250);
+                }}, 280);
             }});
 
             function renderDropdownItems(items, currentQuery) {{
+                selectedItemIndex = -1;
                 if (!items || items.length === 0) {{
-                    dropdown.innerHTML = '<div class="pac-autocomplete-item"><span class="pac-autocomplete-icon">🔍</span><div class="pac-autocomplete-text"><div class="pac-autocomplete-title">Press Enter to search "' + currentQuery + '"</div><div class="pac-autocomplete-sub">Search global geocoding directory</div></div></div>';
+                    dropdown.innerHTML = '<div class="pac-autocomplete-item"><span class="pac-autocomplete-icon">🔍</span><div class="pac-autocomplete-text"><div class="pac-autocomplete-title">No direct suggestions for "' + currentQuery + '"</div><div class="pac-autocomplete-sub">Press Enter to search global routing directory or enter coordinates</div></div></div>';
                     dropdown.classList.add('open');
                     return;
                 }}
 
-                // Deduplicate by title+coords
+                // Deduplicate by title + approximate coordinates (< 500m)
                 var seen = {{}};
                 var uniqueItems = [];
                 items.forEach(function(it) {{
-                    var key = it.title + '_' + it.lat.toFixed(3) + '_' + it.lng.toFixed(3);
+                    var key = (it.title || "").toLowerCase() + '_' + it.lat.toFixed(3) + '_' + it.lng.toFixed(3);
                     if (!seen[key] && uniqueItems.length < 8) {{
                         seen[key] = true;
                         uniqueItems.push(it);
                     }}
                 }});
+                currentSuggestions = uniqueItems;
 
                 var html = '';
                 uniqueItems.forEach(function(it, idx) {{
@@ -3579,7 +4148,8 @@ def build_google_maps_javascript_html(
 
                 var rowEls = dropdown.querySelectorAll('.pac-autocomplete-item');
                 rowEls.forEach(function(row, i) {{
-                    row.addEventListener('click', function() {{
+                    row.addEventListener('click', function(ev) {{
+                        ev.stopPropagation();
                         var selected = uniqueItems[i];
                         if (selected) {{
                             input.value = selected.title;
@@ -3590,7 +4160,43 @@ def build_google_maps_javascript_html(
                 }});
             }}
 
+            function updateSelectionHighlight() {{
+                var rowEls = dropdown.querySelectorAll('.pac-autocomplete-item');
+                rowEls.forEach(function(r, idx) {{
+                    if (idx === selectedItemIndex) {{
+                        r.classList.add('selected');
+                        r.scrollIntoView({{ block: 'nearest' }});
+                    }} else {{
+                        r.classList.remove('selected');
+                    }}
+                }});
+            }}
+
             input.addEventListener('keydown', function(e) {{
+                var rowEls = dropdown.querySelectorAll('.pac-autocomplete-item');
+                if (dropdown.classList.contains('open') && rowEls.length > 0) {{
+                    if (e.key === 'ArrowDown') {{
+                        e.preventDefault();
+                        selectedItemIndex = (selectedItemIndex + 1) % rowEls.length;
+                        updateSelectionHighlight();
+                        return;
+                    }} else if (e.key === 'ArrowUp') {{
+                        e.preventDefault();
+                        selectedItemIndex = (selectedItemIndex - 1 + rowEls.length) % rowEls.length;
+                        updateSelectionHighlight();
+                        return;
+                    }} else if (e.key === 'Enter') {{
+                        e.preventDefault();
+                        if (selectedItemIndex >= 0 && selectedItemIndex < currentSuggestions.length) {{
+                            var chosen = currentSuggestions[selectedItemIndex];
+                            input.value = chosen.title;
+                            dropdown.classList.remove('open');
+                            window.highlightSearchedLocation(chosen.lat, chosen.lng, chosen.title, chosen.subtitle);
+                            return;
+                        }}
+                    }}
+                }}
+
                 if (e.key === 'Enter') {{
                     e.preventDefault();
                     dropdown.classList.remove('open');
@@ -3607,6 +4213,135 @@ def build_google_maps_javascript_html(
             }});
         }};
 
+        // =========================================================================
+        // FEATURE 3: Map Compass & Precision Orientation Controls HUD
+        // =========================================================================
+        window.currentMapBearing = 0;
+        window.isDeviceHeadingActive = false;
+        window.deviceHeadingSensorActive = false;
+
+        window.updateCompassDisplay = function(bearingDeg) {{
+            var needleWrap = document.getElementById('compass-needle-wrap');
+            var readout = document.getElementById('gmap-compass-readout');
+            var normDeg = ((bearingDeg % 360) + 360) % 360;
+            window.currentMapBearing = normDeg;
+
+            if (needleWrap) {{
+                needleWrap.style.transform = 'rotate(' + (-normDeg) + 'deg)';
+            }}
+            if (readout) {{
+                var cardinals = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+                var idx = Math.round(normDeg / 22.5) % 16;
+                readout.textContent = Math.round(normDeg) + '° ' + cardinals[idx];
+            }}
+        }};
+
+        window.resetMapNorthUp = function() {{
+            window.currentMapBearing = 0;
+            window.updateCompassDisplay(0);
+
+            // In Google Maps JavaScript API mode
+            if (window.gMap) {{
+                if (typeof window.gMap.setHeading === 'function') {{
+                    window.gMap.setHeading(0);
+                }}
+                if (typeof window.gMap.setTilt === 'function') {{
+                    window.gMap.setTilt(0);
+                }}
+            }}
+
+            // In Leaflet Fallback mode: smoothly restore tile pane to 0deg
+            var lPane = document.querySelector('#map .leaflet-map-pane');
+            if (lPane) {{
+                lPane.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+                lPane.style.transform = 'rotate(0deg)';
+                lPane.style.transformOrigin = '50% 50%';
+            }}
+
+            window.showMapToast("🧭 Compass: Oriented North-Up (0°)", "🧭");
+        }};
+
+        window.rotateMapOrientation = function(deltaDeg) {{
+            var newBearing = (window.currentMapBearing + deltaDeg + 360) % 360;
+            window.updateCompassDisplay(newBearing);
+
+            // In Google Maps mode
+            if (window.gMap) {{
+                if (typeof window.gMap.setHeading === 'function') {{
+                    window.gMap.setHeading(newBearing);
+                }}
+            }}
+
+            // In Leaflet Fallback mode: rotate tile pane
+            var lPane = document.querySelector('#map .leaflet-map-pane');
+            if (lPane) {{
+                lPane.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                lPane.style.transform = 'rotate(' + newBearing + 'deg)';
+                lPane.style.transformOrigin = '50% 50%';
+            }}
+
+            window.showMapToast("Oriented " + Math.round(newBearing) + "°", "🧭");
+        }};
+
+        window.toggleDeviceHeadingMode = function() {{
+            var btn = document.getElementById('btn-device-heading-mode');
+            if (window.isDeviceHeadingActive) {{
+                window.isDeviceHeadingActive = false;
+                if (btn) btn.classList.remove('active');
+                window.showMapToast("Device Heading Mode: Disabled", "🧭");
+                return;
+            }}
+
+            if (window.DeviceOrientationEvent) {{
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {{
+                    DeviceOrientationEvent.requestPermission().then(function(permissionState) {{
+                        if (permissionState === 'granted') {{
+                            window.enableDeviceHeadingListener(btn);
+                        }} else {{
+                            window.showMapToast("Orientation sensor permission denied", "⚠️");
+                        }}
+                    }}).catch(function(err) {{
+                        window.showMapToast("Orientation sensor unavailable", "⚠️");
+                    }});
+                }} else {{
+                    window.enableDeviceHeadingListener(btn);
+                }}
+            }} else {{
+                window.showMapToast("Compass sensor not supported on this device", "ℹ️");
+            }}
+        }};
+
+        window.enableDeviceHeadingListener = function(btn) {{
+            window.isDeviceHeadingActive = true;
+            if (btn) btn.classList.add('active');
+            window.showMapToast("🧭 Device Heading Sensor: Active", "🧭");
+
+            if (!window.deviceHeadingSensorActive) {{
+                window.deviceHeadingSensorActive = true;
+                var filteredHeading = 0;
+                window.addEventListener('deviceorientation', function(e) {{
+                    if (!window.isDeviceHeadingActive) return;
+                    var compass = e.webkitCompassHeading || (e.alpha ? (360 - e.alpha) : null);
+                    if (compass !== null && !isNaN(compass)) {{
+                        filteredHeading = filteredHeading + 0.25 * (compass - filteredHeading);
+                        window.updateCompassDisplay(filteredHeading);
+                    }}
+                }}, true);
+            }}
+        }};
+
+        window.initMapCompass = function() {{
+            window.updateCompassDisplay(0);
+
+            if (window.gMap) {{
+                window.gMap.addListener('heading_changed', function() {{
+                    var h = window.gMap.getHeading() || 0;
+                    window.updateCompassDisplay(h);
+                }});
+            }}
+        }};
+
+
         // ----------------------------------------------------
         // NEARBY-PLACE CATEGORY ENGINE (ALL 8 CATEGORIES)
         // ----------------------------------------------------
@@ -3616,14 +4351,15 @@ def build_google_maps_javascript_html(
         window.activeFuelSubfilter = 'ALL';
 
         var CATEGORY_CONFIG = {{
-            'HOSPITALS': {{ name: 'Hospitals & Medical Care', icon: '🏥', color: '#ef4444', matchTerms: ['hospital', 'medical', 'clinic', 'trauma', 'doctor'] }},
+            'HOSPITALS': {{ name: 'Hospitals & Medical Care', icon: '🏥', color: '#ef4444', matchTerms: ['hospital', 'medical', 'clinic', 'trauma', 'doctor', 'dispensary', 'phc', 'chc', 'nursing home', 'pharmacy', 'health centre', 'health center', 'first aid', 'day-care hospital', 'maternity'] }},
+            'SUPERMARKETS': {{ name: 'Supermarkets & Groceries', icon: '🛒', color: '#10b981', matchTerms: ['supermarket', 'grocery', 'mart', 'provision', 'market', 'hypermarket', 'food mart', 'daily needs', 'kirana', 'supermaeket', 'general store'] }},
             'FUEL': {{ name: 'Fuel & EV Charging Stations', icon: '⛽', color: '#10b981', matchTerms: ['petrol', 'fuel', 'charging', 'ev charging', 'gas station', 'supercharger', 'diesel'] }},
             'RESTAURANTS': {{ name: 'Restaurants & Dining', icon: '🍽️', color: '#ec4899', matchTerms: ['restaurant', 'food', 'dining', 'cafe', 'cafeteria', 'dhaba', 'bakery', 'bistro'] }},
             'ATMS': {{ name: 'ATMs & Banking Services', icon: '🏧', color: '#06b6d4', matchTerms: ['atm', 'bank', 'banking', 'cash'] }},
             'POLICE': {{ name: 'Police & Rescue Stations', icon: '👮', color: '#3b82f6', matchTerms: ['police', 'rescue', 'fire', 'emergency', 'station'] }},
             'HOTELS': {{ name: 'Hotels & Accommodation', icon: '🏨', color: '#a855f7', matchTerms: ['hotel', 'resort', 'lodge', 'stay', 'inn', 'motel'] }},
             'SHELTERS': {{ name: 'Emergency Shelters & Relief', icon: '⛺', color: '#f97316', matchTerms: ['shelter', 'relief', 'evacuation', 'camp'] }},
-            'MALLS': {{ name: 'Shopping Malls & Centers', icon: '🛍️', color: '#eab308', matchTerms: ['mall', 'shopping', 'store', 'market', 'supermarket', 'plaza'] }}
+            'MALLS': {{ name: 'Shopping Malls & Centers', icon: '🛍️', color: '#eab308', matchTerms: ['mall', 'shopping', 'store', 'plaza'] }}
         }};
 
         window.triggerCategorySearch = function(catKey) {{
@@ -3775,9 +4511,14 @@ def build_google_maps_javascript_html(
             var lat = f.latitude;
             var lng = f.longitude;
             var iconSym = f.amenity_icon || conf.icon;
-            var isEv = (f.name + ' ' + (f.facility_type || '')).toLowerCase().indexOf('ev') !== -1 || (f.name + ' ' + (f.facility_type || '')).toLowerCase().indexOf('charg') !== -1;
+            var nameTypeStr = ((f.name || '') + ' ' + (f.facility_type || '') + ' ' + (f.category || '')).toLowerCase();
+            var isEv = nameTypeStr.indexOf('ev') !== -1 || nameTypeStr.indexOf('charg') !== -1;
             if (conf.name.indexOf('Fuel') !== -1 && isEv) {{
                 iconSym = '⚡';
+            }} else if (nameTypeStr.indexOf('supermarket') !== -1 || nameTypeStr.indexOf('grocery') !== -1 || nameTypeStr.indexOf('mart') !== -1 || nameTypeStr.indexOf('provision') !== -1) {{
+                iconSym = '🛒';
+            }} else if (nameTypeStr.indexOf('clinic') !== -1 || nameTypeStr.indexOf('dispensary') !== -1 || nameTypeStr.indexOf('phc') !== -1 || nameTypeStr.indexOf('nursing') !== -1) {{
+                iconSym = '🩺';
             }}
 
             if (window.lMapInstance) {{
@@ -3903,6 +4644,20 @@ def build_google_maps_javascript_html(
                 }});
             }}
             window.activeCategoryGMapMarkers = [];
+
+            if (typeof inspectionMarker !== 'undefined' && inspectionMarker) {{
+                try {{
+                    if (window.lMapInstance) window.lMapInstance.removeLayer(inspectionMarker);
+                    else if (window.gMap) inspectionMarker.setMap(null);
+                }} catch(e) {{}}
+                inspectionMarker = null;
+            }}
+
+            var drawer = document.getElementById('gmap-place-info-drawer');
+            if (drawer) {{
+                drawer.classList.remove('open');
+                drawer.style.display = 'none';
+            }}
         }};
 
         window.clearActiveCategory = function() {{
@@ -4008,6 +4763,10 @@ def build_google_maps_javascript_html(
                     window.handleMeasureClick(e.latLng.lat(), e.latLng.lng());
                     return;
                 }}
+                if (window.activeMapPickingTarget) {{
+                    window.handleMapPickingClick(e.latLng.lat(), e.latLng.lng());
+                    return;
+                }}
                 if (e.placeId) {{
                     e.stop();
                     if (window.google && window.google.maps && window.google.maps.places && window.gMap) {{
@@ -4044,17 +4803,21 @@ def build_google_maps_javascript_html(
             // 4. Render Origin & Destination Markers
             renderOriginDestMarkers();
 
-            // 5. Render All Saved Tour Locations (97 locations)
-            renderSavedLocations();
+            // 5. Saved tour locations kept in memory for search without cluttering the map with blue dots
 
-            // 6. Render Amenities & Facilities
-            renderAmenitiesMarkers();
+            // 6. Amenities & Facilities: Rendered on-demand when user clicks category pills
+            // (Only display when top category buttons are clicked)
 
-            // 7. Render Hazard Warning Zones
+            // 7. Render Multi-User Fleet & Convoy Members
+            renderFleetMembers();
+
+            // 8. Render Hazard Warning Zones
             renderHazardZones();
 
             // Wire up UI buttons
             setupUIEventHandlers();
+            window.initMapCompass();
+            window.initUnifiedPlaceSearch();
 
             // 8. Auto-locate user's live position on startup and center in Satellite View
             if (navigator.geolocation) {{
@@ -4138,20 +4901,15 @@ def build_google_maps_javascript_html(
                 var polyObj = new google.maps.Polyline({{
                     path: pathCoords,
                     geodesic: true,
-                    strokeColor: r.color || (isSel ? '#10b981' : '#0ea5e9'),
-                    strokeOpacity: isSel ? 1.0 : (hasSelection ? 0.40 : 0.85),
-                    strokeWeight: isSel ? 8 : (hasSelection ? 3.5 : 5),
-                    zIndex: isSel ? 100 : 50
+                    strokeColor: r.color || (isSel ? '#00F0B5' : '#0ea5e9'),
+                    strokeOpacity: isSel ? 1.0 : (hasSelection ? 0.70 : 0.92),
+                    strokeWeight: isSel ? 8.5 : (hasSelection ? 5.0 : 6.0),
+                    zIndex: isSel ? 100 : (100 - (r.rank || 1))
                 }});
                 polyObj.setMap(gMap);
 
                 google.maps.event.addListener(polyObj, 'click', function() {{
-                    try {{
-                        var targetWin = window.parent || window;
-                        var url = new URL(targetWin.location.href);
-                        url.searchParams.set('focus_route', r.route_id);
-                        targetWin.location.replace(url.toString());
-                    }} catch(e) {{}}
+                    window.safeNavigateParent({{ 'focus_route': r.route_id }});
                 }});
 
                 window._gmapRouteObjs.push(polyObj);
@@ -4163,6 +4921,58 @@ def build_google_maps_javascript_html(
 
             if (gMap && !selectedBounds.isEmpty()) {{
                 gMap.fitBounds(selectedBounds);
+            }}
+
+            // Render interactive STEP LOCATIONS on Google Maps
+            window.gmapStepMarkers = window.gmapStepMarkers || [];
+            window.gmapStepMarkers.forEach(function(m) {{ m.setMap(null); }});
+            window.gmapStepMarkers = [];
+
+            var activeRouteWithSteps = polylines.find(function(r) {{ return r.is_selected; }}) || polylines[0];
+            var rawSteps = (activeRouteWithSteps && activeRouteWithSteps.steps && activeRouteWithSteps.steps.length > 0)
+                ? activeRouteWithSteps.steps
+                : [];
+
+            if (rawSteps.length > 0 && gMap) {{
+                rawSteps.forEach(function(st, sIdx) {{
+                    var sLat = st.lat || (st.coords && st.coords[0]);
+                    var sLon = st.lon || (st.coords && st.coords[1]);
+                    if (sLat == null || sLon == null) return;
+                    if (orig && Math.abs(sLat - orig.lat) < 0.0001 && Math.abs(sLon - orig.lng) < 0.0001) return;
+                    if (dest && Math.abs(sLat - dest.lat) < 0.0001 && Math.abs(sLon - dest.lng) < 0.0001) return;
+
+                    var stepNum = String(st.step_num || (sIdx + 1));
+                    var pos = new google.maps.LatLng(sLat, sLon);
+                    var stepMarker = new google.maps.Marker({{
+                        position: pos,
+                        map: gMap,
+                        title: 'Step ' + stepNum + ': ' + (st.instruction || st.road || 'Maneuver'),
+                        label: {{
+                            text: stepNum,
+                            color: '#ffffff',
+                            fontSize: '10px',
+                            fontWeight: 'bold'
+                        }},
+                        icon: {{
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 12,
+                            fillColor: '#0f172a',
+                            fillOpacity: 0.95,
+                            strokeColor: '#38bdf8',
+                            strokeWeight: 2.5
+                        }},
+                        zIndex: 3500
+                    }});
+
+                    var sDist = st.distance_m ? (' • ' + (st.distance_m > 1000 ? (st.distance_m / 1000).toFixed(1) + ' km' : Math.round(st.distance_m) + ' m')) : '';
+                    var sDur = st.duration_s ? (' (' + Math.round(st.duration_s / 60) + ' min)') : '';
+                    var content = '<div class="iw-title">🧭 Step ' + stepNum + '</div><div class="iw-cat" style="color:#38bdf8; font-weight:700;">' + (st.instruction || 'Follow Route') + '</div><div class="iw-meta"><b>Road:</b> ' + (st.road || 'Corridor') + sDist + sDur + '<br><b>Coordinates:</b> ' + sLat.toFixed(5) + ', ' + sLon.toFixed(5) + '</div>';
+                    stepMarker.addListener('click', function() {{
+                        infoWindow.setContent(content);
+                        infoWindow.open(gMap, stepMarker);
+                    }});
+                    window.gmapStepMarkers.push(stepMarker);
+                }});
             }}
         }}
 
@@ -4192,6 +5002,7 @@ def build_google_maps_javascript_html(
                 virtualCompanionGMapMarker = new google.maps.Marker({{
                     position: origLatLng,
                     map: gMap,
+                    draggable: true,
                     title: '🟢 START: ' + origLbl + ' (' + avatarLbl + ')',
                     label: {{
                         text: avatarSym,
@@ -4211,6 +5022,12 @@ def build_google_maps_javascript_html(
                     infoWindow.setContent('<div class="iw-title">' + avatarSym + ' START: ' + origLbl + '</div><div class="iw-cat">Start Departure Point • ' + avatarLbl + '</div><div class="iw-meta">Lat: ' + orig.lat.toFixed(5) + '<br>Lon: ' + orig.lng.toFixed(5) + '</div>');
                     infoWindow.open(gMap, virtualCompanionGMapMarker);
                 }});
+                virtualCompanionGMapMarker.addListener('dragend', function(e) {{
+                    var p = e.latLng;
+                    if (window.handleMarkerDragEnd) {{
+                        window.handleMarkerDragEnd('orig', p.lat(), p.lng());
+                    }}
+                }});
                 bounds.extend(origLatLng);
                 hasBounds = true;
             }}
@@ -4221,6 +5038,7 @@ def build_google_maps_javascript_html(
                 var destMarker = new google.maps.Marker({{
                     position: destLatLng,
                     map: gMap,
+                    draggable: true,
                     title: '🏁 DEST: ' + destLbl,
                     label: {{
                         text: '🏁',
@@ -4239,6 +5057,12 @@ def build_google_maps_javascript_html(
                 destMarker.addListener('click', function() {{
                     infoWindow.setContent('<div class="iw-title">🏁 DEST: ' + destLbl + '</div><div class="iw-cat">Target Destination</div><div class="iw-meta">' + dest.lat.toFixed(5) + ', ' + dest.lng.toFixed(5) + '</div>');
                     infoWindow.open(gMap, destMarker);
+                }});
+                destMarker.addListener('dragend', function(e) {{
+                    var p = e.latLng;
+                    if (window.handleMarkerDragEnd) {{
+                        window.handleMarkerDragEnd('dest', p.lat(), p.lng());
+                    }}
                 }});
                 bounds.extend(destLatLng);
                 hasBounds = true;
@@ -4288,9 +5112,12 @@ def build_google_maps_javascript_html(
                 var iconUrl = 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
                 var catStr = (f.category || f.facility_type || '').toLowerCase();
 
-                if (catStr.indexOf('hospital') !== -1 || catStr.indexOf('medical') !== -1) {{
+                if (catStr.indexOf('hospital') !== -1 || catStr.indexOf('medical') !== -1 || catStr.indexOf('clinic') !== -1 || catStr.indexOf('dispensary') !== -1 || catStr.indexOf('phc') !== -1 || catStr.indexOf('nursing') !== -1) {{
                     group = 'HOSPITALS';
                     iconUrl = 'https://maps.google.com/mapfiles/ms/icons/red-dot.png';
+                }} else if (catStr.indexOf('supermarket') !== -1 || catStr.indexOf('grocery') !== -1 || catStr.indexOf('mart') !== -1 || catStr.indexOf('provision') !== -1 || catStr.indexOf('supermaeket') !== -1) {{
+                    group = 'SUPERMARKETS';
+                    iconUrl = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
                 }} else if (catStr.indexOf('shelter') !== -1) {{
                     group = 'SHELTERS';
                     iconUrl = 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png';
@@ -4335,6 +5162,43 @@ def build_google_maps_javascript_html(
 
                 marker.addListener('click', function() {{
                     window.inspectLocationDetails(f.latitude, f.longitude, f);
+                }});
+
+                allMarkers.push(marker);
+            }});
+        }}
+
+        function renderFleetMembers() {{
+            var members = window.GMAP_DATA.fleetMembers || [];
+            members.forEach(function(m) {{
+                if (!m.latitude || !m.longitude) return;
+                var marker = new google.maps.Marker({{
+                    position: new google.maps.LatLng(m.latitude, m.longitude),
+                    map: gMap,
+                    title: (m.avatar || '🚗') + ' ' + (m.display_name || 'Convoy Member'),
+                    icon: {{
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 12,
+                        fillColor: '#0284c7',
+                        fillOpacity: 0.95,
+                        strokeColor: '#38bdf8',
+                        strokeWeight: 2.5
+                    }},
+                    filterGroup: 'CONVOY'
+                }});
+
+                var distStr = m.relative_location_str || m.distance_label || 'Active';
+                var speedStr = (m.speed_kmh || 0).toFixed(1) + ' km/h';
+                var content = '<div class="iw-title">' + (m.avatar || '🚗') + ' ' + (m.display_name || 'Member') + '</div>' +
+                              '<div class="iw-cat" style="background:rgba(2,132,199,0.25); color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; padding:2px 6px; display:inline-block; font-weight:700;">' + (m.role || 'Traveler').toUpperCase() + '</div>' +
+                              '<div class="iw-meta"><b>Status:</b> ' + (m.status_msg || 'Active on Route') + '<br><b>Distance:</b> ' + distStr + '<br><b>Speed:</b> ' + speedStr + '<br><span style="color:#94a3b8; font-size:11px;">Updated: ' + (m.last_seen_str || 'Just now') + '</span></div>' +
+                              '<div class="iw-actions">' +
+                              '<button class="iw-btn" onclick="window.gMap.setZoom(17); window.gMap.setCenter({{lat:' + m.latitude + ',lng:' + m.longitude + '}})">📍 Focus Member</button>' +
+                              '</div>';
+
+                marker.addListener('click', function() {{
+                    infoWindow.setContent(content);
+                    infoWindow.open(gMap, marker);
                 }});
 
                 allMarkers.push(marker);
@@ -4518,16 +5382,55 @@ def build_google_maps_javascript_html(
                 window.lMapInstance = lMap;
                 L.control.zoom({{ position: 'bottomright' }}).addTo(lMap);
 
-                // Dynamic Google Map Tiles (Satellite Hybrid / Roadmap / Terrain) with OSM error fallback
-                var lyrsCode = 'y';
+                // Authentic Google Maps Satellite & Hybrid Tile Streams (lyrs=y, lyrs=s, lyrs=m, lyrs=p)
                 var mt = (data.mapType || 'hybrid').toLowerCase();
-                if (mt.indexOf('road') !== -1) lyrsCode = 'm';
-                else if (mt.indexOf('terrain') !== -1) lyrsCode = 'p';
+                var primaryUrl = 'https://mt{{s}}.google.com/vt/lyrs=y&x={{x}}&y={{y}}&z={{z}}';
+                var primaryAttr = 'Map & Satellite &copy; Google Maps';
+                var primarySubs = ['0', '1', '2', '3'];
 
-                var tileUrl = 'https://mt1.google.com/vt/lyrs=' + lyrsCode + '&x={{x}}&y={{y}}&z={{z}}';
-                var baseMapLayer = L.tileLayer(tileUrl, {{
-                    maxZoom: 20
+                if (mt === 'satellite' || mt === 's') {{
+                    primaryUrl = 'https://mt{{s}}.google.com/vt/lyrs=s&x={{x}}&y={{y}}&z={{z}}';
+                }} else if (mt === 'terrain' || mt === 'p') {{
+                    primaryUrl = 'https://mt{{s}}.google.com/vt/lyrs=p&x={{x}}&y={{y}}&z={{z}}';
+                }} else if (mt === 'roadmap' || mt === 'road' || mt === 'm') {{
+                    primaryUrl = 'https://mt{{s}}.google.com/vt/lyrs=m&x={{x}}&y={{y}}&z={{z}}';
+                }}
+
+                window.leafletOverlayLayer = null;
+                function attachTileEvents(layer) {{
+                    if (!layer) return;
+                    layer.on('loading', function() {{
+                        var el = document.getElementById('gmap-tile-loading');
+                        if (el) el.style.display = 'flex';
+                    }});
+                    layer.on('load', function() {{
+                        var el = document.getElementById('gmap-tile-loading');
+                        if (el) el.style.display = 'none';
+                    }});
+                    layer.on('tileerror', function() {{
+                        var el = document.getElementById('gmap-tile-loading');
+                        if (el) el.style.display = 'none';
+                        if (window.leafletBaseLayer && !window._fallbackActive) {{
+                            window._fallbackActive = true;
+                            window.showMapToast('Switching to secondary satellite imagery stream...', '🛰️');
+                            try {{
+                                lMap.removeLayer(window.leafletBaseLayer);
+                                window.leafletBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{
+                                    maxZoom: 19,
+                                    attribution: 'Tiles &copy; Esri, Maxar'
+                                }}).addTo(lMap);
+                                window.leafletBaseLayer.bringToBack();
+                            }} catch(e) {{}}
+                        }}
+                    }});
+                }}
+
+                var baseMapLayer = L.tileLayer(primaryUrl, {{
+                    maxZoom: 20,
+                    subdomains: primarySubs,
+                    attribution: primaryAttr
                 }}).addTo(lMap);
+                attachTileEvents(baseMapLayer);
 
                 window.leafletBaseLayer = baseMapLayer;
                 window.setLeafletBaseLayer = function(newCode) {{
@@ -4535,37 +5438,50 @@ def build_google_maps_javascript_html(
                     if (window.leafletBaseLayer) {{
                         try {{ lMap.removeLayer(window.leafletBaseLayer); }} catch(e) {{}}
                     }}
-                    var newUrl;
-                    var attr = 'Map data &copy; OpenStreetMap contributors';
-                    if (newCode === 'esri' || newCode === 'y' || newCode === 's') {{
-                        newUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}';
-                        attr = 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, USDA, USGS';
-                    }} else if (newCode === 'sentinel') {{
-                        newUrl = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020/default/g/{{z}}/{{y}}/{{x}}.jpg';
-                        attr = 'Sentinel-2 cloudless by EOX IT Services GmbH (Copernicus CC BY 4.0)';
-                    }} else {{
-                        newUrl = 'https://mt1.google.com/vt/lyrs=' + newCode + '&x={{x}}&y={{y}}&z={{z}}';
+                    if (window.leafletOverlayLayer) {{
+                        try {{ lMap.removeLayer(window.leafletOverlayLayer); }} catch(e) {{}}
+                        window.leafletOverlayLayer = null;
                     }}
-                    window.leafletBaseLayer = L.tileLayer(newUrl, {{ maxZoom: 20, attribution: attr }}).addTo(lMap);
+                    var newUrl;
+                    var attr = 'Map & Satellite &copy; Google Maps';
+                    var subs = ['0', '1', '2', '3'];
+                    var codeNorm = (newCode || '').toLowerCase();
+
+                    if (codeNorm === 'hybrid' || (codeNorm === 'satellite' && showLabels) || codeNorm === 'y') {{
+                        newUrl = 'https://mt{{s}}.google.com/vt/lyrs=y&x={{x}}&y={{y}}&z={{z}}';
+                        activeMapType = 'hybrid';
+                    }} else if (codeNorm === 'satellite' || codeNorm === 's') {{
+                        newUrl = 'https://mt{{s}}.google.com/vt/lyrs=s&x={{x}}&y={{y}}&z={{z}}';
+                        activeMapType = 'satellite';
+                    }} else if (codeNorm === 'terrain' || codeNorm === 'p') {{
+                        newUrl = 'https://mt{{s}}.google.com/vt/lyrs=p&x={{x}}&y={{y}}&z={{z}}';
+                        activeMapType = 'terrain';
+                    }} else if (codeNorm === 'esri') {{
+                        newUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}';
+                        attr = 'Tiles &copy; Esri &mdash; Source: Esri, Maxar';
+                        subs = [];
+                    }} else {{
+                        newUrl = 'https://mt{{s}}.google.com/vt/lyrs=m&x={{x}}&y={{y}}&z={{z}}';
+                        activeMapType = 'roadmap';
+                    }}
+
+                    var layerOpts = {{
+                        maxZoom: 20,
+                        attribution: attr
+                    }};
+                    if (subs.length > 0) layerOpts.subdomains = subs;
+
+                    window.leafletBaseLayer = L.tileLayer(newUrl, layerOpts).addTo(lMap);
+                    attachTileEvents(window.leafletBaseLayer);
                     window.leafletBaseLayer.bringToBack();
                 }};
 
-                var cartoFallback = L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png', {{
-                    subdomains: 'abcd',
-                    maxZoom: 20
-                }});
-
-                var osmFallback = L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
-                    maxZoom: 19
-                }});
-
-                baseMapLayer.on('tileerror', function() {{
-                    if (!lMap.hasLayer(cartoFallback)) cartoFallback.addTo(lMap);
-                    else if (!lMap.hasLayer(osmFallback)) osmFallback.addTo(lMap);
-                }});
-
+                // Ensure map container renders accurately under all viewport conditions
+                setTimeout(function() {{ lMap.invalidateSize(); }}, 50);
                 setTimeout(function() {{ lMap.invalidateSize(); }}, 200);
                 setTimeout(function() {{ lMap.invalidateSize(); }}, 600);
+                setTimeout(function() {{ lMap.invalidateSize(); }}, 1200);
+                window.addEventListener('resize', function() {{ lMap.invalidateSize(); }});
 
                 var leafletMarkers = [];
                 var allFitBounds = L.latLngBounds();
@@ -4579,10 +5495,23 @@ def build_google_maps_javascript_html(
                     var initialAvatar = data.travelerAvatarIcon || "🚗";
                     var initialTitle = data.travelerAvatarLabel || "Live Vehicle";
 
+                    function getCompactPointerLabel(raw, fallbackPrefix) {{
+                        if (!raw) return fallbackPrefix;
+                        var s = String(raw).replace(/^[🟢🏁📍🛰️🚶🚗✈️]+\\s*/, '').trim();
+                        s = s.replace(/^(?:START|DEST|ORIGIN|TARGET)\\s*[•\-\:]?\\s*/i, '').trim();
+                        var head = s.split(',')[0].split('(')[0].trim();
+                        if (!head || /^(?:current location|selected start|selected destination|origin|target|custom start|custom destination)$/i.test(head)) {{
+                            return fallbackPrefix;
+                        }}
+                        if (head.length > 14) head = head.substring(0, 13).trim() + '…';
+                        return fallbackPrefix + ' • ' + head;
+                    }}
+                    var shortOrigLabel = getCompactPointerLabel(origLabel, "START");
+
                     var startHtml = '<div class="pf-clean-pin-container" style="transform: translate(-50%, -100%);">' +
-                          '  <div id="gmap-virtual-man-pill" class="pf-clean-badge-pill start">' +
+                          '  <div id="gmap-virtual-man-pill" class="pf-clean-badge-pill start" title="' + origLabel + '">' +
                           '    <span class="pf-clean-badge-icon">🟢</span>' +
-                          '    <span id="gmap-virtual-man-text" class="pf-clean-badge-text">START • ' + origLabel + '</span>' +
+                          '    <span id="gmap-virtual-man-text" class="pf-clean-badge-text">' + shortOrigLabel + '</span>' +
                           '  </div>' +
                           '  <div class="pf-clean-pin-body start">' +
                           '    <div class="pf-clean-pin-avatar" id="gmap-virtual-man-icon">' + initialAvatar + '</div>' +
@@ -4597,8 +5526,24 @@ def build_google_maps_javascript_html(
                         iconSize: [0, 0]
                     }});
 
-                    virtualManMarker = L.marker([origLat, origLng], {{ icon: startIcon, zIndexOffset: 5000 }}).addTo(lMap);
-                    virtualManMarker.bindPopup('<div class="iw-title">' + initialAvatar + ' ' + initialTitle + '</div><div class="iw-cat">Start Departure Point</div><div class="iw-meta">Lat: ' + origLat.toFixed(5) + '<br>Lon: ' + origLng.toFixed(5) + '<br>Location: ' + origLabel + '</div><div class="iw-actions"><a class="iw-btn" href="https://www.google.com/maps/search/?api=1&query=' + origLat + ',' + origLng + '" target="_blank">🌐 Real Google Maps Info</a></div>');
+                    virtualManMarker = L.marker([origLat, origLng], {{
+                        icon: startIcon,
+                        zIndexOffset: 5000,
+                        draggable: true
+                    }}).addTo(lMap);
+                    virtualManMarker.bindPopup('<div class="iw-title">' + initialAvatar + ' ' + initialTitle + '</div><div class="iw-cat">Start Departure Point (Drag or tap to set)</div><div class="iw-meta">Lat: ' + origLat.toFixed(5) + '<br>Lon: ' + origLng.toFixed(5) + '<br>Location: ' + origLabel + '</div><div class="iw-actions"><a class="iw-btn" href="https://www.google.com/maps/search/?api=1&query=' + origLat + ',' + origLng + '" target="_blank">🌐 Real Google Maps Info</a></div>');
+
+                    virtualManMarker.on('drag', function(e) {{
+                        var p = e.latlng;
+                        var txtEl = document.getElementById('gmap-virtual-man-text');
+                        if (txtEl) txtEl.innerText = "START • " + p.lat.toFixed(2) + "," + p.lng.toFixed(2);
+                    }});
+                    virtualManMarker.on('dragend', function(e) {{
+                        var p = e.target.getLatLng();
+                        if (window.handleMarkerDragEnd) {{
+                            window.handleMarkerDragEnd('orig', p.lat, p.lng);
+                        }}
+                    }});
 
                     allFitBounds.extend([origLat, origLng]);
                     fitCount++;
@@ -4610,10 +5555,14 @@ def build_google_maps_javascript_html(
                     var destLng = data.destination.lng;
                     var destLabel = data.destination.label || "Target Destination";
 
+                    var shortDestLabel = (typeof getCompactPointerLabel === 'function')
+                        ? getCompactPointerLabel(destLabel, "DEST")
+                        : ("DEST • " + destLabel.split(',')[0].trim());
+
                     var destHtml = '<div class="pf-clean-pin-container" style="transform: translate(-50%, -100%);">' +
-                          '  <div class="pf-clean-badge-pill dest">' +
+                          '  <div id="gmap-dest-man-pill" class="pf-clean-badge-pill dest" title="' + destLabel + '">' +
                           '    <span class="pf-clean-badge-icon">🏁</span>' +
-                          '    <span class="pf-clean-badge-text">DEST • ' + destLabel + '</span>' +
+                          '    <span id="gmap-dest-man-text" class="pf-clean-badge-text">' + shortDestLabel + '</span>' +
                           '  </div>' +
                           '  <div class="pf-clean-pin-body dest">' +
                           '    <div class="pf-clean-pin-avatar">🏁</div>' +
@@ -4628,8 +5577,24 @@ def build_google_maps_javascript_html(
                         iconSize: [0, 0]
                     }});
 
-                    var destM = L.marker([destLat, destLng], {{ icon: destIcon, zIndexOffset: 4000 }}).addTo(lMap);
-                    destM.bindPopup('<div class="iw-title">🏁 ' + destLabel + '</div><div class="iw-cat">Target Destination</div><div class="iw-meta">' + destLat.toFixed(5) + ', ' + destLng.toFixed(5) + '</div><div class="iw-actions"><a class="iw-btn" href="https://www.google.com/maps/search/?api=1&query=' + destLat + ',' + destLng + '" target="_blank">🌐 Real Google Maps Info</a><a class="iw-btn secondary" href="https://www.google.com/maps/dir/?api=1&destination=' + destLat + ',' + destLng + '" target="_blank">🧭 Directions</a></div>');
+                    var destM = L.marker([destLat, destLng], {{
+                        icon: destIcon,
+                        zIndexOffset: 4000,
+                        draggable: true
+                    }}).addTo(lMap);
+                    destM.bindPopup('<div class="iw-title">🏁 ' + destLabel + '</div><div class="iw-cat">Target Destination (Drag or tap to set)</div><div class="iw-meta">' + destLat.toFixed(5) + ', ' + destLng.toFixed(5) + '</div><div class="iw-actions"><a class="iw-btn" href="https://www.google.com/maps/search/?api=1&query=' + destLat + ',' + destLng + '" target="_blank">🌐 Real Google Maps Info</a><a class="iw-btn secondary" href="https://www.google.com/maps/dir/?api=1&destination=' + destLat + ',' + destLng + '" target="_blank">🧭 Directions</a></div>');
+
+                    destM.on('drag', function(e) {{
+                        var p = e.latlng;
+                        var txtEl = document.getElementById('gmap-dest-man-text');
+                        if (txtEl) txtEl.innerText = "DEST • " + p.lat.toFixed(2) + "," + p.lng.toFixed(2);
+                    }});
+                    destM.on('dragend', function(e) {{
+                        var p = e.target.getLatLng();
+                        if (window.handleMarkerDragEnd) {{
+                            window.handleMarkerDragEnd('dest', p.lat, p.lng);
+                        }}
+                    }});
 
                     allFitBounds.extend([destLat, destLng]);
                     fitCount++;
@@ -4680,9 +5645,9 @@ def build_google_maps_javascript_html(
                     }}
 
                     var isSel = r.is_selected;
-                    var strokeCol = r.color || (isSel ? '#10b981' : '#0ea5e9');
-                    var strokeWt = isSel ? 8 : (hasSelection ? 3.5 : 5);
-                    var strokeOp = isSel ? 1.0 : (hasSelection ? 0.40 : 0.85);
+                    var strokeCol = r.color || (isSel ? '#00F0B5' : '#0ea5e9');
+                    var strokeWt = isSel ? 8.5 : (hasSelection ? 5.0 : 6.0);
+                    var strokeOp = isSel ? 1.0 : (hasSelection ? 0.70 : 0.92);
 
                     if (isSel) {{
                         activeLeafletRouteGlow = L.polyline(rCoords, {{
@@ -4698,7 +5663,6 @@ def build_google_maps_javascript_html(
                         color: strokeCol,
                         weight: strokeWt,
                         opacity: strokeOp,
-                        dashArray: (isSel || !hasSelection) ? null : '6, 8',
                         lineCap: 'round',
                         lineJoin: 'round'
                     }}).addTo(lMap);
@@ -4706,12 +5670,7 @@ def build_google_maps_javascript_html(
                     pLine.bindTooltip('<b>' + (r.name || 'Route') + '</b>' + (isSel ? ' (Selected)' : '<br><span style="color:#38bdf8;">Click to switch route</span>'));
 
                     pLine.on('click', function() {{
-                        try {{
-                            var targetWin = window.parent || window;
-                            var url = new URL(targetWin.location.href);
-                            url.searchParams.set('focus_route', r.route_id);
-                            targetWin.location.replace(url.toString());
-                        }} catch(e) {{}}
+                        window.safeNavigateParent({{ 'focus_route': r.route_id }});
                     }});
 
                     if (isSel || !hasSelection) {{
@@ -4729,6 +5688,44 @@ def build_google_maps_javascript_html(
                     lMap.fitBounds(selectedBoundsL, {{ padding: [40, 40] }});
                 }}
 
+                // 3b. Interactive STEP LOCATIONS (Maneuver Waypoints along the selected route)
+                window.leafletStepMarkers = window.leafletStepMarkers || [];
+                window.leafletStepMarkers.forEach(function(m) {{ try {{ lMap.removeLayer(m); }} catch(e) {{}} }});
+                window.leafletStepMarkers = [];
+
+                var activeRouteWithSteps = polylines.find(function(r) {{ return r.is_selected; }}) || polylines[0];
+                var rawSteps = (activeRouteWithSteps && activeRouteWithSteps.steps && activeRouteWithSteps.steps.length > 0)
+                    ? activeRouteWithSteps.steps
+                    : [];
+
+                if (rawSteps.length > 0) {{
+                    rawSteps.forEach(function(st, sIdx) {{
+                        var sLat = st.lat || (st.coords && st.coords[0]);
+                        var sLon = st.lon || (st.coords && st.coords[1]);
+                        if (sLat == null || sLon == null) return;
+                        if (data.origin && Math.abs(sLat - data.origin.lat) < 0.0001 && Math.abs(sLon - data.origin.lng) < 0.0001) return;
+                        if (data.destination && Math.abs(sLat - data.destination.lat) < 0.0001 && Math.abs(sLon - data.destination.lng) < 0.0001) return;
+
+                        var stepNum = st.step_num || (sIdx + 1);
+                        var sIcon = st.icon || "🧭";
+                        var stepHtml = '<div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 2px solid #38bdf8; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(56,189,248,0.7); cursor: pointer; color: #38bdf8; font-size: 11px; font-weight: 800; transform: translate(-50%, -50%); transition: transform 0.2s ease;">' +
+                                       '<span title="Step ' + stepNum + '">' + stepNum + '</span>' +
+                                       '</div>';
+
+                        var stepDivIcon = L.divIcon({{
+                            className: 'pointer-step-waypoint',
+                            html: stepHtml,
+                            iconSize: [0, 0]
+                        }});
+
+                        var stepMarker = L.marker([sLat, sLon], {{ icon: stepDivIcon, zIndexOffset: 3500 }}).addTo(lMap);
+                        var sDist = st.distance_m ? (' • ' + (st.distance_m > 1000 ? (st.distance_m / 1000).toFixed(1) + ' km' : Math.round(st.distance_m) + ' m')) : '';
+                        var sDur = st.duration_s ? (' (' + Math.round(st.duration_s / 60) + ' min)') : '';
+                        stepMarker.bindPopup('<div class="iw-title">🧭 Step ' + stepNum + ' ' + sIcon + '</div><div class="iw-cat" style="color:#38bdf8; font-weight:700;">' + (st.instruction || 'Follow Route') + '</div><div class="iw-meta"><b>Road:</b> ' + (st.road || 'Corridor') + sDist + sDur + '<br><b>Coordinates:</b> ' + sLat.toFixed(5) + ', ' + sLon.toFixed(5) + '</div>');
+                        window.leafletStepMarkers.push(stepMarker);
+                    }});
+                }}
+
                 window._updateLeafletRouteStart = function(newLat, newLng) {{
                     if (currentLeafletPolyCoords && currentLeafletPolyCoords.length >= 2) {{
                         currentLeafletPolyCoords[0] = [newLat, newLng];
@@ -4737,59 +5734,10 @@ def build_google_maps_javascript_html(
                     }}
                 }};
 
-                // 4. Render Saved Locations (97 campus tour places)
-                (data.savedLocations || []).forEach(function(item) {{
-                    var m = L.circleMarker([item.latitude, item.longitude], {{
-                        radius: 6,
-                        fillColor: '#38bdf8',
-                        color: '#ffffff',
-                        weight: 1.5,
-                        opacity: 1,
-                        fillOpacity: 0.85
-                    }}).addTo(lMap);
-                    m.filterGroup = 'SAVED';
+                // 4. Saved locations are kept in memory for search resolution without cluttering the map with dots
 
-                    m.on('click', function() {{
-                        window.inspectLocationDetails(item.latitude, item.longitude, item);
-                    }});
-                    leafletMarkers.push(m);
-                }});
-
-                // 5. Render Facilities & Amenities (Stored off-canvas, pops over when category is selected)
-                (data.amenities || []).forEach(function(f) {{
-                    var group = 'AMENITIES';
-                    var color = '#f59e0b';
-                    var icon = f.amenity_icon || '🏢';
-                    var catStr = (f.category || f.facility_type || '').toLowerCase();
-                    if (catStr.indexOf('hospital') !== -1 || catStr.indexOf('medical') !== -1) {{ group = 'HOSPITALS'; color = '#ef4444'; icon = '🏥'; }}
-                    else if (catStr.indexOf('shelter') !== -1) {{ group = 'SHELTERS'; color = '#f97316'; icon = '⛺'; }}
-                    else if (catStr.indexOf('police') !== -1 || catStr.indexOf('rescue') !== -1) {{ group = 'POLICE'; color = '#3b82f6'; icon = '👮'; }}
-                    else if (catStr.indexOf('petrol') !== -1 || catStr.indexOf('fuel') !== -1 || catStr.indexOf('charging') !== -1) {{ group = 'FUEL'; color = '#10b981'; icon = '⛽'; }}
-                    else if (catStr.indexOf('restaurant') !== -1 || catStr.indexOf('food') !== -1 || catStr.indexOf('dining') !== -1) {{ group = 'RESTAURANTS'; color = '#ec4899'; icon = '🍽️'; }}
-                    else if (catStr.indexOf('hotel') !== -1 || catStr.indexOf('lodge') !== -1) {{ group = 'HOTELS'; color = '#a855f7'; icon = '🏨'; }}
-                    else if (catStr.indexOf('atm') !== -1 || catStr.indexOf('bank') !== -1) {{ group = 'ATMS'; color = '#06b6d4'; icon = '🏧'; }}
-                    else if (catStr.indexOf('mall') !== -1 || catStr.indexOf('shopping') !== -1) {{ group = 'MALLS'; color = '#eab308'; icon = '🛍️'; }}
-
-                    var fName = f.name || (group.charAt(0) + group.slice(1).toLowerCase());
-                    var fHtml = '<div class="amenity-pin-wrapper">' +
-                                '  <div class="amenity-pin-popover">' + icon + ' ' + fName + '</div>' +
-                                '  <div class="amenity-pin-bubble" style="background: ' + color + ';">' + icon + '</div>' +
-                                '</div>';
-
-                    var fIcon = L.divIcon({{
-                        className: 'facility-marker-div',
-                        html: fHtml,
-                        iconSize: [0, 0]
-                    }});
-
-                    var m = L.marker([f.latitude, f.longitude], {{ icon: fIcon }});
-                    m.filterGroup = group;
-                    m.on('click', function() {{
-                        window.inspectLocationDetails(f.latitude, f.longitude, f);
-                    }});
-                    m.addTo(lMap);
-                    leafletMarkers.push(m);
-                }});
+                // 5. Facilities & Amenities: Stored in window.GMAP_DATA.amenities and only plotted on-demand when a category button is clicked
+                // (Nothing selected at top = no logos displayed along route)
 
                 // 6. Render Hazard Warning Zones
                 window.leafletHazardLayers = [];
@@ -4807,10 +5755,15 @@ def build_google_maps_javascript_html(
                 }});
 
                 // 7. AUTOMATICALLY FIT BOUNDS TO POINTERS (START & DESTINATION)
-                if (fitCount >= 2) {{
-                    lMap.fitBounds(allFitBounds, {{ padding: [60, 60], maxZoom: 16 }});
-                }} else if (fitCount === 1) {{
-                    lMap.setView(allFitBounds.getCenter(), 14);
+                var shouldAutoFit = (data.autoFitBounds !== false);
+                if (shouldAutoFit) {{
+                    if (fitCount >= 2) {{
+                        lMap.fitBounds(allFitBounds, {{ padding: [60, 60], maxZoom: 16 }});
+                    }} else if (fitCount === 1) {{
+                        lMap.setView(allFitBounds.getCenter(), 14);
+                    }}
+                }} else {{
+                    lMap.setView([data.center.lat, data.center.lng], data.zoom || 16);
                 }}
 
                 // 8. Wire Top Controls
@@ -4868,6 +5821,13 @@ def build_google_maps_javascript_html(
                                             acc: pos.coords.accuracy || 6.0
                                         }}, '*');
                                     }}
+                                    if (window.safeNavigateParent) {{
+                                        window.safeNavigateParent({{
+                                            'gps_lat': Number(uLat).toFixed(6),
+                                            'gps_lon': Number(uLng).toFixed(6),
+                                            'detect_gps': '1'
+                                        }});
+                                    }}
                                 }} catch(e) {{}}
                             }}, function(err) {{
                                 geoBtn.innerText = '📍 My Location';
@@ -4877,43 +5837,8 @@ def build_google_maps_javascript_html(
                     }});
                 }}
 
-                // 9. Category Filter Pills: Pop over icons on demand
-                var activeLeafletCategory = null;
-                var pills = document.querySelectorAll('.gmap-filter-pill');
-                pills.forEach(function(p) {{
-                    p.addEventListener('click', function() {{
-                        var filter = p.getAttribute('data-filter');
-                        if (activeLeafletCategory === filter) {{
-                            // Click again to toggle off -> restore all detected small place markers
-                            activeLeafletCategory = null;
-                            p.classList.remove('active');
-                            leafletMarkers.forEach(function(m) {{
-                                if (!lMap.hasLayer(m)) lMap.addLayer(m);
-                            }});
-                            return;
-                        }}
-
-                        pills.forEach(function(el) {{ el.classList.remove('active'); }});
-                        p.classList.add('active');
-                        activeLeafletCategory = filter;
-
-                        var visibleBounds = L.latLngBounds();
-                        var count = 0;
-                        leafletMarkers.forEach(function(m) {{
-                            if (m.filterGroup === filter) {{
-                                if (!lMap.hasLayer(m)) lMap.addLayer(m);
-                                visibleBounds.extend(m.getLatLng());
-                                count++;
-                            }} else {{
-                                if (lMap.hasLayer(m)) lMap.removeLayer(m);
-                            }}
-                        }});
-
-                        if (count > 0) {{
-                            lMap.fitBounds(visibleBounds, {{ padding: [70, 70], maxZoom: 16 }});
-                        }}
-                    }});
-                }});
+                // 9. Category Filter Pills: Handled on-demand via window.triggerCategorySearch
+                // (Only displays selected category when clicked; nothing displayed when unselected)
 
                 // 10. Click Map listener - opens Place Inspector Drawer
                 lMap.on('click', function(e) {{
@@ -4921,11 +5846,16 @@ def build_google_maps_javascript_html(
                         window.handleMeasureClick(e.latlng.lat, e.latlng.lng);
                         return;
                     }}
+                    if (window.activeMapPickingTarget) {{
+                        window.handleMapPickingClick(e.latlng.lat, e.latlng.lng);
+                        return;
+                    }}
                     window.inspectLocationDetails(e.latlng.lat, e.latlng.lng, null);
                 }});
 
                 // 11. Unified Place Search & Autocomplete
                 window.initUnifiedPlaceSearch();
+                window.initMapCompass();
 
                 // 12. Leaflet Virtual Man Position Updater
                 window.updateVirtualManLeaflet = function(lat, lon, label, avatarIcon, avatarLabel, speedKmh, isReturning, isStopped) {{
@@ -4971,11 +5901,14 @@ def build_google_maps_javascript_html(
                         iconEl.innerText = charIcon;
                     }}
 
-                    var isAtStart = data.origin && Math.abs(targetCoords[0] - data.origin.lat) < 0.0006 && Math.abs(targetCoords[1] - data.origin.lng) < 0.0006;
+                    var isCustom = !!(data && data.isCustomOrigin);
+                    var isAtStart = isCustom || (data.origin && Math.abs(targetCoords[0] - data.origin.lat) < 0.0006 && Math.abs(targetCoords[1] - data.origin.lng) < 0.0006);
 
                     var badgeText = "";
-                    if (isAtStart && stopped) {{
-                        badgeText = "START • " + (data.origin.label || "Current Location");
+                    if (isAtStart && (isCustom || stopped)) {{
+                        badgeText = (typeof getCompactPointerLabel === 'function')
+                            ? getCompactPointerLabel(data.origin ? data.origin.label : "START", "START")
+                            : "START";
                         if (pillEl) {{ pillEl.className = "pf-clean-badge-pill start"; }}
                     }} else if (stopped) {{
                         badgeText = "PAUSED • " + (avatarLabel || "Car");
@@ -5091,17 +6024,39 @@ def build_google_maps_javascript_html(
             }} catch(err) {{}}
         }}
 
-        // Multi-User Geolocation Detection: Auto-detects real GPS position for every user globally
+        // Multi-User Dynamic Human Motion & Continuous Geolocation Tracking Engine
         var activeGeo = (window.parent && window.parent.navigator && window.parent.navigator.geolocation) ? window.parent.navigator.geolocation : navigator.geolocation;
-        if (activeGeo && !window._gmapGpsAutoDone) {{
-            window._gmapGpsAutoDone = true;
-            activeGeo.getCurrentPosition(function(pos) {{
+        if (activeGeo && !window._gmapMotionWatchActive) {{
+            window._gmapMotionWatchActive = true;
+            window._humanMotionState = 'STATIONARY';
+
+            // Device accelerometer motion detection for walking/running human motion
+            if (window.DeviceMotionEvent) {{
+                window.addEventListener('devicemotion', function(ev) {{
+                    var a = ev.acceleration || ev.accelerationIncludingGravity;
+                    if (a) {{
+                        var mag = Math.sqrt((a.x || 0)*(a.x || 0) + (a.y || 0)*(a.y || 0) + (a.z || 0)*(a.z || 0));
+                        var delta = Math.abs(mag - 9.8);
+                        window._humanMotionState = delta > 2.2 ? 'RUNNING' : (delta > 0.7 ? 'WALKING' : 'STATIONARY');
+                    }}
+                }}, {{ passive: true }});
+            }}
+
+            function onDynamicHumanPosition(pos) {{
+                if (!pos || !pos.coords) return;
                 var uLat = pos.coords.latitude;
                 var uLon = pos.coords.longitude;
+                var rawSpd = pos.coords.speed;
+                var uSpd = (rawSpd !== null && !isNaN(rawSpd) && rawSpd > 0) ? (rawSpd * 3.6) : (window._humanMotionState === 'WALKING' ? 4.2 : (window._humanMotionState === 'RUNNING' ? 8.5 : 0.0));
+                var uHdg = (pos.coords.heading !== null && !isNaN(pos.coords.heading)) ? pos.coords.heading : 0.0;
+                var mState = uSpd > 1.0 ? (uSpd > 15.0 ? 'VEHICLE_DRIVE' : (uSpd > 7.0 ? 'RUNNING' : 'WALKING')) : (window._humanMotionState || 'STATIONARY');
 
-                // Auto-position vehicle and center map if starting at current location
+                // Auto-position human marker and center map ONLY if dynamic live track (NEVER on custom start)
+                var isCustom = !!(window.GMAP_DATA && window.GMAP_DATA.isCustomOrigin);
                 var origLbl = window.GMAP_DATA && window.GMAP_DATA.origin ? (window.GMAP_DATA.origin.label || '') : '';
-                var isCurrentStart = !origLbl || origLbl.indexOf('Current') !== -1 || origLbl.indexOf('📍') !== -1 || origLbl.indexOf('Start') !== -1;
+                // Only consider dynamic track if explicitly labeled as device GPS and NOT a resolved city / place
+                var isDynamicTrack = !isCustom && (origLbl.indexOf('Dynamic Live Location') !== -1 || origLbl.indexOf('My Current Location') !== -1 || origLbl.indexOf('Device GPS') !== -1);
+                var isCurrentStart = isDynamicTrack;
 
                 if (isCurrentStart) {{
                     if (typeof virtualManMarker !== 'undefined' && virtualManMarker) {{
@@ -5109,38 +6064,44 @@ def build_google_maps_javascript_html(
                         if (window._updateLeafletRouteStart) {{
                             window._updateLeafletRouteStart(uLat, uLon);
                         }}
-                        if (typeof lMap !== 'undefined' && lMap) {{
-                            lMap.panTo([uLat, uLon], {{ animate: true, duration: 0.8 }});
-                        }}
                     }}
                     if (typeof virtualCompanionGMapMarker !== 'undefined' && virtualCompanionGMapMarker) {{
                         virtualCompanionGMapMarker.setPosition(new google.maps.LatLng(uLat, uLon));
                         if (window._updateGMapRouteStartCoords) {{
                             window._updateGMapRouteStartCoords(uLat, uLon);
                         }}
-                        if (typeof gMap !== 'undefined' && gMap) {{
-                            gMap.panTo(new google.maps.LatLng(uLat, uLon));
-                        }}
                     }}
                     if (window.GMAP_DATA && window.GMAP_DATA.origin) {{
                         window.GMAP_DATA.origin.lat = uLat;
                         window.GMAP_DATA.origin.lng = uLon;
                     }}
-                }}
 
-                try {{
-                    if (window.parent && window.parent !== window) {{
-                        window.parent.postMessage({{
-                            type: 'PATHFINDER_GPS_DETECTED',
-                            lat: uLat,
-                            lon: uLon,
-                            acc: pos.coords.accuracy || 6.0
-                        }}, '*');
+                    // Broadcast live human motion update ONLY if user is actively tracking live GPS
+                    if (window.BroadcastChannel) {{
+                        try {{
+                            var bc = new BroadcastChannel('pathfinder_journey_channel');
+                            bc.postMessage({{
+                                type: 'PATHFINDER_VEHICLE_UPDATE',
+                                lat: uLat,
+                                lon: uLon,
+                                speedKmh: uSpd,
+                                heading: uHdg,
+                                accuracy: pos.coords.accuracy || 6.0,
+                                state: mState,
+                                avatar: uSpd > 15.0 ? '🚗' : (mState === 'RUNNING' ? '🏃' : '🚶'),
+                                avatarLabel: 'Live Human (' + mState + ' ' + uSpd.toFixed(1) + ' km/h)',
+                                timestamp: Date.now()
+                            }});
+                        }} catch(err) {{}}
                     }}
-                }} catch(e) {{}}
-            }}, function(err) {{
-                console.log("[PATHFINDER] Map geolocation auto-detection notice:", err.message);
-            }}, {{ enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }});
+                }}
+            }}
+
+            activeGeo.watchPosition(onDynamicHumanPosition, function(err) {{
+                console.log("[PATHFINDER] Continuous human motion watch notice:", err.message);
+            }}, {{ enableHighAccuracy: true, timeout: 10000, maximumAge: 1500 }});
+
+            activeGeo.getCurrentPosition(onDynamicHumanPosition, function(err) {{}}, {{ enableHighAccuracy: true, timeout: 6000 }});
         }}
 
         // Ensure vehicle/car stays firmly pointed at the START location on fresh load

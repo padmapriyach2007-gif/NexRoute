@@ -48,70 +48,73 @@ class OSRMRoutingProvider(RoutingProvider):
             f"?overview=full&geometries=geojson&steps=true&alternatives=true"
         )
         
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "Pathfinder-NextGenMaps/2.5 (contact@pathfinder.org)"}
+        from src.backend.routing.route_cache import RouteCacheManager
+        cache_mgr = RouteCacheManager.get_instance()
+        cache_key = cache_mgr._generate_key(
+            origin_lat, origin_lon, dest_lat, dest_lon,
+            osrm_profile, f"tolls:{avoid_tolls}|hw:{avoid_highways}"
         )
-        
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout_sec) as response:
-                if response.status != 200:
-                    logger.warning(f"OSRM returned non-200 status {response.status}")
-                    return []
-                payload = json.loads(response.read().decode("utf-8"))
-        except Exception as e:
-            logger.info(f"OSRM service unavailable ({e}). Falling back to internal engine.")
-            return []
 
-        if payload.get("code") != "Ok" or not payload.get("routes"):
-            return []
-
-        routes = []
-        for idx, r in enumerate(payload["routes"]):
-            geom = r.get("geometry", {})
-            coords = geom.get("coordinates", [])  # [[lon, lat], ...]
-            # convert to [[lat, lon], ...]
-            polyline = [(c[1], c[0]) for c in coords]
-            
-            distance_meters = float(r.get("distance", 0.0))
-            duration_seconds = float(r.get("duration", 0.0))
-            
-            # Extract maneuvers
-            maneuvers = []
-            summary_roads = []
-            legs = r.get("legs", [])
-            for leg in legs:
-                for step in leg.get("steps", []):
-                    step_maneuver = step.get("maneuver", {})
-                    loc = step_maneuver.get("location", [origin_lon, origin_lat])
-                    road_name = step.get("name") or "Unnamed Road"
-                    if road_name and road_name not in summary_roads and road_name != "Unnamed Road":
-                        summary_roads.append(road_name)
-                    
-                    maneuvers.append(Maneuver(
-                        instruction=step_maneuver.get("type", "maneuver") + f" on {road_name}",
-                        action_type=step_maneuver.get("modifier", step_maneuver.get("type", "continue")).upper(),
-                        road_name=road_name,
-                        distance_meters=float(step.get("distance", 0.0)),
-                        duration_seconds=float(step.get("duration", 0.0)),
-                        location=(loc[1], loc[0])
-                    ))
-            
-            # Title based on index
-            title = "Fastest Highway Corridor" if idx == 0 else f"Alternative Route {idx + 1}"
-            alt_obj = RouteObjective.FASTEST if idx == 0 else RouteObjective.SHORTEST
-            
-            route_alt = RouteAlternative(
-                route_id=f"OSRM_R{idx + 1}_{int(duration_seconds)}",
-                title=title,
-                objective=alt_obj,
-                distance_meters=distance_meters,
-                duration_seconds=duration_seconds,
-                polyline=polyline,
-                maneuvers=maneuvers,
-                summary_roads=summary_roads[:4],
-                provider_source="OSRM"
+        def _fetch_from_osrm() -> List[RouteAlternative]:
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Pathfinder-NextGenMaps/2.5 (contact@pathfinder.org)"}
             )
-            routes.append(route_alt)
-            
-        return routes
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_sec) as response:
+                    if response.status != 200:
+                        logger.warning(f"OSRM returned non-200 status {response.status}")
+                        return []
+                    payload = json.loads(response.read().decode("utf-8"))
+            except Exception as e:
+                logger.info(f"OSRM service unavailable ({e}). Falling back to internal engine.")
+                return []
+
+            if payload.get("code") != "Ok" or not payload.get("routes"):
+                return []
+
+            routes = []
+            for idx, r in enumerate(payload["routes"]):
+                geom = r.get("geometry", {})
+                coords = geom.get("coordinates", [])  # [[lon, lat], ...]
+                polyline = [(c[1], c[0]) for c in coords]
+                distance_meters = float(r.get("distance", 0.0))
+                duration_seconds = float(r.get("duration", 0.0))
+                
+                maneuvers = []
+                summary_roads = []
+                legs = r.get("legs", [])
+                for leg in legs:
+                    for step in leg.get("steps", []):
+                        step_maneuver = step.get("maneuver", {})
+                        road_name = step.get("name") or "Unnamed Road"
+                        if road_name and road_name not in summary_roads and road_name != "Unnamed Road":
+                            summary_roads.append(road_name)
+                        maneuvers.append(Maneuver(
+                            instruction=step_maneuver.get("type", "maneuver") + f" on {road_name}",
+                            action_type=step_maneuver.get("modifier", step_maneuver.get("type", "continue")).upper(),
+                            road_name=road_name,
+                            distance_meters=float(step.get("distance", 0.0)),
+                            duration_seconds=float(step.get("duration", 0.0)),
+                            location=(step_maneuver.get("location", [origin_lon, origin_lat])[1], step_maneuver.get("location", [origin_lon, origin_lat])[0])
+                        ))
+
+                via_desc = f"Via {summary_roads[0]}" if summary_roads else f"Route Alternative #{idx + 1}"
+                if len(summary_roads) > 1:
+                    via_desc += f" & {summary_roads[1]}"
+
+                routes.append(RouteAlternative(
+                    route_id=f"osrm_route_{idx + 1}",
+                    title=f"OSRM {osrm_profile.capitalize()} Route {idx + 1}",
+                    summary=via_desc,
+                    distance_meters=distance_meters,
+                    duration_seconds=duration_seconds,
+                    polyline=polyline,
+                    maneuvers=maneuvers,
+                    objective=objective,
+                    confidence=0.92 if idx == 0 else 0.82
+                ))
+            return routes
+
+        return cache_mgr.execute_single_flight(cache_key, _fetch_from_osrm, ttl_sec=900.0)
+

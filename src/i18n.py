@@ -1,5 +1,5 @@
 """
-Centralized Internationalization (i18n) & Localization System for P.A.T.H.F.I.N.D.E.R.
+Centralized Internationalization (i18n) & Localization System for NexRoute
 Supports 8 Languages with Native Scripts, Voice BCP-47 codes, Fallback Chains,
 and Safe Dynamic Interpolation.
 
@@ -55,7 +55,7 @@ def _load_locale_overrides():
 TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "en": {
         # App / Header / Sidebar
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "Predictive Adaptive Transit & Hazard-Free Intelligent Navigation",
         "app.telemetry": "Autonomous Multi-Corridor Safety Telemetry",
         "app.language": "Language",
@@ -71,10 +71,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "Normal Flow",
 
         # Tabs
-        "tab.navigation": "🧭 Navigation",
+        "tab.copilot": "✨ AI Travel Copilot",
+        "tab.navigation": "🧭 Map & Navigation",
         "tab.virtual_guide": "🚗 Virtual Guide",
         "tab.facilities": "🏥 Facilities",
-        "tab.places": "🌟 Places",
+        "tab.places": "🌟 Places & Sights",
 
         # Navigation & Inputs
         "nav.navigation": "Navigation",
@@ -130,6 +131,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fleet.bicycle": "Bicycle",
         "fleet.truck": "Truck / Logistics",
         "fleet.tractor": "Tractor / Farm",
+        "fleet.flight": "Airway / Commercial Flight",
+        "fleet.waterway": "Waterway / Maritime & Ferry",
         "fleet.speed_mode": "Speed Mode",
         "fleet.normal": "Normal Speed",
         "fleet.rush": "Express / Rush",
@@ -137,10 +140,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "Virtual Guide Dashboard",
-        "guide.section1_title": "Section 1: Interactive Journey Progress",
-        "guide.section2_title": "Section 2: Virtual Vehicle Companion",
-        "guide.section3_title": "Section 3: Step-by-Step Maneuver Guide",
-        "guide.section4_title": "Section 4: 3D Walking Perspective",
+        "guide.section1_title": "Interactive Journey Progress",
+        "guide.section2_title": "Virtual Vehicle Companion",
+        "guide.section3_title": "Step-by-Step Maneuver Guide",
+        "guide.section4_title": "3D Walking Perspective",
         "guide.move_parallel": "Move in Parallel",
         "guide.traffic_stop": "Traffic Stop",
         "guide.resume": "Resume Movement",
@@ -193,6 +196,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fac.food": "🍽️ Food & Restaurants",
         "fac.atm": "🏧 ATMs & Banking",
         "fac.restrooms": "🚻 Public Restrooms",
+        "fac.supermarkets": "🛒 Supermarkets & Groceries",
         "fac.focus_map": "Focus Map",
         "fac.route_here": "Route Here",
         "fac.distance_km": "{dist} km away",
@@ -218,8 +222,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. Navigation Copilot",
         "chat.subtitle": "Adaptive User Route Assistant • Conversational AI",
-        "chat.welcome": "👋 Greetings! I am A.U.R.A., your Adaptive User Route Assistant for P.A.T.H.F.I.N.D.E.R. Ask me anything about routes, hazards, weather, or general knowledge!",
-        "chat.placeholder": "Ask A.U.R.A. anything about your route, safety, facilities, or traffic...",
+        "chat.welcome": "👋 Greetings! I am A.U.R.A., your Adaptive User Route Assistant for NexRoute Ask me anything about routes, hazards, weather, or general knowledge!",
+        "chat.placeholder": "Ask AURA...",
         "chat.send": "Send 🚀",
         "chat.reset": "🗑️ Reset Chat",
         "chat.active_provider": "Active Provider",
@@ -236,7 +240,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     "te": {
         # App / Header / Sidebar (Telugu)
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "ప్రిడిక్టివ్ అడాప్టివ్ ట్రాన్సిట్ & హజార్డ్-ఫ్రీ ఇంటెలిజెంట్ నావిగేషన్",
         "app.telemetry": "స్వయంప్రతిపత్తి కలిగిన భద్రతా పర్యవేక్షణ వ్యవస్థ",
         "app.language": "భాషను ఎంచుకోండి",
@@ -252,10 +256,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "సాధారణ రద్దీ",
 
         # Tabs
-        "tab.navigation": "🧭 నావిగేషన్",
+        "tab.copilot": "✨ AI ట్రావెల్ కోపైలట్",
+        "tab.navigation": "🧭 మ్యాప్ & నావిగేషన్",
         "tab.virtual_guide": "🚗 వర్చువల్ గైడ్",
         "tab.facilities": "🏥 సదుపాయాలు",
-        "tab.places": "🌟 దర్శనీయ స్థలాలు",
+        "tab.places": "🌟 దర్శనీయ స్థలాలు & ఆకర్షణలు",
 
         # Navigation & Inputs
         "nav.navigation": "నావిగేషన్",
@@ -318,10 +323,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "వర్చువల్ గైడ్ డ్యాష్‌బోర్డ్",
-        "guide.section1_title": "విభాగం 1: ప్రత్యక్ష ప్రయాణ పురోగతి",
-        "guide.section2_title": "విభాగం 2: వర్చువల్ వాహన సహచరుడు",
-        "guide.section3_title": "విభాగం 3: దశలవారీ మలుపుల మార్గదర్శకత్వం",
-        "guide.section4_title": "విభాగం 4: 3D నడక దృశ్యం",
+        "guide.section1_title": "ప్రత్యక్ష ప్రయాణ పురోగతి",
+        "guide.section2_title": "వర్చువల్ వాహన సహచరుడు",
+        "guide.section3_title": "దశలవారీ మలుపుల మార్గదర్శకత్వం",
+        "guide.section4_title": "3D నడక దృశ్యం",
         "guide.move_parallel": "వాహనంతో పాటు కదలిక ప్రారంభించండి",
         "guide.traffic_stop": "ట్రాఫిక్ కారణంగా ఆపండి",
         "guide.resume": "ప్రయాణం కొనసాగించండి",
@@ -399,8 +404,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. నావిగేషన్ కోపైలట్",
         "chat.subtitle": "అడాప్టివ్ యూజర్ రూట్ అసిస్టెంట్ • స్మార్ట్ సంభాషణ సహాయకుడు",
-        "chat.welcome": "👋 నమస్కారం! నేను A.U.R.A., P.A.T.H.F.I.N.D.E.R. లో మీ ప్రయాణ సహాయకుడిని. మార్గాలు, భద్రత, వాతావరణం లేదా ఏదైనా సమాచారం కోసం నన్ను అడగండి!",
-        "chat.placeholder": "మీ మార్గం, భద్రత, సదుపాయాలు లేదా ట్రాఫిక్ గురించి A.U.R.A.ని అడగండి...",
+        "chat.welcome": "👋 నమస్కారం! నేను A.U.R.A., NexRoute లో మీ ప్రయాణ సహాయకుడిని. మార్గాలు, భద్రత, వాతావరణం లేదా ఏదైనా సమాచారం కోసం నన్ను అడగండి!",
+        "chat.placeholder": "AURA ని అడగండి...",
         "chat.send": "పంపండి 🚀",
         "chat.reset": "🗑️ చాట్ రీసెట్ చేయండి",
         "chat.active_provider": "ప్రస్తుత AI మోడల్",
@@ -417,7 +422,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     "hi": {
         # App / Header / Sidebar (Hindi)
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "अनुमानात्मक अनुकूलनीय पारगमन और बाधा-मुक्त नेविगेशन",
         "app.telemetry": "स्वायत्त बहु-गलियारा सुरक्षा टेलीमेट्री",
         "app.language": "भाषा चुनें",
@@ -433,10 +438,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "सामान्य प्रवाह",
 
         # Tabs
-        "tab.navigation": "🧭 नेविगेशन",
+        "tab.copilot": "✨ AI ट्रैवल को-पायलट",
+        "tab.navigation": "🧭 मैप और नेविगेशन",
         "tab.virtual_guide": "🚗 वर्चुअल गाइड",
         "tab.facilities": "🏥 सुविधाएं",
-        "tab.places": "🌟 दर्शनीय स्थल",
+        "tab.places": "🌟 दर्शनीय स्थल और जगहें",
 
         # Navigation & Inputs
         "nav.navigation": "नेविगेशन",
@@ -493,10 +499,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "वर्चुअल गाइड डैशबोर्ड",
-        "guide.section1_title": "भाग 1: लाइव यात्रा प्रगति",
-        "guide.section2_title": "भाग 2: वर्चुअल वाहन साथी",
-        "guide.section3_title": "भाग 3: मोड़-दर-मोड़ मार्गदर्शन",
-        "guide.section4_title": "भाग 4: 3D पैदल दृश्य",
+        "guide.section1_title": "लाइव यात्रा प्रगति",
+        "guide.section2_title": "वर्चुअल वाहन साथी",
+        "guide.section3_title": "मोड़-दर-मोड़ मार्गदर्शन",
+        "guide.section4_title": "3D पैदल दृश्य",
         "guide.move_parallel": "समानांतर गति शुरू करें",
         "guide.traffic_stop": "यातायात के कारण रोकें",
         "guide.resume": "यात्रा पुनः शुरू करें",
@@ -574,8 +580,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. नेविगेशन सह-चालक",
         "chat.subtitle": "अनुकूलनीय उपयोगकर्ता मार्ग सहायक • संवादात्मक एआई",
-        "chat.welcome": "👋 नमस्ते! मैं A.U.R.A. हूँ, P.A.T.H.F.I.N.D.E.R. में आपका यात्रा साथी। मुझसे मार्ग, सुरक्षा, मौसम या सामान्य ज्ञान के बारे में कुछ भी पूछें!",
-        "chat.placeholder": "मार्ग, सुरक्षा, सुविधाओं या यातायात के बारे में A.U.R.A. से पूछें...",
+        "chat.welcome": "👋 नमस्ते! मैं A.U.R.A. हूँ, NexRoute में आपका यात्रा साथी। मुझसे मार्ग, सुरक्षा, मौसम या सामान्य ज्ञान के बारे में कुछ भी पूछें!",
+        "chat.placeholder": "AURA से पूछें...",
         "chat.send": "भेजें 🚀",
         "chat.reset": "🗑️ चैट रीसेट करें",
         "chat.active_provider": "सक्रिय एआई मॉडल",
@@ -592,7 +598,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     "ta": {
         # App / Header / Sidebar (Tamil)
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "முன்கணிப்பு தகவமைப்பு போக்குவரத்து & விபத்தில்லா நுண்ணறிவு வழிசெலுத்தல்",
         "app.telemetry": "தன்னாட்சி பாதுகாப்பு கண்காணிப்பு அமைப்பு",
         "app.language": "மொழியைத் தேர்வுசெய்க",
@@ -608,10 +614,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "சீரான ஓட்டம்",
 
         # Tabs
-        "tab.navigation": "🧭 வழிசெலுத்தல்",
+        "tab.copilot": "✨ AI பயண இணை பைலட்",
+        "tab.navigation": "🧭 வரைபடம் & வழிசெலுத்தல்",
         "tab.virtual_guide": "🚗 மெய்நிகர் வழிகாட்டி",
         "tab.facilities": "🏥 வசதிகள்",
-        "tab.places": "🌟 இடங்கள்",
+        "tab.places": "🌟 இடங்கள் & காட்சிகள்",
 
         # Navigation & Inputs
         "nav.navigation": "வழிசெலுத்தல்",
@@ -668,10 +675,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "மெய்நிகர் வழிகாட்டி பலகை",
-        "guide.section1_title": "பிரிவு 1: நேரலை பயண முன்னேற்றம்",
-        "guide.section2_title": "பிரிவு 2: மெய்நிகர் வாகன தோழன்",
-        "guide.section3_title": "பிரிவு 3: திருப்ப வழிகாட்டுதல்",
-        "guide.section4_title": "பிரிவு 4: 3D நடைபாதை தோற்றம்",
+        "guide.section1_title": "நேரலை பயண முன்னேற்றம்",
+        "guide.section2_title": "மெய்நிகர் வாகன தோழன்",
+        "guide.section3_title": "திருப்ப வழிகாட்டுதல்",
+        "guide.section4_title": "3D நடைபாதை தோற்றம்",
         "guide.move_parallel": "இணையாக நகரவும்",
         "guide.traffic_stop": "போக்குவரத்து நிறுத்தம்",
         "guide.resume": "பயணத்தைத் தொடரவும்",
@@ -749,8 +756,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. வழிசெலுத்தல் துணை",
         "chat.subtitle": "தகவமைப்பு பயனர் பாதை உதவியாளர் • உரையாடல் AI",
-        "chat.welcome": "👋 வணக்கம்! நான் A.U.R.A., P.A.T.H.F.I.N.D.E.R. இல் உங்கள் பயணத் துணை. வழிகள், பாதுகாப்பு, வானிலை பற்றி என்னிடம் கேளுங்கள்!",
-        "chat.placeholder": "உங்கள் பாதை, பாதுகாப்பு அல்லது வசதிகள் பற்றி A.U.R.A.விடம் கேளுங்கள்...",
+        "chat.welcome": "👋 வணக்கம்! நான் A.U.R.A., NexRoute இல் உங்கள் பயணத் துணை. வழிகள், பாதுகாப்பு, வானிலை பற்றி என்னிடம் கேளுங்கள்!",
+        "chat.placeholder": "AURAவிடம் கேளுங்கள்...",
         "chat.send": "அனுப்பு 🚀",
         "chat.reset": "🗑️ அரட்டையை மீட்டமை",
         "chat.active_provider": "செயலில் உள்ள AI",
@@ -767,7 +774,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     "kn": {
         # App / Header / Sidebar (Kannada)
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "ಮುನ್ಸೂಚಕ ಹೊಂದಿಕೊಳ್ಳುವ ಸಾರಿಗೆ ಮತ್ತು ಅಪಾಯಮುಕ್ತ ಸ್ಮಾರ್ಟ್ ಸಂಚಾರ",
         "app.telemetry": "ಸ್ವಾಯತ್ತ ಸುರಕ್ಷತಾ ವ್ಯವಸ್ಥೆ",
         "app.language": "ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
@@ -783,10 +790,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "ಸಾಮಾನ್ಯ ಸಂಚಾರ",
 
         # Tabs
-        "tab.navigation": "🧭 ನ್ಯಾವಿಗೇಷನ್",
+        "tab.copilot": "✨ AI ಟ್ರಾವೆಲ್ ಕೊ-ಪೈಲಟ್",
+        "tab.navigation": "🧭 ನಕ್ಷೆ & ನ್ಯಾವಿಗೇಷನ್",
         "tab.virtual_guide": "🚗 ವರ್ಚುವಲ್ ಮಾರ್ಗದರ್ಶಿ",
         "tab.facilities": "🏥 ಸೌಲಭ್ಯಗಳು",
-        "tab.places": "🌟 ಪ್ರಮುಖ ಸ್ಥಳಗಳು",
+        "tab.places": "🌟 ಪ್ರಮುಖ ಸ್ಥಳಗಳು & ದೃಶ್ಯಗಳು",
 
         # Navigation & Inputs
         "nav.navigation": "ನ್ಯಾವಿಗೇಷನ್",
@@ -843,10 +851,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "ವರ್ಚುವಲ್ ಗೈಡ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
-        "guide.section1_title": "ವಿಭಾಗ 1: ಲೈವ್ ಪ್ರಯಾಣ ಪ್ರಗತಿ",
-        "guide.section2_title": "ವಿಭಾಗ 2: ವರ್ಚುವಲ್ ವಾಹನ ಸಂಗಾತಿ",
-        "guide.section3_title": "ವಿಭಾಗ 3: ಹಂತ ಹಂತದ ತಿರುವು ಮಾರ್ಗದರ್ಶನ",
-        "guide.section4_title": "ವಿಭಾಗ 4: 3D ನಡಿಗೆ ನೋಟ",
+        "guide.section1_title": "ಲೈವ್ ಪ್ರಯಾಣ ಪ್ರಗತಿ",
+        "guide.section2_title": "ವರ್ಚುವಲ್ ವಾಹನ ಸಂಗಾತಿ",
+        "guide.section3_title": "ಹಂತ ಹಂತದ ತಿರುವು ಮಾರ್ಗದರ್ಶನ",
+        "guide.section4_title": "3D ನಡಿಗೆ ನೋಟ",
         "guide.move_parallel": "ಜೊತೆಗೆ ಚಲನೆ ಪ್ರಾರಂಭಿಸಿ",
         "guide.traffic_stop": "ಟ್ರಾಫಿಕ್ ಕಾರಣದಿಂದ ನಿಲ್ಲಿಸಿ",
         "guide.resume": "ಪ್ರಯಾಣ ಮುಂದುವರಿಸಿ",
@@ -924,8 +932,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. ನ್ಯಾವಿಗೇಷನ್ ಸಹಾಯಕ",
         "chat.subtitle": "ಸ್ಮಾರ್ಟ್ ಸಂಭಾಷಣಾ AI ಸಹಾಯಕ",
-        "chat.welcome": "👋 ನಮಸ್ಕಾರ! ನಾನು A.U.R.A., P.A.T.H.F.I.N.D.E.R. ನಲ್ಲಿ ನಿಮ್ಮ ಮಾರ್ಗದರ್ಶಿ. ಮಾರ್ಗ, ಸುರಕ್ಷತೆ ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ!",
-        "chat.placeholder": "ನಿಮ್ಮ ಮಾರ್ಗ, ಸುರಕ್ಷತೆ ಅಥವಾ ಸೌಲಭ್ಯಗಳ ಬಗ್ಗೆ A.U.R.A. ಅನ್ನು ಕೇಳಿ...",
+        "chat.welcome": "👋 ನಮಸ್ಕಾರ! ನಾನು A.U.R.A., NexRoute ನಲ್ಲಿ ನಿಮ್ಮ ಮಾರ್ಗದರ್ಶಿ. ಮಾರ್ಗ, ಸುರಕ್ಷತೆ ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ!",
+        "chat.placeholder": "AURA ಅನ್ನು ಕೇಳಿ...",
         "chat.send": "ಕಳುಹಿಸಿ 🚀",
         "chat.reset": "🗑️ ಚಾಟ್ ಮರುಹೊಂದಿಸಿ",
         "chat.active_provider": "ಸಕ್ರಿಯ AI",
@@ -942,7 +950,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     "ml": {
         # App / Header / Sidebar (Malayalam)
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "അഡാപ്റ്റീവ് ട്രാൻസിറ്റ് & അപകടരഹിത നാവിഗേഷൻ",
         "app.telemetry": "സുരക്ഷാ നിരീക്ഷണ സംവിധാനം",
         "app.language": "ഭാഷ തിരഞ്ഞെടുക്കുക",
@@ -958,10 +966,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "സാധാരണ ഒഴുക്ക്",
 
         # Tabs
-        "tab.navigation": "🧭 നാവിഗേഷൻ",
-        "tab.virtual_guide": "🚗 വെർച്വൽ ഗൈഡ്",
+        "tab.copilot": "✨ AI ട്രാവൽ കോ-പൈലറ്റ്",
+        "tab.navigation": "🧭 മാപ്പ് & നാവിഗേഷൻ",
+        "tab.virtual_guide": "🚗 വെർച്വಲ್ ഗൈഡ്",
         "tab.facilities": "🏥 സേവനങ്ങൾ",
-        "tab.places": "🌟 സ്ഥലങ്ങൾ",
+        "tab.places": "🌟 സ്ഥലങ്ങളും കാഴ്ചകളും",
 
         # Navigation & Inputs
         "nav.navigation": "നാവിഗേഷൻ",
@@ -1018,10 +1027,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "വെർച്വൽ ഗൈഡ് ഡാഷ്‌ബോർഡ്",
-        "guide.section1_title": "വിഭാഗം 1: ലൈവ് യാത്രാ പുരോഗതി",
-        "guide.section2_title": "വിഭാഗം 2: വെർച്വൽ യാത്രാ സഹായി",
-        "guide.section3_title": "വിഭാഗം 3: ഘട്ടങ്ങൾ തിരിച്ചുള്ള വഴി",
-        "guide.section4_title": "വിഭാഗം 4: 3D നടത്ത ദൃശ്യം",
+        "guide.section1_title": "ലൈവ് യാത്രാ പുരോഗതി",
+        "guide.section2_title": "വെർച്വൽ യാത്രാ സഹായി",
+        "guide.section3_title": "ഘട്ടങ്ങൾ തിരിച്ചുള്ള വഴി",
+        "guide.section4_title": "3D നടത്ത ദൃശ്യം",
         "guide.move_parallel": "സമാന്തരമായി മുന്നോട്ട് നീങ്ങുക",
         "guide.traffic_stop": "ട്രാഫിക് കാരണം നിർത്തുക",
         "guide.resume": "തുടരുക",
@@ -1099,8 +1108,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. നാവിഗേഷൻ സഹായകൻ",
         "chat.subtitle": "സ്മാർട്ട് സംഭാഷണ AI അസിസ്റ്റന്റ്",
-        "chat.welcome": "👋 നമസ്കാരം! ഞാൻ A.U.R.A., P.A.T.H.F.I.N.D.E.R.-ൽ നിങ്ങളുടെ യാത്രാ സഹായി. റൂട്ടുകൾ, സുരക്ഷ, കാലാവസ്ഥ എന്നിവയെക്കുറിച്ച് എന്നോട് ചോദിക്കാം!",
-        "chat.placeholder": "വഴി, സുരക്ഷ, ട്രാഫിക് എന്നിവയെക്കുറിച്ച് A.U.R.A.-യോട് ചോദിക്കുക...",
+        "chat.welcome": "👋 നമസ്കാരം! ഞാൻ A.U.R.A., NexRoute-ൽ നിങ്ങളുടെ യാത്രാ സഹായി. റൂട്ടുകൾ, സുരക്ഷ, കാലാവസ്ഥ എന്നിവയെക്കുറിച്ച് എന്നോട് ചോദിക്കാം!",
+        "chat.placeholder": "AURA-യോട് ചോദിക്കുക...",
         "chat.send": "അയക്കുക 🚀",
         "chat.reset": "🗑️ ചാറ്റ് റീസെറ്റ് ചെയ്യുക",
         "chat.active_provider": "സജീവ AI",
@@ -1117,7 +1126,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     "bn": {
         # App / Header / Sidebar (Bengali)
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "ভবিষ্যদ্বাণীমূলক ট্রানজিট ও ঝুঁকিমুক্ত বুদ্ধিমান নেভিগেশন",
         "app.telemetry": "স্বয়ংক্রিয় বহুমুখী নিরাপত্তা পর্যবেক্ষণ",
         "app.language": "ভাষা নির্বাচন করুন",
@@ -1133,10 +1142,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "স্বাভাবিক চলাচল",
 
         # Tabs
-        "tab.navigation": "🧭 ন্যাভিগেশন",
+        "tab.copilot": "✨ AI ট্রাভেল কো-পাইলট",
+        "tab.navigation": "🧭 মানচিত্র ও ন্যাভিগেশন",
         "tab.virtual_guide": "🚗 ভার্চুয়াল গাইড",
         "tab.facilities": "🏥 পরিষেবা",
-        "tab.places": "🌟 দর্শনীয় স্থান",
+        "tab.places": "🌟 দর্শনীয় স্থানসমূহ",
 
         # Navigation & Inputs
         "nav.navigation": "ন্যাভিগেশন",
@@ -1193,10 +1203,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "ভার্চুয়াল গাইড ড্যাশবোর্ড",
-        "guide.section1_title": "অংশ ১: সরাসরি যাত্রার অগ্রগতি",
-        "guide.section2_title": "অংশ ২: ভার্চুয়াল গাড়ির সঙ্গী",
-        "guide.section3_title": "অংশ ৩: ধাপে ধাপে দিকনির্দেশনা",
-        "guide.section4_title": "অংশ ৪: 3D হাঁটার দৃশ্য",
+        "guide.section1_title": "সরাসরি যাত্রার অগ্রগতি",
+        "guide.section2_title": "ভার্চুয়াল গাড়ির সঙ্গী",
+        "guide.section3_title": "ধাপে ধাপে দিকনির্দেশনা",
+        "guide.section4_title": "3D হাঁটার দৃশ্য",
         "guide.move_parallel": "একসাথে এগিয়ে যান",
         "guide.traffic_stop": "যানজটের জন্য থামুন",
         "guide.resume": "যাত্রা পুনরায় চালু করুন",
@@ -1274,8 +1284,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. ন্যাভিগেশন কো-পাইলট",
         "chat.subtitle": "বুদ্ধিমান এআই কথোপকথন সহকারী",
-        "chat.welcome": "👋 নমস্কার! আমি A.U.R.A., P.A.T.H.F.I.N.D.E.R.-এ আপনার ভ্রমণ সঙ্গী। রুট, নিরাপত্তা বা সাধারণ তথ্যের জন্য আমাকে জিজ্ঞাসা করুন!",
-        "chat.placeholder": "আপনার রুট, নিরাপত্তা বা সুবিধা সম্পর্কে A.U.R.A.-কে জিজ্ঞাসা করুন...",
+        "chat.welcome": "👋 নমস্কার! আমি A.U.R.A., NexRoute-এ আপনার ভ্রমণ সঙ্গী। রুট, নিরাপত্তা বা সাধারণ তথ্যের জন্য আমাকে জিজ্ঞাসা করুন!",
+        "chat.placeholder": "AURA-কে জিজ্ঞাসা করুন...",
         "chat.send": "পাঠান 🚀",
         "chat.reset": "🗑️ চ্যাট রিসেট করুন",
         "chat.active_provider": "সক্রিয় এআই",
@@ -1292,7 +1302,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     "mr": {
         # App / Header / Sidebar (Marathi)
-        "app.title": "P.A.T.H.F.I.N.D.E.R.",
+        "app.title": "NexRoute",
         "app.subtitle": "पूर्वानुमानित अनुकूलनीय वाहतूक व अडथळामुक्त बुद्धिमान नेव्हिगेशन",
         "app.telemetry": "स्वायत्त बहु-मार्गिका सुरक्षा टेलिमेट्री",
         "app.language": "भाषा निवडा",
@@ -1308,10 +1318,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app.normal_flow": "सुरळीत वाहतूक",
 
         # Tabs
-        "tab.navigation": "🧭 नेव्हिगेशन",
+        "tab.copilot": "✨ AI ट्रॅव्हल सह-वैमानिक",
+        "tab.navigation": "🧭 नकाशा आणि नेव्हिगेशन",
         "tab.virtual_guide": "🚗 व्हर्च्युअल मार्गदर्शक",
         "tab.facilities": "🏥 सुविधा",
-        "tab.places": "🌟 प्रसिद्ध ठिकाणे",
+        "tab.places": "🌟 प्रेक्षणीय स्थळे",
 
         # Navigation & Inputs
         "nav.navigation": "नेव्हिगेशन",
@@ -1368,10 +1379,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Virtual Guide & Companion
         "guide.title": "व्हर्च्युअल गाईड डॅशबोर्ड",
-        "guide.section1_title": "विभाग १: थेट प्रवास प्रगती",
-        "guide.section2_title": "विभाग २: व्हर्च्युअल वाहन सोबती",
-        "guide.section3_title": "विभाग ३: वळणावळणाचे मार्गदर्शन",
-        "guide.section4_title": "विभाग ४: 3D चालण्याचे दृश्य",
+        "guide.section1_title": "थेट प्रवास प्रगती",
+        "guide.section2_title": "व्हर्च्युअल वाहन सोबती",
+        "guide.section3_title": "वळणावळणाचे मार्गदर्शन",
+        "guide.section4_title": "3D चालण्याचे दृश्य",
         "guide.move_parallel": "समांतर हालचाल सुरू करा",
         "guide.traffic_stop": "वाहतूक थांबा",
         "guide.resume": "प्रवास सुरू ठेवा",
@@ -1449,8 +1460,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Chatbot (A.U.R.A.)
         "chat.title": "A.U.R.A. नेव्हिगेशन सह-पायलट",
         "chat.subtitle": "बुद्धिमान एआय संभाषण सहाय्यक",
-        "chat.welcome": "👋 नमस्कार! मी A.U.R.A., P.A.T.H.F.I.N.D.E.R. मध्ये तुमचा प्रवास साथी. मार्ग, सुरक्षा किंवा माहितीसाठी मला विचारा!",
-        "chat.placeholder": "तुमचा मार्ग, सुरक्षा किंवा रहदारीबद्दल A.U.R.A. ला विचारा...",
+        "chat.welcome": "👋 नमस्कार! मी A.U.R.A., NexRoute मध्ये तुमचा प्रवास साथी. मार्ग, सुरक्षा किंवा माहितीसाठी मला विचारा!",
+        "chat.placeholder": "AURA ला विचारा...",
         "chat.send": "पाठवा 🚀",
         "chat.reset": "🗑️ चॅट रीसेट करा",
         "chat.active_provider": "सक्रिय एआय मॉडेल",
@@ -1502,16 +1513,26 @@ def get_language_native_name(lang_code: Optional[str] = None) -> str:
     return info.get("native", "English")
 
 
-def t(key: str, lang: Optional[str] = None, **kwargs) -> str:
+def t(key: str, lang: Optional[str] = None, default: Optional[str] = None, **kwargs) -> str:
     """
     Main translation lookup function.
     - Resolves language (explicit or session state).
+    - Supports default fallback string if passed as 2nd positional argument or default kwarg.
     - Looks up key in language table.
     - Falls back to English if missing.
-    - If key does not exist anywhere, returns clean title-cased fallback instead of raw key.
+    - If key does not exist anywhere, returns clean fallback or title-cased key.
     - Safely interpolates kwargs placeholders e.g. {count}, {street}, {dist}.
     """
-    target_lang = lang or get_current_language()
+    fallback_val = default
+    actual_lang = None
+
+    if lang in SUPPORTED_LANGUAGES:
+        actual_lang = lang
+    elif lang is not None:
+        # Caller passed a default string as second positional arg, e.g. t("tab.nav", "Navigation")
+        fallback_val = lang
+
+    target_lang = actual_lang or get_current_language()
     if target_lang not in SUPPORTED_LANGUAGES:
         target_lang = DEFAULT_LANGUAGE
 
@@ -1519,13 +1540,22 @@ def t(key: str, lang: Optional[str] = None, **kwargs) -> str:
     lang_dict = TRANSLATIONS.get(target_lang, {})
     template = lang_dict.get(key)
 
+    if template is None:
+        try:
+            _load_locale_overrides()
+            lang_dict = TRANSLATIONS.get(target_lang, {})
+            template = lang_dict.get(key)
+        except Exception:
+            pass
+
     # Fallback to English
     if template is None:
         template = TRANSLATIONS.get(DEFAULT_LANGUAGE, {}).get(key)
 
-    # Fallback to humanized key
+    # Fallback to caller-provided default or humanized key
     if template is None:
-        template = key.split(".")[-1].replace("_", " ").title()
+        template = fallback_val if fallback_val is not None else key.split(".")[-1].replace("_", " ").title()
+
 
     # Interpolate
     if kwargs:

@@ -123,7 +123,7 @@ class SimulationEngine:
             self.generate_incident(
                 hazard_type=HazardType.BUILDING_FIRE,
                 latitude=16.2798, longitude=80.4568,
-                radius_meters=400.0,
+                radius_meters=850.0,
                 severity=HazardSeverity.CRITICAL,
                 affected_road_name="Tenali - Guntur Highway",
                 description="Structural Fire & Heavy Smoke Plume Crossing Highway"

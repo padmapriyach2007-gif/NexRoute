@@ -139,7 +139,7 @@ def generate_journey_story(
     c3_time = round(max(1.5, total_duration_minutes * 0.25), 1)
     c3_narrative = (
         f"Navigating the junction transitions along {secondary_arterial}, your route makes coordinated turns spanning {c3_dist:.1f} km. "
-        f"The PATHFINDER predictive engine steers you safely around congested bottlenecks and confirmed road hazards, "
+        f"The NEXROUTE predictive engine steers you safely around congested bottlenecks and confirmed road hazards, "
         f"ensuring your travel remains continuous and stress-free."
     )
     c3_spoken = (
@@ -588,6 +588,7 @@ class FriendlyTurnStep:
     spoken_text: str
     accessible_guidance: str = ""
     tactile_crossing_note: str = ""
+    distance_m: float = 150.0
 
 
 def generate_friendly_virtual_guide_turns(
@@ -1052,7 +1053,8 @@ def generate_friendly_virtual_guide_turns(
             icon=icon,
             spoken_text=spoken,
             accessible_guidance=accessible_guidance,
-            tactile_crossing_note=tactile_crossing_note
+            tactile_crossing_note=tactile_crossing_note,
+            distance_m=dist_m
         ))
 
     return friendly_steps
@@ -1599,6 +1601,51 @@ def get_turn_visual_svg(
                 animation: realCheerAction 1.4s ease-in-out infinite !important;
             }}
 
+            /* Real Wave Action Keyframes (Friendly Human Arm & Wrist Greeting) */
+            @keyframes realWaveAction {{
+                0%, 100% {{ transform: translate(340px, 195px) rotate(0deg); }}
+                25% {{ transform: translate(340px, 193px) rotate(3deg); }}
+                75% {{ transform: translate(340px, 193px) rotate(-3deg); }}
+            }}
+            @keyframes realWaveHand {{
+                0%, 100% {{ transform: rotate(0deg); }}
+                25% {{ transform: rotate(28deg); }}
+                75% {{ transform: rotate(-18deg); }}
+            }}
+            .virtual-guide-man-avatar.action-wave {{
+                animation: realWaveAction 1.6s ease-in-out infinite !important;
+            }}
+            .virtual-guide-man-avatar.action-wave .actor-limb-left-arm {{
+                animation: realWaveHand 0.8s ease-in-out infinite !important;
+            }}
+
+            /* Natural Breathing & Lifelike Micro-movements */
+            @keyframes naturalBreathe {{
+                0%, 100% {{ transform: scale(1); }}
+                50% {{ transform: scale(1.02, 1.025); }}
+            }}
+            .virtual-guide-man-avatar .actor-torso-head {{
+                animation: naturalBreathe 3.4s ease-in-out infinite;
+            }}
+
+            /* 3D Level Environmental Lighting Theming */
+            .env-night #skyGrad stop:nth-child(1) {{ stop-color: #030712 !important; }}
+            .env-night #skyGrad stop:nth-child(2) {{ stop-color: #080f24 !important; }}
+            .env-night #skyGrad stop:nth-child(3) {{ stop-color: #0f1d3a !important; }}
+            .env-night #skyGrad stop:nth-child(4) {{ stop-color: #111e3b !important; }}
+            .env-night #skyGrad stop:nth-child(5) {{ stop-color: #0b1528 !important; }}
+            .env-night #skyGrad stop:nth-child(6) {{ stop-color: #030712 !important; }}
+            .env-night .atmospheric-sun {{ opacity: 0 !important; }}
+            .env-night .night-stars-group {{ opacity: 0.95 !important; }}
+
+            .env-day #skyGrad stop:nth-child(1) {{ stop-color: #0284c7 !important; }}
+            .env-day #skyGrad stop:nth-child(2) {{ stop-color: #38bdf8 !important; }}
+            .env-day #skyGrad stop:nth-child(3) {{ stop-color: #7dd3fc !important; }}
+            .env-day #skyGrad stop:nth-child(4) {{ stop-color: #bae6fd !important; }}
+            .env-day #skyGrad stop:nth-child(5) {{ stop-color: #e0f2fe !important; }}
+            .env-day #skyGrad stop:nth-child(6) {{ stop-color: #f0fdf4 !important; }}
+            .env-day .atmospheric-sun {{ transform: translate(490px, 60px) scale(1.1) !important; }}
+
             /* Compatibility Demonstration Keyframes */
             @keyframes demoCrossLeft {{
                 0% {{ transform: translate(340px, 195px) scale(1); }}
@@ -1647,6 +1694,19 @@ def get_turn_visual_svg(
         <circle cx="0" cy="0" r="14" fill="#ffffff" opacity="0.95"/>
         <line x1="-55" y1="-25" x2="55" y2="25" stroke="#fde047" stroke-width="1.2" opacity="0.3"/>
         <line x1="-25" y1="-50" x2="25" y2="50" stroke="#fde047" stroke-width="1.2" opacity="0.3"/>
+    </g>
+
+    <!-- Starry Night Sky Constellations -->
+    <g class="night-stars-group" opacity="0">
+        <circle cx="45" cy="22" r="1.3" fill="#ffffff"/>
+        <circle cx="95" cy="42" r="1.1" fill="#38bdf8"/>
+        <circle cx="160" cy="18" r="1.5" fill="#ffffff"/>
+        <circle cx="230" cy="38" r="1.2" fill="#7dd3fc"/>
+        <circle cx="310" cy="24" r="1.6" fill="#ffffff"/>
+        <circle cx="410" cy="44" r="1.2" fill="#bae6fd"/>
+        <circle cx="520" cy="18" r="1.5" fill="#ffffff"/>
+        <circle cx="620" cy="36" r="1.3" fill="#7dd3fc"/>
+        <circle cx="710" cy="22" r="1.4" fill="#ffffff"/>
     </g>
 
     <!-- Soft Volumetric 3D Clouds with Depth & Highlights -->
@@ -2020,7 +2080,8 @@ def build_virtual_guide_turns_html(
     friendly_turns: List[FriendlyTurnStep],
     origin: str,
     destination: str,
-    travel_mode: str = "Car"
+    travel_mode: str = "Car",
+    lang: Optional[str] = None
 ) -> str:
     """
     Renders the Virtual Man's Interactive Step-by-Step Route Guide HUD.
@@ -2074,7 +2135,7 @@ def build_virtual_guide_turns_html(
                 distance_human="150 m",
                 time_estimate="1 min",
                 spoken_text=f"You have arrived safely at {clean_dest_name}. Excellent journey!",
-                virtual_guide_speech="Hooray! We made it! Thank you for traveling with Pathfinder. Click the buttons below to see me walk, run, or jump!",
+                virtual_guide_speech="Hooray! We made it! Thank you for traveling with NexRoute. Click the buttons below to see me walk, run, or jump!",
                 what_to_look_for="Destination arrival plaza, welcome arch, and verified parking bay.",
                 icon="🏁",
                 accessible_guidance="Step-free ramp entrance directly into the destination plaza.",
@@ -2112,6 +2173,46 @@ def build_virtual_guide_turns_html(
 
     clean_orig = re.sub(r'[📍🏁🧭🚗●🛰️]', '', origin).strip().split(",")[0]
     clean_dest = re.sub(r'[📍🏁🧭🚗●🛰️]', '', destination).strip().split(",")[0]
+
+    try:
+        from src.i18n import t, get_current_language
+        actual_lang = lang or get_current_language()
+    except Exception:
+        actual_lang = lang or "en"
+        def t(k, default="", lang=None): return default
+
+    vg_story_title = t("guide.step_story_title", lang=actual_lang, default="VIRTUAL GUIDE: STEP-BY-STEP FRIENDLY ROUTE STORY")
+    vg_for_traveler = t("guide.for_every_traveler", lang=actual_lang, default="FOR EVERY TRAVELER • LISTEN & FOLLOW")
+    vg_visual_flow = t("guide.visual_picture_flow", lang=actual_lang, default="Visual Picture Flow Process • Simple Pictures • Follow Step-by-Step")
+    vg_view_all = t("guide.view_all_pictures", lang=actual_lang, default="View All Pictures")
+    vg_pipeline_lbl = t("guide.route_journey_pipeline", lang=actual_lang, default="ROUTE JOURNEY PIPELINE")
+    vg_avatar_actions = t("guide.avatar_real_actions", lang=actual_lang, default="AVATAR REAL ACTIONS:")
+    vg_act_walk = t("guide.action_walk", lang=actual_lang, default="Walk")
+    vg_act_run = t("guide.action_run", lang=actual_lang, default="Run")
+    vg_act_turn = t("guide.action_turn", lang=actual_lang, default="Turn")
+    vg_act_jump = t("guide.action_jump", lang=actual_lang, default="Jump")
+    vg_act_cheer = t("guide.action_cheer", lang=actual_lang, default="Cheer")
+    vg_act_wave = t("guide.action_wave", lang=actual_lang, default="Wave")
+    vg_cam_modes = t("guide.cam_modes", lang=actual_lang, default="3D LEVEL CAMERA:")
+    vg_cam_pov = t("guide.cam_pov", lang=actual_lang, default="🎥 Driver POV")
+    vg_cam_drone = t("guide.cam_drone", lang=actual_lang, default="🚁 3D Follow Drone")
+    vg_cam_iso = t("guide.cam_iso", lang=actual_lang, default="🗺️ 3D Isometric Level")
+    vg_env_lighting = t("guide.env_lighting", lang=actual_lang, default="ENVIRONMENT:")
+    vg_env_day = t("guide.env_day", lang=actual_lang, default="☀️ Day")
+    vg_env_sunset = t("guide.env_sunset", lang=actual_lang, default="🌅 Sunset")
+    vg_env_night = t("guide.env_night", lang=actual_lang, default="🌙 Cyber Night")
+    vg_walking_nat = t("guide.walking_naturally", lang=actual_lang, default="Walking naturally along route")
+    vg_speed_lbl = t("guide.telemetry_speed", lang=actual_lang, default="SPEED")
+    vg_heading_lbl = t("guide.telemetry_heading", lang=actual_lang, default="HEADING")
+    vg_corridor_lbl = t("guide.telemetry_corridor", lang=actual_lang, default="ROAD CORRIDOR")
+    vg_remaining_lbl = t("guide.telemetry_remaining", lang=actual_lang, default="REMAINING")
+    vg_status_lbl = t("guide.telemetry_status", lang=actual_lang, default="STATUS")
+    vg_ready_lbl = t("guide.ready_to_follow", lang=actual_lang, default="Ready to Follow")
+    vg_leaving_start = t("guide.leaving_start_point", lang=actual_lang, default="Leaving Start Point")
+    vg_guide_says = t("guide.guide_says", lang=actual_lang, default="YOUR VIRTUAL GUIDE SAYS:")
+    vg_what_to_look = t("guide.what_to_look_for", lang=actual_lang, default="WHAT TO LOOK FOR:")
+    vg_access_title = t("guide.accessibility_title", lang=actual_lang, default="ACCESSIBILITY & CROSSING ASSIST")
+    vg_access_sub = t("guide.accessibility_subtitle", lang=actual_lang, default="Virtual Guide Step-by-Step Disability Guidance")
 
     return f"""
     <style>
@@ -2381,44 +2482,61 @@ def build_virtual_guide_turns_html(
         background: rgba(255, 255, 255, 0.08);
     }}
     .drive-simulate-btn {{
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%) !important;
         color: #ffffff !important;
         font-weight: 800 !important;
-        box-shadow: 0 0 14px rgba(16, 185, 129, 0.45) !important;
-        border: 1px solid rgba(52, 211, 153, 0.5) !important;
+        box-shadow: 0 0 18px rgba(0, 217, 255, 0.50), 0 0 10px rgba(0, 240, 181, 0.40) !important;
+        border: 2px solid #00F0B5 !important;
+        border-radius: 8px !important;
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }}
+    .drive-simulate-btn:hover {{
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.50) 0%, rgba(0, 240, 181, 0.55) 100%) !important;
+        border-color: #00D9FF !important;
+        box-shadow: 0 0 28px rgba(0, 240, 181, 0.70) !important;
+        transform: translateY(-2px) !important;
     }}
     .drive-simulate-btn.driving-active {{
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
-        box-shadow: 0 0 18px rgba(56, 189, 248, 0.65) !important;
-        border-color: #38bdf8 !important;
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.60) 0%, rgba(0, 240, 181, 0.60) 100%) !important;
+        box-shadow: 0 0 26px rgba(0, 217, 255, 0.80), 0 0 14px rgba(0, 240, 181, 0.60) !important;
+        border-color: #00D9FF !important;
     }}
     .guide-speed-pill {{
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #94a3b8;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-size: 0.68rem;
-        font-weight: 800;
-        cursor: pointer;
-        transition: all 0.15s ease;
+        background: linear-gradient(135deg, #0B1B2D 0%, #06111F 100%) !important;
+        border: 1.5px solid rgba(0, 217, 255, 0.35) !important;
+        color: #EAF7FF !important;
+        padding: 4px 10px !important;
+        border-radius: 8px !important;
+        font-size: 0.70rem !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
-    .guide-speed-pill:hover, .guide-speed-pill.active {{
-        background: #0284c7;
-        border-color: #38bdf8;
-        color: #ffffff;
+    .guide-speed-pill:hover {{
+        border-color: #00D9FF !important;
+        background: linear-gradient(135deg, #10263E 0%, #0B1B2D 100%) !important;
+        box-shadow: 0 0 14px rgba(0, 240, 181, 0.40) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+    }}
+    .guide-speed-pill.active {{
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%) !important;
+        border: 1.5px solid #00F0B5 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 16px rgba(0, 217, 255, 0.50), 0 0 8px rgba(0, 240, 181, 0.40) !important;
     }}
     .secondary-btn {{
-        background: rgba(15, 23, 42, 0.7) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        color: #cbd5e1 !important;
+        background: linear-gradient(135deg, #0B1B2D 0%, #06111F 100%) !important;
+        border: 1.5px solid rgba(0, 217, 255, 0.35) !important;
+        color: #EAF7FF !important;
     }}
     .secondary-btn:hover {{
-        background: rgba(30, 41, 59, 0.9) !important;
-        border-color: #38bdf8 !important;
+        background: linear-gradient(135deg, #10263E 0%, #0B1B2D 100%) !important;
+        border-color: #00D9FF !important;
+        box-shadow: 0 0 14px rgba(0, 240, 181, 0.40) !important;
         color: #ffffff !important;
     }}
     .flow-connector-track {{
@@ -2488,7 +2606,13 @@ def build_virtual_guide_turns_html(
         border-radius: 8px;
         padding: 10px 14px;
         margin-top: 8px;
+        min-height: 68px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        transition: min-height 0.2s ease;
     }}
     /* Visual Landmark Radar Clues */
     .landmark-radar-box {{
@@ -2497,6 +2621,12 @@ def build_virtual_guide_turns_html(
         border-radius: 8px;
         padding: 10px 14px;
         margin-top: 8px;
+        min-height: 74px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: min-height 0.2s ease;
     }}
     .landmark-tags-row {{
         display: flex;
@@ -2518,91 +2648,122 @@ def build_virtual_guide_turns_html(
     }}
     /* Action Buttons */
     .guide-btn-action {{
-        background: rgba(56, 189, 248, 0.14);
-        color: #38bdf8;
-        border: 1px solid rgba(56, 189, 248, 0.38);
-        padding: 6px 14px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
+        background: linear-gradient(135deg, #0B1B2D 0%, #06111F 100%) !important;
+        color: #EAF7FF !important;
+        border: 1.5px solid rgba(0, 217, 255, 0.40) !important;
+        padding: 7px 16px !important;
+        border-radius: 8px !important;
+        font-size: 0.76rem !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 8px rgba(0, 217, 255, 0.12) !important;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
     .guide-btn-action:hover {{
-        background: #38bdf8;
-        color: #02132b;
+        background: linear-gradient(135deg, #10263E 0%, #0B1B2D 100%) !important;
+        border-color: #00D9FF !important;
+        color: #ffffff !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), 0 0 16px rgba(0, 240, 181, 0.45) !important;
+        transform: translateY(-2px) !important;
     }}
     .guide-btn-speak {{
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: #ffffff;
-        border: none;
-        padding: 6px 14px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%) !important;
+        color: #ffffff !important;
+        border: 1.5px solid #00F0B5 !important;
+        padding: 7px 16px !important;
+        border-radius: 8px !important;
+        font-size: 0.76rem !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        box-shadow: 0 0 16px rgba(0, 217, 255, 0.45), 0 0 8px rgba(0, 240, 181, 0.35) !important;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        transition: all 0.2s ease;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
     .guide-btn-speak:hover {{
-        background: #059669;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.6);
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.50) 0%, rgba(0, 240, 181, 0.55) 100%) !important;
+        border-color: #00D9FF !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 0 24px rgba(0, 240, 181, 0.65) !important;
     }}
     .guide-btn-replay-pill {{
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%);
-        border: 1px solid #10b981;
-        color: #34d399;
-        border-radius: 999px;
-        padding: 3px 12px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        cursor: pointer;
+        background: linear-gradient(135deg, #0B1B2D 0%, #06111F 100%) !important;
+        border: 1.5px solid #00F0B5 !important;
+        color: #00F0B5 !important;
+        border-radius: 999px !important;
+        padding: 4px 14px !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        transition: all 0.2s ease;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 0 10px rgba(0, 240, 181, 0.25) !important;
     }}
     .guide-btn-replay-pill:hover {{
-        background: #10b981;
-        color: #ffffff;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 18px rgba(0, 240, 181, 0.60) !important;
+        transform: translateY(-1px) !important;
     }}
     /* Interactive Avatar Action Pill Deck */
     .guide-action-pill {{
-        background: rgba(15, 23, 42, 0.85);
-        border: 1.5px solid rgba(56, 189, 248, 0.35);
-        color: #e2e8f0;
-        padding: 5px 13px;
-        border-radius: 8px;
-        font-size: 0.76rem;
-        font-weight: 800;
-        cursor: pointer;
+        background: linear-gradient(135deg, #0B1B2D 0%, #06111F 100%) !important;
+        border: 1.5px solid rgba(0, 217, 255, 0.35) !important;
+        color: #EAF7FF !important;
+        padding: 6px 14px !important;
+        border-radius: 8px !important;
+        font-size: 0.76rem !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45) !important;
     }}
     .guide-action-pill:hover {{
-        background: rgba(56, 189, 248, 0.22);
-        border-color: #38bdf8;
-        color: #ffffff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+        background: linear-gradient(135deg, #10263E 0%, #0B1B2D 100%) !important;
+        border-color: #00D9FF !important;
+        color: #ffffff !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 16px rgba(0, 240, 181, 0.40) !important;
     }}
     .guide-action-pill.active {{
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-        border-color: #38bdf8;
-        color: #ffffff;
-        box-shadow: 0 0 14px rgba(56, 189, 248, 0.65);
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%) !important;
+        border: 1.5px solid #00F0B5 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 20px rgba(0, 217, 255, 0.55), 0 0 10px rgba(0, 240, 181, 0.45) !important;
         transform: scale(1.04);
     }}
+    /* 3D Level Stage & Perspective Controls */
+    .level-3d-stage {{
+        perspective: 1200px;
+        perspective-origin: 50% 50%;
+        margin: 6px 0;
+        cursor: grab;
+    }}
+    .level-3d-stage:active {{
+        cursor: grabbing;
+    }}
+    .level-3d-canvas {{
+        transform-style: preserve-3d;
+        transition: transform 0.20s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+        transform-origin: 50% 70%;
+        will-change: transform;
+    }}
+    .level-3d-canvas.camera-pov {{
+        transform: rotateX(0deg) rotateY(0deg) scale(1);
+    }}
+    .level-3d-canvas.camera-drone {{
+        transform: rotateX(15deg) rotateY(-4deg) scale(0.97) translateY(-6px);
+    }}
+    .level-3d-canvas.camera-iso {{
+        transform: rotateX(24deg) rotateY(-16deg) scale(0.93) translateY(-12px);
+    }}
     </style>
-
     <div class='guide-hud-container'>
         <!-- Virtual Guide Header -->
         <div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;'>
@@ -2613,22 +2774,22 @@ def build_virtual_guide_turns_html(
                 <div>
                     <div style='display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
                         <b style='font-size: 0.98rem; color: #ffffff; letter-spacing: 0.02em;'>
-                            VIRTUAL GUIDE: STEP-BY-STEP FRIENDLY ROUTE STORY
+                            {vg_story_title}
                         </b>
                         <span style='background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;'>
-                            FOR EVERY TRAVELER • LISTEN & FOLLOW
+                            {vg_for_traveler}
                         </span>
                     </div>
                     <div style='display: flex; align-items: center; gap: 10px; margin-top: 3px;'>
                         <span style='font-size: 0.74rem; color: #38bdf8; font-weight: 600;'>
-                            🎨 Visual Picture Flow Process • Simple Pictures • Follow Step-by-Step
+                            🎨 {vg_visual_flow}
                         </span>
                     </div>
                 </div>
             </div>
             <div style='display: flex; align-items: center; gap: 8px;'>
                 <button id='btn-toggle-turns-view' class='guide-btn-action' onclick='toggleTurnsView()'>
-                    🖼️ View All Pictures
+                    🖼️ {vg_view_all}
                 </button>
             </div>
         </div>
@@ -2636,7 +2797,7 @@ def build_virtual_guide_turns_html(
         <!-- Quest Progress Bar -->
         <div class='quest-progress-wrap'>
             <div class='quest-progress-header'>
-                <span>ROUTE JOURNEY PIPELINE</span>
+                <span>{vg_pipeline_lbl}</span>
                 <span id='quest-progress-text'>Turn 1 of {len(friendly_turns)} • 0% Complete</span>
             </div>
             <div class='quest-progress-bar'>
@@ -2667,70 +2828,91 @@ def build_virtual_guide_turns_html(
                 </div>
             </div>
 
-            <!-- The Visual Scene Picture Illustration -->
-            <div id='showcase-visual-svg-container' style='box-shadow: 0 8px 24px rgba(0,0,0,0.5); border-radius: 12px; overflow: hidden; border: 1.5px solid rgba(56, 189, 248, 0.35);'>
-                {turns_data[0]["svg"]}
+            <!-- 3D Level Stage Controls (Camera Modes & Environment Lighting) -->
+            <div class='level-3d-controls-bar' style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 6px 12px;'>
+                <div style='display: flex; align-items: center; gap: 6px; flex-wrap: wrap;'>
+                    <span style='font-size: 0.68rem; color: #38bdf8; font-weight: 800; letter-spacing: 0.04em;'>{vg_cam_modes}</span>
+                    <button id='btn-cam-pov' class='guide-speed-pill active' onclick='setCameraMode("pov")' title='1st Person Driver Dashboard POV'>{vg_cam_pov}</button>
+                    <button id='btn-cam-drone' class='guide-speed-pill' onclick='setCameraMode("drone")' title='Elevated 3D Follow Drone View'>{vg_cam_drone}</button>
+                    <button id='btn-cam-iso' class='guide-speed-pill' onclick='setCameraMode("iso")' title='3D Tactical Isometric Perspective'>{vg_cam_iso}</button>
+                </div>
+                <div style='display: flex; align-items: center; gap: 6px; flex-wrap: wrap;'>
+                    <span style='font-size: 0.68rem; color: #facc15; font-weight: 800; letter-spacing: 0.04em;'>{vg_env_lighting}</span>
+                    <button id='btn-env-day' class='guide-speed-pill' onclick='setEnvironmentMode("day")' title='Bright Daylight Level'>{vg_env_day}</button>
+                    <button id='btn-env-sunset' class='guide-speed-pill active' onclick='setEnvironmentMode("sunset")' title='Golden Hour Sunset Level'>{vg_env_sunset}</button>
+                    <button id='btn-env-night' class='guide-speed-pill' onclick='setEnvironmentMode("night")' title='Cyber Night Starlight Level'>{vg_env_night}</button>
+                </div>
             </div>
 
-            <!-- Interactive Avatar Action Controller Deck (Real Walk, Run, Turn, Jump, Cheer) -->
+            <!-- The Visual Scene Picture Illustration in Interactive 3D Level Stage -->
+            <div id='level-3d-stage' class='level-3d-stage' title='Move mouse or drag to tilt 3D level in real-time'>
+                <div id='showcase-visual-svg-container' class='level-3d-canvas camera-pov env-sunset' style='box-shadow: 0 16px 40px rgba(0,0,0,0.65); border-radius: 14px; overflow: hidden; border: 1.5px solid rgba(56, 189, 248, 0.4);'>
+                    {turns_data[0]["svg"]}
+                </div>
+            </div>
+
+            <!-- Interactive Avatar Action Controller Deck (Real Walk, Run, Turn, Jump, Cheer, Wave) -->
             <div class='avatar-action-deck' style='background: linear-gradient(135deg, rgba(8, 22, 44, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 12px; padding: 10px 16px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 18px rgba(0,0,0,0.45);'>
                 <div style='display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
                     <span style='font-size: 0.72rem; color: #38bdf8; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; display: flex; align-items: center; gap: 5px;'>
-                        <span>🎮</span> AVATAR REAL ACTIONS:
+                        <span>🎮</span> {vg_avatar_actions}
                     </span>
                     <button id='btn-act-walk' class='guide-action-pill active' onclick='triggerAvatarAction("walk")' title='Real Walking Stride with Arm & Leg Swing'>
-                        <span>🚶</span> Walk
+                        <span>🚶</span> {vg_act_walk}
                     </button>
                     <button id='btn-act-run' class='guide-action-pill' onclick='triggerAvatarAction("run")' title='Athletic Sprint with High Knee Lift & Pumping Arms'>
-                        <span>🏃</span> Run
+                        <span>🏃</span> {vg_act_run}
                     </button>
                     <button id='btn-act-turn' class='guide-action-pill' onclick='triggerAvatarAction("turn")' title='Smooth Pivot & Guidance Pointing'>
-                        <span>🔄</span> Turn
+                        <span>🔄</span> {vg_act_turn}
                     </button>
                     <button id='btn-act-jump' class='guide-action-pill' onclick='triggerAvatarAction("jump")' title='High Vertical Leap with Cushioned Elastic Landing'>
-                        <span>⭐</span> Jump
+                        <span>⭐</span> {vg_act_jump}
                     </button>
                     <button id='btn-act-cheer' class='guide-action-pill' onclick='triggerAvatarAction("cheer")' title='Joyful Victory Celebration Hop & Waving Arms'>
-                        <span>🎉</span> Cheer
+                        <span>🎉</span> {vg_act_cheer}
+                    </button>
+                    <button id='btn-act-wave' class='guide-action-pill' onclick='triggerAvatarAction("wave")' title='Turn and Wave Warmly to Traveler'>
+                        <span>👋</span> {vg_act_wave}
                     </button>
                 </div>
                 <div id='action-status-pill' style='font-size: 0.72rem; font-weight: 800; color: #34d399; background: rgba(16, 185, 129, 0.16); border: 1px solid rgba(16, 185, 129, 0.4); padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;'>
-                    <span>🚶</span> <span>Walking naturally along route</span>
+                    <span>🚶</span> <span>{vg_walking_nat}</span>
                 </div>
             </div>
 
             <!-- Real-Time Traveler Experience Telemetry Strip -->
             <div class='traveler-experience-strip'>
                 <div class='traveler-telemetry-item'>
-                    <span class='telemetry-label'>🚗 SPEED</span>
+                    <span class='telemetry-label'>🚗 {vg_speed_lbl}</span>
                     <span id='exp-speed' class='telemetry-value' style='color: #38bdf8;'>30 km/h</span>
                 </div>
                 <div class='telemetry-divider'></div>
                 <div class='traveler-telemetry-item'>
-                    <span class='telemetry-label'>🧭 HEADING</span>
-                    <span id='exp-heading' class='telemetry-value' style='color: #34d399;'>Leaving Start Point</span>
+                    <span class='telemetry-label'>🧭 {vg_heading_lbl}</span>
+                    <span id='exp-heading' class='telemetry-value' style='color: #34d399;'>{vg_leaving_start}</span>
                 </div>
                 <div class='telemetry-divider'></div>
                 <div class='traveler-telemetry-item'>
-                    <span class='telemetry-label'>🛣️ ROAD CORRIDOR</span>
+                    <span class='telemetry-label'>🛣️ {vg_corridor_lbl}</span>
                     <span id='showcase-turn-road' class='telemetry-value' style='color: #f1f5f9; max-width: 220px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'>{friendly_turns[0].road_name}</span>
                 </div>
                 <div class='telemetry-divider'></div>
                 <div class='traveler-telemetry-item'>
-                    <span class='telemetry-label'>🏁 REMAINING</span>
+                    <span class='telemetry-label'>🏁 {vg_remaining_lbl}</span>
                     <span id='exp-remaining' class='telemetry-value' style='color: #fbbf24;'>{len(friendly_turns) - 1} steps</span>
                 </div>
                 <div class='telemetry-divider'></div>
                 <div class='traveler-telemetry-item'>
-                    <span class='telemetry-label'>⚡ STATUS</span>
-                    <span id='exp-status' class='telemetry-value' style='color: #34d399;'>● Ready to Follow</span>
+                    <span class='telemetry-label'>⚡ {vg_status_lbl}</span>
+                    <span id='exp-status' class='telemetry-value' style='color: #34d399;'>● {vg_ready_lbl}</span>
                 </div>
             </div>
 
             <!-- Simple, Short Guidance Balloon -->
             <div class='guide-speech-balloon' style='margin-top: 10px;'>
                 <div style='font-size: 0.72rem; color: #34d399; font-weight: 800; display: flex; align-items: center; gap: 6px;'>
-                    <span>👨‍✈️</span> <span>YOUR VIRTUAL GUIDE SAYS:</span>
+                    <span>👨‍✈️</span> <span>{vg_guide_says}</span>
                 </div>
                 <div id='showcase-turn-speech' style='color: #f1f5f9; font-size: 0.88rem; line-height: 1.45; margin-top: 4px; font-weight: 600;'>
                     "{friendly_turns[0].virtual_guide_speech}"
@@ -2740,7 +2922,7 @@ def build_virtual_guide_turns_html(
             <!-- Visual Landmark Clues -->
             <div class='landmark-radar-box' style='margin-top: 8px;'>
                 <div style='font-size: 0.72rem; color: #38bdf8; font-weight: 800; display: flex; align-items: center; gap: 6px;'>
-                    <span>👀</span> <span>WHAT TO LOOK FOR:</span>
+                    <span>👀</span> <span>{vg_what_to_look}</span>
                 </div>
                 <div id='showcase-landmark-chips' class='landmark-tags-row'>
                     <!-- Populated via JS -->
@@ -2755,14 +2937,14 @@ def build_virtual_guide_turns_html(
                 <div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
                     <div style='display: flex; align-items: center; gap: 8px;'>
                         <span style='background: #0284c7; color: #ffffff; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 800;'>
-                            ♿ ACCESSIBILITY & CROSSING ASSIST
+                            ♿ {vg_access_title}
                         </span>
                         <span style='font-size: 0.74rem; color: #34d399; font-weight: 700;'>
-                            Virtual Guide Step-by-Step Disability Guidance
+                            {vg_access_sub}
                         </span>
                     </div>
                     <!-- Demonstration Trigger Button -->
-                    <button id='btn-demo-movement' class='guide-btn-action' style='background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border: 1px solid #38bdf8; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);' onclick='animateVirtualGuideDemonstration()' title='Watch Virtual Man demonstrate crossing and turn'>
+                    <button id='btn-demo-movement' class='guide-btn-action' style='background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%); color: #ffffff; border: 1.5px solid #00F0B5; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 16px rgba(0, 217, 255, 0.4);' onclick='animateVirtualGuideDemonstration()' title='Watch Virtual Man demonstrate crossing and turn'>
                         <span>🚶‍♂️▶️</span> <span id='btn-demo-movement-text'>Move Virtual Guide: Turn & Cross</span>
                     </button>
                 </div>
@@ -2814,7 +2996,7 @@ def build_virtual_guide_turns_html(
                     <button id='btn-auto-drive' class='guide-btn-action drive-simulate-btn' onclick='toggleAutoDrive()' title='Autoplay Travel Simulation'>
                         <span>▶</span><span>Experience Drive</span>
                     </button>
-                    <button class='guide-btn-action' style='background: #0284c7; color: #ffffff;' onclick='nextTurn()' title='Next Step'>
+                    <button class='guide-btn-action' style='background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%); border: 1.5px solid #00F0B5; color: #ffffff; box-shadow: 0 0 16px rgba(0, 217, 255, 0.4);' onclick='nextTurn()' title='Next Step'>
                         Next ▶
                     </button>
                     <button class='guide-btn-action secondary-btn' onclick='selectTurnStep(TOTAL_TURNS - 1, true)' title='Jump to Destination'>
@@ -2907,12 +3089,89 @@ def build_virtual_guide_turns_html(
         }}
 
         let currentAvatarAction = 'walk';
+        let activeCam = 'pov';
+        let activeEnv = 'sunset';
+
+        function getBaseCameraAngles() {{
+            if (activeCam === 'drone') return {{ rx: 15, ry: -4, sc: 0.97, ty: -6 }};
+            if (activeCam === 'iso') return {{ rx: 24, ry: -16, sc: 0.93, ty: -12 }};
+            return {{ rx: 0, ry: 0, sc: 1, ty: 0 }};
+        }}
+
+        function apply3DTransform(offsetX, offsetY) {{
+            const canvas = document.getElementById('showcase-visual-svg-container');
+            if (!canvas) return;
+            const base = getBaseCameraAngles();
+            const tiltX = base.rx - (offsetY * 14);
+            const tiltY = base.ry + (offsetX * 16);
+            canvas.style.transform = `rotateX(${{tiltX.toFixed(2)}}deg) rotateY(${{tiltY.toFixed(2)}}deg) scale(${{base.sc}}) translateY(${{base.ty}}px)`;
+        }}
+
+        window.setCameraMode = function(mode) {{
+            activeCam = mode;
+            ['pov', 'drone', 'iso'].forEach(m => {{
+                const btn = document.getElementById('btn-cam-' + m);
+                if (btn) {{
+                    if (m === mode) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }}
+            }});
+            const canvas = document.getElementById('showcase-visual-svg-container');
+            if (canvas) {{
+                canvas.classList.remove('camera-pov', 'camera-drone', 'camera-iso');
+                canvas.classList.add('camera-' + mode);
+                const base = getBaseCameraAngles();
+                canvas.style.transform = `rotateX(${{base.rx}}deg) rotateY(${{base.ry}}deg) scale(${{base.sc}}) translateY(${{base.ty}}px)`;
+            }}
+        }};
+
+        window.setEnvironmentMode = function(env) {{
+            activeEnv = env;
+            ['day', 'sunset', 'night'].forEach(e => {{
+                const btn = document.getElementById('btn-env-' + e);
+                if (btn) {{
+                    if (e === env) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }}
+            }});
+            const canvas = document.getElementById('showcase-visual-svg-container');
+            if (canvas) {{
+                canvas.classList.remove('env-day', 'env-sunset', 'env-night');
+                canvas.classList.add('env-' + env);
+            }}
+        }};
+
+        const stageEl = document.getElementById('level-3d-stage');
+        if (stageEl) {{
+            stageEl.addEventListener('mousemove', function(e) {{
+                const rect = stageEl.getBoundingClientRect();
+                const offsetX = (e.clientX - rect.left) / rect.width - 0.5;
+                const offsetY = (e.clientY - rect.top) / rect.height - 0.5;
+                apply3DTransform(offsetX, offsetY);
+            }});
+            stageEl.addEventListener('mouseleave', function() {{
+                const canvas = document.getElementById('showcase-visual-svg-container');
+                if (canvas) {{
+                    const base = getBaseCameraAngles();
+                    canvas.style.transform = `rotateX(${{base.rx}}deg) rotateY(${{base.ry}}deg) scale(${{base.sc}}) translateY(${{base.ty}}px)`;
+                }}
+            }});
+            stageEl.addEventListener('touchmove', function(e) {{
+                if (e.touches && e.touches[0]) {{
+                    const rect = stageEl.getBoundingClientRect();
+                    const offsetX = (e.touches[0].clientX - rect.left) / rect.width - 0.5;
+                    const offsetY = (e.touches[0].clientY - rect.top) / rect.height - 0.5;
+                    apply3DTransform(offsetX, offsetY);
+                }}
+            }}, {{ passive: true }});
+        }}
+
         window.triggerAvatarAction = function(action) {{
             currentAvatarAction = action;
             const actor = document.getElementById('virtual-guide-actor');
             const statusPill = document.getElementById('action-status-pill');
             
-            ['walk', 'run', 'turn', 'jump', 'cheer'].forEach(a => {{
+            ['walk', 'run', 'turn', 'jump', 'cheer', 'wave'].forEach(a => {{
                 const btn = document.getElementById('btn-act-' + a);
                 if (btn) {{
                     if (a === action) btn.classList.add('active');
@@ -2921,7 +3180,7 @@ def build_virtual_guide_turns_html(
             }});
 
             if (actor) {{
-                actor.classList.remove('action-walk', 'action-run', 'action-turn', 'action-jump', 'action-cheer');
+                actor.classList.remove('action-walk', 'action-run', 'action-turn', 'action-jump', 'action-cheer', 'action-wave');
                 actor.classList.add('action-' + action);
             }}
 
@@ -2936,6 +3195,8 @@ def build_virtual_guide_turns_html(
                     statusPill.innerHTML = '<span>⭐</span> <span style="color: #f43f5e;">High vertical leap & soft landing!</span>';
                 }} else if (action === 'cheer') {{
                     statusPill.innerHTML = '<span>🎉</span> <span style="color: #a855f7;">Celebrating safe destination arrival!</span>';
+                }} else if (action === 'wave') {{
+                    statusPill.innerHTML = '<span>👋</span> <span style="color: #38bdf8;">Waving and greeting traveler warmly!</span>';
                 }}
             }}
         }};
@@ -3163,7 +3424,13 @@ def build_virtual_guide_turns_html(
             const instrEl = document.getElementById('showcase-simple-instr');
             if (instrEl) instrEl.innerText = t.simple_instruction;
             const svgEl = document.getElementById('showcase-visual-svg-container');
-            if (svgEl) svgEl.innerHTML = t.svg;
+            if (svgEl) {{
+                svgEl.innerHTML = t.svg;
+                svgEl.classList.remove('camera-pov', 'camera-drone', 'camera-iso', 'env-day', 'env-sunset', 'env-night');
+                svgEl.classList.add('camera-' + activeCam, 'env-' + activeEnv);
+                const base = getBaseCameraAngles();
+                svgEl.style.transform = `rotateX(${{base.rx}}deg) rotateY(${{base.ry}}deg) scale(${{base.sc}}) translateY(${{base.ty}}px)`;
+            }}
             const distEl = document.getElementById('showcase-turn-dist');
             if (distEl) distEl.innerText = `📏 ${{t.dist}}`;
             const timeEl = document.getElementById('showcase-turn-time');

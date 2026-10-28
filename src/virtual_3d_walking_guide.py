@@ -1185,6 +1185,9 @@ def build_3d_walking_guide_html(
         let gaitPhase = 0.0;
         let jumpStartTime = -1;
         const JUMP_DURATION_MS = 650;
+        let animFrameId = null;
+        let fallbackAnimId = null;
+        const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         window.triggerCuteHop = function() {{
             const nowTime = performance.now();
@@ -1243,27 +1246,34 @@ def build_3d_walking_guide_html(
 
             try {{
                 scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x060d1a);
-                scene.fog = new THREE.FogExp2(0x060d1a, 0.008);
+                scene.background = new THREE.Color(0x38bdf8);
+                scene.fog = new THREE.FogExp2(0xc7d2fe, 0.0065);
 
                 const width = container.clientWidth || 800;
                 const height = container.clientHeight || 480;
 
                 camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 1000);
-                renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: true }});
+                renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: true, powerPreference: "high-performance" }});
                 renderer.setSize(width, height);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 container.appendChild(renderer.domElement);
 
-                // Lighting
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                // Natural Atmosphere & Lighting
+                const hemiLight = new THREE.HemisphereLight(0x7dd3fc, 0x15803d, 0.85);
+                scene.add(hemiLight);
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
                 scene.add(ambientLight);
 
-                const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
-                dirLight.position.set(30, 60, 40);
+                const dirLight = new THREE.DirectionalLight(0xfffaed, 1.3);
+                dirLight.position.set(35, 65, 45);
                 dirLight.castShadow = true;
                 scene.add(dirLight);
+
+                // Build Realistic Scenery (Sky Dome, Clouds, Grass Terrain, Trees)
+                buildRealisticLandscape();
 
                 // Build 3D Road along Route Spline
                 build3DRoad();
@@ -1277,7 +1287,8 @@ def build_3d_walking_guide_html(
                 isThreeJsReady = true;
 
                 window.addEventListener('resize', onWindowResize);
-                requestAnimationFrame(animationLoop);
+                document.addEventListener('visibilitychange', onVisibilityChange);
+                animFrameId = requestAnimationFrame(animationLoop);
             }} catch (err) {{
                 console.warn("WebGL initialization failed, falling back to 2D:", err);
                 init2DFallback();
@@ -1317,7 +1328,7 @@ def build_3d_walking_guide_html(
 
             // Sidewalk Curbs along Road
             const curbLeftGeo = new THREE.TubeGeometry(spline, PATH_POINTS.length * 2, 0.35, 6, false);
-            const curbMat = new THREE.MeshStandardMaterial({{ color: 0x475569, roughness: 0.9 }});
+            const curbMat = new THREE.MeshStandardMaterial({{ color: 0x94a3b8, roughness: 0.8 }});
             const curbLeft = new THREE.Mesh(curbLeftGeo, curbMat);
             curbLeft.position.set(-2.6, 0.15, 0);
             scene.add(curbLeft);
@@ -1335,6 +1346,100 @@ def build_3d_walking_guide_html(
                     }}
                 }}
             }});
+        }}
+
+        // Build Realistic Outdoor Landscape (Sky Dome, Sun, Ground Lawn, Foliage)
+        function buildRealisticLandscape() {{
+            function makeSkyTex(topHex, midHex, botHex) {{
+                const sc = document.createElement('canvas');
+                sc.width = 128; sc.height = 256;
+                const sctx = sc.getContext('2d');
+                const grad = sctx.createLinearGradient(0, 0, 0, 256);
+                grad.addColorStop(0.0, topHex);
+                grad.addColorStop(0.55, midHex);
+                grad.addColorStop(1.0, botHex);
+                sctx.fillStyle = grad;
+                sctx.fillRect(0, 0, 128, 256);
+                const tex = new THREE.CanvasTexture(sc);
+                tex.generateMipmaps = false;
+                tex.minFilter = THREE.LinearFilter;
+                return tex;
+            }}
+
+            const skyGeo = new THREE.SphereGeometry(320, 32, 16);
+            const skyMat = new THREE.MeshBasicMaterial({{
+                map: makeSkyTex('#1d4ed8', '#38bdf8', '#e0f2fe'),
+                side: THREE.BackSide
+            }});
+            const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+            scene.add(skyMesh);
+
+            // Sun
+            const sunGeo = new THREE.CircleGeometry(8.0, 24);
+            const sunMat = new THREE.MeshBasicMaterial({{ color: 0xfffae0, side: THREE.DoubleSide }});
+            const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+            sunMesh.position.set(50, 80, 140);
+            sunMesh.lookAt(0, 0, 0);
+            scene.add(sunMesh);
+
+            // Grass Ground Plane
+            function makeGrassTex() {{
+                const gc = document.createElement('canvas');
+                gc.width = 256; gc.height = 256;
+                const gctx = gc.getContext('2d');
+                gctx.fillStyle = '#2d6a2e';
+                gctx.fillRect(0, 0, 256, 256);
+                for (let i = 0; i < 600; i++) {{
+                    const gx = Math.random() * 256;
+                    const gy = Math.random() * 256;
+                    gctx.fillStyle = Math.random() > 0.5 ? 'rgba(54, 138, 56, 0.45)' : 'rgba(28, 77, 30, 0.45)';
+                    gctx.beginPath();
+                    gctx.arc(gx, gy, 2 + Math.random() * 4, 0, Math.PI * 2);
+                    gctx.fill();
+                }}
+                const tex = new THREE.CanvasTexture(gc);
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(40, 40);
+                return tex;
+            }}
+
+            const groundGeo = new THREE.PlaneGeometry(500, 500, 16, 16);
+            const groundMat = new THREE.MeshStandardMaterial({{
+                map: makeGrassTex(),
+                roughness: 0.95,
+                metalness: 0.05
+            }});
+            const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.position.y = -0.06;
+            groundMesh.receiveShadow = true;
+            scene.add(groundMesh);
+
+            // Roadside Trees along PATH_POINTS
+            if (PATH_POINTS && PATH_POINTS.length >= 2) {{
+                const trunkMat = new THREE.MeshStandardMaterial({{ color: 0x4a2e18, roughness: 0.9 }});
+                const greenMats = [
+                    new THREE.MeshStandardMaterial({{ color: 0x15803d, roughness: 0.82 }}),
+                    new THREE.MeshStandardMaterial({{ color: 0x16a34a, roughness: 0.85 }}),
+                    new THREE.MeshStandardMaterial({{ color: 0x14532d, roughness: 0.90 }})
+                ];
+                for (let i = 0; i < PATH_POINTS.length; i += 3) {{
+                    const pt = PATH_POINTS[i];
+                    [-6.5, 6.5].forEach((offset, sIdx) => {{
+                        const tree = new THREE.Group();
+                        tree.position.set(pt.x + offset + (Math.random() - 0.5) * 2, 0, pt.z + (Math.random() - 0.5) * 2);
+                        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.22, 2.0, 8), trunkMat);
+                        trunk.position.y = 1.0;
+                        tree.add(trunk);
+                        const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(1.5, 1), greenMats[(i + sIdx) % greenMats.length]);
+                        crown.position.y = 2.8;
+                        crown.castShadow = true;
+                        tree.add(crown);
+                        scene.add(tree);
+                    }});
+                }}
+            }}
         }}
 
         function buildZebraCrossing(x, y, z, bearing) {{
@@ -1821,7 +1926,20 @@ def build_3d_walking_guide_html(
 
         // Main Animation Loop
         function animationLoop(timestamp) {{
-            requestAnimationFrame(animationLoop);
+            const root = document.getElementById('walking-guide-3d-root');
+            if (!root || !root.isConnected) {{
+                // DOM node unmounted/re-rendered: perform full resource cleanup
+                cleanupThreeScene();
+                return;
+            }}
+
+            if (document.hidden) {{
+                // Pause animation loop while tab is hidden to prevent CPU/GPU drain
+                animFrameId = null;
+                return;
+            }}
+
+            animFrameId = requestAnimationFrame(animationLoop);
 
             const dt = Math.min((timestamp - lastTimestamp) / 1000.0, 0.1);
             lastTimestamp = timestamp;
@@ -2122,6 +2240,16 @@ def build_3d_walking_guide_html(
             const ctx = canvas.getContext('2d');
 
             function render2D() {{
+                const root = document.getElementById('walking-guide-3d-root');
+                if (!root || !root.isConnected) return;
+
+                if (document.hidden) {{
+                    fallbackAnimId = null;
+                    return;
+                }}
+
+                fallbackAnimId = requestAnimationFrame(render2D);
+
                 canvas.width = canvas.clientWidth || 800;
                 canvas.height = canvas.clientHeight || 480;
 
@@ -2147,10 +2275,53 @@ def build_3d_walking_guide_html(
                 // Guide avatar 2D
                 ctx.font = '54px Outfit, sans-serif';
                 ctx.fillText('🚶‍♂️', canvas.width * 0.5, canvas.height * 0.85);
-
-                requestAnimationFrame(render2D);
             }}
-            render2D();
+
+            fallbackAnimId = requestAnimationFrame(render2D);
+
+            document.addEventListener('visibilitychange', function() {{
+                if (!document.hidden && !fallbackAnimId) {{
+                    fallbackAnimId = requestAnimationFrame(render2D);
+                }}
+            }});
+        }}
+
+        function onVisibilityChange() {{
+            if (!document.hidden && !animFrameId) {{
+                lastTimestamp = performance.now();
+                animFrameId = requestAnimationFrame(animationLoop);
+            }}
+        }}
+
+        function cleanupThreeScene() {{
+            if (animFrameId) {{
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }}
+            window.removeEventListener('resize', onWindowResize);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+
+            if (renderer) {{
+                renderer.dispose();
+                if (renderer.domElement && renderer.domElement.parentNode) {{
+                    renderer.domElement.parentNode.removeChild(renderer.domElement);
+                }}
+            }}
+
+            if (scene) {{
+                scene.traverse(function(obj) {{
+                    if (obj.geometry) {{
+                        obj.geometry.dispose();
+                    }}
+                    if (obj.material) {{
+                        if (Array.isArray(obj.material)) {{
+                            obj.material.forEach(m => m.dispose());
+                        }} else {{
+                            obj.material.dispose();
+                        }}
+                    }}
+                }});
+            }}
         }}
 
         function onWindowResize() {{

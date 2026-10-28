@@ -1,5 +1,5 @@
 """
-A.U.R.A. — Autonomous Conversational Copilot Engine
+Pathfinder — Autonomous Conversational Copilot Engine
 Adaptive User Route Assistant for P.A.T.H.F.I.N.D.E.R.
 (Predictive Adaptive Transit & Hazard-Free Intelligent Navigation)
 
@@ -19,19 +19,19 @@ from src.ai_assistant_engine import (
     BuiltinCognitiveEngine,
     ConversationManager,
     GroundingEngine,
-    AURA_CORE_SYSTEM_PROMPT
+    PATHFINDER_TRAVEL_SYSTEM_PROMPT
 )
 from src.pathfinder_tools import PathfinderToolExecutor, TOOL_SCHEMAS
 
 logger = logging.getLogger("pathfinder.aura")
 
-# Complete system instructions for A.U.R.A.
-AURA_SYSTEM_PROMPT = AURA_CORE_SYSTEM_PROMPT
+# Complete system instructions for Pathfinder
+PATHFINDER_SYSTEM_PROMPT = PATHFINDER_TRAVEL_SYSTEM_PROMPT
 
 
 class PathfinderChatbot:
     """
-    A.U.R.A. — Adaptive User Route Assistant
+    Pathfinder — Adaptive User Route Assistant
     Intelligent Conversational Assistant for P.A.T.H.F.I.N.D.E.R.
     """
 
@@ -68,11 +68,10 @@ class PathfinderChatbot:
         raw_query = user_query.strip()
         if not raw_query:
             return {
-                "badge": "⚡ A.U.R.A. READY",
+                "badge": "🤖 A.U.R.A. READY",
                 "response": (
-                    "Hello! I am **A.U.R.A.**, your **Adaptive User Route Assistant** for P.A.T.H.F.I.N.D.E.R. "
-                    "I can answer ordinary general knowledge questions, write stories or code, explain concepts, "
-                    "or calculate live hazard-free navigation routes. What would you like to explore today?"
+                    "Hello! I am **A.U.R.A.** (*Adaptive User Route Assistant*), your intelligent travel and navigation companion for **NexRoute**\n\n"
+                    "How can I help you today? Ask me anything about your route, avoiding tolls, highways or ferries, the digital speedometer, hazard alerts, travel packing tips, or general everyday questions!"
                 )
             }
 
@@ -119,47 +118,27 @@ class PathfinderChatbot:
                 "badge": "🛡️ SYSTEM SECURITY PROTOCOL",
                 "response": (
                     "**Request Blocked by Security Protocol.**\n\n"
-                    "I am **A.U.R.A.**, an AI assistant governed by strict data safety and privacy policies. "
+                    "I am **NexRoute AI**, an intelligent assistant governed by strict data safety and privacy policies. "
                     "System instructions, API credentials, and internal prompts are strictly confidential "
                     "and cannot be disclosed, altered, or overridden. How can I assist you with an educational, "
                     "coding, creative, or navigation inquiry?"
                 )
             }
 
-        # ---------------------------------------------------------------------
-        # 2. PATHFINDER CAPABILITIES & ARCHITECTURE INQUIRY
-        # ---------------------------------------------------------------------
-        if any(w in q for w in ["what can pathfinder actually do", "what can pathfinder do", "what are your capabilities", "tell me what pathfinder can do"]):
-            return {
-                "badge": "🧭 PATHFINDER SYSTEM OVERVIEW",
-                "response": (
-                    "### 🧭 What PATHFINDER Can Actually Do\n\n"
-                    "PATHFINDER (*Predictive Adaptive Transit & Hazard-Free Intelligent Navigation*) is an intelligent navigation platform designed with a clear distinction between implemented features and external capabilities:\n\n"
-                    "#### ✅ Implemented & Verified Features:\n"
-                    "• **Dynamic Multi-Objective Route Optimization:** Generates distinct routes mathematically tailored to your priority: **Fastest** (velocity priority), **Shortest** (geodesic mileage minimization), **Balanced** (Pareto equilibrium), and **Accessible** (step-free, ramp-prioritized, wheelchair-friendly).\n"
-                    "• **Live Obstacle & Road Closure Evasion:** Automatically senses active road restrictions (such as the NH-16 bypass closure) and reroutes traffic with zero manual intervention.\n"
-                    "• **Interactive Map & Polyline Synchronization:** Fully synchronized Leaflet/Folium map with clickable route cards, layer toggling (Satellite, Road, Terrain), and camera auto-fit bounds.\n"
-                    "• **Real-Time Atmospheric Weather:** Connects directly to the Open-Meteo meteorological API for live temperature, humidity, and wind conditions at any origin or destination.\n"
-                    "• **Nearby Amenity Discovery:** Real-time search for dining, lodging, fuel, and medical care around coordinates.\n"
-                    "• **A.U.R.A. Conversational Copilot:** Dual-purpose assistant supporting general knowledge, coding, writing, and direct map navigation actions.\n\n"
-                    "#### 📋 Planned / External Features (Honest Scope):\n"
-                    "• Direct CAN-bus vehicle autonomous steering (requires physical drive-by-wire hardware).\n"
-                    "• Real-time commercial satellite video telemetry (requires dedicated defense/commercial satellite feeds)."
-                )
-            }
+
 
         # ---------------------------------------------------------------------
         # 3. LANGUAGE DETECTION & MULTILINGUAL SUPPORT
         # ---------------------------------------------------------------------
         app_lang = (ctx.get("language") or "en").lower().strip()
 
-        is_telugu = (app_lang == "te") or bool(re.search(r"[\u0c00-\u0c7f]", raw_query)) or any(w in q for w in ["namaskaram", "ela unnav", "dharilo", "margam", "telugu lo"])
-        is_hindi = (app_lang == "hi") or bool(re.search(r"[\u0900-\u097f]", raw_query) and not any(w in q for w in ["marathi", "marathit"])) or any(w in q for w in ["namaste", "kaise ho", "rasta", "hindi me"])
-        is_tamil = (app_lang == "ta") or bool(re.search(r"[\u0b80-\u0bff]", raw_query)) or any(w in q for w in ["vanakkam", "eppadi irukinga", "vazhi", "tamilil", "tamil"])
-        is_kannada = (app_lang == "kn") or bool(re.search(r"[\u0c80-\u0cff]", raw_query)) or any(w in q for w in ["namaskara", "hegidira", "daari", "kannadadalli", "kannada"])
-        is_malayalam = (app_lang == "ml") or bool(re.search(r"[\u0d00-\u0d7f]", raw_query)) or any(w in q for w in ["namaskaram", "sugamano", "vazhi", "malayalam"])
-        is_bengali = (app_lang == "bn") or bool(re.search(r"[\u0980-\u09ff]", raw_query)) or any(w in q for w in ["nomoshkar", "kemon acho", "rasta", "banglay", "bengali"])
-        is_marathi = (app_lang == "mr") or any(w in q for w in ["namaskar", "kasa kay", "rasta", "marathit", "marathi"])
+        is_telugu = (app_lang == "te") or bool(re.search(r"[\u0c00-\u0c7f]", raw_query)) or any(w in q for w in ["ela unnav", "dharilo", "margam", "telugu lo"])
+        is_hindi = (app_lang == "hi") or bool(re.search(r"[\u0900-\u097f]", raw_query) and not any(w in q for w in ["marathi", "marathit"])) or any(w in q for w in ["kaise ho", "rasta", "hindi me"])
+        is_tamil = (app_lang == "ta") or bool(re.search(r"[\u0b80-\u0bff]", raw_query)) or any(w in q for w in ["eppadi irukinga", "vazhi", "tamilil", "tamil"])
+        is_kannada = (app_lang == "kn") or bool(re.search(r"[\u0c80-\u0cff]", raw_query)) or any(w in q for w in ["hegidira", "daari", "kannadadalli", "kannada"])
+        is_malayalam = (app_lang == "ml") or bool(re.search(r"[\u0d00-\u0d7f]", raw_query)) or any(w in q for w in ["sugamano", "vazhi", "malayalam"])
+        is_bengali = (app_lang == "bn") or bool(re.search(r"[\u0980-\u09ff]", raw_query)) or any(w in q for w in ["kemon acho", "rasta", "banglay", "bengali"])
+        is_marathi = (app_lang == "mr") or any(w in q for w in ["kasa kay", "rasta", "marathit", "marathi"])
 
         active_lang = "en"
         if is_telugu:
@@ -217,6 +196,11 @@ class PathfinderChatbot:
         if journey_res is not None:
             return journey_res
 
+        # E2) Live Multi-User Convoy & Location Sharing Inquiries
+        convoy_res = self._handle_convoy_intent(raw_query, q, ctx, language=active_lang)
+        if convoy_res is not None:
+            return convoy_res
+
         # F) Grounding Tools: Nearby Places & Real Weather
         places_res = self._handle_nearby_places(raw_query, q, ctx)
         if places_res is not None:
@@ -232,8 +216,26 @@ class PathfinderChatbot:
             return global_res
 
         # ---------------------------------------------------------------------
+        # 5B. APPLICATION KNOWLEDGE & FEATURE EXPLANATION (P.A.T.H.F.I.N.D.E.R. / A.U.R.A.)
+        # ---------------------------------------------------------------------
+        app_res = self._handle_app_knowledge(raw_query, q, ctx)
+        if app_res is not None:
+            return app_res
+
+        # ---------------------------------------------------------------------
+        # 5C. TRAVEL KNOWLEDGE & ADVICE (BASIC TO ADVANCED)
+        # ---------------------------------------------------------------------
+        travel_res = self._handle_travel_qa(raw_query, q, ctx)
+        if travel_res is not None:
+            return travel_res
+
+        # ---------------------------------------------------------------------
         # 6. CONTEXTUAL MULTILINGUAL GREETINGS & INTRODUCTIONS
         # ---------------------------------------------------------------------
+        greet_res = self._handle_greetings_and_general(raw_query, q, ctx, language=active_lang)
+        if greet_res is not None:
+            return greet_res
+
         is_greeting_or_intro = any(w in q for w in [
             "hello", "hi", "hey", "who are you", "who r u", "help me", "what can you do", "introduce yourself"
         ])
@@ -267,17 +269,17 @@ class PathfinderChatbot:
             p_name = self.llm_client.active_provider_name
             if p_name != "builtin":
                 return {
-                    "badge": f"⚡ A.U.R.A. • {p_name.upper()}",
+                    "badge": f"🧭 NEXROUTE • {p_name.upper()}",
                     "response": (
                         f"**External AI Provider Active:** I am currently connected via **{p_name.title()}** "
-                        f"for general-purpose natural language reasoning, paired with PATHFINDER's real routing and GIS engine."
+                        f"for general-purpose natural language reasoning, paired with NexRoute's real routing and GIS engine."
                     )
                 }
             else:
                 return {
-                    "badge": "⚡ A.U.R.A. • COGNITIVE ENGINE",
+                    "badge": "🧭 NEXROUTE • COGNITIVE ENGINE",
                     "response": (
-                        "**AI Status:** I am currently operating on PATHFINDER's **Built-in Cognitive Reasoning Engine**.\n\n"
+                        "**AI Status:** I am currently operating on NexRoute's **Built-in Cognitive Reasoning Engine**.\n\n"
                         "To connect a commercial LLM, configure one of the following environment variables on your server:\n"
                         "• `GEMINI_API_KEY` or `GOOGLE_API_KEY` (Google Gemini)\n"
                         "• `OPENAI_API_KEY` (OpenAI GPT-4o-mini)\n"
@@ -299,25 +301,25 @@ class PathfinderChatbot:
                 "bn": "The user's preferred language is Bengali (বাংলা). Please reply naturally and fluently in Bengali script.",
                 "mr": "The user's preferred language is Marathi (मराठी). Please reply naturally and fluently in Marathi script."
             }
-            system_prompt = AURA_CORE_SYSTEM_PROMPT
+            system_prompt = PATHFINDER_TRAVEL_SYSTEM_PROMPT
             if lang_code in lang_prompts:
                 system_prompt += f"\n\nLANGUAGE INSTRUCTION: {lang_prompts[lang_code]}"
             llm_msgs = self.conv_manager.get_messages_for_llm() + [{"role": "user", "content": raw_query}]
             llm_out, provider_label = self.llm_client.generate(llm_msgs, system_prompt=system_prompt)
             if llm_out:
                 return {
-                    "badge": f"⚡ A.U.R.A. • {provider_label.upper()}",
+                    "badge": f"🧭 NEXROUTE • {provider_label.upper()}",
                     "response": llm_out
                 }
             else:
                 err_cat = self.llm_client.last_error_category or "API_ERROR"
                 err_prefix = ""
                 if err_cat == "AUTH_ERROR":
-                    err_prefix = "*(⚠️ Notice: AI Provider Authentication Error. The configured API key is invalid or unauthorized. Operating via A.U.R.A. Cognitive Engine.)*\n\n"
+                    err_prefix = "*(⚠️ Notice: AI Provider Authentication Error. The configured API key is invalid or unauthorized. Operating via NexRoute Cognitive Engine.)*\n\n"
                 elif err_cat == "RATE_LIMIT_ERROR":
-                    err_prefix = "*(⚠️ Notice: AI Provider Rate Limit / Quota Exceeded. Operating via A.U.R.A. Cognitive Engine.)*\n\n"
+                    err_prefix = "*(⚠️ Notice: AI Provider Rate Limit / Quota Exceeded. Operating via NexRoute Cognitive Engine.)*\n\n"
                 elif err_cat == "TIMEOUT_ERROR":
-                    err_prefix = "*(⚠️ Notice: AI Provider Timeout. Operating via A.U.R.A. Cognitive Engine.)*\n\n"
+                    err_prefix = "*(⚠️ Notice: AI Provider Timeout. Operating via NexRoute Cognitive Engine.)*\n\n"
 
                 cog_res = self.cognitive_engine.reason(
                     query=raw_query,
@@ -372,6 +374,20 @@ class PathfinderChatbot:
         status_words = ["where are we", "journey status", "how far have we", "how far to destination", "eta to destination", "current route status", "progress of journey", "trip status"]
         if any(w in q for w in status_words):
             return self.tool_executor.execute("get_current_journey_status", {}, ctx, language=language)
+        return None
+
+    def _handle_convoy_intent(self, raw_query: str, q: str, ctx: Dict[str, Any], language: str = "en") -> Optional[Dict[str, Any]]:
+        """Handles inquiries about other users, convoy peers, and shared locations."""
+        convoy_words = [
+            "convoy", "other user", "other users", "friends", "where are my friends",
+            "fleet member", "fleet members", "shared location", "who is in my room",
+            "convoy status", "where are other users", "location sharing", "group members",
+            "who is sharing", "room members", "peer", "peers"
+        ]
+        if any(w in q for w in convoy_words):
+            m = re.search(r"room\s+([A-Za-z0-9\-_]+)", q, re.I)
+            room_arg = m.group(1) if m else ctx.get("convoy_room_code", "DEMO-CONVOY")
+            return self.tool_executor.execute("get_convoy_status", {"room_code": room_arg}, ctx, language=language)
         return None
 
     def _handle_route_intent(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -536,12 +552,12 @@ class PathfinderChatbot:
                     }
                 else:
                     return {
-                        "badge": "🧭 DESTINATION CLARIFICATION • A.U.R.A.",
+                        "badge": "🧭 DESTINATION CLARIFICATION • NEXROUTE",
                         "response": f"I remembered your destination as **'{dest_raw}'**, but could not locate it via geocoding. Please specify the full landmark or city name."
                     }
             else:
                 return {
-                    "badge": "🧭 DESTINATION CLARIFICATION • A.U.R.A.",
+                    "badge": "🧭 DESTINATION CLARIFICATION • NEXROUTE",
                     "response": "Could you clarify which destination you want to travel to? Please specify a place, landmark, or city name."
                 }
 
@@ -917,8 +933,28 @@ class PathfinderChatbot:
         return None
 
     def _handle_global_transit(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Handles explicit long-distance / international travel questions like 'How do I go to Tokyo?'."""
-        if any(w in q for w in ["how do i go to tokyo", "how to reach tokyo", "how to go to tokyo", "travel to tokyo"]):
+        """Handles explicit long-distance / international travel questions and destination itineraries."""
+        # Never intercept capital/geography or philosophical questions
+        if any(w in q for w in ["capital", "who is", "what is the capital", "rule of the road", "why is"]):
+            return None
+
+        # Prioritize day-by-day itineraries and travel planning
+        if any(w in q for w in ["itinerary", "plan a trip", "3-day", "3 day", "5-day", "5 day", "day-by-day", "travel plan", "vacation plan", "tour plan"]):
+            itinerary_res = self.cognitive_engine._handle_travel_query(q, raw_query, ctx)
+            if itinerary_res:
+                return itinerary_res
+
+        # Check travel transit intent keywords
+        is_travel_q = any(w in q for w in [
+            "how do i go to", "how to go to", "how to reach", "travel to", "travel guide",
+            "how can i reach", "how can i travel to", "flights to", "visit to", "trip to",
+            "going to", "getting to", "travel tips for", "visit"
+        ])
+        if not is_travel_q:
+            return None
+
+        # 1. Tokyo (Strict match for test compatibility)
+        if "tokyo" in q or ("japan" in q and any(w in q for w in ["go to", "travel to", "reach"])):
             return {
                 "badge": "✈️ GLOBAL TRANSIT • TOKYO",
                 "response": (
@@ -929,22 +965,185 @@ class PathfinderChatbot:
                     "• **Emergency Contacts:** Police: 110, Ambulance/Fire: 119."
                 )
             }
-        return None
+
+        # 2. Paris
+        if "paris" in q or "france" in q:
+            return {
+                "badge": "✈️ GLOBAL TRANSIT • PARIS",
+                "response": (
+                    "### 🇫🇷 Travel Guidance to Paris, France\n\n"
+                    "• **Air Transit:** Fly into Paris Charles de Gaulle Airport (CDG, 25 km northeast, 35 mins via RER B train) or Paris Orly (ORY, 13 km south via Orlyval + RER B).\n"
+                    "• **Local Transport:** RATP Metro (16 lines) and RER regional trains. Purchase a Navigo Easy card or contactless single/carnet tickets.\n"
+                    "• **Must-See Highlights:** Eiffel Tower, Louvre Museum, Notre-Dame Cathedral, Musée d'Orsay, and Seine River cruises.\n"
+                    "• **Visa Requirements:** Schengen Short-Stay Visa (Type C) allowing up to 90 days of travel within a 180-day window.\n"
+                    "• **Emergency Contacts:** European Emergency: 112, Police (Police Secours): 17, Medical (SAMU): 15."
+                )
+            }
+
+        # 3. London
+        if "london" in q or "england" in q or "uk" in q:
+            return {
+                "badge": "✈️ GLOBAL TRANSIT • LONDON",
+                "response": (
+                    "### 🇬🇧 Travel Guidance to London, United Kingdom\n\n"
+                    "• **Air Transit:** Main international gateways are London Heathrow (LHR, connected via Piccadilly line and Elizabeth line) and London Gatwick (LGW, 30 mins via Gatwick Express to Victoria).\n"
+                    "• **Local Transport:** Transport for London (TfL) Tube, Overground, DLR, and red double-decker buses. Simply tap in and tap out with contactless credit/debit card or Oyster card with daily fare capping.\n"
+                    "• **Top Landmarks:** Big Ben and Westminster Palace, Tower Bridge, British Museum, London Eye, and Hyde Park.\n"
+                    "• **Visa Requirements:** UK Standard Visitor Visa (valid up to 6 months) unless traveling on a visa-exempt passport.\n"
+                    "• **Emergency Contacts:** Police / Ambulance / Fire: 999 or 112."
+                )
+            }
+
+        # 4. New York
+        if any(w in q for w in ["new york", "nyc", "manhattan"]):
+            return {
+                "badge": "✈️ GLOBAL TRANSIT • NEW YORK CITY",
+                "response": (
+                    "### 🇺🇸 Travel Guidance to New York City, USA\n\n"
+                    "• **Air Transit:** Fly into John F. Kennedy International Airport (JFK, connected via AirTrain to Jamaica Station / NYC Subway E/J/Z) or Newark Liberty (EWR, NJ Transit train to NY Penn Station).\n"
+                    "• **Local Transport:** 24/7 MTA Subway and bus network. Tap to pay directly at any turnstile with contactless card/phone using the OMNY system (fare capped at 12 rides/week).\n"
+                    "• **Must-Visit Spots:** Times Square, Central Park, Empire State Building, Brooklyn Bridge, Statue of Liberty, and High Line.\n"
+                    "• **Visa Requirements:** Valid ESTA (Electronic System for Travel Authorization for Visa Waiver Program citizens) or US B1/B2 Visitor Visa.\n"
+                    "• **Emergency Assistance:** 911 (Police, Fire, Medical)."
+                )
+            }
+
+        # 5. Dubai
+        if "dubai" in q or "uae" in q:
+            return {
+                "badge": "✈️ GLOBAL TRANSIT • DUBAI",
+                "response": (
+                    "### 🇦🇪 Travel Guidance to Dubai, United Arab Emirates\n\n"
+                    "• **Air Transit:** Fly into Dubai International Airport (DXB, Terminal 1 & 3 connect directly to the driverless Dubai Metro Red Line).\n"
+                    "• **Local Transport:** Dubai Metro, Tram, Palm Monorail, and Careem / Uber ride hailing. Purchase a Silver Nol Card for seamless public transit tap-and-go fares.\n"
+                    "• **Must-Visit Highlights:** Burj Khalifa (World's tallest building), Dubai Mall & Dubai Fountain, Palm Jumeirah, Museum of the Future, and Desert Safaris.\n"
+                    "• **Visa Requirements:** 30-day or 60-day tourist visa (many nationalities receive free Visa on Arrival).\n"
+                    "• **Emergency Contacts:** Police: 999, Ambulance: 998, Fire: 997."
+                )
+            }
+
+        # 6. Singapore
+        if "singapore" in q:
+            return {
+                "badge": "✈️ GLOBAL TRANSIT • SINGAPORE",
+                "response": (
+                    "### 🇸🇬 Travel Guidance to Singapore\n\n"
+                    "• **Air Transit:** Singapore Changi Airport (SIN, consistently ranked world's best, connected to MRT East-West line at Tanah Merah).\n"
+                    "• **Local Transport:** Ultra-clean Mass Rapid Transit (MRT) and public buses. Use SimplyGo (tap with foreign Visa/Mastercard directly) or buy an EZ-Link transit card.\n"
+                    "• **Must-Visit Attractions:** Gardens by the Bay, Marina Bay Sands SkyPark, Sentosa Island, Singapore Botanic Gardens, and Chinatown Hawker Centers.\n"
+                    "• **Entry Requirements:** Complete the mandatory electronic Singapore Arrival Card (SGAC) within 3 days prior to arrival.\n"
+                    "• **Emergency Contacts:** Police: 999, Ambulance/Civil Defence: 995."
+                )
+            }
+
+        # 7. Rome
+        if "rome" in q or "italy" in q:
+            return {
+                "badge": "✈️ GLOBAL TRANSIT • ROME",
+                "response": (
+                    "### 🇮🇹 Travel Guidance to Rome, Italy\n\n"
+                    "• **Air Transit:** Leonardo da Vinci–Fiumicino Airport (FCO, 32 km southwest, 32-minute direct non-stop Leonardo Express train to Roma Termini).\n"
+                    "• **Local Transport:** ATAC Metro (Lines A, B, C) and city buses. Purchase a BIT 100-minute ticket or 24/48/72-hour transit pass.\n"
+                    "• **Historic Landmarks:** Colosseum, Roman Forum, Trevi Fountain, Pantheon, and Vatican City (St. Peter's Basilica & Sistine Chapel).\n"
+                    "• **Visa Requirements:** Schengen Short-Stay Visa (Type C).\n"
+                    "• **Emergency Assistance:** 112 (Universal European Emergency Number)."
+                )
+            }
+
+        # 8. Goa
+        if "goa" in q:
+            return {
+                "badge": "🌴 DOMESTIC TRANSIT • GOA",
+                "response": (
+                    "### 🌴 Travel Guidance to Goa, India\n\n"
+                    "• **Air Transit:** Manohar International Airport (MOPA / GOX in North Goa) or Dabolim Airport (GOI in Central/South Goa).\n"
+                    "• **Rail Transit:** Madgaon Junction (MAO), Thivim (THVM), or Vasco da Gama (VSG) via Konkan Railway.\n"
+                    "• **Local Transport:** Self-drive scooter or car rentals are the most popular way to explore. GoaMiles government-approved cab app is available at airports and stations.\n"
+                    "• **Key Experiences:**\n"
+                    "  - *North Goa:* Vibrant beaches (Anjuna, Vagator, Baga), night markets, water sports, and historic Chapora Fort.\n"
+                    "  - *South Goa:* Serene white-sand beaches (Palolem, Agonda, Benaulim), spice plantations, and Dudhsagar Waterfalls.\n"
+                    "• **Emergency Contacts:** Police: 112, Women Helpline: 1091."
+                )
+            }
+
+        # 9. Tirupati
+        if "tirupati" in q or "tirumala" in q:
+            return {
+                "badge": "🛕 PILGRIMAGE TRANSIT • TIRUPATI",
+                "response": (
+                    "### 🛕 Travel Guidance to Tirupati & Tirumala, Andhra Pradesh\n\n"
+                    "• **Transit Access:**\n"
+                    "  - *By Air:* Tirupati International Airport (TIR) at Renigunta, 15 km from Tirupati city.\n"
+                    "  - *By Rail:* Tirupati Main (TPTY) and Renigunta Junction (RU) with trains connecting major Indian cities.\n"
+                    "  - *By Road:* Frequent APSRTC and KSRTC express buses from Chennai, Bengaluru, Vijayawada, and Hyderabad.\n"
+                    "• **Ascent to Tirumala:** APSRTC electric buses depart every 2–3 minutes from Tirupati bus stand up the scenic Ghat Road (takes ~45 mins). Dedicated pedestrian pathways (Alipiri Mettu ~3,550 steps and Srivari Mettu ~2,388 steps) are available for walking devotees.\n"
+                    "• **Darshan Booking:** Ensure Special Entry Darshan (SED, ₹300) tickets are pre-booked through the official TTD website (tirupatibalaji.ap.gov.in) weeks in advance."
+                )
+            }
+
+        # 10. Visakhapatnam (Vizag)
+        if any(w in q for w in ["visakhapatnam", "vizag"]):
+            return {
+                "badge": "🌊 COASTAL TRANSIT • VISAKHAPATNAM",
+                "response": (
+                    "### 🌊 Travel Guidance to Visakhapatnam (Vizag), Andhra Pradesh\n\n"
+                    "• **Transit Access:** Visakhapatnam International Airport (VTZ) and Visakhapatnam Railway Station (VSKP, East Coast Railway).\n"
+                    "• **City Highlights:**\n"
+                    "  - *Beach Road:* RK Beach, INS Kursura Submarine Museum, and TU 142 Aircraft Museum.\n"
+                    "  - *Scenic Vistas:* Kailasagiri hilltop park with ropeway car and panoramic Bay of Bengal views.\n"
+                    "  - *Araku Valley & Borra Caves:* Take the scenic morning Vistadome glass-roof train through Eastern Ghats tunnels.\n"
+                    "• **Local Transport:** APSRTC city buses, auto-rickshaws, and app-based cabs (Ola/Uber)."
+                )
+            }
+
+        # 11. General Destination Extractor & Multi-Modal Travel Blueprint
+        dest_match = re.search(
+            r"(?:how\s+(?:do\s+i|can\s+i|to)?\s*(?:go|travel|reach|get)\s+to|travel\s+(?:guide|tips|itinerary|guidance)?\s+(?:for|to)|visit(?:ing)?\s+to|trip\s+to)\s+([a-zA-Z\s]+)",
+            q
+        )
+        dest_name = (dest_match.group(1).strip("?. ") if dest_match else q.replace("how to go to", "").replace("travel to", "").strip("?. "))
+        dest_title = dest_name.title()
+
+        # Try live grounding lookup for destination highlights
+        grounded_snippet = ""
+        live_dest = GroundingEngine.query_world_knowledge(dest_name)
+        if live_dest:
+            _, _, ext = live_dest
+            grounded_snippet = f"\n\n#### 📍 About {dest_title}:\n{ext[:350]}...\n"
+
+        return {
+            "badge": f"✈️ TRAVEL & TRANSIT • {dest_title.upper()[:18]}",
+            "response": (
+                f"### ✈️ Comprehensive Travel & Transit Blueprint: {dest_title}\n"
+                f"{grounded_snippet}\n"
+                f"#### 1. Air & Long-Distance Transit:\n"
+                f"• Search multi-carrier itineraries via Google Flights / Skyscanner into the primary regional airport serving {dest_title}.\n"
+                f"• Check high-speed rail connections if traveling overland from neighboring hubs.\n\n"
+                f"#### 2. Documentation & Entry Formalities:\n"
+                f"• Verify passport validity (must have at least 6 months remaining).\n"
+                f"• Review tourist visa / eVisa / entry permit requirements before purchasing non-refundable tickets.\n\n"
+                f"#### 3. Local Commute & Urban Transit:\n"
+                f"• Check for integrated regional transit cards (metro/tram/bus) or contactless tap-to-pay systems.\n"
+                f"• Download offline maps (Google Maps / Organic Maps) and configure an international travel eSIM for cellular data.\n\n"
+                f"#### 4. Smart Travel Tips:\n"
+                f"• Keep copies of travel insurance, hotel bookings, and emergency embassy contacts in both digital and printed format."
+            )
+        }
 
     def _handle_telugu_query(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
         """Responds in natural Telugu."""
         if any(w in q for w in ["నమస్కారం", "namaskaram", "హలో", "hello"]):
             return {
-                "badge": "⚡ A.U.R.A. తెలుగు",
+                "badge": "🧭 NEXROUTE తెలుగు",
                 "response": (
                     "నమస్కారం! నేను **A.U.R.A.** (Adaptive User Route Assistant). "
-                    "P.A.T.H.F.I.N.D.E.R. లో మీ వ్యక్తిగత AI సహచరుడిని.\n\n"
+                    "NexRoute లో మీ వ్యక్తిగత AI సహచరుడిని.\n\n"
                     "మీరు సాధారణ విజ్ఞానం, కోడింగ్, గణితం, సైన్స్ లేదా సురక్షితమైన ప్రయాణ మార్గాల గురించి నన్ను ఏమైనా అడగవచ్చు. "
                     "నేను మీకు ఎలా సహాయపడగలను?"
                 )
             }
         return {
-            "badge": "⚡ A.U.R.A. తెలుగు",
+            "badge": "🧭 NEXROUTE తెలుగు",
             "response": (
                 f"మీ ప్రశ్న: **\"{raw_query}\"**.\n\n"
                 "నేను మీ ప్రయాణ మార్గాలు, రోడ్డు భద్రత మరియు సాధారణ విజ్ఞాన విషయాలలో మీకు స్పష్టమైన సమాచారాన్ని అందించగలను. "
@@ -956,16 +1155,16 @@ class PathfinderChatbot:
         """Responds in natural Hindi."""
         if any(w in q for w in ["नमस्ते", "namaste", "हैलो", "hello"]):
             return {
-                "badge": "⚡ A.U.R.A. हिन्दी",
+                "badge": "🧭 NEXROUTE हिन्दी",
                 "response": (
                     "नमस्ते! मैं **A.U.R.A.** (Adaptive User Route Assistant) हूँ, "
-                    "P.A.T.H.F.I.N.D.E.R. का बुद्धिमान AI सहायक।\n\n"
+                    "NexRoute का बुद्धिमान AI सहायक।\n\n"
                     "आप मुझसे सामान्य ज्ञान, विज्ञान, कोडिंग, पढ़ाई या सुरक्षित रास्तों के बारे में कोई भी प्रश्न पूछ सकते हैं। "
                     "मैं आपकी किस प्रकार सहायता कर सकता हूँ?"
                 )
             }
         return {
-            "badge": "⚡ A.U.R.A. हिन्दी",
+            "badge": "🧭 NEXROUTE हिन्दी",
             "response": (
                 f"आपके प्रश्न: **\"{raw_query}\"** के संदर्भ में,\n\n"
                 "मैं आपको सटीक जानकारी और सुरक्षित यात्रा निर्देश प्रदान करने के लिए तैयार हूँ। "
@@ -977,16 +1176,16 @@ class PathfinderChatbot:
         """Responds in natural Tamil."""
         if any(w in q for w in ["வணக்கம்", "vanakkam", "ஹலோ", "hello"]):
             return {
-                "badge": "⚡ A.U.R.A. தமிழ்",
+                "badge": "🧭 NEXROUTE தமிழ்",
                 "response": (
                     "வணக்கம்! நான் **A.U.R.A.** (Adaptive User Route Assistant). "
-                    "P.A.T.H.F.I.N.D.E.R. இன் உங்கள் அறிவார்ந்த AI உதவியாளர்.\n\n"
+                    "NexRoute இன் உங்கள் அறிவார்ந்த AI உதவியாளர்.\n\n"
                     "பாதுகாப்பான வழிசெலுத்தல், வழிகள், பொது அறிவு, குறியீட்டு முறை அல்லது அறிவியல் பற்றி நீங்கள் கேட்கலாம். "
                     "நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
                 )
             }
         return {
-            "badge": "⚡ A.U.R.A. தமிழ்",
+            "badge": "🧭 NEXROUTE தமிழ்",
             "response": (
                 f"உங்கள் கேள்வி: **\"{raw_query}\"**.\n\n"
                 "நான் உங்களுக்கு துல்லியமான வழிகாட்டல் மற்றும் பாதுகாப்பான பயண தகவல்களை வழங்க தயாராக உள்ளேன். "
@@ -998,16 +1197,16 @@ class PathfinderChatbot:
         """Responds in natural Kannada."""
         if any(w in q for w in ["ನಮಸ್ಕಾರ", "namaskara", "ಹಲೋ", "hello"]):
             return {
-                "badge": "⚡ A.U.R.A. ಕನ್ನಡ",
+                "badge": "🧭 NEXROUTE ಕನ್ನಡ",
                 "response": (
                     "ನಮಸ್ಕಾರ! ನಾನು **A.U.R.A.** (Adaptive User Route Assistant). "
-                    "P.A.T.H.F.I.N.D.E.R. ನ ಬುದ್ಧಿವಂತ AI ಸಹಾಯಕ.\n\n"
+                    "NexRoute ನ ಬುದ್ಧಿವಂತ AI ಸಹಾಯಕ.\n\n"
                     "ಸುರಕ್ಷಿತ ಸಂಚಾರ ಮಾರ್ಗಗಳು, ಸಾಮಾನ್ಯ ಜ್ಞಾನ, ಕೋಡಿಂಗ್ ಅಥವಾ ವಿಜ್ಞಾನದ ಬಗ್ಗೆ ನೀವು ಕೇಳಬಹುದು. "
                     "ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
                 )
             }
         return {
-            "badge": "⚡ A.U.R.A. ಕನ್ನಡ",
+            "badge": "🧭 NEXROUTE ಕನ್ನಡ",
             "response": (
                 f"ನಿಮ್ಮ ಪ್ರಶ್ನೆ: **\"{raw_query}\"**.\n\n"
                 "ನಿಮಗೆ ನಿಖರವಾದ ಮಾರ್ಗದರ್ಶನ ಮತ್ತು ಸುರಕ್ಷಿತ ಪ್ರಯಾಣದ ಮಾಹಿತಿಯನ್ನು ಒದಗಿಸಲು ನಾನು ಸಿದ್ಧನಿದ್ದೇನೆ. "
@@ -1019,16 +1218,16 @@ class PathfinderChatbot:
         """Responds in natural Malayalam."""
         if any(w in q for w in ["നമസ്കാരം", "namaskaram", "ഹലോ", "hello"]):
             return {
-                "badge": "⚡ A.U.R.A. മലയാളം",
+                "badge": "🧭 NEXROUTE മലയാളം",
                 "response": (
                     "നമസ്കാരം! ഞാൻ **A.U.R.A.** (Adaptive User Route Assistant). "
-                    "P.A.T.H.F.I.N.D.E.R. ൻ്റെ സ്മാർട്ട് AI സഹായി.\n\n"
+                    "NexRoute ൻ്റെ സ്മാർട്ട് AI സഹായി.\n\n"
                     "സുരക്ഷിതമായ യാത്രാ റൂട്ടുകൾ, പൊതുവിജ്ഞാനം, കോഡിംഗ് അല്ലെങ്കിൽ ശാസ്ത്രം എന്നിവയെക്കുറിച്ച് നിങ്ങൾക്ക് എന്നോട് ചോദിക്കാം. "
                     "ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കണം?"
                 )
             }
         return {
-            "badge": "⚡ A.U.R.A. മലയാളം",
+            "badge": "🧭 NEXROUTE മലയാളം",
             "response": (
                 f"താങ്കളുടെ ചോദ്യം: **\"{raw_query}\"**.\n\n"
                 "നിങ്ങൾക്ക് കൃത്യമായ റൂട്ട് വിവരങ്ങളും സുരക്ഷിത യാത്രാ നിർദ്ദേശങ്ങളും നൽകാൻ ഞാൻ തയ്യാറാണ്. "
@@ -1040,16 +1239,16 @@ class PathfinderChatbot:
         """Responds in natural Bengali."""
         if any(w in q for w in ["নমস্কার", "nomoshkar", "হ্যালো", "hello"]):
             return {
-                "badge": "⚡ A.U.R.A. বাংলা",
+                "badge": "🧭 NEXROUTE বাংলা",
                 "response": (
                     "নমস্কার! আমি **A.U.R.A.** (Adaptive User Route Assistant)। "
-                    "P.A.T.H.F.I.N.D.E.R.-এর আপনার বুদ্ধিমান AI সহকারী।\n\n"
+                    "NexRoute-এর আপনার বুদ্ধিমান AI সহকারী।\n\n"
                     "নিরাপদ রুট, দিকনির্দেশনা, সাধারণ জ্ঞান, কোডিং বা বিজ্ঞান সম্পর্কিত যেকোনো প্রশ্ন আপনি আমাকে করতে পারেন। "
                     "আমি আপনাকে কীভাবে সাহায্য করতে পারি?"
                 )
             }
         return {
-            "badge": "⚡ A.U.R.A. বাংলা",
+            "badge": "🧭 NEXROUTE বাংলা",
             "response": (
                 f"আপনার প্রশ্ন: **\"{raw_query}\"**।\n\n"
                 "আমি আপনাকে সঠিক পথনির্দেশ এবং নিরাপদ ভ্রমণের তথ্য দিতে প্রস্তুত। "
@@ -1061,16 +1260,16 @@ class PathfinderChatbot:
         """Responds in natural Marathi."""
         if any(w in q for w in ["नमस्कार", "namaskar", "हॅलो", "hello"]):
             return {
-                "badge": "⚡ A.U.R.A. मराठी",
+                "badge": "🧭 NEXROUTE मराठी",
                 "response": (
                     "नमस्कार! मी **A.U.R.A.** (Adaptive User Route Assistant) आहे, "
-                    "P.A.T.H.F.I.N.D.E.R. चा बुद्धिमान AI सहाय्यक.\n\n"
+                    "NexRoute चा बुद्धिমান AI सहाय्यक.\n\n"
                     "तुम्ही मला सुरक्षित मार्ग, सामान्य ज्ञान, कोडिंग किंवा विज्ञानाबद्दल कोणतेही प्रश्न विचारू शकता. "
                     "मी आपली काय मदत करू शकतो?"
                 )
             }
         return {
-            "badge": "⚡ A.U.R.A. मराठी",
+            "badge": "🧭 NEXROUTE मराठी",
             "response": (
                 f"तुमचा प्रश्न: **\"{raw_query}\"**.\n\n"
                 "मी तुम्हाला अचूक दिशा आणि सुरक्षित प्रवासाची माहिती देण्यासाठी सज्ज आहे. "
@@ -1127,3 +1326,363 @@ class PathfinderChatbot:
                 "badge": "🌐 TRANSLATION",
                 "response": f"Translation request recognized for: *\"{raw_query}\"*."
             }
+
+    # =========================================================================
+    # APPLICATION KNOWLEDGE, TRAVEL QA, AND GENERAL GREETINGS
+    # =========================================================================
+    def _handle_greetings_and_general(self, raw_query: str, q: str, ctx: Dict[str, Any], language: str = "en") -> Optional[Dict[str, Any]]:
+        """Provides warm, concise, and helpful responses to greetings and conversational inquiries."""
+        # Regional / Indian greetings
+        if any(w in q for w in ["namaskaram", "namaste", "vanakkam", "namaskara", "nomoshkar", "pranam"]) or any(w in raw_query for w in ["నమస్కారం", "नमस्ते", "வணக்கம்", "ನಮಸ್ಕಾರ"]):
+            if language == "te" or bool(re.search(r"[\u0c00-\u0c7f]", raw_query)):
+                return {
+                    "badge": "🤖 A.U.R.A. • తెలుగు",
+                    "response": (
+                        "నమస్కారం! 🙏 నేను **A.U.R.A.** (*Adaptive User Route Assistant*). "
+                        "NexRoute లో మీ వ్యక్తిగత ప్రయాణ సహచరుడిని.\n\n"
+                        "నేను మీకు ఎలా సహాయపడగలను? మార్గాలు, టోల్స్ నివారించడం, స్పీడోమీటర్ లేదా ఏవైనా ప్రయాణ సమాచారం గురించి అడగండి!"
+                    )
+                }
+            elif language == "hi" or bool(re.search(r"[\u0900-\u097f]", raw_query)):
+                return {
+                    "badge": "🤖 A.U.R.A. • हिन्दी",
+                    "response": (
+                        "नमस्ते! 🙏 मैं **A.U.R.A.** (*Adaptive User Route Assistant*) हूँ, NexRoute में आपका यात्रा सहायक।\n\n"
+                        "मैं आपकी क्या मदद कर सकता हूँ? रास्ते, टोल से बचाव, स्पीडोमीटर या यात्रा से जुड़े कोई भी सवाल पूछें!"
+                    )
+                }
+            elif language == "ta" or bool(re.search(r"[\u0b80-\u0bff]", raw_query)):
+                return {
+                    "badge": "🤖 A.U.R.A. • தமிழ்",
+                    "response": (
+                        "வணக்கம்! 🙏 நான் **A.U.R.A.** (*Adaptive User Route Assistant*), NexRoute இல் உங்கள் பயண உதவியாளர்.\n\n"
+                        "நான் உங்களுக்கு எவ்வாறு உதவ முடியும்? சிறந்த வழிகள், சுங்கச்சாவடிகளைத் தவிர்ப்பது அல்லது பயண ஆலோசனைகள் பற்றி கேளுங்கள்!"
+                    )
+                }
+            elif language == "kn" or bool(re.search(r"[\u0c80-\u0cff]", raw_query)):
+                return {
+                    "badge": "🤖 A.U.R.A. • ಕನ್ನಡ",
+                    "response": (
+                        "ನಮಸ್ಕಾರ! 🙏 ನಾನು **A.U.R.A.** (*Adaptive User Route Assistant*), NexRoute ನಲ್ಲಿ ನಿಮ್ಮ ಪ್ರಯಾಣ ಸಹಾಯಕ.\n\n"
+                        "ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ? ಮಾರ್ಗಗಳು, ಟೋಲ್ ತಪ್ಪಿಸುವುದು ಅಥವಾ ಪ್ರಯಾಣದ ಮಾಹಿತಿ ಕುರಿತು ಕೇಳಿ!"
+                    )
+                }
+            elif language == "ml" or bool(re.search(r"[\u0d00-\u0d7f]", raw_query)):
+                return {
+                    "badge": "🤖 A.U.R.A. • മലയാളം",
+                    "response": (
+                        "നമസ്കാരം! 🙏 ഞാൻ **A.U.R.A.** (*Adaptive User Route Assistant*), NexRoute ലെ നിങ്ങളുടെ യാത്രാ സഹായി.\n\n"
+                        "ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കണം? മികച്ച റൂട്ടുകൾ, ടോൾ ഒഴിവാക്കൽ അല്ലെങ്കിൽ യാത്രാ വിവരങ്ങൾ ചോദിക്കൂ!"
+                    )
+                }
+            elif language == "bn" or bool(re.search(r"[\u0980-\u09ff]", raw_query)):
+                return {
+                    "badge": "🤖 A.U.R.A. • বাংলা",
+                    "response": (
+                        "নমস্কার! 🙏 আমি **A.U.R.A.** (*Adaptive User Route Assistant*), NexRoute-এ আপনার ভ্রমণ সহায়ক।\n\n"
+                        "আমি আপনাকে কীভাবে সাহায্য করতে পারি? রুট, টোল এড়ানো বা যেকোনো ভ্রমণ সংক্রান্ত প্রশ্ন আমাকে জিজ্ঞাসা করতে পারেন!"
+                    )
+                }
+            elif language == "mr":
+                return {
+                    "badge": "🤖 A.U.R.A. • मराठी",
+                    "response": (
+                        "नमस्कार! 🙏 मी **A.U.R.A.** (*Adaptive User Route Assistant*) आहे, NexRoute मधील आपला प्रवास सहकारी.\n\n"
+                        "मी आपल्याला कशी मदत करू शकतो? मार्ग, टोल टाळणे किंवा कोणत्याही प्रवासाच्या प्रश्नांसाठी मला विचारा!"
+                    )
+                }
+            else:
+                return {
+                    "badge": "🤖 A.U.R.A. • GREETING",
+                    "response": (
+                        "Namaskaram! 🙏 I am **A.U.R.A.** (*Adaptive User Route Assistant*).\n\n"
+                        "I am doing great and all systems are running smoothly! How can I help you with your journey, route navigation, travel tips, or everyday questions today?"
+                    )
+                }
+
+        # Standard English Greetings
+        greet_patterns = ["hello", "hi aura", "hey aura", "hi bot", "hey bot", "hiya", "howdy", "good morning", "good afternoon", "good evening", "good night"]
+        # Match single-word greetings or greeting phrases
+        if q in ["hello", "hi", "hey", "hiya", "howdy"] or any(q.startswith(p) for p in greet_patterns) or any(w in q for w in ["good morning", "good afternoon", "good evening"]):
+            return {
+                "badge": "🤖 A.U.R.A. • GREETING",
+                "response": (
+                    "Hello! 👋 I am **A.U.R.A.** (*Adaptive User Route Assistant*).\n\n"
+                    "How can I help you today? You can ask me about routes, live hazards, avoiding tolls or highways, the digital speedometer, travel packing advice, or general questions!"
+                )
+            }
+
+        # Well-being questions ("how are you", "how r u", "how do you do")
+        if any(w in q for w in ["how are you", "how r u", "how are u", "how do you do", "how's it going", "how is it going", "how have you been"]):
+            return {
+                "badge": "🤖 A.U.R.A. • STATUS",
+                "response": (
+                    "I'm doing great, thank you for asking! 😊 All navigation engines, hazard sensors, and routing algorithms are operating at 100%.\n\n"
+                    "How can I assist you with your travels or questions today?"
+                )
+            }
+
+        # Identity & origin questions ("who are you", "what is aura", "who made you")
+        if any(w in q for w in ["who are you", "who r u", "what is your name", "who created you", "who made you", "what are you", "tell me about yourself", "what is aura"]):
+            return {
+                "badge": "🤖 A.U.R.A. • IDENTITY",
+                "response": (
+                    "I am **A.U.R.A.** (*Adaptive User Route Assistant*), an intelligent AI travel and routing companion designed for **NexRoute**\n\n"
+                    "I help you discover optimal routes, avoid traffic hazards, tolls, and highways, monitor your speed in our digital cockpit, and provide simple, concise answers to any travel or everyday questions!"
+                )
+            }
+
+        # Help & Capability inquiries
+        if any(w in q for w in ["what can you do", "how can you help", "help me", "can you help me", "what are your capabilities", "assist me"]):
+            return {
+                "badge": "🤖 A.U.R.A. • ASSISTANCE",
+                "response": (
+                    "Here is how I can assist you:\n\n"
+                    "• **Smart Navigation**: Finding Fastest, Shortest, Balanced, or Accessible routes between any two places.\n"
+                    "• **Route Preferences**: Toggling Avoid Tolls, Avoid Highways, and Avoid Ferries with one command.\n"
+                    "• **Digital Speedometer**: Monitoring your travel velocity, drive modes, and speed limit compliance.\n"
+                    "• **3D Virtual Guide**: Immersive landmark stories and turn-by-turn maneuvers.\n"
+                    "• **Travel Advice**: Packing lists, road trip preparation, flight tips, budget strategies, and weather updates.\n\n"
+                    "Where would you like to begin?"
+                )
+            }
+
+        # Courtesy & Appreciation
+        if any(w in q for w in ["thank you", "thanks", "thanks a lot", "thank u", "thx", "appreciate it"]):
+            return {
+                "badge": "🤖 A.U.R.A. • COURTESY",
+                "response": (
+                    "You're very welcome! 😊 Always happy to assist. Let me know if you need any more directions or travel advice for your journey!"
+                )
+            }
+
+        # Farewells
+        if any(w in q for w in ["bye", "goodbye", "see you", "cya", "have a good day", "take care"]):
+            return {
+                "badge": "🤖 A.U.R.A. • FAREWELL",
+                "response": (
+                    "Safe travels! 🚗✨ Wishing you a smooth, hazard-free, and enjoyable journey ahead. Feel free to chat whenever you need guidance!"
+                )
+            }
+
+        return None
+
+    def _handle_app_knowledge(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Answers comprehensive questions about NexRoute features with clarity and precision."""
+        # Avoid Tolls
+        if any(w in q for w in ["avoid toll", "avoid tolls", "toll road", "tolls work", "how do tolls work", "what is avoid tolls", "why avoid tolls"]):
+            return {
+                "badge": "💳 AURA • AVOID TOLLS",
+                "response": (
+                    "### 💳 Avoid Tolls in NexRoute\n\n"
+                    "• **Functionality**: Bypasses toll expressways and automated toll plazas (like FASTag plazas).\n"
+                    "• **How it Works**: Automatically recalculates the polyline along toll-free state highways and major arterial corridors.\n"
+                    "• **Benefit**: Saves money on intercity trips, especially over long interstate journeys.\n"
+                    "• **How to use**: Toggle the **Avoid Tolls** button in the Routing Preferences bar or type *\"Avoid tolls\"* right here in chat."
+                )
+            }
+
+        # Avoid Highways
+        if any(w in q for w in ["avoid highway", "avoid highways", "highway work", "how do highways work", "what is avoid highways", "why avoid highways"]):
+            return {
+                "badge": "🛣️ AURA • AVOID HIGHWAYS",
+                "response": (
+                    "### 🛣️ Avoid Highways in NexRoute\n\n"
+                    "• **Functionality**: Routes traffic away from high-speed controlled-access expressways.\n"
+                    "• **How it Works**: Prioritizes secondary highways, scenic state roads, and local bypass roads.\n"
+                    "• **Benefit**: Ideal for leisurely scenic road trips, learner drivers, two-wheelers, or avoiding high-speed congestion.\n"
+                    "• **How to use**: Toggle the **Avoid Highways** button in Routing Preferences or tell me *\"Avoid highways\"*."
+                )
+            }
+
+        # Avoid Ferries
+        if any(w in q for w in ["avoid ferry", "avoid ferries", "ferry work", "how do ferries work", "what is avoid ferries", "why avoid ferries"]):
+            return {
+                "badge": "⛴️ AURA • AVOID FERRIES",
+                "response": (
+                    "### ⛴️ Avoid Ferries in NexRoute\n\n"
+                    "• **Functionality**: Guarantees a continuous land-based path, excluding water crossings and vehicle roll-on/roll-off ferries.\n"
+                    "• **How it Works**: Reroutes via permanent bridges and coastal roadways instead of ferry terminals.\n"
+                    "• **Benefit**: Avoids ferry timetable delays, vehicle boarding queues, and seasonal weather disruptions.\n"
+                    "• **How to use**: Toggle the **Avoid Ferries** button in Routing Preferences or type *\"Avoid ferries\"*."
+                )
+            }
+
+        # Speedometer & Cockpit
+        if any(w in q for w in ["speedometer", "speed meter", "speed gauge", "digital cockpit", "how does speed work"]) and not any(k in q for k in ["expressway", "highway", "india", "law", "legal", "fine"]):
+            return {
+                "badge": "🏎️ AURA • SPEEDOMETER COCKPIT",
+                "response": (
+                    "### 🏎️ Creative Digital Speedometer Cockpit\n\n"
+                    "• **Radial Speed Gauge**: Interactive dashboard gauge displaying real-time speed in km/h with an animated needle and glowing arc.\n"
+                    "• **Speed Limit Alert**: Displays the legal speed limit for current roads and highlights in amber/red when exceeding limits.\n"
+                    "• **Drive Modes**: Toggle between **Eco**, **Comfort**, and **Sport** modes to adjust simulated vehicle dynamics.\n"
+                    "• **Live Telemetry**: Continuously tracks your average velocity, distance remaining, and estimated time of arrival (ETA)."
+                )
+            }
+
+        # Virtual Guide Story
+        if any(w in q for w in ["guide story", "virtual guide", "storyteller", "unlock guide story", "locked guide", "3d guide"]):
+            return {
+                "badge": "📖 AURA • VIRTUAL GUIDE STORY",
+                "response": (
+                    "### 📖 3D Virtual Guide Storyteller\n\n"
+                    "• **What it is**: An immersive companion that provides human-like landmark storytelling, cultural trivia, and turn-by-turn guidance along your journey.\n"
+                    "• **How to Unlock**: The guide is unlocked automatically once both **Starting Point** and **Destination** are entered on the map.\n"
+                    "• **Features**: Includes 3D environment commentary, route milestone markers, and regional cultural lore tailored to your active transit mode."
+                )
+            }
+
+        # Hazard Evasion
+        if any(w in q for w in ["hazard", "road closure", "obstacle", "pothole", "blockage", "flood", "detour"]):
+            return {
+                "badge": "⚠️ AURA • HAZARD EVASION",
+                "response": (
+                    "### ⚠️ Live Hazard & Road Closure Evasion\n\n"
+                    "• **Active Sensing**: Monitors real-time road obstructions, construction zones, waterlogging, and road repairs.\n"
+                    "• **Dynamic Detours**: If a closure (such as NH-16 bypass maintenance) is detected, NexRoute automatically routes around it with zero manual intervention.\n"
+                    "• **Safety Ratings**: Evaluates street lighting, surface condition, and accident probability along each corridor."
+                )
+            }
+
+        # Route Types / Multi-Objective
+        if any(w in q for w in ["fastest route", "shortest route", "balanced route", "accessible route", "route options", "route types"]):
+            return {
+                "badge": "🧭 AURA • ROUTE OPTIONS",
+                "response": (
+                    "### 🧭 4 Multi-Objective Route Options\n\n"
+                    "1. **Fastest Route**: Uses expressways and priority corridors for the minimum travel time.\n"
+                    "2. **Shortest Route**: Minimizes total physical distance traveled (geodesic mileage).\n"
+                    "3. **Balanced Route**: The Pareto sweet spot optimizing travel time, fuel economy, and road quality.\n"
+                    "4. **Accessible Route**: Selects wheelchair-accessible, smooth pavements with ramps and gentle inclines."
+                )
+            }
+
+        # About P.A.T.H.F.I.N.D.E.R.
+        if any(w in q for w in ["what is nexroute", "what is pathfinder", "what is this app", "about this app", "how does this app work", "how does pathfinder work", "tell me about pathfinder"]):
+            return {
+                "badge": "🧭 AURA • ABOUT NEXROUTE",
+                "response": (
+                    "### 🧭 About NexRoute\n\n"
+                    "**NexRoute** (*Adaptive Navigation & AI Travel Copilot*) is an advanced transit intelligence platform featuring:\n\n"
+                    "• **Multi-Objective Routing**: Fastest, Shortest, Balanced, and Accessible routes.\n"
+                    "• **Route Customization**: Avoid Tolls, Avoid Highways, and Avoid Ferries.\n"
+                    "• **Digital Cockpit**: Real-time speedometer, speed limits, and driving telemetry.\n"
+                    "• **3D Virtual Guide**: Dynamic landmark storytelling and human-like maneuvers.\n"
+                    "• **Hazard Evasion**: Instant detour calculation around road closures and bad weather.\n"
+                    "• **A.U.R.A. Copilot**: Your intelligent route assistant always ready to answer any travel question!"
+                )
+            }
+
+        return None
+
+    def _handle_travel_qa(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Provides concise, accurate, and structured answers to basic and advanced travel questions."""
+        # Packing tips / luggage
+        if any(w in q for w in ["packing", "pack", "what to pack", "packing list", "luggage tips", "packing tips"]):
+            return {
+                "badge": "🧳 AURA • TRAVEL PACKING",
+                "response": (
+                    "### 🧳 Smart Travel Packing Checklist\n\n"
+                    "1. **Carry-On Essentials**: Passport/ID, tickets, medicines, phone charger, and a change of clothes.\n"
+                    "2. **Electronics**: Pack power banks in cabin baggage (strictly prohibited in checked baggage).\n"
+                    "3. **Clothing Technique**: Roll your clothes instead of folding to save 30% suitcase space and prevent wrinkles.\n"
+                    "4. **Toiletries**: Keep liquids under 100ml (3.4oz) in a clear ziplock pouch for airport security.\n"
+                    "5. **Golden Rule**: Pack versatile, layered clothes suitable for mix-and-match wear."
+                )
+            }
+
+        # Road trip preparation
+        if any(w in q for w in ["road trip", "car prep", "long drive", "driving tips", "prepare for road trip"]):
+            return {
+                "badge": "🚗 AURA • ROAD TRIP PREP",
+                "response": (
+                    "### 🚗 Essential Road Trip Checklist\n\n"
+                    "1. **Vehicle Checks (Tires, Fluids, Brakes)**: Verify tire pressure (including spare), engine oil, brake fluid, coolant, and wiper wash.\n"
+                    "2. **Emergency Kit**: Pack jumper cables, first-aid kit, flashlight, tire inflator, and drinking water.\n"
+                    "3. **Offline Maps**: Download offline map regions in advance to navigate through weak signal zones.\n"
+                    "4. **Rest Breaks**: Plan a 15-minute rest stop every 2 hours or 150 km to prevent driver fatigue.\n"
+                    "5. **FASTag & Cash**: Keep your toll account funded and keep small cash for parking and rural tolls."
+                )
+            }
+
+        # Flight / Airport tips
+        if any(w in q for w in ["flight tips", "airport tips", "flying tips", "boarding tips", "first time flying", "layover tips"]) or (any(w in q for w in ["flight", "airport", "airplane", "flying"]) and any(w in q for w in ["tip", "tips", "advice", "rule", "guideline", "how early", "security"])):
+            return {
+                "badge": "✈️ AURA • FLIGHT TIPS",
+                "response": (
+                    "### ✈️ Smart Flight & Airport Tips\n\n"
+                    "1. **Timing**: Arrive 2 hours early for domestic flights, and 3 hours early for international flights.\n"
+                    "2. **Online Check-In**: Check in 24 hours prior to select your preferred window or aisle seat.\n"
+                    "3. **Security Screening**: Wear slip-on shoes; place laptops, tablets, and liquid pouches in accessible outer pockets.\n"
+                    "4. **Cabin Comfort**: Drink water regularly (cabin air humidity is under 20%) and use chewing gum or earplugs during takeoff/landing to equalize ear pressure."
+                )
+            }
+
+        # Budget Travel & Saving Money
+        if any(w in q for w in ["budget travel", "save money", "cheap travel", "travel on a budget", "cheap flights"]):
+            return {
+                "badge": "💰 AURA • BUDGET TRAVEL",
+                "response": (
+                    "### 💰 Top Ways to Save Money Traveling\n\n"
+                    "1. **Shoulder Season**: Travel right before or after peak season for 30–50% cheaper stays and fewer crowds.\n"
+                    "2. **Public Transit**: Use city metro cards, trams, and regional trains instead of hailing cabs.\n"
+                    "3. **Eat Local**: Dine at bustling neighborhood markets and local family restaurants for authentic, low-cost meals.\n"
+                    "4. **Free Attractions**: Visit city parks, historic walking districts, viewpoints, and free museum days."
+                )
+            }
+
+        # Jet Lag
+        if any(w in q for w in ["jet lag", "jetlag", "time zone", "adjust to time zone"]):
+            return {
+                "badge": "⏰ AURA • JET LAG RELIEF",
+                "response": (
+                    "### ⏰ How to Beat Jet Lag Fast\n\n"
+                    "1. **Pre-Shift Sleep**: Shift sleep by 1 hour toward your destination timezone 2 days before flying.\n"
+                    "2. **Sunlight Exposure**: Spend at least 30 minutes in natural daylight upon arrival to reset your circadian clock.\n"
+                    "3. **Hydration**: Drink plenty of water during flight; limit caffeine and alcohol.\n"
+                    "4. **Stay Awake**: Resist taking long daytime naps; stay awake until at least 9:00 PM local time."
+                )
+            }
+
+        # Travel Safety & Solo Travel
+        if any(w in q for w in ["solo travel", "travel safety", "safe travel", "safety tips", "is it safe"]):
+            return {
+                "badge": "🛡️ AURA • TRAVEL SAFETY",
+                "response": (
+                    "### 🛡️ Essential Travel Safety Rules\n\n"
+                    "1. **Share Itinerary**: Share your live location and hotel details with a trusted family member or friend.\n"
+                    "2. **Digital Copies**: Keep cloud backups of your passport, visa, insurance, and emergency contacts.\n"
+                    "3. **Stay Alert**: Avoid flashing expensive electronics or large cash in crowded tourist hubs.\n"
+                    "4. **Emergency Numbers**: Save local police (112 / 911) and hotel emergency numbers on speed dial."
+                )
+            }
+
+        # International Travel & Visas
+        if any(w in q for w in ["passport", "visa", "international travel", "foreign travel", "esim", "currency exchange"]):
+            return {
+                "badge": "🌐 AURA • INTERNATIONAL TRAVEL",
+                "response": (
+                    "### 🌐 International Travel Essentials\n\n"
+                    "1. **6-Month Passport Rule**: Ensure your passport is valid for at least 6 months past your return date.\n"
+                    "2. **Visa Formalities**: Check eVisa or visa-on-arrival requirements before booking non-refundable tickets.\n"
+                    "3. **eSIM Data**: Install an international travel eSIM (e.g., Airalo) for immediate cellular connectivity upon arrival.\n"
+                    "4. **Cards & Forex**: Use a zero-forex-markup card and notify your bank of international travel dates.\n"
+                    "5. **Travel Insurance**: Always carry medical and trip interruption travel insurance."
+                )
+            }
+
+        # Mountain / Hill driving
+        if any(w in q for w in ["mountain driving", "ghat", "hill driving", "hill station driving"]):
+            return {
+                "badge": "🏔️ AURA • MOUNTAIN DRIVING",
+                "response": (
+                    "### 🏔️ Mountain & Ghat Road Driving Safety\n\n"
+                    "1. **Engine Braking**: Shift into lower gears (2nd or 3rd) going downhill to prevent brake pad overheating.\n"
+                    "2. **Uphill Priority**: Uphill vehicles always have the right of way on narrow single-lane inclines.\n"
+                    "3. **Hairpin Bends**: Honk gently before blind curves and never overtake on corners.\n"
+                    "4. **Weather Watch**: Keep fog lights ready and reduce speed during mist or monsoon rain."
+                )
+            }
+
+        return None

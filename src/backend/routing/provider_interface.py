@@ -15,6 +15,8 @@ class RoutingProfile(str, Enum):
     CYCLING = "cycling"
     MOTORCYCLE = "motorcycle"
     HEAVY_VEHICLE = "heavy_vehicle"
+    FLIGHT = "flight"
+    WATERWAY = "waterway"
 
 
 class RouteObjective(str, Enum):
@@ -56,6 +58,7 @@ class RouteAlternative:
     duration_seconds: float
     polyline: List[Tuple[float, float]]
     maneuvers: List[Maneuver] = field(default_factory=list)
+    summary: str = ""
     summary_roads: List[str] = field(default_factory=list)
     has_tolls: bool = False
     toll_fee_inr: float = 0.0
@@ -66,6 +69,7 @@ class RouteAlternative:
     road_quality_score: float = 0.85
     is_wheelchair_accessible: bool = True
     accessibility_confidence: float = 0.9  # 1.0 = verified, 0.5 = unverified
+    confidence: float = 0.9
     provider_source: str = "OSRM"
 
     @property

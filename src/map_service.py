@@ -20,6 +20,11 @@ import re
 
 # Pre-cached regional landmarks, micro-areas, wards, colonies, and campus blocks
 OFFLINE_GEOCODE_CACHE = {
+    # Darsi Regional Town & Hub
+    "darsi": {"lat": 15.7688, "lon": 79.6792, "name": "Darsi Town, Prakasam, Andhra Pradesh, India"},
+    "darsi town": {"lat": 15.7688, "lon": 79.6792, "name": "Darsi Town, Prakasam, Andhra Pradesh, India"},
+    "darsi town, andhra pradesh, india": {"lat": 15.7688, "lon": 79.6792, "name": "Darsi Town, Prakasam, Andhra Pradesh, India"},
+
     # Baseline Universities & Campus Micro-Locations
     "vignan university": {"lat": 16.2335, "lon": 80.5505, "name": "Vignan's Foundation for Science, Technology & Research, Vadlamudi"},
     "vignan campus": {"lat": 16.2335, "lon": 80.5505, "name": "Vignan University Main Campus"},
@@ -112,6 +117,9 @@ OFFLINE_GEOCODE_CACHE = {
     "astalakshmi temple": {"lat": 16.2385, "lon": 80.6420, "name": "Sri Asta Lakshmi Temple, Tenali", "display_name": "Sri Asta Lakshmi Temple, Tenali, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali", "type": "place_of_worship"},
     "bsr enclave": {"lat": 16.23454, "lon": 80.65197, "name": "BSR Enclave, Sarojini Naidu Street, Tenali", "display_name": "BSR Enclave, Sarojini Naidu Street, Tenali, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali"},
     "sarojini naidu street": {"lat": 16.23454, "lon": 80.65180, "name": "Sarojini Naidu Street, Tenali", "display_name": "Sarojini Naidu Street, Tenali, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Tenali"},
+    "amaravati": {"lat": 16.5417, "lon": 80.5150, "name": "Amaravati Capital City, Andhra Pradesh", "display_name": "AP State Secretariat, Velagapudi, Amaravati Capital City, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Amaravati", "type": "city"},
+    "amaravathi": {"lat": 16.5417, "lon": 80.5150, "name": "Amaravati Capital City, Andhra Pradesh", "display_name": "AP State Secretariat, Velagapudi, Amaravati Capital City, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Amaravati", "type": "city"},
+    "amaravati capital": {"lat": 16.5417, "lon": 80.5150, "name": "Amaravati Capital City, Andhra Pradesh", "display_name": "AP State Secretariat, Velagapudi, Amaravati Capital City, Guntur District, Andhra Pradesh", "state": "Andhra Pradesh", "country": "India", "city": "Amaravati", "type": "city"},
 
     # Campus Specific Locations & Internal POIs with Entrance Reference
     "the cafeteria, vignan university, vadlamudi": {"lat": 16.2336, "lon": 80.5525, "name": "Vignan Central Cafeteria & Food Court", "display_name": "The Cafeteria, Vignan University, Vadlamudi (Campus Internal POI - nearest road entrance: Main Entrance Arch)", "state": "Andhra Pradesh", "country": "India", "city": "Vadlamudi", "is_campus_internal": True, "campus_entrance": "Vignan University Main Entrance Arch, Vadlamudi Road", "entrance_lat": 16.2325, "entrance_lon": 80.5490, "type": "amenity"},
@@ -148,6 +156,61 @@ OFFLINE_GEOCODE_CACHE = {
     "ongole": {"lat": 15.5057, "lon": 80.0499, "name": "Ongole Town Center", "display_name": "Ongole, Prakasam District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Ongole"},
     "nellore": {"lat": 14.4426, "lon": 79.9865, "name": "Nellore City Center", "display_name": "Nellore, SPSR Nellore District, Andhra Pradesh, India", "state": "Andhra Pradesh", "country": "India", "city": "Nellore"},
 }
+
+# Curated prominent sub-areas, transit hubs, IT corridors & neighborhoods for multi-area selection
+CITY_AREAS_DIRECTORY: Dict[str, List[Dict[str, Any]]] = {
+    "hyderabad": [
+        {"name": "Hyderabad City Center (Nampally / Abids)", "display_name": "Hyderabad City Center, Nampally / Abids, Hyderabad, Telangana", "city": "Hyderabad", "state": "Telangana", "country": "India", "lat": 17.3850, "lon": 78.4867, "category_icon": "🏛️", "category_name": "City Center", "area_badge": "Downtown Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_hyd_center"},
+        {"name": "Rajiv Gandhi Int'l Airport (RGIA)", "display_name": "Rajiv Gandhi International Airport (RGIA), Shamshabad, Hyderabad, Telangana", "city": "Shamshabad", "state": "Telangana", "country": "India", "lat": 17.2403, "lon": 78.4294, "category_icon": "✈️", "category_name": "Airport", "area_badge": "Shamshabad Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_hyd_rgia"},
+        {"name": "HITEC City / Madhapur (Cyber Towers)", "display_name": "HITEC City / Madhapur, Cyberabad IT Zone, Hyderabad, Telangana", "city": "Hyderabad", "state": "Telangana", "country": "India", "lat": 17.4485, "lon": 78.3772, "category_icon": "💻", "category_name": "Tech Corridor", "area_badge": "Cyberabad IT Zone", "provider": "Verified Regional Gazetteer", "provider_id": "area_hyd_hitec"},
+        {"name": "Gachibowli Financial District", "display_name": "Gachibowli Financial District & ISB, Hyderabad, Telangana", "city": "Hyderabad", "state": "Telangana", "country": "India", "lat": 17.4401, "lon": 78.3489, "category_icon": "🏢", "category_name": "Financial District", "area_badge": "Corporate Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_hyd_gachibowli"},
+        {"name": "Secunderabad Junction Railway Station", "display_name": "Secunderabad Junction Railway Station, Secunderabad, Telangana", "city": "Secunderabad", "state": "Telangana", "country": "India", "lat": 17.4334, "lon": 78.5015, "category_icon": "🚆", "category_name": "Railway Station", "area_badge": "Main Transit Junction", "provider": "Verified Regional Gazetteer", "provider_id": "area_hyd_sc_station"},
+        {"name": "Charminar & Historic Old City", "display_name": "Charminar & Historic Old City, Hyderabad, Telangana", "city": "Hyderabad", "state": "Telangana", "country": "India", "lat": 17.3616, "lon": 78.4747, "category_icon": "🏰", "category_name": "Heritage & Culture", "area_badge": "Historic Center", "provider": "Verified Regional Gazetteer", "provider_id": "area_hyd_charminar"},
+        {"name": "Banjara Hills / Jubilee Hills", "display_name": "Banjara Hills & Jubilee Hills Commercial Hub, Hyderabad, Telangana", "city": "Hyderabad", "state": "Telangana", "country": "India", "lat": 17.4319, "lon": 78.4073, "category_icon": "🛍️", "category_name": "Commercial & Lifestyle", "area_badge": "Metro Sector", "provider": "Verified Regional Gazetteer", "provider_id": "area_hyd_banjara"}
+    ],
+    "guntur": [
+        {"name": "Guntur City Center (Old Club Road / Market)", "display_name": "Guntur City Center, Old Club Road, Guntur, Andhra Pradesh", "city": "Guntur", "state": "Andhra Pradesh", "country": "India", "lat": 16.3067, "lon": 80.4365, "category_icon": "🏛️", "category_name": "City Center", "area_badge": "Downtown Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_gnt_center"},
+        {"name": "Guntur Junction Railway Station", "display_name": "Guntur Junction Railway Station, Station Road, Guntur, Andhra Pradesh", "city": "Guntur", "state": "Andhra Pradesh", "country": "India", "lat": 16.3045, "lon": 80.4445, "category_icon": "🚆", "category_name": "Railway Station", "area_badge": "Main Transit Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_gnt_station"},
+        {"name": "Brodipet Commercial Center", "display_name": "Brodipet Commercial Center, Guntur, Andhra Pradesh", "city": "Guntur", "state": "Andhra Pradesh", "country": "India", "lat": 16.3015, "lon": 80.4420, "category_icon": "🛍️", "category_name": "Commercial", "area_badge": "Market Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_gnt_brodipet"},
+        {"name": "Arundelpet Main Area", "display_name": "Arundelpet Commercial & Residential Sector, Guntur, Andhra Pradesh", "city": "Guntur", "state": "Andhra Pradesh", "country": "India", "lat": 16.3075, "lon": 80.4350, "category_icon": "📍", "category_name": "Commercial Sector", "area_badge": "Central Sector", "provider": "Verified Regional Gazetteer", "provider_id": "area_gnt_arundelpet"},
+        {"name": "NTR RTC Central Bus Stand", "display_name": "NTR RTC Central Bus Stand, Guntur, Andhra Pradesh", "city": "Guntur", "state": "Andhra Pradesh", "country": "India", "lat": 16.3080, "lon": 80.4420, "category_icon": "🚌", "category_name": "Bus Terminal", "area_badge": "RTC Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_gnt_busstand"},
+        {"name": "Vignan University (VFSTR Vadlamudi)", "display_name": "Vignan's Foundation for Science, Technology & Research (VFSTR), Vadlamudi, Guntur District", "city": "Vadlamudi", "state": "Andhra Pradesh", "country": "India", "lat": 16.2335, "lon": 80.5505, "category_icon": "🎓", "category_name": "University Campus", "area_badge": "VFSTR Campus", "provider": "Verified Regional Gazetteer", "provider_id": "area_gnt_vignan"},
+        {"name": "AIIMS Mangalagiri", "display_name": "All India Institute of Medical Sciences (AIIMS), Mangalagiri, Guntur District", "city": "Mangalagiri", "state": "Andhra Pradesh", "country": "India", "lat": 16.4385, "lon": 80.5750, "category_icon": "🏥", "category_name": "Healthcare & Hospital", "area_badge": "AIIMS Campus", "provider": "Verified Regional Gazetteer", "provider_id": "area_gnt_aiims"}
+    ],
+    "tenali": [
+        {"name": "Tenali Town Center", "display_name": "Tenali Town Center, Guntur District, Andhra Pradesh", "city": "Tenali", "state": "Andhra Pradesh", "country": "India", "lat": 16.2430, "lon": 80.6400, "category_icon": "🏛️", "category_name": "Town Center", "area_badge": "Municipal Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_tnl_center"},
+        {"name": "Tenali Junction Railway Station", "display_name": "Tenali Junction Railway Station, Station Road, Tenali, Andhra Pradesh", "city": "Tenali", "state": "Andhra Pradesh", "country": "India", "lat": 16.2395, "lon": 80.6465, "category_icon": "🚆", "category_name": "Railway Station", "area_badge": "Main Station", "provider": "Verified Regional Gazetteer", "provider_id": "area_tnl_station"},
+        {"name": "Morrispet Commercial Area", "display_name": "Morrispet Commercial Area, Tenali, Andhra Pradesh", "city": "Tenali", "state": "Andhra Pradesh", "country": "India", "lat": 16.2380, "lon": 80.6450, "category_icon": "🛍️", "category_name": "Commercial", "area_badge": "Market Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_tnl_morrispet"},
+        {"name": "Chenchupet Area", "display_name": "Chenchupet Residential Sector, Tenali, Andhra Pradesh", "city": "Tenali", "state": "Andhra Pradesh", "country": "India", "lat": 16.2450, "lon": 80.6350, "category_icon": "📍", "category_name": "Residential Sector", "area_badge": "Town Sector", "provider": "Verified Regional Gazetteer", "provider_id": "area_tnl_chenchupet"},
+        {"name": "Sri Asta Lakshmi Temple", "display_name": "Sri Asta Lakshmi Temple, Tenali, Guntur District, Andhra Pradesh", "city": "Tenali", "state": "Andhra Pradesh", "country": "India", "lat": 16.2385, "lon": 80.6420, "category_icon": "🛕", "category_name": "Temple & Pilgrim", "area_badge": "Cultural Landmark", "provider": "Verified Regional Gazetteer", "provider_id": "area_tnl_temple"},
+        {"name": "BSR Enclave (Sarojini Naidu St)", "display_name": "BSR Enclave, Sarojini Naidu Street, Tenali, Andhra Pradesh", "city": "Tenali", "state": "Andhra Pradesh", "country": "India", "lat": 16.23454, "lon": 80.65197, "category_icon": "📍", "category_name": "Residential Enclave", "area_badge": "Enclave", "provider": "Verified Regional Gazetteer", "provider_id": "area_tnl_bsr"},
+        {"name": "Angalakuduru Village", "display_name": "Angalakuduru Village, Tenali Mandal, Andhra Pradesh", "city": "Tenali Mandal", "state": "Andhra Pradesh", "country": "India", "lat": 16.2280, "lon": 80.6220, "category_icon": "🏡", "category_name": "Mandal Outskirts", "area_badge": "Rural Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_tnl_angalakuduru"}
+    ],
+    "vijayawada": [
+        {"name": "Vijayawada City Center / Benz Circle", "display_name": "Benz Circle, Vijayawada, NTR District, Andhra Pradesh", "city": "Vijayawada", "state": "Andhra Pradesh", "country": "India", "lat": 16.5062, "lon": 80.6480, "category_icon": "🏛️", "category_name": "City Center", "area_badge": "Benz Circle Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_vja_center"},
+        {"name": "Vijayawada Junction Railway Station", "display_name": "Vijayawada Junction Railway Station, Vijayawada, Andhra Pradesh", "city": "Vijayawada", "state": "Andhra Pradesh", "country": "India", "lat": 16.5180, "lon": 80.6200, "category_icon": "🚆", "category_name": "Railway Station", "area_badge": "Transit Junction", "provider": "Verified Regional Gazetteer", "provider_id": "area_vja_station"},
+        {"name": "Pandit Nehru Bus Station (PNBS)", "display_name": "Pandit Nehru Bus Station (PNBS), Vijayawada, Andhra Pradesh", "city": "Vijayawada", "state": "Andhra Pradesh", "country": "India", "lat": 16.5110, "lon": 80.6280, "category_icon": "🚌", "category_name": "Bus Terminal", "area_badge": "Central RTC", "provider": "Verified Regional Gazetteer", "provider_id": "area_vja_pnbs"},
+        {"name": "Vijayawada Int'l Airport (Gannavaram)", "display_name": "Vijayawada International Airport (Gannavaram), Gannavaram, Andhra Pradesh", "city": "Gannavaram", "state": "Andhra Pradesh", "country": "India", "lat": 16.5280, "lon": 80.7980, "category_icon": "✈️", "category_name": "Airport", "area_badge": "Airport Terminal", "provider": "Verified Regional Gazetteer", "provider_id": "area_vja_airport"},
+        {"name": "Kanaka Durga Temple (Indrakeeladri)", "display_name": "Kanaka Durga Temple, Indrakeeladri, Vijayawada, Andhra Pradesh", "city": "Vijayawada", "state": "Andhra Pradesh", "country": "India", "lat": 16.5160, "lon": 80.6055, "category_icon": "🛕", "category_name": "Pilgrim Site", "area_badge": "Temple Shrine", "provider": "Verified Regional Gazetteer", "provider_id": "area_vja_temple"},
+        {"name": "Prakasam Barrage", "display_name": "Prakasam Barrage, Krishna River, Vijayawada, Andhra Pradesh", "city": "Vijayawada", "state": "Andhra Pradesh", "country": "India", "lat": 16.5075, "lon": 80.6080, "category_icon": "🌊", "category_name": "River Landmark", "area_badge": "Krishna River", "provider": "Verified Regional Gazetteer", "provider_id": "area_vja_barrage"}
+    ],
+    "bangalore": [
+        {"name": "MG Road / Vidhana Soudha (City Center)", "display_name": "MG Road / Vidhana Soudha, Bengaluru, Karnataka", "city": "Bengaluru", "state": "Karnataka", "country": "India", "lat": 12.9716, "lon": 77.5946, "category_icon": "🏛️", "category_name": "City Center", "area_badge": "Central District", "provider": "Verified Regional Gazetteer", "provider_id": "area_blr_center"},
+        {"name": "Kempegowda Int'l Airport (BLR)", "display_name": "Kempegowda International Airport (BLR), Devanahalli, Bengaluru, Karnataka", "city": "Devanahalli", "state": "Karnataka", "country": "India", "lat": 13.1986, "lon": 77.7066, "category_icon": "✈️", "category_name": "Airport", "area_badge": "Airport Terminal", "provider": "Verified Regional Gazetteer", "provider_id": "area_blr_airport"},
+        {"name": "Whitefield IT Corridor", "display_name": "Whitefield IT Corridor & Tech Parks, Bengaluru, Karnataka", "city": "Bengaluru", "state": "Karnataka", "country": "India", "lat": 12.9698, "lon": 77.7500, "category_icon": "💻", "category_name": "Tech Corridor", "area_badge": "IT Park Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_blr_whitefield"},
+        {"name": "Electronic City Hub", "display_name": "Electronic City Phase 1 & 2, Bengaluru, Karnataka", "city": "Bengaluru", "state": "Karnataka", "country": "India", "lat": 12.8452, "lon": 77.6602, "category_icon": "💻", "category_name": "Tech Corridor", "area_badge": "Electronic City", "provider": "Verified Regional Gazetteer", "provider_id": "area_blr_ecity"},
+        {"name": "KSR Bengaluru Railway Station (Majestic)", "display_name": "KSR Bengaluru City Railway Station (Majestic), Bengaluru, Karnataka", "city": "Bengaluru", "state": "Karnataka", "country": "India", "lat": 12.9774, "lon": 77.5713, "category_icon": "🚆", "category_name": "Railway Station", "area_badge": "Majestic Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_blr_station"}
+    ],
+    "amaravati": [
+        {"name": "Amaravati Capital City (Secretariat)", "display_name": "AP State Secretariat, Velagapudi, Amaravati, Guntur District, Andhra Pradesh", "city": "Velagapudi", "state": "Andhra Pradesh", "country": "India", "lat": 16.5417, "lon": 80.5150, "category_icon": "🏛️", "category_name": "Capital City", "area_badge": "Secretariat Hub", "provider": "Verified Regional Gazetteer", "provider_id": "area_amr_secretariat"},
+        {"name": "Amaravati High Court", "display_name": "Andhra Pradesh High Court, Nelapadu, Amaravati, Andhra Pradesh", "city": "Nelapadu", "state": "Andhra Pradesh", "country": "India", "lat": 16.5135, "lon": 80.4985, "category_icon": "⚖️", "category_name": "Judicial Complex", "area_badge": "High Court", "provider": "Verified Regional Gazetteer", "provider_id": "area_amr_highcourt"},
+        {"name": "Amaravati Heritage Town & Mahastupa", "display_name": "Amaravati Buddhist Stupa & Dhyana Buddha, Amaravati Town, Andhra Pradesh", "city": "Amaravati", "state": "Andhra Pradesh", "country": "India", "lat": 16.5746, "lon": 80.3572, "category_icon": "🛕", "category_name": "Heritage Monument", "area_badge": "Buddhist Stupa", "provider": "Verified Regional Gazetteer", "provider_id": "area_amr_stupa"},
+        {"name": "SRM University AP (Amaravati)", "display_name": "SRM University AP, Neerukonda, Amaravati, Andhra Pradesh", "city": "Neerukonda", "state": "Andhra Pradesh", "country": "India", "lat": 16.4678, "lon": 80.5054, "category_icon": "🎓", "category_name": "University Campus", "area_badge": "SRM Campus", "provider": "Verified Regional Gazetteer", "provider_id": "area_amr_srm"},
+        {"name": "VIT-AP University", "display_name": "VIT-AP University, Inavolu, Beside AP Secretariat, Amaravati, Andhra Pradesh", "city": "Inavolu", "state": "Andhra Pradesh", "country": "India", "lat": 16.4975, "lon": 80.4990, "category_icon": "🎓", "category_name": "University Campus", "area_badge": "VIT Campus", "provider": "Verified Regional Gazetteer", "provider_id": "area_amr_vit"}
+    ]
+}
+CITY_AREAS_DIRECTORY["bengaluru"] = CITY_AREAS_DIRECTORY["bangalore"]
+CITY_AREAS_DIRECTORY["amaravathi"] = CITY_AREAS_DIRECTORY["amaravati"]
 
 
 class MapService:
@@ -290,21 +353,62 @@ class MapService:
 
         # Handle 'current location' keyword
         if "current" in q_norm or "my location" in q_norm or "live location" in q_norm:
+            c_lat = origin_coords[0] if origin_coords else 17.3850
+            c_lon = origin_coords[1] if origin_coords else 78.4867
             cur_loc_res = [{
-                "lat": 16.23454,
-                "lon": 80.65197,
+                "lat": c_lat,
+                "lon": c_lon,
                 "display_name": "📍 Current Location",
                 "country": "India",
-                "state": "Andhra Pradesh",
-                "city": "Tenali",
+                "state": "",
+                "city": "Current Location",
                 "type": "current_location",
                 "importance": 1.0,
                 "relevance_score": 1.0,
                 "source": "CURRENT_LOCATION",
                 "is_campus_internal": False
             }]
-            self._query_candidates_cache[q_norm] = cur_loc_res
             return cur_loc_res
+
+        # ---------------------------------------------------------
+        # TIER 1.5: Airport IATA & Global Airway Hub Detection
+        # ---------------------------------------------------------
+        q_clean_up = q_clean.upper()
+        try:
+            from src.backend.routing.flight_provider import AIRPORT_DATABASE
+            matched_airports = []
+            for apt in AIRPORT_DATABASE:
+                has_airport_kw = any(w in q_norm for w in ["airport", "aerodrome", "terminal", "intl", "airway"])
+                is_exact_code = (q_clean_up == apt["iata"] or q_clean_up == apt["icao"])
+                is_airport_name_query = has_airport_kw and (
+                    apt["name"].lower() in q_norm or
+                    q_norm.startswith(apt["name"].lower()) or
+                    apt["name"].lower().startswith(q_norm) or
+                    f"{apt['city'].lower()} airport" in q_norm or 
+                    f"{apt['city'].lower()} intl" in q_norm
+                )
+                if is_exact_code or is_airport_name_query:
+                    matched_airports.append({
+                        "lat": apt["lat"],
+                        "lon": apt["lon"],
+                        "name": f"✈️ {apt['name']} ({apt['iata']})",
+                        "display_name": f"✈️ {apt['name']} ({apt['iata']}), {apt['city']}, {apt['country']}",
+                        "address": f"{apt['name']}, {apt['city']}, {apt['country']}",
+                        "country": apt["country"],
+                        "state": apt["city"],
+                        "city": apt["city"],
+                        "type": "airport",
+                        "importance": 1.0,
+                        "relevance_score": 1.0,
+                        "provider": "Global Aviation Database",
+                        "provider_id": f"airport_{apt['iata']}",
+                        "source": "AIRPORT_REGISTRY",
+                        "is_campus_internal": False
+                    })
+            if matched_airports:
+                return matched_airports[:limit]
+        except Exception:
+            pass
 
         q_tokens = set(re.findall(r"\b[a-zA-Z0-9]{2,}\b", q_norm_std))
         # Known regional and major global localities for locality-consistency ranking
@@ -330,11 +434,26 @@ class MapService:
             target_tokens = set(re.findall(r"\b[a-zA-Z0-9]{2,}\b", f"{k_clean} {name_clean} {disp_clean}"))
             token_overlap = len(q_tokens.intersection(target_tokens))
 
-            # Match criteria: exact key, exact name, startswith, or significant token overlap
+            # Generic stopwords that should not trigger false gazetteer matches on their own
+            GENERIC_STOPWORDS = {
+                "town", "city", "center", "centre", "andhra", "pradesh", "district", "india",
+                "near", "junction", "road", "street", "main", "gate", "station", "building",
+                "telangana", "state", "point", "location", "place", "hub"
+            }
+            distinctive_q_tokens = {t for t in q_tokens if t not in GENERIC_STOPWORDS and len(t) >= 3}
+            distinctive_overlap = len(distinctive_q_tokens.intersection(target_tokens))
+
+            # Match criteria: exact key, exact name, startswith, or distinctive token overlap
             is_exact = (k_clean == q_norm or k_clean == q_norm_std or name_clean == q_norm or name_clean == q_norm_std)
             is_substring = (len(q_norm_std) >= 3 and (k_clean.startswith(q_norm_std) or q_norm_std in k_clean or q_norm_std in name_clean))
 
-            if is_exact or is_substring or (token_overlap >= max(1, min(len(q_tokens), 2))):
+            has_valid_overlap = False
+            if distinctive_q_tokens:
+                has_valid_overlap = (distinctive_overlap >= 1 and token_overlap >= 2)
+            else:
+                has_valid_overlap = (token_overlap >= max(1, min(len(q_tokens), 2)))
+
+            if is_exact or is_substring or has_valid_overlap:
                 # Calculate match score (verified gazetteer has highest confidence)
                 match_score = 1.60 if is_exact else (1.30 if is_substring else 0.85)
                 match_score += 0.08 * token_overlap
@@ -672,6 +791,117 @@ class MapService:
 
         return final_candidates
 
+    def get_disambiguation_candidates(
+        self,
+        query: str,
+        limit: int = 8,
+        origin_coords: Optional[Tuple[float, float]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Returns rich multi-area disambiguation candidates for any query.
+        If a recognized metropolitan hub or city is queried, provides prominent
+        neighborhoods, airports, IT corridors, transit stations, and city center areas.
+        Also preserves international and statewide candidates returned by geocode_candidates.
+        """
+        q_raw = (query or "").strip()
+        if not q_raw:
+            return []
+
+        q_norm = q_raw.lower()
+        base_cands = self.geocode_candidates(q_raw, limit=max(limit, 5), origin_coords=origin_coords)
+
+        # Check for matching city in directory
+        matched_city_key = None
+        for k in CITY_AREAS_DIRECTORY.keys():
+            if k == q_norm or k in q_norm.split() or q_norm.startswith(k):
+                matched_city_key = k
+                break
+
+        res: List[Dict[str, Any]] = []
+        if matched_city_key:
+            for item in CITY_AREAS_DIRECTORY[matched_city_key]:
+                cand_copy = dict(item)
+                cand_copy.setdefault("source", "CITY_AREAS_DIRECTORY")
+                cand_copy.setdefault("importance", 1.5)
+                cand_copy.setdefault("relevance_score", 1.5)
+                cand_copy.setdefault("is_campus_internal", False)
+                res.append(cand_copy)
+
+            # Preserve any international or cross-state matches from base_cands (e.g. Hyderabad, Sindh, Pakistan)
+            for bc in base_cands:
+                is_unique_region = True
+                for r_item in res:
+                    if abs(bc["lat"] - r_item["lat"]) < 0.05 and abs(bc["lon"] - r_item["lon"]) < 0.05:
+                        is_unique_region = False
+                        break
+                if is_unique_region:
+                    res.append(bc)
+        else:
+            res = list(base_cands)
+
+        # Ensure all candidates have rich display metadata & category badges
+        for idx, c in enumerate(res):
+            c_name = c.get("name") or c.get("display_name", "").split(",")[0].strip()
+            c.setdefault("name", c_name)
+            if not c.get("category_icon"):
+                t_low = (str(c.get("type", "")) + " " + c_name.lower() + " " + str(c.get("display_name", "")).lower())
+                if any(w in t_low for w in ["airport", "aerodrome", "terminal"]):
+                    c["category_icon"] = "✈️"
+                    c["category_name"] = "Airport"
+                    c["area_badge"] = "Aviation Hub"
+                elif any(w in t_low for w in ["railway", "station", "train", "junction"]):
+                    c["category_icon"] = "🚆"
+                    c["category_name"] = "Railway Station"
+                    c["area_badge"] = "Transit Hub"
+                elif any(w in t_low for w in ["bus", "pnbs", "rtc"]):
+                    c["category_icon"] = "🚌"
+                    c["category_name"] = "Bus Terminal"
+                    c["area_badge"] = "Bus Hub"
+                elif any(w in t_low for w in ["temple", "church", "mosque", "worship", "devasthanam"]):
+                    c["category_icon"] = "🛕"
+                    c["category_name"] = "Place of Worship"
+                    c["area_badge"] = "Landmark"
+                elif any(w in t_low for w in ["hospital", "medical", "clinic", "health"]):
+                    c["category_icon"] = "🏥"
+                    c["category_name"] = "Healthcare"
+                    c["area_badge"] = "Medical"
+                elif any(w in t_low for w in ["university", "college", "school", "campus"]):
+                    c["category_icon"] = "🎓"
+                    c["category_name"] = "University"
+                    c["area_badge"] = "Academic"
+                elif any(w in t_low for w in ["mall", "market", "commercial", "shopping"]):
+                    c["category_icon"] = "🛍️"
+                    c["category_name"] = "Commercial"
+                    c["area_badge"] = "Market"
+                elif any(w in t_low for w in ["city", "town", "center"]):
+                    c["category_icon"] = "🏛️"
+                    c["category_name"] = "City Center"
+                    c["area_badge"] = "Downtown"
+                elif any(w in t_low for w in ["village", "rural"]):
+                    c["category_icon"] = "🏡"
+                    c["category_name"] = "Village"
+                    c["area_badge"] = "Mandal"
+                else:
+                    c["category_icon"] = "📍"
+                    c["category_name"] = "Area / Landmark"
+                    c["area_badge"] = c.get("city") or c.get("state") or "Locality"
+
+            if not c.get("provider_id"):
+                c["provider_id"] = f"area_{c['lat']:.4f}_{c['lon']:.4f}_{idx}"
+
+            # Calculate distance if origin_coords is available
+            if origin_coords:
+                import math
+                lat1, lon1 = math.radians(origin_coords[0]), math.radians(origin_coords[1])
+                lat2, lon2 = math.radians(c["lat"]), math.radians(c["lon"])
+                dlat = lat2 - lat1
+                dlon = lon2 - lon1
+                a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+                dist_km = 6371.0 * 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+                c["distance_km"] = round(dist_km, 1)
+
+        return res[:limit]
+
     def reverse_geocode(self, lat: float, lon: float) -> str:
         """Translates lat/lon into human-readable landmark or address worldwide."""
         # Check proximity to known cached landmarks (< 350 meters) - find closest
@@ -718,7 +948,8 @@ class MapService:
         auto_fit_bounds: bool = False,
         traveler_avatar: str = "boy",
         emergency_facilities: Optional[List[Dict[str, Any]]] = None,
-        is_custom_origin: bool = False
+        is_custom_origin: bool = False,
+        fleet_members: Optional[List[Dict[str, Any]]] = None
     ) -> folium.Map:
         """
         Creates a rich, multi-layered interactive Folium Leaflet Map with:
@@ -864,7 +1095,9 @@ class MapService:
                         url.searchParams.set("gps_lat", lat.toFixed(6));
                         url.searchParams.set("gps_lon", lon.toFixed(6));
                         url.searchParams.set("gps_acc", (acc || 6.0).toFixed(1));
-                        targetWin.location.replace(url.toString());
+                        if (targetWin.history && targetWin.history.replaceState) {{
+                            targetWin.history.replaceState(null, '', url.toString());
+                        }}
                     }}
                 }} catch(err) {{
                     console.warn("[PATHFINDER] Could not sync detected start location to parent window:", err);
@@ -1408,6 +1641,76 @@ class MapService:
                     )
                 ).add_to(m)
 
+        # 4c. Add Multi-User Live Fleet / Convoy Peer Markers
+        if fleet_members:
+            for member in fleet_members:
+                m_lat = member.get("latitude")
+                m_lon = member.get("longitude")
+                if not m_lat or not m_lon:
+                    continue
+                m_name = member.get("display_name", "Convoy Member")
+                m_avatar = member.get("avatar", "🚗")
+                m_role = member.get("role", "traveler").capitalize()
+                m_speed = member.get("speed_kmh", 0.0)
+                m_dist_lbl = member.get("relative_location_str", member.get("distance_label", ""))
+                m_status = member.get("status_msg", "Active")
+                m_seen = member.get("last_seen_str", "Just now")
+
+                member_html = f"""
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                    <div style="
+                        width: 36px; height: 36px; border-radius: 50%;
+                        background: rgba(15, 23, 42, 0.95);
+                        border: 2px solid #38bdf8;
+                        box-shadow: 0 0 14px rgba(56, 189, 248, 0.75), inset 0 0 6px rgba(56, 189, 248, 0.3);
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 18px;
+                    ">
+                        {m_avatar}
+                    </div>
+                    <div style="
+                        background: rgba(15, 23, 42, 0.92);
+                        color: #38bdf8;
+                        font-weight: 700;
+                        font-size: 10px;
+                        padding: 1px 5px;
+                        border-radius: 4px;
+                        border: 1px solid rgba(56, 189, 248, 0.5);
+                        margin-top: 2px;
+                        white-space: nowrap;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+                    ">
+                        {m_name}
+                    </div>
+                </div>
+                """
+
+                popup_html = f"""
+                <div style='font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; min-width: 210px; padding: 4px;'>
+                    <div style='background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff; padding: 4px 8px; border-radius: 5px; font-weight: 800; font-size: 0.82rem; display: flex; align-items: center; justify-content: space-between;'>
+                        <span>{m_avatar} {m_name}</span>
+                        <span style='font-size: 0.65rem; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px;'>{m_role}</span>
+                    </div>
+                    <div style='margin-top: 6px; font-size: 0.76rem; color: #1e293b; line-height: 1.45;'>
+                        <b>Status:</b> <span style='color: #0284c7;'>{m_status}</span><br>
+                        <b>Distance:</b> {m_dist_lbl}<br>
+                        <b>Live Speed:</b> {m_speed:.1f} km/h<br>
+                        <span style='font-size: 0.68rem; color: #64748b;'>Updated: {m_seen}</span>
+                    </div>
+                </div>
+                """
+
+                folium.Marker(
+                    location=[m_lat, m_lon],
+                    icon=folium.DivIcon(
+                        html=member_html,
+                        icon_size=(90, 52),
+                        icon_anchor=(45, 18)
+                    ),
+                    tooltip=f"{m_avatar} {m_name} ({m_dist_lbl})",
+                    popup=folium.Popup(popup_html, max_width=260)
+                ).add_to(m)
+
         # 5. Add Route Polylines with Multi-Objective Visual Hierarchy
         if routes:
             for idx, r in enumerate(routes):
@@ -1427,31 +1730,21 @@ class MapService:
                     opacity = 0.85 if is_selected else (0.35 if has_selection else 0.55)
                     weight = 6 if is_selected else 3.5
                 elif is_selected:
-                    line_color = "#38bdf8" if rank > 1 else "#10b981"  # Vibrant luminous highlight
+                    line_color = r.get("color") or ("#38bdf8" if rank > 1 else "#10b981")  # Vibrant luminous highlight
                     dash_array = None
                     opacity = 1.0
-                    weight = 8
+                    weight = 8.5
                 elif has_selection:
-                    # Muted background alternative when another route is selected
-                    line_color = "#64748b" if rank != 1 else "#059669"
-                    dash_array = "6, 8"
-                    opacity = 0.40
-                    weight = 3.5
-                elif rank == 1:
-                    line_color = "#10b981"  # Emerald green for Top Recommended route
+                    # Visible distinct alternative when another route is selected
+                    line_color = r.get("color") or ("#64748b" if rank != 1 else "#059669")
                     dash_array = None
-                    opacity = 0.95
-                    weight = 6
-                elif rank == 2:
-                    line_color = "#38bdf8"  # Cyan for Alternative 1
-                    dash_array = None
-                    opacity = 0.85
-                    weight = 4.5
+                    opacity = 0.70
+                    weight = 5.0
                 else:
-                    line_color = "#a855f7"  # Purple for Alternative 2
-                    dash_array = "6, 6"
-                    opacity = 0.80
-                    weight = 4
+                    line_color = r.get("color") or ("#10b981" if rank == 1 else ("#38bdf8" if rank == 2 else "#a855f7"))
+                    dash_array = None
+                    opacity = 0.95 if rank == 1 else 0.90
+                    weight = 6.5 if rank == 1 else 5.5
 
                 route_label = r.get("name", f"Route {idx+1}")
                 dist_km = r.get("distance_km", 0.0)
@@ -1971,7 +2264,8 @@ class MapService:
         auto_fit_bounds: bool = False,
         traveler_avatar: str = "boy",
         emergency_facilities: Optional[List[Dict[str, Any]]] = None,
-        is_custom_origin: bool = False
+        is_custom_origin: bool = False,
+        fleet_members: Optional[List[Dict[str, Any]]] = None
     ) -> folium.Map:
         """Adapts route polylines, road restrictions, and breadcrumb trails for Folium map rendering."""
         routes_adapted = []
@@ -1981,6 +2275,7 @@ class MapService:
                     "name": r.get("name", f"Route {idx}"),
                     "polyline": r.get("coordinates", []),
                     "rank": r.get("rank", idx),
+                    "color": r.get("color"),
                     "is_eligible": r.get("is_eligible", True),
                     "is_selected": r.get("is_selected", False),
                     "safety_status": r.get("status", "ROUTE_ELIGIBLE")
@@ -2000,7 +2295,8 @@ class MapService:
             auto_fit_bounds=auto_fit_bounds,
             traveler_avatar=traveler_avatar,
             emergency_facilities=emergency_facilities,
-            is_custom_origin=is_custom_origin
+            is_custom_origin=is_custom_origin,
+            fleet_members=fleet_members
         )
 
     def render_hazard_map(

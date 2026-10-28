@@ -68,5 +68,16 @@ class Settings(BaseModel):
     REPORT_DUPLICATE_DISTANCE_METERS: float = 50.0
     MIN_CONFIDENCE_FOR_ROUTE_AVOIDANCE: float = 0.65
 
+    # Traffic Fusion & Uncertainty
+    TRAFFIC_FUSION_K_ANONYMITY_THRESHOLD: int = Field(
+        default_factory=lambda: int(os.getenv("TRAFFIC_FUSION_K_ANONYMITY_THRESHOLD", "3"))
+    )
+    TRAFFIC_DECAY_HALF_LIFE_SEC: float = Field(
+        default_factory=lambda: float(os.getenv("TRAFFIC_DECAY_HALF_LIFE_SEC", "180.0"))
+    )
+    TRAFFIC_UNCERTAINTY_PENALTY_WEIGHT: float = Field(
+        default_factory=lambda: float(os.getenv("TRAFFIC_UNCERTAINTY_PENALTY_WEIGHT", "0.25"))
+    )
+
 
 settings = Settings()

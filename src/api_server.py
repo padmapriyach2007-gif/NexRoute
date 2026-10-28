@@ -26,7 +26,7 @@ Provides:
 """
 
 from typing import Any, Dict, List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -40,11 +40,23 @@ from src.notification_service import NotificationService, NotificationPriority
 from src.backend.database.migrations import run_migrations
 from src.backend.database.seed_data import seed_database
 from src.backend.api.v2_router import v2_router
+from src.backend.api.routes_spec_endpoints import spec_router
 
 app = FastAPI(
     title="P.A.T.H.F.I.N.D.E.R. Next-Generation Maps & Real-World Navigation Backend",
     version="2.5.0",
     description="Autonomous emergency-aware routing, digital twin road intelligence, multi-entrance arrival, multimodal itineraries, and AI trip planning."
+)
+
+# Scalability, Rate Limiting & Overload Protection Middleware
+from src.backend.security.rate_limiter import ScalabilityProtectionMiddleware
+
+app.add_middleware(
+    ScalabilityProtectionMiddleware,
+    max_request_bytes=3 * 1024 * 1024,
+    general_rate_limit=120,
+    strict_rate_limit=30,
+    max_concurrent_requests=64
 )
 
 # CORS middleware for mobile and web clients
@@ -62,7 +74,11 @@ def on_startup():
     run_migrations()
     seed_database()
 
-# Mount Next-Gen v2 APIRouter
+from src.backend.api.health_router import health_router
+
+# Mount Specification Core Endpoints & Next-Gen v2 APIRouter
+app.include_router(health_router)
+app.include_router(spec_router)
 app.include_router(v2_router)
 
 # Global singleton services (v1 compatibility)
@@ -140,7 +156,30 @@ def geocode_place(req: GeocodeRequest):
     coords = map_service.geocode(req.query)
     if not coords:
         raise HTTPException(status_code=404, detail="Location not found")
-    return {"query": req.query, "latitude": coords[0], "longitude": coords[1]}
+    lat = coords["lat"] if isinstance(coords, dict) else coords[0]
+    lon = coords["lon"] if isinstance(coords, dict) else coords[1]
+    return {"query": req.query, "latitude": lat, "longitude": lon}
+
+
+@app.get("/api/autocomplete")
+def autocomplete_places(
+    q: str = Query(..., min_length=1, description="Search query string"),
+    limit: int = Query(7, ge=1, le=20, description="Max suggestions to return"),
+    origin_lat: Optional[float] = Query(None, ge=-90.0, le=90.0),
+    origin_lon: Optional[float] = Query(None, ge=-180.0, le=180.0)
+):
+    """
+    Search-as-you-type autocomplete endpoint with structured location details,
+    category badges, coordinate validation, and optional geographic distance relevance.
+    """
+    orig_coords = (origin_lat, origin_lon) if origin_lat is not None and origin_lon is not None else None
+    results = map_service.get_disambiguation_candidates(q, limit=limit, origin_coords=orig_coords)
+    return {
+        "query": q,
+        "count": len(results),
+        "suggestions": results
+    }
+
 
 
 @app.post("/api/route")

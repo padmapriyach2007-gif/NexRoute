@@ -54,6 +54,7 @@ class FacilityCategory(str, Enum):
     SHOPPING_MALLS = "shopping_malls"
     HOSPITAL_CLINICS = "hospital_clinics"
     CUSTOM_SEARCH = "custom_search"
+    SUPERMARKETS = "supermarkets"
 
 
 CATEGORY_CONFIG = {
@@ -157,7 +158,7 @@ CATEGORY_CONFIG = {
         "desc": "24/7 Cash Hubs, Cash Deposit Machines (CDM) & Banking Outlets"
     },
     FacilityCategory.SHOPPING_MALLS: {
-        "label": "🛍️ Shopping Malls & Retail",
+        "label": "🛍️ Shopping Malls & Supermarkets",
         "short_label": "Shopping Malls",
         "icon": "🛍️",
         "color": "#ec4899",
@@ -165,14 +166,23 @@ CATEGORY_CONFIG = {
         "border_badge": "rgba(236, 72, 153, 0.45)",
         "desc": "Hypermarkets, Department Stores, Retail Complexes & Malls"
     },
+    FacilityCategory.SUPERMARKETS: {
+        "label": "🛒 Supermarkets & Groceries",
+        "short_label": "Supermarkets",
+        "icon": "🛒",
+        "color": "#10b981",
+        "bg_badge": "rgba(16, 185, 129, 0.2)",
+        "border_badge": "#10b981",
+        "desc": "Supermarkets, Local Grocery & Provision Stores, Daily Marts & Hypermarkets"
+    },
     FacilityCategory.HOSPITAL_CLINICS: {
-        "label": "🏥 Hospitals & Clinics",
+        "label": "🏥 Hospitals, Clinics & Small Healthcare",
         "short_label": "Hospital Clinics",
         "icon": "🏥",
         "color": "#ef4444",
         "bg_badge": "rgba(239, 68, 68, 0.2)",
         "border_badge": "#ef4444",
-        "desc": "24/7 Emergency Casualty, Multi-Specialty Hospitals & Trauma Centers"
+        "desc": "Small Hospitals, 24/7 Trauma Centers, Primary Health Centers (PHC), Local Clinics & Dispensaries"
     },
     FacilityCategory.CUSTOM_SEARCH: {
         "label": "🔍 Custom User Location Search",
@@ -592,6 +602,162 @@ VERIFIED_FACILITIES_DATABASE: List[Dict[str, Any]] = [
         "rating": "4.4 ⭐ (Public Clinic)",
         "amenity_icon": "🏥",
         "notes": "Emergency first response, snakebite antivenom, outpatient clinic, diagnostic lab."
+    },
+    # ----------------- SMALL HOSPITALS, CLINICS & DISPENSARIES -----------------
+    {
+        "facility_id": "HOSP_SANJEEVANI_NARAKODUR",
+        "name": "Sanjeevani Family Clinic & Child Care Center",
+        "category": FacilityCategory.HOSPITAL_CLINICS,
+        "facility_type": "Neighborhood Clinic & Small Outpatient Hospital",
+        "latitude": 16.2510,
+        "longitude": 80.5280,
+        "address": "Narakodur Highway Junction, Guntur Corridor",
+        "operating_hours": "08:00 - 21:00 Daily • Emergency On-Call",
+        "contact_phone": "+91 863 241 1205",
+        "rating": "4.6 ⭐ (Verified Family Clinic)",
+        "amenity_icon": "🩺",
+        "notes": "General physician, pediatric care, ECG, diagnostic tests & first-aid emergency care."
+    },
+    {
+        "facility_id": "HOSP_SRI_SAI_NURSING_HOME",
+        "name": "Sri Sai Nursing Home & Maternity Clinic",
+        "category": FacilityCategory.HOSPITAL_CLINICS,
+        "facility_type": "Small Hospital & Maternal Healthcare",
+        "latitude": 16.2415,
+        "longitude": 80.6490,
+        "address": "Tenali Main Road, Near Municipal Circle",
+        "operating_hours": "24/7 Inpatient & Maternity Care",
+        "contact_phone": "+91 8644 228 114",
+        "rating": "4.5 ⭐ (Community Small Hospital)",
+        "amenity_icon": "🏥",
+        "notes": "15-bed small hospital, maternity labor room, round-the-clock emergency doctor on duty."
+    },
+    {
+        "facility_id": "HOSP_CHEBROLU_PHC",
+        "name": "Chebrolu Government Primary Health Centre (PHC)",
+        "category": FacilityCategory.HOSPITAL_CLINICS,
+        "facility_type": "Primary Health Centre & Dispensary",
+        "latitude": 16.2020,
+        "longitude": 80.5290,
+        "address": "Main Road, Chebrolu Rural Mandal",
+        "operating_hours": "08:00 - 18:00 Daily • 24/7 Emergency Triage",
+        "contact_phone": "+91 8644 254 108",
+        "rating": "4.3 ⭐ (Govt Health Centre)",
+        "amenity_icon": "🏥",
+        "notes": "Primary rural health centre, dispensary, free emergency triage, diagnostic laboratory."
+    },
+    {
+        "facility_id": "HOSP_LIFELINE_EMERGENCY_CLINIC",
+        "name": "LifeLine 24/7 Day-Care Hospital & Emergency Clinic",
+        "category": FacilityCategory.HOSPITAL_CLINICS,
+        "facility_type": "Small Emergency Hospital & Trauma Clinic",
+        "latitude": 16.2840,
+        "longitude": 80.4680,
+        "address": "Guntur-Tenali Link Road, Auto Nagar Approach",
+        "operating_hours": "24/7 Emergency & Outpatient Care",
+        "contact_phone": "+91 863 235 5588",
+        "rating": "4.7 ⭐ (Verified Small Hospital)",
+        "amenity_icon": "🏥",
+        "notes": "20-bed emergency hospital, mini-ICU, fracture splinting, oxygen support & pharmacy."
+    },
+    {
+        "facility_id": "HOSP_APOLLO_PRIMARY_CLINIC",
+        "name": "Apollo Clinic & 24/7 Diagnostic Pharmacy",
+        "category": FacilityCategory.HOSPITAL_CLINICS,
+        "facility_type": "Specialty Outpatient Clinic & Pharmacy",
+        "latitude": 16.2990,
+        "longitude": 80.4510,
+        "address": "Lakshmipuram Main Road, Guntur",
+        "operating_hours": "07:00 - 23:00 Daily • Pharmacy 24/7",
+        "contact_phone": "+91 863 226 7700",
+        "rating": "4.8 ⭐ (Accredited Clinic)",
+        "amenity_icon": "🩺",
+        "notes": "Consultant doctors, digital X-ray, ultrasound, express blood testing & home delivery."
+    },
+    # ----------------- SUPERMARKETS & GROCERY MARTS -----------------
+    {
+        "facility_id": "SUP_MORE_SUPERMARKET_TENALI",
+        "name": "More Supermarket & Daily Needs Mart",
+        "category": FacilityCategory.SUPERMARKETS,
+        "facility_type": "Supermarket, Fresh Produce & Groceries",
+        "latitude": 16.2440,
+        "longitude": 80.6515,
+        "address": "Station Road, Tenali Urban",
+        "operating_hours": "07:30 - 22:30 Daily",
+        "contact_phone": "+91 8644 233 400",
+        "rating": "4.6 ⭐ (Verified Supermarket)",
+        "amenity_icon": "🛒",
+        "notes": "Fresh vegetables, dairy, household staples, packaged foods & digital payments."
+    },
+    {
+        "facility_id": "SUP_RELIANCE_SMART_POINT_NARAKODUR",
+        "name": "Reliance Smart Point Neighborhood Supermarket",
+        "category": FacilityCategory.SUPERMARKETS,
+        "facility_type": "Neighborhood Supermarket & Grocery Store",
+        "latitude": 16.2525,
+        "longitude": 80.5260,
+        "address": "Narakodur Cross, Tenali-Guntur Main Road",
+        "operating_hours": "07:00 - 22:00 Daily",
+        "contact_phone": "+91 863 241 8900",
+        "rating": "4.5 ⭐ (Neighborhood Mart)",
+        "amenity_icon": "🛒",
+        "notes": "Daily groceries, staples, bakery, beverages & household provisions at discount prices."
+    },
+    {
+        "facility_id": "SUP_RATNADEEP_SUPERMARKET_GUNTUR",
+        "name": "Ratnadeep Supermarket & Gourmet Provisions",
+        "category": FacilityCategory.SUPERMARKETS,
+        "facility_type": "Premium Supermarket & Fresh Grocery Mart",
+        "latitude": 16.2980,
+        "longitude": 80.4430,
+        "address": "Lakshmipuram 4th Lane, Guntur",
+        "operating_hours": "08:00 - 22:30 Daily",
+        "contact_phone": "+91 863 234 4567",
+        "rating": "4.7 ⭐ (Top Rated Supermarket)",
+        "amenity_icon": "🛒",
+        "notes": "Gourmet groceries, organic produce, dairy, bakery counter & air-conditioned aisles."
+    },
+    {
+        "facility_id": "SUP_SPENCERS_FRESH_MART_GUNTUR",
+        "name": "Spencer's Neighborhood Supermarket & Fresh Mart",
+        "category": FacilityCategory.SUPERMARKETS,
+        "facility_type": "Supermarket & Departmental Mart",
+        "latitude": 16.3080,
+        "longitude": 80.4390,
+        "address": "Arundelpet Main Road, Guntur Central",
+        "operating_hours": "07:30 - 22:00 Daily",
+        "contact_phone": "+91 863 223 9080",
+        "rating": "4.6 ⭐ (Supermarket)",
+        "amenity_icon": "🛒",
+        "notes": "Full-line supermarket, fresh fruits, vegetables, imported groceries & personal care."
+    },
+    {
+        "facility_id": "SUP_VIGNAN_CAMPUS_MART",
+        "name": "Vignan Campus Mart & Cooperative Supermarket",
+        "category": FacilityCategory.SUPERMARKETS,
+        "facility_type": "Campus Supermarket & Daily Provisions",
+        "latitude": 16.2345,
+        "longitude": 80.5490,
+        "address": "Student Amenities Block, Vignan University, Vadlamudi",
+        "operating_hours": "07:30 - 22:00 Daily",
+        "contact_phone": "+91 863 234 4700",
+        "rating": "4.8 ⭐ (Campus Supermarket)",
+        "amenity_icon": "🛒",
+        "notes": "Daily provisions, snacks, fresh fruit, stationery, toiletries & emergency transit items."
+    },
+    {
+        "facility_id": "SUP_HERITAGE_DAILY_FRESH",
+        "name": "Heritage Daily Fresh Mart & Dairy Supermarket",
+        "category": FacilityCategory.SUPERMARKETS,
+        "facility_type": "Dairy, Produce & Grocery Supermarket",
+        "latitude": 16.2210,
+        "longitude": 80.5380,
+        "address": "Chebrolu - Vadlamudi Road",
+        "operating_hours": "06:30 - 21:30 Daily",
+        "contact_phone": "+91 863 248 1120",
+        "rating": "4.5 ⭐ (Fresh Mart)",
+        "amenity_icon": "🛒",
+        "notes": "Fresh farm dairy products, daily cooking essentials, fruits & pantry staples."
     }
 ]
 
@@ -620,23 +786,26 @@ WORLDWIDE_REGIONAL_POIS: Dict[str, List[Dict[str, Any]]] = {
         {"name": "Kaveri Residency & Lodge", "category": FacilityCategory.HOTELS, "facility_type": "Lodging & Suites", "lat_offset": -0.003, "lon_offset": 0.004, "icon": "🏨", "road": "Station Approach Road, Ranjole"},
         {"name": "Bidar Rural Police Outpost", "category": FacilityCategory.POLICE_RESCUE, "facility_type": "Police Station", "lat_offset": 0.001, "lon_offset": -0.002, "icon": "👮", "road": "Checkpost Junction, Ranjole"},
         {"name": "Ranjole Civic Shelter & Hall", "category": FacilityCategory.SHELTERS, "facility_type": "Community Refuge", "lat_offset": -0.001, "lon_offset": 0.002, "icon": "⛺", "road": "Civil Complex, Ranjole"},
-        {"name": "Reliance Smart Supermarket", "category": FacilityCategory.SHOPPING_MALLS, "facility_type": "Supermarket & Groceries", "lat_offset": 0.003, "lon_offset": -0.003, "icon": "🛍️", "road": "Commercial Hub, Ranjole"}
+        {"name": "Reliance Smart Supermarket", "category": FacilityCategory.SUPERMARKETS, "facility_type": "Supermarket & Groceries", "lat_offset": 0.003, "lon_offset": -0.003, "icon": "🛒", "road": "Commercial Hub, Ranjole"},
+        {"name": "Ranjole Daily Needs Supermarket", "category": FacilityCategory.SUPERMARKETS, "facility_type": "Supermarket & Provisions", "lat_offset": 0.002, "lon_offset": 0.004, "icon": "🛒", "road": "Market Complex, Ranjole"},
+        {"name": "Sanjeevani Day-Care Hospital & Clinic", "category": FacilityCategory.HOSPITAL_CLINICS, "facility_type": "Small Hospital & Clinic", "lat_offset": -0.002, "lon_offset": -0.004, "icon": "🏥", "road": "Hospital Road, Ranjole"}
     ]
 }
 
 CATEGORY_OSM_SEARCH_MAP: Dict[FacilityCategory, Tuple[List[str], str, str]] = {
-    FacilityCategory.HOSPITAL_CLINICS: (["hospital", "clinic", "medical"], "🏥", "Hospital & Healthcare"),
-    FacilityCategory.HOSPITALS: (["hospital", "clinic", "trauma"], "🏥", "Hospital & Healthcare"),
+    FacilityCategory.HOSPITAL_CLINICS: (["hospital", "clinic", "dispensary", "health centre", "nursing home", "medical clinic"], "🏥", "Hospital & Healthcare"),
+    FacilityCategory.HOSPITALS: (["hospital", "clinic", "trauma", "dispensary", "phc", "medical centre"], "🏥", "Hospital & Healthcare"),
+    FacilityCategory.SUPERMARKETS: (["supermarket", "grocery", "convenience store", "provisions", "mart", "hypermarket"], "🛒", "Supermarket & Groceries"),
     FacilityCategory.PETROL: (["fuel", "gas station", "petrol"], "⛽", "Fuel & Energy"),
     FacilityCategory.FUEL_CHARGING: (["fuel", "charging station", "ev charging"], "⚡", "EV & Fuel Station"),
     FacilityCategory.RESTAURANTS: (["restaurant", "cafe", "fast food"], "🍽️", "Dining & Cafe"),
     FacilityCategory.HOTELS: (["hotel", "lodging", "motel", "inn"], "🏨", "Lodging & Accommodations"),
     FacilityCategory.ATM: (["atm", "bank"], "🏧", "ATM & Banking"),
     FacilityCategory.POLICE_RESCUE: (["police", "fire station"], "👮", "Emergency & Police"),
-    FacilityCategory.EMERGENCY: (["hospital", "police", "fire station"], "🚨", "Emergency Station"),
+    FacilityCategory.EMERGENCY: (["hospital", "clinic", "police", "fire station"], "🚨", "Emergency Station"),
     FacilityCategory.SHELTERS: (["shelter", "community centre"], "⛺", "Civic Refuge Shelter"),
-    FacilityCategory.SHOPPING_MALLS: (["supermarket", "mall", "department store"], "🛍️", "Shopping & Retail"),
-    FacilityCategory.ALL_FACILITIES: (["hospital", "hotel", "restaurant", "fuel", "atm", "supermarket"], "🌐", "Transit Amenity")
+    FacilityCategory.SHOPPING_MALLS: (["supermarket", "mall", "department store", "grocery", "mart"], "🛍️", "Shopping & Retail"),
+    FacilityCategory.ALL_FACILITIES: (["hospital", "clinic", "supermarket", "grocery", "hotel", "restaurant", "fuel", "atm"], "🌐", "Transit Amenity")
 }
 
 
@@ -662,7 +831,7 @@ def _query_nominatim_bounded(query: str, min_lon: float, max_lat: float, max_lon
 def synthesize_localized_facilities(
     center_lat: float,
     center_lon: float,
-    matched_cat_enum: FacilityCategory,
+    matched_cat_enum: FacilityCategory = FacilityCategory.ALL_FACILITIES,
     radius_km: float = 8.0,
     count: int = 5
 ) -> List[Dict[str, Any]]:
@@ -706,21 +875,41 @@ def synthesize_localized_facilities(
 
     # Deterministic spatial angle/distance generator
     categories_to_gen = (
-        [FacilityCategory.HOSPITALS, FacilityCategory.HOTELS, FacilityCategory.RESTAURANTS, FacilityCategory.PETROL, FacilityCategory.ATM, FacilityCategory.SHOPPING_MALLS, FacilityCategory.POLICE_RESCUE, FacilityCategory.SHELTERS]
+        [FacilityCategory.HOSPITALS, FacilityCategory.SUPERMARKETS, FacilityCategory.HOTELS, FacilityCategory.RESTAURANTS, FacilityCategory.PETROL, FacilityCategory.ATM, FacilityCategory.SHOPPING_MALLS, FacilityCategory.POLICE_RESCUE, FacilityCategory.SHELTERS]
         if matched_cat_enum == FacilityCategory.ALL_FACILITIES
         else [matched_cat_enum]
     )
 
     synthesized: List[Dict[str, Any]] = []
     base_names = {
-        FacilityCategory.HOSPITALS: [("General Hospital & Emergency", "24/7 Hospital", "🏥"), ("Community Care Health Clinic", "Medical Clinic", "🏥"), ("Apollo City Pharmacy & Clinic", "Specialty Clinic", "🏥")],
-        FacilityCategory.HOSPITAL_CLINICS: [("General Hospital & Emergency", "24/7 Hospital", "🏥"), ("Community Care Health Clinic", "Medical Clinic", "🏥"), ("Apex Diagnostic & First Aid Center", "Diagnostic Center", "🏥")],
+        FacilityCategory.HOSPITALS: [
+            ("General Hospital & Emergency", "24/7 Hospital", "🏥"),
+            ("Community Health Centre (PHC)", "Primary Health Centre", "🏥"),
+            ("Sanjeevani Family Clinic & Dispensary", "Local Clinic & First Aid", "🩺"),
+            ("LifeLine 24/7 Small Hospital", "Emergency Care Hospital", "🏥")
+        ],
+        FacilityCategory.HOSPITAL_CLINICS: [
+            ("Primary Health Centre & Dispensary", "Primary Care Clinic", "🏥"),
+            ("Community Health Clinic & First Aid", "Neighborhood Clinic", "🩺"),
+            ("Sri Sai Day-Care Hospital & Maternity", "Small Hospital", "🏥"),
+            ("Apollo Family Clinic & Pharmacy", "Clinical Care & Pharmacy", "🏥")
+        ],
+        FacilityCategory.SUPERMARKETS: [
+            ("FreshChoice Daily Supermarket", "Supermarket & Groceries", "🛒"),
+            ("Reliance Smart Point Supermarket", "Grocery Mart", "🛒"),
+            ("Daily Needs Provision Supermarket", "Provisions & Groceries", "🛒"),
+            ("Metro Food & Grocery Mart", "Mini Supermarket", "🛒")
+        ],
         FacilityCategory.HOTELS: [("Grand Central Hotel & Suites", "Transit Hotel", "🏨"), ("Crown Palace Residency", "Boutique Hotel", "🏨"), ("Highway Comfort Inn & Lodge", "Lodging & Suites", "🏨")],
         FacilityCategory.RESTAURANTS: [("Royal Spice Family Restaurant", "Family Diner", "🍽️"), ("Green Leaf Garden Cafe & Bistro", "Cafe & Eatery", "🍽️"), ("Express Highway Food Hub", "Highway Diner", "🍽️")],
         FacilityCategory.PETROL: [("National Express Fuel & EV Station", "Petrol & Diesel Pump", "⛽"), ("Highway Auto LPG & Fast Charger", "EV & Fuel Hub", "⛽"), ("TotalEnergies Rapid Refuel", "Fuel Station", "⛽")],
         FacilityCategory.FUEL_CHARGING: [("FastCharge 150kW EV Hub", "Ultra-Fast EV Charger", "⚡"), ("CleanEnergy Power Station", "Battery Swap & Charge", "⚡"), ("GreenDrive EV Point", "EV Charging Station", "⚡")],
         FacilityCategory.ATM: [("State Bank 24/7 ATM & CDM", "Cash ATM", "🏧"), ("HDFC Bank Fast Cash Point", "24/7 ATM", "🏧"), ("National Express Cash ATM", "Transit ATM", "🏧")],
-        FacilityCategory.SHOPPING_MALLS: [("Central Avenue Supermarket", "Supermarket & Groceries", "🛍️"), ("Metro City Shopping Mall & Retail", "Shopping Center", "🛍️"), ("Lifestyle Retail Plaza", "Retail Arcade", "🛍️")],
+        FacilityCategory.SHOPPING_MALLS: [
+            ("Central City Shopping Mall & Retail", "Shopping Center & Mall", "🛍️"),
+            ("Metro Plaza Commercial Complex", "Commercial Complex", "🛍️"),
+            ("Lifestyle Galleria & Superstore", "Shopping Galleria", "🛍️")
+        ],
         FacilityCategory.POLICE_RESCUE: [("Sub-Divisional Police Station", "Police Station", "👮"), ("Emergency Fire & Rescue Command", "Fire & Rescue Station", "👮")],
         FacilityCategory.SHELTERS: [("Civic Evacuation & Community Shelter", "Disaster Safe Haven", "⛺"), ("Town Hall Emergency Refuge", "Civic Center", "⛺")],
     }
@@ -800,7 +989,9 @@ def fetch_dynamic_osm_facilities(
     
     if "emergency" in clean_cat:
         matched_cat_enum = FacilityCategory.EMERGENCY
-    elif any(k in clean_cat for k in ["hospital", "clinic", "medical", "doctor", "health", "🏥"]):
+    elif any(k in clean_cat for k in ["supermarket", "grocery", "provision", "mart", "kirana", "supermaeket", "🛒"]):
+        matched_cat_enum = FacilityCategory.SUPERMARKETS
+    elif any(k in clean_cat for k in ["hospital", "clinic", "medical", "doctor", "health", "dispensary", "phc", "nursing", "chc", "care center", "🏥", "🩺"]):
         matched_cat_enum = FacilityCategory.HOSPITAL_CLINICS
     elif any(k in clean_cat for k in ["fuel", "gas", "petrol", "diesel", "ev", "charging", "⛽"]):
         matched_cat_enum = FacilityCategory.PETROL
@@ -873,7 +1064,7 @@ def fetch_dynamic_osm_facilities(
                         if not name_raw:
                             name_raw = disp_raw.split(",")[0].strip() if disp_raw else f"{cat_label} Spot"
                         
-                        if name_raw.lower() in ["hospital", "clinic", "restaurant", "hotel", "fuel", "atm", "police"]:
+                        if name_raw.lower() in ["hospital", "clinic", "restaurant", "hotel", "fuel", "atm", "police", "supermarket", "grocery"]:
                             suburb_tag = addr_dict.get("suburb") or addr_dict.get("neighbourhood") or addr_dict.get("city") or ""
                             name_raw = f"{suburb_tag} {name_raw.title()}".strip()
 
@@ -891,6 +1082,9 @@ def fetch_dynamic_osm_facilities(
                             if any(k in term for k in ["hospital", "clinic"]):
                                 item_cat = FacilityCategory.HOSPITAL_CLINICS
                                 item_icon = "🏥"
+                            elif any(k in term for k in ["supermarket", "grocery"]):
+                                item_cat = FacilityCategory.SUPERMARKETS
+                                item_icon = "🛒"
                             elif any(k in term for k in ["hotel", "lodging"]):
                                 item_cat = FacilityCategory.HOTELS
                                 item_icon = "🏨"
@@ -906,6 +1100,15 @@ def fetch_dynamic_osm_facilities(
                             elif any(k in term for k in ["restaurant", "cafe"]):
                                 item_cat = FacilityCategory.RESTAURANTS
                                 item_icon = "🍽️"
+
+                        # Customize icon for small clinics vs hospitals and supermarkets vs malls
+                        name_lower = name_raw.lower()
+                        if any(w in name_lower for w in ["clinic", "dispensary", "phc", "health centre", "first aid"]):
+                            item_icon = "🩺"
+                        elif any(w in name_lower for w in ["supermarket", "grocery", "provision", "mart"]):
+                            item_icon = "🛒"
+                            if matched_cat_enum == FacilityCategory.ALL_FACILITIES:
+                                item_cat = FacilityCategory.SUPERMARKETS
 
                         # Ensure compliant naming pattern
                         if item_cat == FacilityCategory.HOTELS and not any(k in name_raw.lower() for k in ["hotel", "lodge", "motel", "inn", "stay", "resort"]):

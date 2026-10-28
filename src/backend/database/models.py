@@ -6,6 +6,7 @@ multimodal transit, collaborative trips, offline packages, and audit trails.
 
 import uuid
 from datetime import datetime, timezone
+from typing import Dict, Any, Optional, List
 from sqlalchemy import (
     Column, String, Integer, Float, Boolean, DateTime, Text, ForeignKey,
     Enum, JSON, Index, UniqueConstraint
@@ -280,6 +281,22 @@ class RoadConditionReport(Base):
     __table_args__ = (
         Index("idx_reports_spatial", "latitude", "longitude", "status"),
     )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "category": self.category,
+            "severity": self.severity,
+            "status": self.status,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "road_name": self.road_name,
+            "description": self.description,
+            "confidence_score": round(self.confidence_score, 2),
+            "upvotes": self.upvotes,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None
+        }
 
 
 class ReportConfirmation(Base):
@@ -679,4 +696,53 @@ class NavigationProgressEvent(Base):
     idempotency_key = Column(String(100), nullable=True, index=True)
     
     session = relationship("NavigationSession", back_populates="events")
+
+
+# =============================================================================
+# 13. PRIVACY-PRESERVING LOCATION SHARING & ANONYMOUS TRAFFIC CONTRIBUTIONS
+# =============================================================================
+
+class LocationSharingSession(Base):
+    __tablename__ = "location_sharing_sessions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    recipient_identifier = Column(String(150), nullable=False)
+    sharing_token = Column(String(64), unique=True, nullable=False, index=True)
+    duration_minutes = Column(Integer, default=60, nullable=False)
+    current_lat = Column(Float, nullable=True)
+    current_lon = Column(Float, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    revoked_at = Column(DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            "session_id": self.id,
+            "recipient": self.recipient_identifier,
+            "sharing_token": self.sharing_token,
+            "duration_minutes": self.duration_minutes,
+            "current_lat": self.current_lat,
+            "current_lon": self.current_lon,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+        }
+
+
+class LocationContribution(Base):
+    __tablename__ = "location_contributions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_pseudonym = Column(String(64), nullable=False, index=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    speed_kmh = Column(Float, default=0.0, nullable=False)
+    heading = Column(Float, default=0.0, nullable=False)
+    accuracy_meters = Column(Float, default=5.0, nullable=False)
+    inferred_mode = Column(String(30), default="VEHICLE", nullable=False)  # VEHICLE, WALKING, STATIONARY
+    road_segment_id = Column(String(64), nullable=True, index=True)
+    is_downweighted = Column(Boolean, default=False, nullable=False)
+    timestamp = Column(DateTime, default=utcnow, nullable=False)
 

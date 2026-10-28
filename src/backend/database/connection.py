@@ -19,13 +19,21 @@ if settings.DATABASE_URL.startswith("sqlite:///"):
     if db_dir:
         os.makedirs(db_dir, exist_ok=True)
 
-# Connect args for SQLite to allow multi-threaded FastAPI workers
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+# Connect args for SQLite to allow multi-threaded FastAPI workers and 5s busy timeout
+connect_args = {
+    "check_same_thread": False,
+    "timeout": 15
+} if settings.DATABASE_URL.startswith("sqlite") else {}
 
+# Engine configuration with connection pooling and health pre-ping
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args=connect_args,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    pool_size=10 if not settings.DATABASE_URL.startswith("sqlite") else 5,
+    max_overflow=20 if not settings.DATABASE_URL.startswith("sqlite") else 10,
+    pool_timeout=15,
+    pool_recycle=1800
 )
 
 
@@ -42,9 +50,21 @@ def _haversine_sql(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 @event.listens_for(engine, "connect")
-def register_sqlite_functions(dbapi_connection, connection_record):
-    """Registers spatial distance math directly into SQLite connection."""
+def configure_sqlite_pragmas(dbapi_connection, connection_record):
+    """
+    Configures SQLite high-concurrency pragmas:
+    - WAL Mode: Non-blocking concurrent reads during writes.
+    - Busy Timeout: Waits up to 5,000ms on locks rather than throwing immediate errors.
+    - Synchronous Normal: High throughput with crash-resilient WAL.
+    - Spatial Haversine: Registers fast in-database distance function.
+    """
     if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA busy_timeout=5000;")
+        cursor.execute("PRAGMA cache_size=-64000;")  # 64MB RAM page cache
+        cursor.close()
         dbapi_connection.create_function("haversine_km", 4, _haversine_sql)
 
 
@@ -52,8 +72,20 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+from contextlib import contextmanager
+
 def get_db() -> Generator[Session, None, None]:
     """FastAPI Dependency that yields an active database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@contextmanager
+def get_db_session():
+    """Context manager yielding a database session with guaranteed cleanup."""
     db = SessionLocal()
     try:
         yield db

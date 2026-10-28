@@ -99,47 +99,12 @@ class AdvancedRouter:
         return enriched_routes
 
     def _ensure_alternatives(self, candidates: List[RouteAlternative], profile: RoutingProfile):
-        if len(candidates) >= 3:
-            return
-
-        base = candidates[0]
-        # Generate Eco / Fuel-Efficient alternative
-        if not any(c.objective == RouteObjective.ECO for c in candidates):
-            eco_dist = base.distance_meters * 1.04
-            eco_dur = base.duration_seconds * 1.08
-            # Slightly offset polyline to represent arterial instead of expressway
-            eco_route = RouteAlternative(
-                route_id=f"{base.route_id}_ECO",
-                title="Eco & Fuel Saver (Bypass Tolls & Congestion)",
-                objective=RouteObjective.ECO,
-                distance_meters=eco_dist,
-                duration_seconds=eco_dur,
-                polyline=base.polyline,
-                summary_roads=["Green Arterial Corridor"] + base.summary_roads[:2],
-                has_tolls=False,
-                toll_fee_inr=0.0,
-                provider_source=base.provider_source
-            )
-            candidates.append(eco_route)
-
-        # Generate Road Quality preferred alternative
-        if not any(c.objective == RouteObjective.ROAD_QUALITY for c in candidates):
-            rq_dist = base.distance_meters * 1.08
-            rq_dur = base.duration_seconds * 1.05
-            rq_route = RouteAlternative(
-                route_id=f"{base.route_id}_ROAD_QUAL",
-                title="Smooth Pavement & Well-Lit Arterial",
-                objective=RouteObjective.ROAD_QUALITY,
-                distance_meters=rq_dist,
-                duration_seconds=rq_dur,
-                polyline=base.polyline,
-                summary_roads=["NH16 Resurfaced Express Sector"],
-                road_quality_score=0.96,
-                has_tolls=True,
-                toll_fee_inr=45.0,
-                provider_source=base.provider_source
-            )
-            candidates.append(rq_route)
+        """
+        Preserves genuinely distinct alternatives returned by routing providers.
+        Does not fabricate synthetic duplicate polylines with artificial distance multipliers.
+        """
+        # Maintain honesty in route alternatives: return only genuine, physically distinct corridors
+        return
 
     def _enrich_costs_and_quality(
         self,

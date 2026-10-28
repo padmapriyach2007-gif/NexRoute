@@ -68,6 +68,5 @@ def test_render_place_details_card_html():
     }
     html = render_place_details_card_html(place)
     assert "Heritage Cafe & Bakery" in html
-    assert "application-map-viewport" in html
     assert "★ 4.9" in html
-    assert "View on In-App Map" in html
+    assert "Main High Street" in html

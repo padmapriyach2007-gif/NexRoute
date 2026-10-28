@@ -371,25 +371,103 @@ def build_virtual_companion_hud_html(
             scrollbar-width: thin;
         }}
         .timeline-step-card {{
-            background: rgba(15, 23, 42, 0.7);
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(10, 18, 36, 0.98) 100%);
             border: 1.5px solid rgba(255, 255, 255, 0.12);
-            border-radius: 12px;
-            padding: 10px 14px;
-            min-width: 175px;
-            flex: 1;
+            border-radius: 14px;
+            padding: 0;
+            min-width: 195px;
+            flex: 0 0 195px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: all 0.25s ease;
+            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+        }}
+        .timeline-step-card:hover {{
+            border-color: #38bdf8;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(56, 189, 248, 0.35);
         }}
         .timeline-step-card.active {{
-            background: rgba(2, 132, 199, 0.25);
+            background: linear-gradient(180deg, rgba(2, 132, 199, 0.35) 0%, rgba(15, 23, 42, 0.98) 100%);
             border-color: #38bdf8;
-            box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.55), 0 8px 24px rgba(0, 0, 0, 0.6);
         }}
         .timeline-step-card.completed {{
-            background: rgba(6, 78, 59, 0.3);
+            background: linear-gradient(180deg, rgba(6, 78, 59, 0.35) 0%, rgba(15, 23, 42, 0.98) 100%);
             border-color: #10b981;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+        }}
+        .step-picture-frame {{
+            position: relative;
+            width: 100%;
+            height: 92px;
+            overflow: hidden;
+            background: #0f172a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }}
+        .step-picture-frame svg {{
+            transition: transform 0.4s ease;
+        }}
+        .timeline-step-card:hover .step-picture-frame svg {{
+            transform: scale(1.05);
+        }}
+        .step-pic-overlay-badge {{
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            right: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }}
+        .step-card-body {{
+            padding: 8px 10px 10px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            justify-content: space-between;
+        }}
+        .step-card-headline {{
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.1em;
+        }}
+        .timeline-step-card.active .step-card-headline {{
+            color: #38bdf8;
+        }}
+        .timeline-step-card.completed .step-card-headline {{
+            color: #6ee7b7;
+        }}
+        .step-card-footer {{
+            font-size: 0.67rem;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }}
+        .step-card-road {{
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 110px;
+        }}
+        .step-card-dist {{
+            color: #38bdf8;
+            font-weight: 800;
         }}
         .step-badge {{
             width: 26px;
@@ -558,6 +636,229 @@ def build_virtual_companion_hud_html(
         let currentSpeed = {current_speed_kmh};
         let isPaused = false;
 
+        function getScenicStepSvg(dirType, roadName, stepNum, iconText, isCompleted, isActive) {{
+            const rawDir = (dirType || '').toUpperCase();
+            const cleanRoad = String(roadName || 'Main Corridor').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const shortRoad = cleanRoad.length > 20 ? cleanRoad.substring(0, 18) + '...' : cleanRoad;
+            const uid = 'svg_comp_' + stepNum + '_' + Math.random().toString(36).substr(2, 5);
+            const labelBg = 'rgba(15, 23, 42, 0.88)';
+
+            if (rawDir.includes('ARRIVE') || rawDir.includes('DEST')) {{
+                return `
+                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                    <defs>
+                        <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0f172a"/>
+                            <stop offset="50%" stop-color="#047857"/>
+                            <stop offset="100%" stop-color="#10b981"/>
+                        </linearGradient>
+                        <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#334155"/>
+                            <stop offset="100%" stop-color="#1e293b"/>
+                        </linearGradient>
+                        <radialGradient id="sun_${{uid}}" cx="50%" cy="30%" r="50%">
+                            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
+                            <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.4"/>
+                            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+                        </radialGradient>
+                    </defs>
+                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
+                    <circle cx="100" cy="36" r="38" fill="url(#sun_${{uid}})"/>
+                    <polygon points="0,50 35,40 70,48 110,36 150,46 185,38 200,46 200,54 0,54" fill="#064e3b" opacity="0.7"/>
+                    <rect y="48" width="200" height="44" fill="#065f46"/>
+                    <polygon points="65,92 135,92 112,48 88,48" fill="url(#road_${{uid}})"/>
+                    <line x1="100" y1="48" x2="100" y2="92" stroke="#34d399" stroke-width="2" stroke-dasharray="4,3"/>
+                    <path d="M 75 92 L 75 40 Q 100 26 125 40 L 125 92" fill="none" stroke="#34d399" stroke-width="3.5"/>
+                    <path d="M 78 43 Q 100 30 122 43" fill="none" stroke="#fef08a" stroke-width="1.8"/>
+                    <rect x="80" y="30" width="40" height="10" rx="3" fill="#064e3b" stroke="#34d399" stroke-width="1"/>
+                    <text x="100" y="37.5" font-size="5.5" font-weight="900" fill="#fef08a" text-anchor="middle" font-family="sans-serif">★ ARRIVAL ★</text>
+                    <text x="68" y="42" font-size="11">🏁</text>
+                    <text x="122" y="42" font-size="11">🏁</text>
+                    <rect x="8" y="72" width="70" height="14" rx="3" fill="${{labelBg}}" stroke="#34d399" stroke-width="1"/>
+                    <text x="43" y="82" font-size="6.5" font-weight="800" fill="#a7f3d0" text-anchor="middle" font-family="sans-serif">${{shortRoad}}</text>
+                </svg>`;
+            }} else if (rawDir.includes('LEFT')) {{
+                return `
+                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                    <defs>
+                        <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0369a1"/>
+                            <stop offset="100%" stop-color="#38bdf8"/>
+                        </linearGradient>
+                        <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#1e293b"/>
+                            <stop offset="100%" stop-color="#334155"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
+                    <circle cx="170" cy="20" r="13" fill="#fef08a" opacity="0.8"/>
+                    <ellipse cx="140" cy="18" rx="18" ry="6" fill="#ffffff" opacity="0.6"/>
+                    <rect y="46" width="200" height="46" fill="#0f766e"/>
+                    <path d="M 0 50 Q 60 53 90 92 L 155 92 Q 120 46 0 42 Z" fill="url(#road_${{uid}})"/>
+                    <path d="M 0 42 Q 120 46 155 92" fill="none" stroke="#64748b" stroke-width="2"/>
+                    <path d="M 0 50 Q 60 53 90 92" fill="none" stroke="#64748b" stroke-width="2"/>
+                    <path d="M 0 46 Q 90 50 122 92" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,4"/>
+                    <g transform="translate(68, 60) scale(0.6)">
+                        <path d="M 28 35 C 28 20, 15 12, -2 12 L -2 18 L -18 8 L -2 -2 L -2 5 C 20 5, 36 15, 36 35 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+                    </g>
+                    <line x1="8" y1="44" x2="16" y2="50" stroke="#ffffff" stroke-width="3"/>
+                    <line x1="16" y1="44" x2="24" y2="50" stroke="#ffffff" stroke-width="3"/>
+                    <line x1="24" y1="44" x2="32" y2="50" stroke="#ffffff" stroke-width="3"/>
+                    <rect x="160" y="30" width="32" height="30" rx="2" fill="#1e293b" opacity="0.85"/>
+                    <rect x="165" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
+                    <rect x="175" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
+                    <circle cx="148" cy="44" r="9" fill="#15803d"/>
+                    <circle cx="148" cy="38" r="7" fill="#22c55e"/>
+                    <line x1="38" y1="26" x2="38" y2="48" stroke="#475569" stroke-width="2"/>
+                    <rect x="34" y="22" width="8" height="15" rx="2" fill="#0f172a"/>
+                    <circle cx="38" cy="26" r="2" fill="#ef4444"/>
+                    <circle cx="38" cy="30" r="2" fill="#f59e0b"/>
+                    <circle cx="38" cy="35" r="2.5" fill="#22c55e"/>
+                    <rect x="8" y="72" width="82" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
+                    <text x="49" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">TURN LEFT • ${{shortRoad}}</text>
+                </svg>`;
+            }} else if (rawDir.includes('RIGHT')) {{
+                return `
+                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                    <defs>
+                        <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0284c7"/>
+                            <stop offset="100%" stop-color="#60a5fa"/>
+                        </linearGradient>
+                        <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#334155"/>
+                            <stop offset="100%" stop-color="#1e293b"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
+                    <circle cx="30" cy="20" r="13" fill="#fef08a" opacity="0.8"/>
+                    <ellipse cx="60" cy="18" rx="18" ry="6" fill="#ffffff" opacity="0.6"/>
+                    <rect y="46" width="200" height="46" fill="#0f766e"/>
+                    <path d="M 45 92 Q 80 46 200 42 L 200 50 Q 140 53 110 92 Z" fill="url(#road_${{uid}})"/>
+                    <path d="M 45 92 Q 80 46 200 42" fill="none" stroke="#64748b" stroke-width="2"/>
+                    <path d="M 110 92 Q 140 53 200 50" fill="none" stroke="#64748b" stroke-width="2"/>
+                    <path d="M 78 92 Q 110 50 200 46" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,4"/>
+                    <g transform="translate(115, 60) scale(0.6)">
+                        <path d="M -28 35 C -28 20, -15 12, 2 12 L 2 18 L 18 8 L 2 -2 L 2 5 C -20 5, -36 15, -36 35 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+                    </g>
+                    <line x1="168" y1="44" x2="176" y2="50" stroke="#ffffff" stroke-width="3"/>
+                    <line x1="176" y1="44" x2="184" y2="50" stroke="#ffffff" stroke-width="3"/>
+                    <line x1="184" y1="44" x2="192" y2="50" stroke="#ffffff" stroke-width="3"/>
+                    <rect x="8" y="30" width="32" height="30" rx="2" fill="#1e293b" opacity="0.85"/>
+                    <rect x="13" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
+                    <rect x="23" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
+                    <circle cx="52" cy="44" r="9" fill="#15803d"/>
+                    <circle cx="52" cy="38" r="7" fill="#22c55e"/>
+                    <line x1="158" y1="26" x2="158" y2="48" stroke="#475569" stroke-width="2"/>
+                    <rect x="154" y="22" width="8" height="15" rx="2" fill="#0f172a"/>
+                    <circle cx="158" cy="26" r="2" fill="#ef4444"/>
+                    <circle cx="158" cy="30" r="2" fill="#f59e0b"/>
+                    <circle cx="158" cy="35" r="2.5" fill="#22c55e"/>
+                    <rect x="108" y="72" width="84" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
+                    <text x="150" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">TURN RIGHT • ${{shortRoad}}</text>
+                </svg>`;
+            }} else if (rawDir.includes('START') || rawDir.includes('DEPART')) {{
+                return `
+                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                    <defs>
+                        <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0284c7"/>
+                            <stop offset="60%" stop-color="#38bdf8"/>
+                            <stop offset="100%" stop-color="#bae6fd"/>
+                        </linearGradient>
+                        <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#475569"/>
+                            <stop offset="100%" stop-color="#1e293b"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
+                    <ellipse cx="100" cy="44" rx="50" ry="15" fill="#fef08a" opacity="0.6"/>
+                    <polygon points="10,44 25,34 35,44 50,30 65,44 80,36 95,44 110,32 130,44 150,37 170,44 190,34 195,44" fill="#0284c7" opacity="0.4"/>
+                    <rect y="44" width="200" height="48" fill="#065f46"/>
+                    <polygon points="40,92 160,92 106,44 94,44" fill="url(#road_${{uid}})"/>
+                    <polygon points="26,92 40,92 94,44 88,44" fill="#64748b"/>
+                    <polygon points="160,92 174,92 112,44 106,44" fill="#64748b"/>
+                    <line x1="100" y1="44" x2="100" y2="92" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,4"/>
+                    <rect x="74" y="58" width="52" height="6" rx="2" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
+                    <line x1="78" y1="64" x2="78" y2="88" stroke="#34d399" stroke-width="2.5"/>
+                    <line x1="122" y1="64" x2="122" y2="88" stroke="#34d399" stroke-width="2.5"/>
+                    <text x="100" y="63" font-size="5" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif">★ DEPARTURE GATE ★</text>
+                    <circle cx="100" cy="72" r="5" fill="#10b981"/>
+                    <circle cx="100" cy="72" r="2" fill="#ffffff"/>
+                    <circle cx="20" cy="54" r="8" fill="#15803d"/><circle cx="20" cy="48" r="6" fill="#22c55e"/>
+                    <circle cx="180" cy="54" r="8" fill="#15803d"/><circle cx="180" cy="48" r="6" fill="#22c55e"/>
+                    <rect x="8" y="72" width="76" height="14" rx="3" fill="${{labelBg}}" stroke="#10b981" stroke-width="1"/>
+                    <text x="46" y="82" font-size="6.5" font-weight="800" fill="#a7f3d0" text-anchor="middle" font-family="sans-serif">START • ${{shortRoad}}</text>
+                </svg>`;
+            }} else if (rawDir.includes('ROUNDABOUT')) {{
+                return `
+                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                    <defs>
+                        <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0284c7"/>
+                            <stop offset="100%" stop-color="#38bdf8"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
+                    <rect y="42" width="200" height="50" fill="#065f46"/>
+                    <ellipse cx="100" cy="68" rx="72" ry="23" fill="#334155" stroke="#64748b" stroke-width="2"/>
+                    <ellipse cx="100" cy="68" rx="36" ry="11" fill="#15803d" stroke="#22c55e" stroke-width="2"/>
+                    <circle cx="100" cy="66" r="5" fill="#f59e0b"/>
+                    <ellipse cx="100" cy="68" rx="54" ry="17" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,4"/>
+                    <text x="60" y="70" font-size="10" fill="#ffffff">↺</text>
+                    <text x="134" y="70" font-size="10" fill="#ffffff">↻</text>
+                    <rect x="8" y="72" width="82" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
+                    <text x="49" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">ROUNDABOUT • ${{shortRoad}}</text>
+                </svg>`;
+            }} else {{
+                return `
+                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                    <defs>
+                        <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0284c7"/>
+                            <stop offset="50%" stop-color="#38bdf8"/>
+                            <stop offset="100%" stop-color="#7dd3fc"/>
+                        </linearGradient>
+                        <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#475569"/>
+                            <stop offset="100%" stop-color="#1e293b"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
+                    <ellipse cx="60" cy="18" rx="20" ry="6" fill="#ffffff" opacity="0.75"/>
+                    <ellipse cx="150" cy="14" rx="24" ry="7" fill="#ffffff" opacity="0.65"/>
+                    <polygon points="0,44 40,34 90,42 140,32 180,40 200,36 200,46 0,46" fill="#0369a1" opacity="0.5"/>
+                    <rect y="44" width="200" height="48" fill="#047857"/>
+                    <polygon points="35,92 165,92 106,44 94,44" fill="url(#road_${{uid}})"/>
+                    <polygon points="20,92 35,92 94,44 88,44" fill="#64748b"/>
+                    <polygon points="165,92 180,92 112,44 106,44" fill="#64748b"/>
+                    <line x1="100" y1="44" x2="100" y2="92" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="6,4"/>
+                    <circle cx="22" cy="60" r="10" fill="#15803d"/><circle cx="22" cy="52" r="8" fill="#22c55e"/>
+                    <circle cx="48" cy="50" r="6" fill="#15803d"/><circle cx="48" cy="45" r="4" fill="#22c55e"/>
+                    <circle cx="178" cy="60" r="10" fill="#15803d"/><circle cx="178" cy="52" r="8" fill="#22c55e"/>
+                    <circle cx="152" cy="50" r="6" fill="#15803d"/><circle cx="152" cy="45" r="4" fill="#22c55e"/>
+                    <rect x="76" y="50" width="48" height="9" rx="2" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+                    <text x="100" y="56.5" font-size="5" font-weight="900" fill="#38bdf8" text-anchor="middle" font-family="sans-serif">⬆ STRAIGHT AHEAD</text>
+                    <rect x="8" y="72" width="76" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
+                    <text x="46" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">${{shortRoad}}</text>
+                </svg>`;
+            }}
+        }}
+
+        window.selectCompanionStep = function(idx) {{
+            if (idx < 0 || idx >= STEPS.length) return;
+            currentStepIdx = idx;
+            const curStep = STEPS[currentStepIdx] || STEPS[0];
+            const actInstr = document.getElementById('active-instruction-text');
+            const actIcon = document.getElementById('active-maneuver-icon');
+            const actDist = document.getElementById('active-step-dist');
+            if (actInstr) actInstr.innerText = curStep.instruction_text;
+            if (actIcon) actIcon.innerText = curStep.icon || '📍';
+            if (actDist) actDist.innerText = Math.round(curStep.distance_meters) + ' m';
+            renderTimeline();
+            broadcastCompanionPosition();
+        }};
+
         // Render timeline step cards
         function renderTimeline() {{
             const bar = document.getElementById('companion-timeline-steps');
@@ -570,18 +871,25 @@ def build_virtual_companion_hud_html(
                 const badgeClass = isCompleted ? 'badge-completed' : (isActive ? 'badge-active' : 'badge-pending');
                 const badgeText = isCompleted ? '✓' : (idx + 1);
 
+                const picSvg = getScenicStepSvg(s.instruction_type, s.road_name, idx + 1, s.icon, isCompleted, isActive);
+
                 return `
-                <div class="timeline-step-card ${{cardClass}}">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                        <span class="step-badge ${{badgeClass}}">${{badgeText}}</span>
-                        <span style="font-size: 1.1rem;">${{s.icon || '📍'}}</span>
+                <div class="timeline-step-card ${{cardClass}}" onclick="window.selectCompanionStep(${{idx}})">
+                    <div class="step-picture-frame">
+                        ${{picSvg}}
+                        <div class="step-pic-overlay-badge">
+                            <span class="step-badge ${{badgeClass}}">${{badgeText}}</span>
+                            <span style="font-size: 1.05rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">${{s.icon || '📍'}}</span>
+                        </div>
                     </div>
-                    <div style="font-size: 0.78rem; font-weight: 700; color: ${{isActive ? '#38bdf8' : (isCompleted ? '#34d399' : '#cbd5e1')}}; line-height: 1.3;">
-                        ${{s.instruction_text}}
-                    </div>
-                    <div style="font-size: 0.65rem; color: #94a3b8; margin-top: 6px; display: flex; justify-content: space-between;">
-                        <span>${{s.road_name || ''}}</span>
-                        <b>${{Math.round(s.distance_meters)}} m</b>
+                    <div class="step-card-body">
+                        <div class="step-card-headline" title="${{s.instruction_text}}">
+                            ${{s.instruction_text}}
+                        </div>
+                        <div class="step-card-footer">
+                            <span class="step-card-road" title="${{s.road_name || ''}}">${{s.road_name || 'Corridor'}}</span>
+                            <b class="step-card-dist">${{Math.round(s.distance_meters)}} m</b>
+                        </div>
                     </div>
                 </div>
                 `;

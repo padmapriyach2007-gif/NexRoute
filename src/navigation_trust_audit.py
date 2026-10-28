@@ -376,7 +376,7 @@ class NavigationTrustAuditEngine:
         return min_d
 
 
-def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult) -> str:
+def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult, lang: Optional[str] = None, *args, **kwargs) -> str:
     """
     Renders a compact, responsive, high-aesthetic HTML card representing
     the Navigation Trust Audit for the selected route.
@@ -415,6 +415,57 @@ def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult) -
         conn_color = "#94a3b8"
         conn_icon = "📡"
 
+    try:
+        from src.i18n import t, get_current_language
+        actual_lang = lang or get_current_language()
+    except Exception:
+        actual_lang = lang or "en"
+        def t(k, default="", lang=None): return default
+
+    audit_title = t("audit.title", lang=actual_lang, default="Navigation Trust Audit")
+    route_status_lbl = t("audit.route_status", lang=actual_lang, default="Route Status")
+    hazard_insp_lbl = t("audit.hazard_inspection", lang=actual_lang, default="Hazard Inspection")
+    route_src_lbl = t("audit.route_source", lang=actual_lang, default="Route Source")
+    conn_lbl = t("audit.connectivity", lang=actual_lang, default="Connectivity")
+
+    # Localize badge text
+    if "Checked" in status_badge_text:
+        status_badge_text_disp = f"✓ {t('audit.checked', lang=actual_lang, default='Checked')}"
+    else:
+        status_badge_text_disp = status_badge_text
+
+    # Localize status label
+    if "Checked" in audit.status_label:
+        status_label_disp = t("audit.checked", lang=actual_lang, default="Checked")
+    else:
+        status_label_disp = audit.status_label
+
+    # Localize hazard summary
+    if "No hazards detected" in audit.hazard_summary:
+        hazard_summary_disp = t("audit.no_hazards", lang=actual_lang, default="No hazards detected in checked area")
+    else:
+        hazard_summary_disp = audit.hazard_summary
+
+    # Localize route provider
+    if "Autonomous Road Graph Model" in audit.route_provider:
+        route_provider_disp = t("audit.autonomous_model", lang=actual_lang, default="Autonomous Road Graph Model")
+    elif "OSRM" in audit.route_provider:
+        route_provider_disp = "OSRM (OpenStreetMap)"
+    else:
+        route_provider_disp = audit.route_provider
+
+    # Localize connectivity label
+    if "Local Graph" in audit.connectivity_label:
+        conn_label_disp = t("audit.local_graph", lang=actual_lang, default="Local Graph (Online Services Available)")
+    else:
+        conn_label_disp = audit.connectivity_label
+
+    # Localize status reason
+    if "Validated against active hazard registries" in audit.status_reason:
+        status_reason_disp = t("audit.verified_desc", lang=actual_lang, default=audit.status_reason)
+    else:
+        status_reason_disp = audit.status_reason
+
     card_html = f"""
     <div class="nav-trust-audit-card" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.88) 100%); border: 1.5px solid {status_border}; border-radius: 12px; padding: 12px 16px; margin: 10px 0 14px 0; color: #f8fafc; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px {status_bg}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Top Bar: Header & Status Badge -->
@@ -422,38 +473,38 @@ def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult) -
             <div style='display: flex; align-items: center; gap: 8px;'>
                 <span style='font-size: 1.1rem;'>🛡️</span>
                 <span style='font-size: 0.85rem; font-weight: 800; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.04em;'>
-                    Navigation Trust Audit
+                    {audit_title}
                 </span>
                 <span style='background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; font-size: 0.70rem; padding: 2px 8px; border-radius: 4px;'>
                     {audit.route_name}
                 </span>
             </div>
             <div style='background: {status_bg}; border: 1px solid {status_border}; color: {status_color}; font-size: 0.74rem; font-weight: 800; padding: 3px 10px; border-radius: 6px; letter-spacing: 0.03em;'>
-                {status_badge_text}
+                {status_badge_text_disp}
             </div>
         </div>
 
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px;'>
             <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Route Status</div>
-                <div style='font-size: 0.85rem; font-weight: 800; color: {status_color}; margin-top: 3px; display: flex; align-items: center; gap: 4px;'>{audit.status_label}</div>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>{route_status_lbl}</div>
+                <div style='font-size: 0.85rem; font-weight: 800; color: {status_color}; margin-top: 3px; display: flex; align-items: center; gap: 4px;'>{status_label_disp}</div>
             </div>
             <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Hazard Inspection</div>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>{hazard_insp_lbl}</div>
                 <div style='font-size: 0.80rem; font-weight: 700; color: {hazard_color}; margin-top: 3px; line-height: 1.3;'>
-                    {hazard_icon} {audit.hazard_summary}
+                    {hazard_icon} {hazard_summary_disp}
                 </div>
             </div>
             <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px; overflow: hidden;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Route Source</div>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>{route_src_lbl}</div>
                 <div style='font-size: 0.80rem; font-weight: 700; color: #f1f5f9; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;' title='{audit.route_provider}'>
-                    🧭 {"OSRM (OpenStreetMap)" if "OSRM" in audit.route_provider else audit.route_provider}
+                    🧭 {route_provider_disp}
                 </div>
             </div>
             <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-height: 58px;'>
-                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>Connectivity</div>
+                <div style='font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;'>{conn_lbl}</div>
                 <div style='font-size: 0.80rem; font-weight: 700; color: {conn_color}; margin-top: 3px; line-height: 1.3;'>
-                    {conn_icon} {audit.connectivity_label}
+                    {conn_icon} {conn_label_disp}
                 </div>
             </div>
         </div>
@@ -461,7 +512,7 @@ def render_navigation_trust_audit_card_html(audit: NavigationTrustAuditResult) -
         <div style='font-size: 0.80rem; color: #e2e8f0; line-height: 1.5; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.07); border-left: 3.5px solid {status_color}; border-radius: 8px; padding: 9px 14px; display: flex; align-items: flex-start; gap: 8px;'>
             <span style='font-size: 0.95rem; line-height: 1.2;'>🛡️</span>
             <div>
-                <b style='color: {status_color};'>{audit.status_label}:</b> {audit.status_reason}
+                <b style='color: {status_color};'>{status_label_disp}:</b> {status_reason_disp}
             </div>
         </div>
     </div>
