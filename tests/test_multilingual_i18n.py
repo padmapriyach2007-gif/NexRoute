@@ -163,3 +163,46 @@ def test_distance_and_duration_formatting():
 
     dur_hours = format_duration(125.0)
     assert "2 hr" in dur_hours and "5 min" in dur_hours
+
+
+def test_tabs_multilingual_all_languages():
+    """All 5 primary navigation tabs must have valid translations across all 8 languages."""
+    tab_keys = ["tab.navigation", "tab.facilities", "tab.copilot", "tab.places", "tab.virtual_guide"]
+    for lang in SUPPORTED_LANGUAGES:
+        for k in tab_keys:
+            val = t(k, lang=lang)
+            assert val and val != k, f"Missing translation for {k} in language {lang}"
+
+
+def test_aura_chips_and_welcome_multilingual():
+    """Aura action chips and welcome messages must be localized across all 8 languages."""
+    chip_keys = [
+        "aura.chip_route", "aura.chip_places", "aura.chip_plan",
+        "aura.chip_cost", "aura.chip_stays", "aura.chip_ask", "aura.chip_clear",
+        "aura.welcome_badge", "aura.welcome_msg"
+    ]
+    for lang in SUPPORTED_LANGUAGES:
+        for k in chip_keys:
+            val = t(k, lang=lang)
+            assert val and val != k, f"Missing translation for {k} in language {lang}"
+
+
+def test_corridor_and_endpoints_hud_multilingual():
+    """Route corridor and Endpoints HUD keys must be localized across all 8 languages."""
+    hud_keys = [
+        "nav.route_corridor", "nav.active_path", "nav.route_endpoints",
+        "nav.live_map_hud", "nav.fit_route", "nav.tour"
+    ]
+    for lang in SUPPORTED_LANGUAGES:
+        for k in hud_keys:
+            val = t(k, lang=lang)
+            assert val and val != k, f"Missing translation for {k} in language {lang}"
+
+
+def test_navigation_header_language_switcher_source():
+    """Verify that render_view_navigation_header contains the universal language selectbox."""
+    with open("src/travel_copilot_studio.py", "r", encoding="utf-8") as f:
+        src = f.read()
+    assert "nav_header_lang_" in src
+    assert "SUPPORTED_LANGUAGES" in src
+    assert "set_current_language" in src

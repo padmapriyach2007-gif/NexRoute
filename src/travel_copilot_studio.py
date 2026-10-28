@@ -2165,7 +2165,7 @@ def render_view_navigation_header(title: str, subtitle: str, current_key: str = 
     elif current_key == "guide" and emblem_icon == "🧭":
         emblem_icon = "🚗"
 
-    h_col1, h_col2 = st.columns([3.8, 1.4])
+    h_col1, h_col2 = st.columns([2.9, 2.3])
     with h_col1:
         st.markdown(f"""
         <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px; margin-top: 4px;">
@@ -2183,13 +2183,39 @@ def render_view_navigation_header(title: str, subtitle: str, current_key: str = 
         </div>
         """, unsafe_allow_html=True)
     with h_col2:
-        hb_col1, hb_col2 = st.columns([1.6, 1.1])
+        hb_lang, hb_col1, hb_col2 = st.columns([1.5, 1.3, 1.0])
+        with hb_lang:
+            lang_codes = list(SUPPORTED_LANGUAGES.keys())
+            def _lang_format(code):
+                meta = SUPPORTED_LANGUAGES.get(code, {})
+                return f"{meta.get('flag', '🌐')} {meta.get('native', code)}"
+            curr_idx = lang_codes.index(cur_lang) if cur_lang in lang_codes else 0
+            sel_lang = st.selectbox(
+                "Language",
+                options=lang_codes,
+                index=curr_idx,
+                format_func=_lang_format,
+                key=f"nav_header_lang_{current_key}",
+                label_visibility="collapsed"
+            )
+            if sel_lang != cur_lang:
+                st.session_state.app_language = sel_lang
+                try:
+                    from src.i18n import set_current_language
+                    set_current_language(sel_lang)
+                except Exception:
+                    pass
+                try:
+                    st.query_params["lang"] = sel_lang
+                except Exception:
+                    pass
+                st.rerun()
         with hb_col1:
             if st.button(ld.get("back_dash", "🏠 ← Back"), key=f"btn_back_to_dash_{current_key}", type="primary", use_container_width=True):
                 st.session_state.current_view = "dashboard"
                 st.rerun()
         with hb_col2:
-            if st.button("🚀 Tour", key=f"btn_nav_tour_{current_key}", use_container_width=True):
+            if st.button(t("nav.tour", default="🚀 Tour", lang=cur_lang), key=f"btn_nav_tour_{current_key}", use_container_width=True):
                 st.session_state.launch_quick_tour = True
                 st.rerun()
 
