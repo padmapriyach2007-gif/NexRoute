@@ -26704,52 +26704,6 @@ body {{
 
 
 
-                    # Progressive Disclosure: Expandable Route Details Section (Section 3)
-
-                    with st.expander("ℹ️ Route Details", expanded=False):
-
-                        roads_list = ", ".join(r_item.route.summary_roads[:3]) if r_item.route.summary_roads else "Regional Road Network"
-
-                        st.markdown(f"**📍 Major Roads:** {roads_list}")
-
-                        
-
-                        # Step preview
-
-                        if r_item.route.steps:
-
-                            st.markdown(f"**Turn Guidance ({len(r_item.route.steps)} steps):**")
-
-                            for s in r_item.route.steps[:3]:
-
-                                st.caption(f"{s.get('icon', '➡️')} {s.get('instruction', 'Follow road')} ({s.get('distance_m', 0):.0f}m)")
-
-                            if len(r_item.route.steps) > 3:
-
-                                st.caption(f"... plus {len(r_item.route.steps) - 3} more steps")
-
-
-
-                        st.markdown("**💰 Fuel Calculation:**")
-
-                        st.caption(f"Estimated at standard 15 km/L petrol consumption at ₹102/L: `{r_item.effective_distance_km:.1f} km ÷ 15 km/L × ₹102/L = ₹{max(10, int(round((r_item.effective_distance_km / 15.0) * 102.0)))}`.")
-
-                        
-
-                        st.markdown("**🛣️ Toll Information:**")
-
-                        st.caption(f"Status: {toll_display}. Toll charges are estimated based on verified state and national toll plaza registries.")
-
-
-
-                        st.markdown(f"**📡 Data Source:** {r_item.route.source}")
-
-                        st.caption("Road geometry and travel duration calculated directly from OpenStreetMap Contraction Hierarchies routing engine.")
-
-
-
-
-
         # =========================================================================
 
 
