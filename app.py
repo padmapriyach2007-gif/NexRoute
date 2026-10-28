@@ -102,32 +102,42 @@ else:
 
 
 
+import re
 import streamlit as st
 
 # =============================================================================
 # GLOBAL MARKDOWN SANITIZER & HTML INDENTATION ENGINE
 # Prevents CommonMark from parsing indented HTML lines as code blocks
-# Guarantees unsafe_allow_html=True across all application views and tabs
+# Collapses multiline tag attributes and guarantees unsafe_allow_html=True
 # =============================================================================
 _orig_st_markdown = st.markdown
 
 def _safe_st_markdown(body, *args, **kwargs):
     if isinstance(body, str):
         # Detect if body contains any HTML or CSS constructs
-        if any(tag in body for tag in (
+        if "<" in body and ">" in body and any(tag in body for tag in (
             "<div", "<span", "<p", "<style", "<section", "<table",
             "<h1", "<h2", "<h3", "<h4", "<h5", "<h6",
             "<ul", "<li", "<button", "<a ", "<b ", "<b>",
             "<i ", "<i>", "<strong", "<em", "<hr", "<br", "<!--"
         )):
             kwargs["unsafe_allow_html"] = True
+
+            # Collapse any opening HTML tags that contain newlines in their attributes
+            def _collapse_tag(m):
+                return re.sub(r'\s+', ' ', m.group(0))
+
+            body = re.sub(r'<[a-zA-Z0-9_\-]+(?:\s+[^>]*)?>', _collapse_tag, body, flags=re.DOTALL)
+
             # Strip leading/trailing whitespace from each line so CommonMark
             # never treats indented lines (>= 4 spaces) as raw code blocks (<pre><code>)
             cleaned_lines = []
             for line in body.splitlines():
                 stripped = line.strip()
-                if stripped or (cleaned_lines and cleaned_lines[-1] != ""):
-                    cleaned_lines.append(stripped)
+                # Skip blank lines directly adjacent to HTML tags to prevent CommonMark from closing HTML blocks prematurely
+                if stripped == "" and cleaned_lines and (cleaned_lines[-1] == "" or cleaned_lines[-1].startswith("<")):
+                    continue
+                cleaned_lines.append(stripped)
             body = "\n".join(cleaned_lines)
     return _orig_st_markdown(body, *args, **kwargs)
 
@@ -10629,15 +10639,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%);
-
-
-
-                    border: 2px solid #10b981; border-radius: 18px; padding: 20px; text-align: center; margin: 12px 0 20px 0;
-
-
-
-                    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);">
+        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%); border: 2px solid #10b981; border-radius: 18px; padding: 20px; text-align: center; margin: 12px 0 20px 0; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);">
 
 
 
@@ -11353,15 +11355,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
-
-
-
-                border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 18px 22px; margin-bottom: 18px;
-
-
-
-                box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);'>
+    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);'>
 
 
 
@@ -11657,11 +11651,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-                <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(56, 189, 248, 0.28);
-
-
-
-                            border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; flex-direction: column; justify-content: space-between;'>
+                <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(56, 189, 248, 0.28); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; flex-direction: column; justify-content: space-between;'>
 
 
 
@@ -14397,27 +14387,7 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-            <div style='background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(13, 31, 60, 0.96) 100%);
-
-
-
-                        border: 2px solid {"#10b981" if is_orig else "#ef4444"};
-
-
-
-                        border-radius: 14px;
-
-
-
-                        padding: 18px 20px;
-
-
-
-                        margin: 12px 0 18px 0;
-
-
-
-                        box-shadow: 0 12px 36px rgba(0,0,0,0.7), 0 0 20px {"rgba(16, 185, 129, 0.3)" if is_orig else "rgba(239, 68, 68, 0.3)"};'>
+            <div style='background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(13, 31, 60, 0.96) 100%); border: 2px solid {"#10b981" if is_orig else "#ef4444"}; border-radius: 14px; padding: 18px 20px; margin: 12px 0 18px 0; box-shadow: 0 12px 36px rgba(0,0,0,0.7), 0 0 20px {"rgba(16, 185, 129, 0.3)" if is_orig else "rgba(239, 68, 68, 0.3)"};'>
 
 
 
@@ -17309,15 +17279,7 @@ body {{
 
 
 
-<div id="tour-speedometer-cockpit" style='background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 29, 0.99) 100%);
-
-
-
-            border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 16px; padding: 12px 16px 10px 16px;
-
-
-
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55); box-sizing: border-box; width: 100%;'>
+<div id="tour-speedometer-cockpit" style='background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 29, 0.99) 100%); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 16px; padding: 12px 16px 10px 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55); box-sizing: border-box; width: 100%;'>
 
 
 
@@ -17357,11 +17319,7 @@ body {{
 
 
 
-        <span style='font-size: 0.70rem; font-weight: 800; color: {zone_color}; background: rgba(255, 255, 255, 0.06);
-
-
-
-                     padding: 3px 9px; border-radius: 999px; border: 1px solid {zone_color}44; letter-spacing: 0.04em;'>
+        <span style='font-size: 0.70rem; font-weight: 800; color: {zone_color}; background: rgba(255, 255, 255, 0.06); padding: 3px 9px; border-radius: 999px; border: 1px solid {zone_color}44; letter-spacing: 0.04em;'>
 
 
 
@@ -17477,11 +17435,7 @@ body {{
 
 
 
-            <path d="M 91.06 187.85 A 90 90 0 1 1 228.94 187.85"
-
-
-
-                  fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="12" stroke-linecap="round" />
+            <path d="M 91.06 187.85 A 90 90 0 1 1 228.94 187.85" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="12" stroke-linecap="round" />
 
 
 
@@ -17489,15 +17443,7 @@ body {{
 
 
 
-            <path class="speedo-arc-elem" d="M 91.06 187.85 A 90 90 0 1 1 228.94 187.85"
-
-
-
-                  fill="none" stroke="url(#speedMeterGrad)" stroke-width="12" stroke-linecap="round"
-
-
-
-                  stroke-dasharray="408.4" stroke-dashoffset="{stroke_dashoffset}" filter="url(#meterGlow)" />
+            <path class="speedo-arc-elem" d="M 91.06 187.85 A 90 90 0 1 1 228.94 187.85" fill="none" stroke="url(#speedMeterGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="408.4" stroke-dashoffset="{stroke_dashoffset}" filter="url(#meterGlow)" />
 
 
 
@@ -18689,15 +18635,7 @@ body {{
 
 
 
-            <div style='background: linear-gradient(90deg, rgba(0, 240, 181, 0.12), rgba(56, 189, 248, 0.10));
-
-
-
-                        border: 1px solid rgba(0, 240, 181, 0.35); border-radius: 8px; padding: 7px 14px;
-
-
-
-                        margin-top: 6px; margin-bottom: 10px; font-size: 0.75rem; color: #f8fafc; display: flex; align-items: center; justify-content: space-between;'>
+            <div style='background: linear-gradient(90deg, rgba(0, 240, 181, 0.12), rgba(56, 189, 248, 0.10)); border: 1px solid rgba(0, 240, 181, 0.35); border-radius: 8px; padding: 7px 14px; margin-top: 6px; margin-bottom: 10px; font-size: 0.75rem; color: #f8fafc; display: flex; align-items: center; justify-content: space-between;'>
 
 
 
@@ -18881,11 +18819,7 @@ body {{
 
 
 
-            <div style='background: rgba(56, 189, 248, 0.10); border: 1.5px solid rgba(56, 189, 248, 0.35);
-
-
-
-                        border-radius: 12px; padding: 18px 22px; margin: 14px 0; text-align: center;'>
+            <div style='background: rgba(56, 189, 248, 0.10); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 18px 22px; margin: 14px 0; text-align: center;'>
 
 
 
@@ -20381,15 +20315,7 @@ body {{
 
 
 
-                    <div style='background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(15, 23, 42, 0.95) 100%);
-
-
-
-                                border: 1.5px solid #38bdf8; border-radius: 10px; padding: 10px 16px; margin-bottom: 8px;
-
-
-
-                                box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);'>
+                    <div style='background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(15, 23, 42, 0.95) 100%); border: 1.5px solid #38bdf8; border-radius: 10px; padding: 10px 16px; margin-bottom: 8px; box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);'>
 
 
 
@@ -20777,27 +20703,7 @@ body {{
 
 
 
-            <div style='background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(13, 31, 60, 0.94) 100%);
-
-
-
-                        border: 1.5px solid rgba(56, 189, 248, 0.45);
-
-
-
-                        border-radius: 14px;
-
-
-
-                        padding: 12px 14px 8px 14px;
-
-
-
-                        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.2);
-
-
-
-                        margin-bottom: 10px;'>
+            <div style='background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(13, 31, 60, 0.94) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 14px; padding: 12px 14px 8px 14px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.2); margin-bottom: 10px;'>
 
 
 
@@ -22657,23 +22563,7 @@ body {{
 
 
 
-                <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%);
-
-
-
-                            border: 1px solid rgba(56, 189, 248, 0.4);
-
-
-
-                            border-radius: 10px;
-
-
-
-                            padding: 10px 12px;
-
-
-
-                            margin: 10px 0 8px 0;'>
+                <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 10px 12px; margin: 10px 0 8px 0;'>
 
 
 
@@ -22817,27 +22707,7 @@ body {{
 
 
 
-                    <div style='background: linear-gradient(90deg, rgba(15, 23, 42, 0.98) 0%, rgba(13, 31, 60, 0.96) 100%);
-
-
-
-                                border: 1.5px solid #38bdf8;
-
-
-
-                                border-radius: 12px;
-
-
-
-                                padding: 12px 18px;
-
-
-
-                                margin-bottom: 12px;
-
-
-
-                                box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);'>
+                    <div style='background: linear-gradient(90deg, rgba(15, 23, 42, 0.98) 0%, rgba(13, 31, 60, 0.96) 100%); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px 18px; margin-bottom: 12px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);'>
 
 
 
@@ -25308,11 +25178,7 @@ body {{
 
 
 
-            <div style='background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.35); border-left: 4px solid #f59e0b;
-
-
-
-                        border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
+            <div style='background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.35); border-left: 4px solid #f59e0b; border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
 
 
 
@@ -27140,19 +27006,7 @@ body {{
 
 
 
-        <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%);
-
-
-
-                    border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 14px 18px; margin-bottom: 16px;
-
-
-
-                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-
-
-
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.5);'>
+        <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);'>
 
 
 
@@ -28108,19 +27962,7 @@ body {{
 
 
 
-            <div style="background: linear-gradient(135deg, rgba(8, 22, 44, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
-
-
-
-                        border: 1.5px solid rgba(56, 189, 248, 0.4); border-radius: 14px; padding: 14px 18px; margin: 14px 0 10px 0;
-
-
-
-                        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-
-
-
-                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);">
+            <div style="background: linear-gradient(135deg, rgba(8, 22, 44, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%); border: 1.5px solid rgba(56, 189, 248, 0.4); border-radius: 14px; padding: 14px 18px; margin: 14px 0 10px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);">
 
 
 
@@ -28735,15 +28577,7 @@ body {{
 
 
 
-            <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.65) 100%);
-
-
-
-                        border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 12px; padding: 14px 18px; margin-top: 14px; margin-bottom: 12px;
-
-
-
-                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);'>
+            <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.65) 100%); border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 12px; padding: 14px 18px; margin-top: 14px; margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);'>
 
 
 
@@ -28983,15 +28817,7 @@ body {{
 
 
 
-                <div style='background: linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(15, 23, 42, 0.95) 100%);
-
-
-
-                            border: 2px solid #10b981; border-radius: 12px; padding: 16px 20px; margin: 12px 0;
-
-
-
-                            box-shadow: 0 0 25px rgba(16, 185, 129, 0.35);'>
+                <div style='background: linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(15, 23, 42, 0.95) 100%); border: 2px solid #10b981; border-radius: 12px; padding: 16px 20px; margin: 12px 0; box-shadow: 0 0 25px rgba(16, 185, 129, 0.35);'>
 
 
 
@@ -29151,15 +28977,7 @@ body {{
 
 
 
-                <div style='background: linear-gradient(135deg, rgba(127, 29, 29, 0.35) 0%, rgba(15, 23, 42, 0.95) 100%);
-
-
-
-                            border: 2px solid #ef4444; border-radius: 12px; padding: 16px 20px; margin: 12px 0;
-
-
-
-                            box-shadow: 0 0 25px rgba(239, 68, 68, 0.35);'>
+                <div style='background: linear-gradient(135deg, rgba(127, 29, 29, 0.35) 0%, rgba(15, 23, 42, 0.95) 100%); border: 2px solid #ef4444; border-radius: 12px; padding: 16px 20px; margin: 12px 0; box-shadow: 0 0 25px rgba(239, 68, 68, 0.35);'>
 
 
 
@@ -29707,15 +29525,7 @@ body {{
 
 
 
-                        f"<div style='background: rgba(10, 20, 38, 0.85); border: 1.5px solid {b_badge}; "
-
-
-
-                        f"border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; "
-
-
-
-                        f"justify-content: space-between; min-height: 230px; box-shadow: 0 4px 16px rgba(0,0,0,0.35);'>"
+                        f"<div style='background: rgba(10, 20, 38, 0.85); border: 1.5px solid {b_badge}; " f"border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; " f"justify-content: space-between; min-height: 230px; box-shadow: 0 4px 16px rgba(0,0,0,0.35);'>"
 
 
 
