@@ -5910,11 +5910,15 @@ def render_app_info_dialog():
                 if dist_km is None:
                     orig_coords = st.session_state.get("user_live_coords") or st.session_state.get("custom_start_coords")
                     if orig_coords and lat and lon:
-                        from geopy.distance import geodesic
                         try:
+                            from geopy.distance import geodesic
                             dist_km = geodesic(orig_coords, (lat, lon)).kilometers
                         except Exception:
-                            dist_km = None
+                            import math
+                            _dlat = math.radians(lat - orig_coords[0])
+                            _dlon = math.radians(lon - orig_coords[1])
+                            _a = math.sin(_dlat / 2.0) ** 2 + math.cos(math.radians(orig_coords[0])) * math.cos(math.radians(lat)) * math.sin(_dlon / 2.0) ** 2
+                            dist_km = 6371.0 * (2.0 * math.atan2(math.sqrt(_a), math.sqrt(max(0.0, 1.0 - _a))))
 
                 dist_str = f"~{dist_km:.2f} km from Start" if dist_km is not None else "Corridor Waypoint"
 
