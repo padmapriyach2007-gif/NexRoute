@@ -4067,669 +4067,311 @@ st.markdown("""
 
 
     /* =========================================================================
-
-
-
-       RESPONSIVE & MOBILE-FIRST DESIGN ENHANCEMENTS
-
-
-
-       Guarantees full compatibility across Android, iOS, Foldables, Tablets & Desktops
-
-
-
+       COMPLETE 6-TIER MOBILE-FIRST RESPONSIVE DESIGN SPECIFICATION
+       Tier 1: Small phones (320px–374px)
+       Tier 2: Standard phones (375px–430px)
+       Tier 3: Large phones (431px–600px)
+       Tier 4: Tablets (601px–1024px)
+       Tier 5: Laptops (1025px–1440px)
+       Tier 6: Large Desktops (> 1440px)
        ========================================================================= */
 
-
-
     *, *::before, *::after {
-
-
-
         box-sizing: border-box !important;
-
-
-
     }
 
+    html, body, .stApp {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
 
+    /* Universal Touch Target Minimum (44px) */
+    .stButton > button,
+    div[data-testid="stFormSubmitButton"] > button,
+    div[data-testid="stSelectbox"] > div,
+    div[data-testid="stTextInput"] input {
+        min-height: 44px !important;
+        touch-action: manipulation !important;
+    }
 
+    /* Universal Focus Visibility */
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    [role="tab"]:focus-visible {
+        outline: 2px solid #38bdf8 !important;
+        outline-offset: 2px !important;
+    }
 
+    /* Mobile Bottom Sheet Pull Handle & Drawer */
+    .mobile-bottom-sheet-handle-bar {
+        display: none;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(13, 31, 60, 0.95) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        border-radius: 12px 12px 0 0;
+        padding: 8px 12px 4px 12px;
+        margin-bottom: 8px;
+        text-align: center;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .mobile-bottom-sheet-pill-handle {
+        width: 44px;
+        height: 5px;
+        background: rgba(56, 189, 248, 0.6);
+        border-radius: 999px;
+        margin: 0 auto 6px auto;
+    }
 
+    /* -------------------------------------------------------------
+       TIER 6: Large Desktops (> 1440px)
+       ------------------------------------------------------------- */
+    @media (min-width: 1441px) {
+        .main .block-container {
+            max-width: 1560px !important;
+        }
+    }
 
+    /* -------------------------------------------------------------
+       TIER 5: Laptops (1025px - 1440px)
+       ------------------------------------------------------------- */
+    @media (min-width: 1025px) and (max-width: 1440px) {
+        .main .block-container {
+            max-width: 1380px !important;
+        }
+    }
 
+    /* -------------------------------------------------------------
+       TIER 4: Tablets (601px - 1024px)
+       ------------------------------------------------------------- */
     @media (max-width: 1024px) {
-
-
-
         .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
-
-
-
             display: grid !important;
-
-
-
             grid-template-columns: repeat(5, 1fr) !important;
-
-
-
             gap: 6px !important;
-
-
-
         }
-
-
-
         .st-key-fleet_deck_container div[data-testid="stColumn"] {
-
-
-
             flex: none !important;
-
-
-
             width: auto !important;
-
-
-
         }
-
-
-
         .st-key-speed_deck_container div[data-testid="stHorizontalBlock"] {
-
-
-
             display: grid !important;
-
-
-
             grid-template-columns: repeat(2, 1fr) !important;
-
-
-
             gap: 6px !important;
-
-
-
         }
-
-
-
         .st-key-speed_deck_container div[data-testid="stColumn"] {
-
-
-
             flex: none !important;
-
-
-
             width: auto !important;
-
-
-
         }
-
-
-
     }
 
-
-
-
-
-
-
+    /* Mobile & Tablet Map Viewport (<= 992px): Map on top (order: 1), Route Panel below as Bottom Sheet (order: 2) */
     @media (max-width: 992px) {
-
-
-
-        /* Automotive Cockpit Carousel Snap Scroll */
-
-
-
-        .st-key-driving_modes_cockpit_deck div[data-testid="stHorizontalBlock"] {
-
-
-
+        .mobile-bottom-sheet-handle-bar {
+            display: block !important;
+        }
+        .st-key-nav_map_and_controls_container div[data-testid="stHorizontalBlock"] {
             display: flex !important;
-
-
-
-            flex-wrap: nowrap !important;
-
-
-
-            overflow-x: auto !important;
-
-
-
-            scroll-snap-type: x mandatory !important;
-
-
-
+            flex-direction: column !important;
             gap: 12px !important;
-
-
-
-            padding-bottom: 12px !important;
-
-
-
-            -webkit-overflow-scrolling: touch !important;
-
-
-
         }
-
-
-
-        .st-key-driving_modes_cockpit_deck div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-
-
-
-            flex: 0 0 270px !important;
-
-
-
-            min-width: 270px !important;
-
-
-
-            max-width: 270px !important;
-
-
-
-            scroll-snap-align: start !important;
-
-
-
+        /* Interactive Satellite Map appears at TOP */
+        .st-key-nav_map_and_controls_container div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(2) {
+            order: 1 !important;
+            width: 100% !important;
         }
-
-
-
+        /* Route controls & endpoints appear BELOW as bottom sheet */
+        .st-key-nav_map_and_controls_container div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(1) {
+            order: 2 !important;
+            width: 100% !important;
+            background: rgba(15, 23, 42, 0.85) !important;
+            border-radius: 14px !important;
+            padding: 12px !important;
+            border: 1.5px solid rgba(56, 189, 248, 0.3) !important;
+        }
+        /* Mobile map responsive dimensions */
+        iframe[title="streamlit_folium.st_folium"],
+        div[data-testid="stIFrame"] iframe {
+            height: clamp(340px, 52vh, 480px) !important;
+            min-height: 340px !important;
+            width: 100% !important;
+            border-radius: 12px !important;
+        }
     }
 
-
-
-
-
-
-
+    /* -------------------------------------------------------------
+       TIER 3 & 2: Mobile Devices (<= 768px)
+       ------------------------------------------------------------- */
     @media (max-width: 768px) {
-
-
-
-        /* Mobile Viewport Container Reset */
-
-
-
+        /* Mobile Safe Area Padding */
         .main .block-container,
-
-
-
         div[data-testid="stAppViewBlockContainer"] {
-
-
-
             padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)) !important;
-
-
-
             padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
-
-
-
-            padding-left: calc(0.5rem + env(safe-area-inset-left, 0px)) !important;
-
-
-
-            padding-right: calc(0.5rem + env(safe-area-inset-right, 0px)) !important;
-
-
-
+            padding-left: calc(0.6rem + env(safe-area-inset-left, 0px)) !important;
+            padding-right: calc(0.6rem + env(safe-area-inset-right, 0px)) !important;
             max-width: 100vw !important;
-
-
-
         }
 
-
-
-
-
-
-
-        /* Mobile Touch Targets & Accessibility */
-
-
-
-        .stButton > button {
-
-
-
-            min-height: 44px !important;
-
-
-
-            font-size: 0.86rem !important;
-
-
-
-            touch-action: manipulation !important;
-
-
-
+        /* 1 Card per row for Route Recommendation Cards */
+        .st-key-route_recommendation_cards_deck div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
         }
-
-
-
-
-
-
-
-        /* Hide Virtual Keyboard Floating Button on Touch Devices */
-
-
-
-        #pathfinder-vk-fab-trigger,
-
-
-
-        .virtual-keyboard-fab {
-
-
-
-            display: none !important;
-
-
-
-            visibility: hidden !important;
-
-
-
-            pointer-events: none !important;
-
-
-
-        }
-
-
-
-
-
-
-
-        /* Mobile Fleet Deck - 3 column responsive grid */
-
-
-
-        .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
-
-
-
-            display: grid !important;
-
-
-
-            grid-template-columns: repeat(3, 1fr) !important;
-
-
-
-            gap: 6px !important;
-
-
-
-        }
-
-
-
-        .st-key-fleet_deck_container div[data-testid="stColumn"] {
-
-
-
-            flex: none !important;
-
-
-
-            width: auto !important;
-
-
-
-        }
-
-
-
-        .st-key-fleet_deck_container div[data-testid="stButton"] > button {
-
-
-
-            height: 52px !important;
-
-
-
-            min-height: 52px !important;
-
-
-
-            max-height: 52px !important;
-
-
-
-            font-size: 0.78rem !important;
-
-
-
-        }
-
-
-
-
-
-
-
-        /* Mobile Speed Deck - 2 column responsive grid */
-
-
-
-        .st-key-speed_deck_container div[data-testid="stHorizontalBlock"] {
-
-
-
-            display: grid !important;
-
-
-
-            grid-template-columns: repeat(2, 1fr) !important;
-
-
-
-            gap: 6px !important;
-
-
-
-        }
-
-
-
-        .st-key-speed_deck_container div[data-testid="stColumn"] {
-
-
-
-            flex: none !important;
-
-
-
-            width: auto !important;
-
-
-
-        }
-
-
-
-
-
-
-
-        /* Mobile Map Viewport Full-Width */
-
-
-
-        iframe[title="streamlit_folium.st_folium"],
-
-
-
-        div[data-testid="stIFrame"] iframe {
-
-
-
-            border-radius: 8px !important;
-
-
-
+        .st-key-route_recommendation_cards_deck div[data-testid="stColumn"] {
             width: 100% !important;
-
-
-
-            max-width: 100% !important;
-
-
-
-            height: clamp(340px, 52vh, 480px) !important;
-
-
-
-            min-height: 340px !important;
-
-
-
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
         }
-
-
-
-
-
-
-
-        /* Mobile Route Cards */
-
-
-
         .touchable-route-card {
-
-
-
-            padding: 12px !important;
-
-
-
+            padding: 14px !important;
             margin-bottom: 8px !important;
-
-
-
         }
 
+        /* Journey Stepper Controls: Responsive 2x2 Grid */
+        .st-key-journey_stepper_controls div[data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+        }
+        .st-key-journey_stepper_controls div[data-testid="stColumn"] {
+            width: 100% !important;
+            flex: none !important;
+        }
+        .st-key-journey_stepper_controls div[data-testid="stButton"] > button {
+            min-height: 48px !important;
+            font-size: 0.82rem !important;
+        }
 
+        /* Aura Chatbot Quick Chips Deck */
+        div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+        }
+        div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stColumn"] {
+            flex: 1 1 calc(33.33% - 6px) !important;
+            min-width: 85px !important;
+        }
+        div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stButton"] > button {
+            min-height: 44px !important;
+            font-size: 0.78rem !important;
+            padding: 4px 6px !important;
+        }
 
+        /* Places Controls Deck */
+        .st-key-places_controls_deck div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+        }
+        .st-key-places_controls_deck div[data-testid="stColumn"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
 
+        /* Vehicle Fleet Deck on Mobile: 3 columns */
+        .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 6px !important;
+        }
+        .st-key-fleet_deck_container div[data-testid="stColumn"] {
+            flex: none !important;
+            width: auto !important;
+        }
+        .st-key-fleet_deck_container div[data-testid="stButton"] > button {
+            height: 52px !important;
+            min-height: 52px !important;
+            font-size: 0.78rem !important;
+        }
 
-
+        /* Speed Deck on Mobile: 2 columns */
+        .st-key-speed_deck_container div[data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
+        }
+        .st-key-speed_deck_container div[data-testid="stColumn"] {
+            flex: none !important;
+            width: auto !important;
+        }
 
         /* Mobile Tabs navigation */
-
-
-
         div[data-testid="stTabs"] [role="tab"] {
-
-
-
             padding: 7px 12px !important;
-
-
-
             font-size: 0.82rem !important;
-
-
-
-            min-height: 38px !important;
-
-
-
+            min-height: 40px !important;
         }
 
-
-
-
-
-
-
-        /* Compact, non-overlapping Chatbot FAB */
-
-
-
+        /* Floating Aura Chatbot FAB */
         [data-testid="stElementContainer"]:has([data-testid="stPopover"]),
-
-
-
         div[data-testid="stPopover"],
-
-
-
         .floating-aura-logo-overlay {
-
-
-
             bottom: 16px !important;
-
-
-
             right: 14px !important;
-
-
-
             width: 50px !important;
-
-
-
             height: 50px !important;
-
-
-
             min-width: 50px !important;
-
-
-
-            max-width: 50px !important;
-
-
-
             min-height: 50px !important;
-
-
-
-            max-height: 50px !important;
-
-
-
         }
-
-
-
-        div[data-testid="stPopover"] > button,
-
-
-
-        div[data-testid="stPopover"] button {
-
-
-
-            width: 50px !important;
-
-
-
-            height: 50px !important;
-
-
-
-            min-width: 50px !important;
-
-
-
-            max-width: 50px !important;
-
-
-
-            min-height: 50px !important;
-
-
-
-            max-height: 50px !important;
-
-
-
-        }
-
-
-
     }
 
-
-
-
-
-
-
-    @media (max-width: 480px) {
-
-
-
+    /* -------------------------------------------------------------
+       TIER 1: Small Phones (320px - 374px)
+       ------------------------------------------------------------- */
+    @media (max-width: 374px) {
         .main .block-container,
-
-
-
         div[data-testid="stAppViewBlockContainer"] {
-
-
-
-            padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
-
-
-
-            padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
-
-
-
-            padding-left: calc(0.35rem + env(safe-area-inset-left, 0px)) !important;
-
-
-
-            padding-right: calc(0.35rem + env(safe-area-inset-right, 0px)) !important;
-
-
-
+            padding-left: 6px !important;
+            padding-right: 6px !important;
+            padding-top: 6px !important;
         }
-
-
-
-    }
-
-
-
-
-
-
-
-    @media (max-width: 340px) {
-
-
-
-        /* Ultra-narrow screens (Foldable cover / small devices) */
-
-
-
         .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
-
-
-
             grid-template-columns: repeat(2, 1fr) !important;
-
-
-
+            gap: 4px !important;
         }
-
-
-
+        .st-key-speed_deck_container div[data-testid="stHorizontalBlock"] {
+            grid-template-columns: 1fr !important;
+            gap: 4px !important;
+        }
+        .st-key-journey_stepper_controls div[data-testid="stHorizontalBlock"] {
+            grid-template-columns: 1fr !important;
+            gap: 6px !important;
+        }
+        div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stColumn"] {
+            flex: 1 1 calc(50% - 6px) !important;
+            min-width: 75px !important;
+        }
+        h1, .qr-hero-heading {
+            font-size: 1.35rem !important;
+        }
+        h2 {
+            font-size: 1.15rem !important;
+        }
+        .stButton > button {
+            font-size: 0.76rem !important;
+        }
     }
 
+    /* Desktop Bottom Sheet Toggle Hide */
+    @media (min-width: 993px) {
+        .mobile-bottom-sheet-handle-bar,
+        .st-key-mobile_bottom_sheet_toggle_container {
+            display: none !important;
+        }
+    }
 
-
-
-
-
-
+    /* Reduced Motion Preferences */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+    
     /* Hide Leaflet bottom attribution bar */
 
 
@@ -6477,8 +6119,9 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         _execute_chat_turn(q_str)
         st.rerun()
 
-    # 6 Quick-Action Chips & Clear Chat (Dynamically Localized across 8 languages)
-    qc_cur_l = st.session_state.get("app_language", "en")
+    with st.container(key=f"aura_quick_chips_deck_{key_prefix}"):
+        # 6 Quick-Action Chips & Clear Chat (Dynamically Localized across 8 languages)
+        qc_cur_l = st.session_state.get("app_language", "en")
     qc1, qc2, qc3, qc4, qc5, qc6, qc_clear = st.columns([1, 1, 1, 1, 1, 1, 0.8])
     with qc1:
         if st.button(t("aura.chip_route", default="🗺️ Route", lang=qc_cur_l), key=f"chip_route_{key_prefix}", use_container_width=True):
@@ -10921,7 +10564,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-    ctrl_prev, ctrl_move, ctrl_next, ctrl_reset = st.columns([1, 1.25, 1, 1])
+    with st.container(key="journey_stepper_controls"):
+        ctrl_prev, ctrl_move, ctrl_next, ctrl_reset = st.columns([1, 1.25, 1, 1])
 
 
 
@@ -20509,7 +20153,8 @@ body {{
 
 
 
-        col_side_endpoints, col_map_main = st.columns([1.08, 2.92], vertical_alignment="top")
+        with st.container(key="nav_map_and_controls_container"):
+            col_side_endpoints, col_map_main = st.columns([1.08, 2.92], vertical_alignment="top")
 
 
 
@@ -20518,8 +20163,39 @@ body {{
 
 
         with col_side_endpoints:
+            if "mobile_bottom_sheet_state" not in st.session_state:
+                st.session_state.mobile_bottom_sheet_state = "expanded"
+            cur_sheet = st.session_state.mobile_bottom_sheet_state
 
+            # Mobile Bottom Sheet Handle Bar (Styled via CSS, hidden on desktop >992px)
+            st.markdown(f"""
+            <div class="mobile-bottom-sheet-handle-bar">
+                <div class="mobile-bottom-sheet-pill-handle"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 6px 4px;">
+                    <span style="font-size: 0.76rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+                        🧭 Route & Location Drawer
+                    </span>
+                    <span style="font-size: 0.68rem; color: #34d399; font-weight: 800; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); padding: 1px 8px; border-radius: 9999px;">
+                        {cur_sheet.upper()} MODE
+                    </span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
+            with st.container(key="mobile_bottom_sheet_toggle_container"):
+                col_sh_t1, col_sh_t2, col_sh_t3 = st.columns(3)
+                with col_sh_t1:
+                    if st.button("📱 Summary", key="btn_sh_collapsed", type="primary" if cur_sheet == "collapsed" else "secondary", use_container_width=True, help="Collapsed mode: keeps satellite map maximized with quick route summary"):
+                        st.session_state.mobile_bottom_sheet_state = "collapsed"
+                        st.rerun()
+                with col_sh_t2:
+                    if st.button("⚡ Choices", key="btn_sh_half", type="primary" if cur_sheet == "half" else "secondary", use_container_width=True, help="Half mode: shows route alternatives and quick actions"):
+                        st.session_state.mobile_bottom_sheet_state = "half"
+                        st.rerun()
+                with col_sh_t3:
+                    if st.button("⚙️ Full", key="btn_sh_expanded", type="primary" if cur_sheet == "expanded" else "secondary", use_container_width=True, help="Expanded mode: full access to all inputs, GPS, and custom search"):
+                        st.session_state.mobile_bottom_sheet_state = "expanded"
+                        st.rerun()
 
             # Client-side hardware GPS synchronization bridge
 
@@ -26282,7 +25958,8 @@ body {{
 
             # 3. Individual Simplified Route Recommendation Cards (Sections 1, 2, 3, 4, 6, 7, 8)
 
-            card_cols = st.columns(min(num_routes, 3))
+            with st.container(key="route_recommendation_cards_deck"):
+                card_cols = st.columns(min(num_routes, 3))
 
 
 
@@ -28167,7 +27844,8 @@ body {{
 
 
 
-        f_bar_c1, f_bar_c2, f_bar_c3 = st.columns([1.5, 1.2, 0.8])
+        with st.container(key="places_controls_deck"):
+            f_bar_c1, f_bar_c2, f_bar_c3 = st.columns([1.5, 1.2, 0.8])
 
 
 

@@ -995,6 +995,52 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
         letter-spacing: 0 !important;
     }
 }
+
+/* Mobile Bottom Sheet Handle Bar */
+.mobile-bottom-sheet-handle-bar {
+    display: none;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 12px 12px 0 0;
+    padding: 8px 12px 4px 12px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+.mobile-bottom-sheet-pill-handle {
+    width: 44px;
+    height: 5px;
+    background: rgba(56, 189, 248, 0.6);
+    border-radius: 999px;
+    margin: 0 auto 6px auto;
+}
+
+/* Tiered Breakpoints for View Navigation Header */
+@media (max-width: 768px) {
+    div[class*="st-key-view_nav_header_container"] div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    div[class*="st-key-view_nav_header_container"] div[data-testid="stColumn"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+    div[class*="st-key-view_nav_header_container"] div[data-testid="stColumn"]:nth-child(2) div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 6px !important;
+        align-items: center !important;
+    }
+    div[class*="st-key-view_nav_header_container"] h2 {
+        font-size: 1.25rem !important;
+    }
+}
+@media (max-width: 430px) {
+    div[class*="st-key-view_nav_header_container"] h2 {
+        font-size: 1.10rem !important;
+    }
+}
+
 </style>
 """
 
@@ -2165,9 +2211,10 @@ def render_view_navigation_header(title: str, subtitle: str, current_key: str = 
     elif current_key == "guide" and emblem_icon == "🧭":
         emblem_icon = "🚗"
 
-    h_col1, h_col2 = st.columns([2.9, 2.3])
-    with h_col1:
-        st.markdown(f"""
+    with st.container(key=f"view_nav_header_container_{current_key}"):
+        h_col1, h_col2 = st.columns([2.9, 2.3])
+        with h_col1:
+            st.markdown(f"""
         <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px; margin-top: 4px;">
             <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(56, 189, 248, 0.15); border: 1.5px solid #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);">
                 {emblem_icon}
