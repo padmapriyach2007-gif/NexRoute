@@ -659,11 +659,11 @@ from src.i18n import (
 
 
 
-    format_distance as i18n_format_distance,
+    format_distance,
 
 
 
-    format_duration as i18n_format_duration
+    format_duration
 
 
 
@@ -4589,7 +4589,7 @@ from src.emergency_service import EmergencyServiceManager, FacilityCategory as E
 
 
 
-def format_distance(dist_km: float, unit: str = "km") -> str:
+def format_distance(dist_km: float, unit: str = "km", lang: Optional[str] = None) -> str:
 
 
 
@@ -4606,6 +4606,12 @@ def format_distance(dist_km: float, unit: str = "km") -> str:
 
 
 
+
+
+
+def format_duration(dur_min: float, lang: Optional[str] = None) -> str:
+    from src.i18n import format_duration as _i18n_format_duration
+    return _i18n_format_duration(dur_min, lang=lang)
 
 
 
@@ -5522,8 +5528,9 @@ def render_app_info_dialog():
                     orig_coords = st.session_state.get("user_live_coords") or st.session_state.get("custom_start_coords")
                     if orig_coords and lat and lon:
                         try:
-                            from geopy.distance import geodesic
-                            dist_km = geodesic(orig_coords, (lat, lon)).kilometers
+                            import importlib
+                            geopy_dist = importlib.import_module("geopy.distance")
+                            dist_km = geopy_dist.geodesic(orig_coords, (lat, lon)).kilometers
                         except Exception:
                             import math
                             _dlat = math.radians(lat - orig_coords[0])
