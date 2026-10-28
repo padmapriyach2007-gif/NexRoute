@@ -872,14 +872,7 @@ def render_ai_road_intelligence_hud_html(report: AIRoadIntelligenceReport) -> st
         avoidance_color = "#fbbf24"
 
     return f"""
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.90) 100%);
-                border: 1.5px solid rgba(56, 189, 248, 0.40);
-                border-radius: 12px;
-                padding: 16px 18px;
-                margin: 12px 0 16px 0;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
-                color: #f8fafc;">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.90) 100%); border: 1.5px solid rgba(56, 189, 248, 0.40); border-radius: 12px; padding: 16px 18px; margin: 12px 0 16px 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); color: #f8fafc;">
 
         <!-- Header -->
         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.10); padding-bottom: 10px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">

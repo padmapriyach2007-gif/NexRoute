@@ -374,8 +374,7 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics, lang: Optional[st
     day_offset_badge = ""
     if kin.eta_day_offset_str:
         day_offset_badge = f"""
-        <span style='background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5);
-                     font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; margin-left: 6px; letter-spacing: 0.04em;'>
+        <span style='background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; margin-left: 6px; letter-spacing: 0.04em;'>
             {t("hud.arrives_next_day", lang=actual_lang, default=kin.eta_day_offset_str)}
         </span>
         """
@@ -391,31 +390,15 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics, lang: Optional[st
     total_leg_lbl = t("hud.total_leg", lang=actual_lang, default="Total Leg:")
 
     raw_html = f"""
-<div style='
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.90) 0%, rgba(30, 41, 59, 0.82) 100%);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1.5px solid {border_col};
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin: 10px 0 16px 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-'>
+<div style=' background: linear-gradient(135deg, rgba(15, 23, 42, 0.90) 0%, rgba(30, 41, 59, 0.82) 100%); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1.5px solid {border_col}; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 16px 20px; margin: 10px 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; '>
     <!-- Header Banner -->
     <div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px; margin-bottom: 14px;'>
         <div style='display: flex; align-items: center; gap: 10px;'>
-            <span style='
-                display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-                background: {theme_col}; box-shadow: 0 0 10px {theme_col};
-            '></span>
+            <span style=' display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: {theme_col}; box-shadow: 0 0 10px {theme_col}; '></span>
             <span style='font-size: 0.76rem; font-weight: 900; color: #f8fafc; letter-spacing: 0.08em; text-transform: uppercase;'>
                 ⚡ {hud_title}
             </span>
-            <span style='
-                background: {glow_bg}; color: {theme_col}; border: 1px solid {border_col};
-                font-size: 0.72rem; font-weight: 800; padding: 2px 9px; border-radius: 12px;
-            '>
+            <span style=' background: {glow_bg}; color: {theme_col}; border: 1px solid {border_col}; font-size: 0.72rem; font-weight: 800; padding: 2px 9px; border-radius: 12px; '>
                 {kin.vehicle_emoji} {veh_name_disp}
             </span>
         </div>
@@ -429,26 +412,17 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics, lang: Optional[st
     <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;'>
         
         <!-- Segment 1: Departure Schedule -->
-        <div style='
-            background: rgba(10, 18, 35, 0.65); border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;
-        '>
+        <div style=' background: rgba(10, 18, 35, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; '>
             <div>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
                     <span style='font-size: 0.70rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;'>
                         🕒 {departure_time_lbl}
                     </span>
                     <div style='display: flex; align-items: center; gap: 4px;'>
-                        <span style='
-                            background: rgba(147, 51, 234, 0.2); color: #c084fc; font-size: 0.65rem; font-weight: 800;
-                            padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(168, 85, 247, 0.4);
-                        '>
+                        <span style=' background: rgba(147, 51, 234, 0.2); color: #c084fc; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(168, 85, 247, 0.4); '>
                             🌐 {kin.timezone_abbr}
                         </span>
-                        <span style='
-                            background: rgba(56, 189, 248, 0.16); color: #38bdf8; font-size: 0.68rem; font-weight: 800;
-                            padding: 1px 7px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);
-                        '>
+                        <span style=' background: rgba(56, 189, 248, 0.16); color: #38bdf8; font-size: 0.68rem; font-weight: 800; padding: 1px 7px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3); '>
                             {dep_label}
                         </span>
                     </div>
@@ -469,20 +443,13 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics, lang: Optional[st
         </div>
 
         <!-- Segment 2: Vehicle Speed & Accurate Travel Duration -->
-        <div style='
-            background: rgba(10, 18, 35, 0.65); border: 1.5px solid {border_col};
-            border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;
-            position: relative; overflow: hidden;
-        '>
+        <div style=' background: rgba(10, 18, 35, 0.65); border: 1.5px solid {border_col}; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; '>
             <div>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
                     <span style='font-size: 0.70rem; font-weight: 800; color: {theme_col}; text-transform: uppercase; letter-spacing: 0.05em;'>
                         ⚡ {speed_time_lbl}
                     </span>
-                    <span style='
-                        background: {glow_bg}; color: {theme_col}; font-size: 0.68rem; font-weight: 800;
-                        padding: 1px 7px; border-radius: 4px; border: 1px solid {border_col};
-                    '>
+                    <span style=' background: {glow_bg}; color: {theme_col}; font-size: 0.68rem; font-weight: 800; padding: 1px 7px; border-radius: 4px; border: 1px solid {border_col}; '>
                         {kin.speed_kmh:.1f} km/h
                     </span>
                 </div>
@@ -504,26 +471,17 @@ def render_transit_kinematics_hud_html(kin: TransitKinematics, lang: Optional[st
         </div>
 
         <!-- Segment 3: Estimated Arrival (ETA) & Distance -->
-        <div style='
-            background: rgba(10, 18, 35, 0.65); border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;
-        '>
+        <div style=' background: rgba(10, 18, 35, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; '>
             <div>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
                     <span style='font-size: 0.70rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.05em;'>
                         🎯 {eta_lbl}
                     </span>
                     <div style='display: flex; align-items: center; gap: 4px;'>
-                        <span style='
-                            background: rgba(147, 51, 234, 0.2); color: #c084fc; font-size: 0.65rem; font-weight: 800;
-                            padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(168, 85, 247, 0.4);
-                        '>
+                        <span style=' background: rgba(147, 51, 234, 0.2); color: #c084fc; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(168, 85, 247, 0.4); '>
                             {kin.timezone_abbr}
                         </span>
-                        <span style='
-                            background: rgba(16, 185, 129, 0.16); color: #34d399; font-size: 0.68rem; font-weight: 800;
-                            padding: 1px 7px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35);
-                        '>
+                        <span style=' background: rgba(16, 185, 129, 0.16); color: #34d399; font-size: 0.68rem; font-weight: 800; padding: 1px 7px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35); '>
                             ● {eta_badge}
                         </span>
                     </div>

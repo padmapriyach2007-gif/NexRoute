@@ -1395,40 +1395,12 @@ class MapService:
 
                     # Prominent Floating Caution Badge on Map
                     badge_html = f"""
-                    <div style="
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        cursor: pointer;
-                        filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
-                    ">
-                        <div style="
-                            display: flex;
-                            align-items: center;
-                            gap: 6px;
-                            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-                            color: #ffffff;
-                            border: 2px solid #ffffff;
-                            border-radius: 20px;
-                            padding: 5px 12px;
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                            font-weight: 800;
-                            font-size: 12px;
-                            letter-spacing: 0.5px;
-                            white-space: nowrap;
-                            box-shadow: 0 0 15px rgba(239, 68, 68, 0.9);
-                        ">
+                    <div style=" display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); ">
+                        <div style=" display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #ffffff; border: 2px solid #ffffff; border-radius: 20px; padding: 5px 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 0.5px; white-space: nowrap; box-shadow: 0 0 15px rgba(239, 68, 68, 0.9); ">
                             <span style="font-size: 16px;">⚠️</span>
                             <span>ROAD BLOCKED</span>
                         </div>
-                        <div style="
-                            width: 0;
-                            height: 0;
-                            border-left: 7px solid transparent;
-                            border-right: 7px solid transparent;
-                            border-top: 8px solid #b91c1c;
-                            margin-top: -1px;
-                        "></div>
+                        <div style=" width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid #b91c1c; margin-top: -1px; "></div>
                     </div>
                     """
                     folium.Marker(
@@ -1488,40 +1460,12 @@ class MapService:
 
                     # Prominent Floating Hazardous Symbol Badge
                     hazard_badge_html = f"""
-                    <div style="
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        cursor: pointer;
-                        filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
-                    ">
-                        <div style="
-                            display: flex;
-                            align-items: center;
-                            gap: 6px;
-                            background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
-                            color: #ffffff;
-                            border: 2px solid #fecaca;
-                            border-radius: 20px;
-                            padding: 5px 12px;
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                            font-weight: 800;
-                            font-size: 12px;
-                            letter-spacing: 0.5px;
-                            white-space: nowrap;
-                            box-shadow: 0 0 18px rgba(220, 38, 38, 0.95);
-                        ">
+                    <div style=" display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); ">
+                        <div style=" display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%); color: #ffffff; border: 2px solid #fecaca; border-radius: 20px; padding: 5px 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 0.5px; white-space: nowrap; box-shadow: 0 0 18px rgba(220, 38, 38, 0.95); ">
                             <span style="font-size: 16px;">{hazard_emoji} ⚠️</span>
                             <span>{badge_title}</span>
                         </div>
-                        <div style="
-                            width: 0;
-                            height: 0;
-                            border-left: 7px solid transparent;
-                            border-right: 7px solid transparent;
-                            border-top: 8px solid #7f1d1d;
-                            margin-top: -1px;
-                        "></div>
+                        <div style=" width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid #7f1d1d; margin-top: -1px; "></div>
                     </div>
                     """
                     folium.Marker(
@@ -1593,19 +1537,7 @@ class MapService:
                 badge_bg = "rgba(15, 23, 42, 0.92)"
 
                 fac_html = f"""
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 32px;
-                    height: 32px;
-                    background: {badge_bg};
-                    border: 2px solid {badge_border};
-                    border-radius: 50%;
-                    box-shadow: 0 0 10px {badge_border};
-                    font-size: 16px;
-                    cursor: pointer;
-                " title="{f_name}">
+                <div style=" display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: {badge_bg}; border: 2px solid {badge_border}; border-radius: 50%; box-shadow: 0 0 10px {badge_border}; font-size: 16px; cursor: pointer; " title="{f_name}">
                     {f_icon}
                 </div>
                 """
@@ -1658,28 +1590,10 @@ class MapService:
 
                 member_html = f"""
                 <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-                    <div style="
-                        width: 36px; height: 36px; border-radius: 50%;
-                        background: rgba(15, 23, 42, 0.95);
-                        border: 2px solid #38bdf8;
-                        box-shadow: 0 0 14px rgba(56, 189, 248, 0.75), inset 0 0 6px rgba(56, 189, 248, 0.3);
-                        display: flex; align-items: center; justify-content: center;
-                        font-size: 18px;
-                    ">
+                    <div style=" width: 36px; height: 36px; border-radius: 50%; background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; box-shadow: 0 0 14px rgba(56, 189, 248, 0.75), inset 0 0 6px rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; font-size: 18px; ">
                         {m_avatar}
                     </div>
-                    <div style="
-                        background: rgba(15, 23, 42, 0.92);
-                        color: #38bdf8;
-                        font-weight: 700;
-                        font-size: 10px;
-                        padding: 1px 5px;
-                        border-radius: 4px;
-                        border: 1px solid rgba(56, 189, 248, 0.5);
-                        margin-top: 2px;
-                        white-space: nowrap;
-                        box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-                    ">
+                    <div style=" background: rgba(15, 23, 42, 0.92); color: #38bdf8; font-weight: 700; font-size: 10px; padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.5); margin-top: 2px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.5); ">
                         {m_name}
                     </div>
                 </div>

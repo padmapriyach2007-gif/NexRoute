@@ -892,22 +892,7 @@ def render_driving_mode_cockpit_card_html(
         route_tag = route_tag[:14] + ".."
 
     html = f"""
-    <div style='
-        background: {card_bg};
-        border: 2px solid {border_color};
-        border-radius: 14px;
-        padding: 12px 12px 10px 12px;
-        box-shadow: {card_shadow};
-        height: 315px;
-        min-height: 315px;
-        max-height: 315px;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        transition: all 0.25s ease;
-    '>
+    <div style=' background: {card_bg}; border: 2px solid {border_color}; border-radius: 14px; padding: 12px 12px 10px 12px; box-shadow: {card_shadow}; height: 315px; min-height: 315px; max-height: 315px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; transition: all 0.25s ease; '>
         <div>
             {status_ribbon}
             <div style='display: flex; align-items: center; justify-content: space-between; height: 26px; margin-bottom: 4px;'>
@@ -1488,9 +1473,7 @@ def render_cockpit_mode_functionality_hud(
     extra_hud = f"{extra_hud}\n{dynamic_telemetry_hud}"
 
     hud_html = f"""
-    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.90) 100%);
-                border: 2px solid {accent}; border-radius: 14px; padding: 16px 20px; margin-top: 12px; margin-bottom: 16px;
-                box-shadow: 0 0 24px rgba(56, 189, 248, 0.25); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;'>
+    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.90) 100%); border: 2px solid {accent}; border-radius: 14px; padding: 16px 20px; margin-top: 12px; margin-bottom: 16px; box-shadow: 0 0 24px rgba(56, 189, 248, 0.25); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;'>
         <div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: {accent}; box-shadow: 0 0 10px {accent};'></span>

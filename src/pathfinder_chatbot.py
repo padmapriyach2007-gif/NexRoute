@@ -22,6 +22,8 @@ from src.ai_assistant_engine import (
     PATHFINDER_TRAVEL_SYSTEM_PROMPT
 )
 from src.pathfinder_tools import PathfinderToolExecutor, TOOL_SCHEMAS
+from src.aura_assistant_handlers import AuraAssistantMixin, AuraIntentType, AuraIntentClassifier
+from src.route_engine import OSRMGlobalRoutingProvider
 
 logger = logging.getLogger("pathfinder.aura")
 
@@ -29,7 +31,7 @@ logger = logging.getLogger("pathfinder.aura")
 PATHFINDER_SYSTEM_PROMPT = PATHFINDER_TRAVEL_SYSTEM_PROMPT
 
 
-class PathfinderChatbot:
+class PathfinderChatbot(AuraAssistantMixin):
     """
     Pathfinder — Adaptive User Route Assistant
     Intelligent Conversational Assistant for P.A.T.H.F.I.N.D.E.R.
@@ -46,6 +48,7 @@ class PathfinderChatbot:
         self.llm_client = LLMClient()
         self.cognitive_engine = BuiltinCognitiveEngine()
         self.conv_manager = ConversationManager()
+        self.routing_provider = OSRMGlobalRoutingProvider()
         self.tool_executor = PathfinderToolExecutor(
             pipeline=pipeline,
             map_service=map_service,
@@ -159,7 +162,7 @@ class PathfinderChatbot:
             active_lang = app_lang
 
         if "translate" in q:
-            return self._handle_translation(raw_query, q)
+            return self._handle_aura_translation(raw_query, q)
 
         # ---------------------------------------------------------------------
         # 4. EMERGENCY & LIFE-SAFETY PROTOCOLS
@@ -167,6 +170,69 @@ class PathfinderChatbot:
         em_res = self._handle_emergency_queries(raw_query, q, ctx)
         if em_res is not None:
             return em_res
+
+        # ---------------------------------------------------------------------
+        # 4B. AURA INTENT CLASSIFICATION & DISPATCH
+        # ---------------------------------------------------------------------
+        intent = AuraIntentClassifier.classify(raw_query, q, self.conv_manager)
+
+        if intent == AuraIntentType.FOLLOW_UP:
+            return self._handle_follow_up(raw_query, q, ctx)
+
+        if intent == AuraIntentType.TRAVEL_COST:
+            return self._handle_travel_cost(raw_query, q, ctx)
+
+        if intent == AuraIntentType.NAVIGATION_ACTION:
+            return self._handle_navigation_action(raw_query, q, ctx)
+
+        if intent == AuraIntentType.ITINERARY_PLANNING:
+            return self._handle_itinerary_planning(raw_query, q, ctx)
+
+        if intent == AuraIntentType.GENERAL_KNOWLEDGE:
+            if "translate" in q:
+                return self._handle_aura_translation(raw_query, q)
+            return self._handle_general_knowledge(raw_query, q, ctx)
+
+        if intent == AuraIntentType.ROUTE_COMPARISON:
+            res = self._handle_route_conceptual_comparison(raw_query, q, ctx)
+            if res is not None:
+                return res
+            res = self._handle_route_comparison(raw_query, q, ctx)
+            if res is not None:
+                return res
+
+        if intent == AuraIntentType.PLACES_SEARCH:
+            res = self._handle_halfway_places(raw_query, q, ctx)
+            if res is not None:
+                return res
+            res = self._handle_nearby_places(raw_query, q, ctx)
+            if res is not None:
+                return res
+
+        if intent in [AuraIntentType.GREETING, AuraIntentType.GENERAL_CONVERSATION]:
+            if is_telugu and any(w in raw_query for w in ["నమస్కారం", "హలో", "ఎలా ఉన్నావు"]):
+                return self._handle_telugu_query(raw_query, q, ctx)
+            if is_hindi and any(w in raw_query for w in ["नमस्ते", "हैलो", "कैसे हो"]):
+                return self._handle_hindi_query(raw_query, q, ctx)
+            res = self._handle_greetings_and_general(raw_query, q, ctx, language=active_lang)
+            if res is not None:
+                return res
+
+        if intent in [AuraIntentType.BASIC_TRAVEL, AuraIntentType.TRAVEL_SAFETY]:
+            res = self._handle_aura_travel_qa(raw_query, q, ctx)
+            if res is not None:
+                return res
+            res = self._handle_travel_qa(raw_query, q, ctx)
+            if res is not None:
+                return res
+
+        if intent == AuraIntentType.ROUTE_SEARCH:
+            res = self._handle_aura_route_search(raw_query, q, ctx)
+            if res is not None:
+                return res
+            res = self._handle_route_intent(raw_query, q, ctx)
+            if res is not None:
+                return res
 
         # ---------------------------------------------------------------------
         # 5. NAVIGATION TOOL ACTIONS (DETERMINISTIC ROUTING & REAL APP ACTIONS)

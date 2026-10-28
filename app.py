@@ -5790,58 +5790,19 @@ if "pathfinder_bot" not in st.session_state:
 
 
 
-if "aura_chat_history" not in st.session_state:
-
-
-
+if "aura_chat_history" not in st.session_state or not st.session_state.aura_chat_history:
     st.session_state.aura_chat_history = [
-
-
-
         {
-
-
-
             "role": "assistant",
-
-
-
-            "badge": "🤖 AURA ONLINE",
-
-
-
+            "badge": "🤖 AURA READY",
             "content": (
-
-
-
                 "<div style='font-size: 0.86rem; line-height: 1.5; color: #f1f5f9;'>"
-
-
-
-                "👋 <b>Hello! I am AURA</b><br>"
-
-
-
-                "<span style='color: #c084fc; font-weight: 600;'>Adaptive User Route Assistant</span> for <b>NexRoute</b><br><br>"
-
-
-
-                "How can I help you today? Ask me anything about your route, avoiding tolls or highways, the speedometer, hazard alerts, travel packing tips, or general everyday questions!"
-
-
-
+                "👋 <b>Hi! I'm Aura</b>, your intelligent AI travel assistant for <b>NexRoute</b>.<br><br>"
+                "I can help you plan trips, find optimal routes, discover nearby places & halfway stops, estimate fuel and tolls, and answer any travel or everyday questions.<br><br>"
+                "Where would you like to explore today?"
                 "</div>"
-
-
-
             )
-
-
-
         }
-
-
-
     ]
 
 
@@ -6488,18 +6449,53 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
 
 
     if s_click and u_text and u_text.strip():
-
-
-
         q_str = u_text.strip()
-
-
-
         _execute_chat_turn(q_str)
-
-
-
         st.rerun()
+
+    # 6 Quick-Action Chips & Clear Chat
+    qc1, qc2, qc3, qc4, qc5, qc6, qc_clear = st.columns([1, 1, 1, 1, 1, 1, 0.8])
+    with qc1:
+        if st.button("🗺️ Route", key=f"chip_route_{key_prefix}", use_container_width=True):
+            _execute_chat_turn("Find a route from Vijayawada to Hyderabad")
+            st.rerun()
+    with qc2:
+        if st.button("📍 Places", key=f"chip_places_{key_prefix}", use_container_width=True):
+            _execute_chat_turn("Find restaurants and rest stops along my route")
+            st.rerun()
+    with qc3:
+        if st.button("✈️ Plan", key=f"chip_plan_{key_prefix}", use_container_width=True):
+            _execute_chat_turn("Plan a 2-day weekend trip from Vijayawada to Araku Valley")
+            st.rerun()
+    with qc4:
+        if st.button("⛽ Cost", key=f"chip_cost_{key_prefix}", use_container_width=True):
+            _execute_chat_turn("Estimate my fuel cost for this journey")
+            st.rerun()
+    with qc5:
+        if st.button("🏨 Stays", key=f"chip_hotel_{key_prefix}", use_container_width=True):
+            _execute_chat_turn("Find nearby hotels and accommodation")
+            st.rerun()
+    with qc6:
+        if st.button("💬 Ask", key=f"chip_ask_{key_prefix}", use_container_width=True):
+            _execute_chat_turn("What can you do?")
+            st.rerun()
+    with qc_clear:
+        if st.button("🗑️ Clear", key=f"chip_clear_{key_prefix}", use_container_width=True):
+            st.session_state.aura_chat_history = [
+                {
+                    "role": "assistant",
+                    "badge": "🤖 AURA READY",
+                    "content": (
+                        "<div style='font-size: 0.86rem; line-height: 1.5; color: #f1f5f9;'>"
+                        "👋 <b>Hi! I'm Aura</b>, your intelligent AI travel assistant for <b>NexRoute</b>.<br><br>"
+                        "Chat cleared! How can I assist your journey today?"
+                        "</div>"
+                    )
+                }
+            ]
+            if "pathfinder_bot" in st.session_state:
+                st.session_state.pathfinder_bot.reset_conversation()
+            st.rerun()
 
 
 

@@ -85,17 +85,7 @@ def render_traffic_intelligence_dashboard():
 
     # Glassmorphic Cockpit Header Banner
     st.markdown("""
-    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.90) 100%);
-                border: 1.5px solid rgba(56, 189, 248, 0.40);
-                border-radius: 16px;
-                padding: 16px 22px;
-                margin-bottom: 16px;
-                box-shadow: 0 10px 32px rgba(0,0,0,0.55), 0 0 20px rgba(56, 189, 248, 0.15);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                flex-wrap: wrap;
-                gap: 12px;">
+    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.90) 100%); border: 1.5px solid rgba(56, 189, 248, 0.40); border-radius: 16px; padding: 16px 22px; margin-bottom: 16px; box-shadow: 0 10px 32px rgba(0,0,0,0.55), 0 0 20px rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 14px;">
             <div style="font-size: 2.3rem; filter: drop-shadow(0 0 14px #38bdf8);">🚦</div>
             <div>
@@ -309,8 +299,7 @@ def render_traffic_intelligence_dashboard():
 
         with col_f_summary:
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.82) 100%);
-                        border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 16px;">
+            <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.82) 100%); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc;">{fused.zone_id}</div>

@@ -1966,8 +1966,7 @@ def build_google_maps_javascript_html(
         <div class="gmap-toolbar">
             <div class="gmap-search-wrapper">
                 <span class="gmap-search-icon">🔍</span>
-                <input id="pac-input" class="gmap-search-input" type="text"
-                       placeholder="Search places, landmarks, saved rooms or coordinates..." autocomplete="off" />
+                <input id="pac-input" class="gmap-search-input" type="text" placeholder="Search places, landmarks, saved rooms or coordinates..." autocomplete="off" />
                 <div id="pac-autocomplete-dropdown" class="pac-autocomplete-dropdown"></div>
             </div>
             <button class="gmap-btn" id="btn-geolocation" onclick="window.locateUserGps()" title="Center map at your real GPS location">

@@ -111,8 +111,7 @@ def build_google_maps_toolbar_html(
     ferry_pill = "<span style='color: #ef4444; font-weight: 700;'>🚫 Avoid Ferries</span>" if avoid_ferries else "<span style='color: #64748b;'>Ferries Allowed</span>"
 
     return f"""
-    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.90));
-                border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 12px; padding: 10px 16px; margin: 10px 0;'>
+    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.90)); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 12px; padding: 10px 16px; margin: 10px 0;'>
         <div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <div style='width: 32px; height: 32px; border-radius: 8px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;'>
@@ -148,8 +147,7 @@ def build_loopholes_deck_html(loopholes: List[Dict[str, Any]]) -> str:
     cards_html = ""
     for item in loopholes:
         cards_html += f"""
-        <div style='background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-top: 3px solid {item["accent_color"]};
-                    border-radius: 10px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; min-width: 220px; flex: 1;'>
+        <div style='background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-top: 3px solid {item["accent_color"]}; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; min-width: 220px; flex: 1;'>
             <div>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;'>
                     <div style='display: flex; align-items: center; gap: 8px;'>
@@ -178,8 +176,7 @@ def build_loopholes_deck_html(loopholes: List[Dict[str, Any]]) -> str:
         """
 
     full_html = f"""
-    <div style='background: linear-gradient(135deg, rgba(10, 20, 38, 0.90), rgba(15, 23, 42, 0.95));
-                border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 16px; margin: 16px 0;'>
+    <div style='background: linear-gradient(135deg, rgba(10, 20, 38, 0.90), rgba(15, 23, 42, 0.95)); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 16px; margin: 16px 0;'>
         <div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;'>
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.4rem;'>🚀</span>

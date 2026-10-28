@@ -1782,18 +1782,14 @@ def get_turn_visual_svg(
         <g filter="url(#dropShadow)" transform="translate(265, 252)">
             <rect width="230" height="36" rx="8" fill="url(#hudGlassGrad)" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1"/>
             
-            <rect x="6" y="5" width="105" height="26" rx="5" 
-                  fill="{'rgba(14, 165, 233, 0.35)' if left_lane_active else 'rgba(15, 23, 42, 0.6)'}" 
-                  stroke="{'#38bdf8' if left_lane_active else 'rgba(148, 163, 184, 0.25)'}" stroke-width="{'1.5' if left_lane_active else '1'}"/>
+            <rect x="6" y="5" width="105" height="26" rx="5" fill="{'rgba(14, 165, 233, 0.35)' if left_lane_active else 'rgba(15, 23, 42, 0.6)'}" stroke="{'#38bdf8' if left_lane_active else 'rgba(148, 163, 184, 0.25)'}" stroke-width="{'1.5' if left_lane_active else '1'}"/>
             <text x="18" y="22" font-size="13">⬅️</text>
             <text x="36" y="21" fill="{'#ffffff' if left_lane_active else '#94a3b8'}" font-size="9" font-weight="800" font-family="'Segoe UI', Roboto, sans-serif">
                 {'TURN LANE' if left_lane_active else 'LEFT ONLY'}
             </text>
             {f'<circle cx="98" cy="18" r="3" fill="#10b981" filter="url(#neonGlowEmerald)"/>' if left_lane_active else ''}
 
-            <rect x="119" y="5" width="105" height="26" rx="5" 
-                  fill="{'rgba(14, 165, 233, 0.35)' if (right_lane_active or straight_lane_active) else 'rgba(15, 23, 42, 0.6)'}" 
-                  stroke="{'#38bdf8' if (right_lane_active or straight_lane_active) else 'rgba(148, 163, 184, 0.25)'}" stroke-width="{'1.5' if (right_lane_active or straight_lane_active) else '1'}"/>
+            <rect x="119" y="5" width="105" height="26" rx="5" fill="{'rgba(14, 165, 233, 0.35)' if (right_lane_active or straight_lane_active) else 'rgba(15, 23, 42, 0.6)'}" stroke="{'#38bdf8' if (right_lane_active or straight_lane_active) else 'rgba(148, 163, 184, 0.25)'}" stroke-width="{'1.5' if (right_lane_active or straight_lane_active) else '1'}"/>
             <text x="131" y="22" font-size="13">{'➡️' if right_lane_active else '⬆️'}</text>
             <text x="149" y="21" fill="{'#ffffff' if (right_lane_active or straight_lane_active) else '#94a3b8'}" font-size="9" font-weight="800" font-family="'Segoe UI', Roboto, sans-serif">
                 {'EXIT LANE' if right_lane_active else 'THRU LANE'}
