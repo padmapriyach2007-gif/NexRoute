@@ -1513,24 +1513,39 @@ def get_language_native_name(lang_code: Optional[str] = None) -> str:
     return info.get("native", "English")
 
 
-def t(key: str, lang: Optional[str] = None, default: Optional[str] = None, **kwargs) -> str:
+def t(key: str, *args, default: Optional[str] = None, lang: Optional[str] = None, **kwargs) -> str:
     """
     Main translation lookup function.
-    - Resolves language (explicit or session state).
-    - Supports default fallback string if passed as 2nd positional argument or default kwarg.
-    - Looks up key in language table.
-    - Falls back to English if missing.
-    - If key does not exist anywhere, returns clean fallback or title-cased key.
+    - Resolves language (explicit via positional arg, kwarg 'lang', or session state).
+    - Supports default fallback string (positional arg, kwarg 'default', or kwarg 'fallback').
+    - Highly resilient: safely accepts any permutation of (key, default, lang) or (key, lang, default).
+    - Looks up key in language table with fallback chain to English, default string, or title-cased key.
     - Safely interpolates kwargs placeholders e.g. {count}, {street}, {dist}.
+    - Always returns a string, never raises TypeError or returns None.
     """
-    fallback_val = default
-    actual_lang = None
+    fallback_val = default if default is not None else kwargs.get("fallback")
+    actual_lang = lang
 
-    if lang in SUPPORTED_LANGUAGES:
-        actual_lang = lang
-    elif lang is not None:
-        # Caller passed a default string as second positional arg, e.g. t("tab.nav", "Navigation")
-        fallback_val = lang
+    # Parse variable positional arguments safely
+    if args:
+        if len(args) == 1:
+            a0 = args[0]
+            if isinstance(a0, str) and a0 in SUPPORTED_LANGUAGES and actual_lang is None:
+                actual_lang = a0
+            elif fallback_val is None and a0 is not None:
+                fallback_val = str(a0)
+        elif len(args) >= 2:
+            a0, a1 = args[0], args[1]
+            if isinstance(a0, str) and a0 in SUPPORTED_LANGUAGES:
+                if actual_lang is None:
+                    actual_lang = a0
+                if fallback_val is None and a1 is not None:
+                    fallback_val = str(a1)
+            else:
+                if fallback_val is None and a0 is not None:
+                    fallback_val = str(a0)
+                if actual_lang is None and isinstance(a1, str) and a1 in SUPPORTED_LANGUAGES:
+                    actual_lang = a1
 
     target_lang = actual_lang or get_current_language()
     if target_lang not in SUPPORTED_LANGUAGES:
@@ -1556,6 +1571,10 @@ def t(key: str, lang: Optional[str] = None, default: Optional[str] = None, **kwa
     if template is None:
         template = fallback_val if fallback_val is not None else key.split(".")[-1].replace("_", " ").title()
 
+    if template is None:
+        template = str(key)
+
+    template = str(template)
 
     # Interpolate
     if kwargs:
@@ -1565,7 +1584,8 @@ def t(key: str, lang: Optional[str] = None, default: Optional[str] = None, **kwa
             # Safe replacement if format throws KeyError on extra braces
             res = template
             for k, v in kwargs.items():
-                res = res.replace("{" + str(k) + "}", str(v))
+                if k not in ("default", "fallback"):
+                    res = res.replace("{" + str(k) + "}", str(v))
             return res
 
     return template

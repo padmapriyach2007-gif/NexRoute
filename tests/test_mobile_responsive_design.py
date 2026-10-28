@@ -122,3 +122,4 @@ def test_reduced_motion_accessibility():
         content = f.read()
 
     assert "prefers-reduced-motion: reduce" in content
+

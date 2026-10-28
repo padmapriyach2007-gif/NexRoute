@@ -206,3 +206,42 @@ def test_navigation_header_language_switcher_source():
     assert "nav_header_lang_" in src
     assert "SUPPORTED_LANGUAGES" in src
     assert "set_current_language" in src
+
+
+def test_t_function_call_signatures_and_type_safety():
+    """
+    Ensure t() accepts any combination of positional/keyword default and lang arguments
+    without ever raising TypeError: 'got multiple values for argument lang' or returning None.
+    """
+    # 1. Exact call signature from app.py line 29269
+    res1 = t("tab.places", "Places & Sights", lang="te")
+    assert isinstance(res1, str) and len(res1) > 0
+    assert "🌟 " + res1  # string concatenation must not fail
+
+    # 2. Subtitle with long fallback and lang kwarg
+    res2 = t("places.header_sub", "Discover useful places near your location", lang="hi")
+    assert isinstance(res2, str) and len(res2) > 0
+
+    # 3. Default as keyword + lang as keyword
+    res3 = t("tab.places", default="Places & Sights", lang="ta")
+    assert isinstance(res3, str) and len(res3) > 0
+
+    # 4. Positional default only
+    res4 = t("tab.places", "Places & Sights")
+    assert isinstance(res4, str) and len(res4) > 0
+
+    # 5. Positional language code only
+    res5 = t("tab.places", "bn")
+    assert isinstance(res5, str) and len(res5) > 0
+
+    # 6. Positional lang + positional default
+    res6 = t("tab.places", "kn", "Places & Sights")
+    assert isinstance(res6, str) and len(res6) > 0
+
+    # 7. Positional default + positional lang
+    res7 = t("tab.places", "Places & Sights", "ml")
+    assert isinstance(res7, str) and len(res7) > 0
+
+    # 8. Non-existent key with default
+    res8 = t("non_existent_key_123", "Custom Fallback Text", lang="mr")
+    assert res8 == "Custom Fallback Text"

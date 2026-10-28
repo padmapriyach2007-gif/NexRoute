@@ -134,11 +134,12 @@ def _safe_st_markdown(body, *args, **kwargs):
             cleaned_lines = []
             for line in body.splitlines():
                 stripped = line.strip()
-                # Skip blank lines directly adjacent to HTML tags to prevent CommonMark from closing HTML blocks prematurely
-                if stripped == "" and cleaned_lines and (cleaned_lines[-1] == "" or cleaned_lines[-1].startswith("<")):
-                    continue
+                # Skip leading blank lines or blank lines directly adjacent to HTML tags
+                if not stripped:
+                    if not cleaned_lines or cleaned_lines[-1] == "" or cleaned_lines[-1].startswith("<") or cleaned_lines[-1].endswith(">"):
+                        continue
                 cleaned_lines.append(stripped)
-            body = "\n".join(cleaned_lines)
+            body = "\n".join(cleaned_lines).strip()
     return _orig_st_markdown(body, *args, **kwargs)
 
 st.markdown = _safe_st_markdown
@@ -29266,7 +29267,9 @@ if st.session_state.get("current_view") == "places":
 
 
     cur_l = st.session_state.get("app_language", "en")
-    render_view_navigation_header("🌟 " + t("tab.places", "Places & Sights", lang=cur_l), t("places.header_sub", "Discover useful places near your location or along your selected route.", lang=cur_l), "places")
+    places_title = t("tab.places", default="Places & Sights", lang=cur_l)
+    places_sub = t("places.header_sub", default="Discover useful places near your location or along your selected route.", lang=cur_l)
+    render_view_navigation_header(f"🌟 {places_title}", str(places_sub), "places")
 
 
 
