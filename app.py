@@ -4583,18 +4583,8 @@ from src.emergency_service import EmergencyServiceManager, FacilityCategory as E
 
 
 def format_distance(dist_km: float, unit: str = "km", lang: Optional[str] = None) -> str:
-
-
-
-    if str(unit).lower() in ("miles", "mi", "mile"):
-
-
-
-        return f"{dist_km * 0.621371:.2f} mi"
-
-
-
-    return f"{dist_km:.2f} km"
+    from src.i18n import format_distance as _i18n_format_distance
+    return _i18n_format_distance(dist_km, unit=unit, lang=lang)
 
 
 
@@ -10058,10 +10048,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
         "duration_mins": f"{int(getattr(resolved_item.route, 'duration_seconds', 360) / 60)}" if resolved_item else "6"
-
-
-
-    })
+    }, language=st.session_state.get("app_language", "en"))
 
 
 
@@ -10198,13 +10185,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
         total_distance_m=route_total_dist_km * 1000.0,
-
-
-
-        travel_mode=t_mode_str.lower()
-
-
-
+        travel_mode=t_mode_str.lower(),
+        language=st.session_state.get("app_language", "en")
     )
 
 
@@ -10385,10 +10367,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-        user_speed_kmh=float(st.session_state.get("user_speed_kmh", 4.8))
-
-
-
+        user_speed_kmh=float(st.session_state.get("user_speed_kmh", 4.8)),
+        lang=st.session_state.get("app_language", "en")
     )
 
 
@@ -17446,50 +17426,17 @@ body {{
 
 
         if cur_spd <= vehicle_limits["eco"] + 2:
-
-
-
-            spd_verdict = "🟢 OPTIMAL (SAFE & HEALTHY SPEED)"
-
-
-
+            spd_verdict = t("speed.optimal_safe_speed", default="🟢 OPTIMAL (SAFE & HEALTHY SPEED)", lang=curr_l)
             spd_verdict_col = "#10b981"
-
-
-
-            spd_health_msg = f"You are driving at an optimal eco cruising velocity ({cur_spd:g} {unit_str.split()[0]}). Stopping buffer is >2.8s, eliminating driver fatigue and minimizing brake emissions."
-
-
-
+            spd_health_msg = t("speed.optimal_health_msg", default=f"You are driving at an optimal eco cruising velocity ({cur_spd:g} {unit_str.split()[0]}). Stopping buffer is >2.8s, eliminating driver fatigue and minimizing brake emissions.", lang=curr_l, speed=f"{cur_spd:g}")
         elif cur_spd <= vehicle_limits["normal"] + 2:
-
-
-
-            spd_verdict = "🟢 BALANCED & HEALTHY SPEED"
-
-
-
+            spd_verdict = t("speed.balanced_healthy_speed", default="🟢 BALANCED & HEALTHY SPEED", lang=curr_l)
             spd_verdict_col = "#00F0B5"
-
-
-
-            spd_health_msg = f"You are driving at a balanced cruise speed ({cur_spd:g} {unit_str.split()[0]}). Safe 2.6s headway buffer is maintained. Driver cognitive load is well within relaxed limits."
-
-
-
+            spd_health_msg = t("speed.balanced_health_msg", default=f"You are driving at a balanced cruise speed ({cur_spd:g} {unit_str.split()[0]}). Safe 2.6s headway buffer is maintained. Driver cognitive load is well within relaxed limits.", lang=curr_l, speed=f"{cur_spd:g}")
         else:
-
-
-
-            spd_verdict = "⚠️ ELEVATED SPEED (MAINTAIN HEADWAY)"
-
-
-
+            spd_verdict = t("speed.elevated_speed", default="⚠️ ELEVATED SPEED (MAINTAIN HEADWAY)", lang=curr_l)
             spd_verdict_col = "#f59e0b"
-
-
-
-            spd_health_msg = f"High velocity cruise ({cur_spd:g} {unit_str.split()[0]}). Reaction stopping distance increases to ~48m. Stay alert, avoid sudden steering maneuvers, and take regular rest breaks."
+            spd_health_msg = t("speed.elevated_health_msg", default=f"High velocity cruise ({cur_spd:g} {unit_str.split()[0]}). Reaction stopping distance increases to ~48m. Stay alert, avoid sudden steering maneuvers, and take regular rest breaks.", lang=curr_l, speed=f"{cur_spd:g}")
 
 
 
@@ -17563,7 +17510,13 @@ body {{
 
 
 
-        preset_labels = ["🏙️ City", "🚗 Eco", "🛣️ Cruise", "⚡ High", "🚀 Max"]
+        preset_labels = [
+            f"🏙️ {t('speed.city_40', default='City', lang=curr_l)}",
+            f"🚗 {t('speed.eco_65', default='Eco', lang=curr_l)}",
+            f"🛣️ {t('speed.cruise_90', default='Cruise', lang=curr_l)}",
+            f"⚡ {t('speed.high_115', default='High', lang=curr_l)}",
+            f"🚀 {t('speed.max_140', default='Max', lang=curr_l)}"
+        ]
 
 
 
@@ -26895,7 +26848,7 @@ body {{
 
 
 
-                    card_html = render_driving_mode_cockpit_card_html(mode, is_active=is_active, is_best=is_best)
+                    card_html = render_driving_mode_cockpit_card_html(mode, is_active=is_active, is_best=is_best, lang=st.session_state.get("app_language", "en"))
 
 
 
@@ -27152,13 +27105,8 @@ body {{
 
 
             mode_info=active_mode_obj,
-
-
-
-            return_components=True
-
-
-
+            return_components=True,
+            lang=st.session_state.get("app_language", "en")
         )
 
 
@@ -27492,13 +27440,7 @@ body {{
 
 
             # Aura 3D Virtual Guide Quick Launch Deck
-
-
-
-            st.markdown("""
-
-
-
+            st.markdown(f"""
             <div style="background: linear-gradient(135deg, rgba(8, 22, 44, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%); border: 1.5px solid rgba(56, 189, 248, 0.4); border-radius: 14px; padding: 14px 18px; margin: 14px 0 10px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);">
 
 

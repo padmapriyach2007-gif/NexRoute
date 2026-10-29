@@ -764,7 +764,9 @@ class AutomotiveDriveSelectorEngine:
 def render_driving_mode_cockpit_card_html(
     mode: Dict[str, Any],
     is_active: bool,
-    is_best: bool
+    is_best: bool,
+    lang: Optional[str] = None,
+    **kwargs: Any
 ) -> str:
     """
     Renders an automotive cockpit drive dynamics card with Tesla/Porsche-style
@@ -773,11 +775,6 @@ def render_driving_mode_cockpit_card_html(
     mode_id = mode.get("mode_id", "")
     accent = mode.get("badge_color", "#38bdf8")
 
-    try:
-        from src.i18n import t
-    except ImportError:
-        def t(k, **kw): return k
-
     curr_lang = lang or kwargs.get("lang")
     if not curr_lang:
         try:
@@ -785,6 +782,11 @@ def render_driving_mode_cockpit_card_html(
             curr_lang = st.session_state.get("app_language", "en")
         except Exception:
             curr_lang = "en"
+
+    try:
+        from src.i18n import t
+    except ImportError:
+        def t(k, **kw): return kw.get("default", k)
 
     mode_id = mode.get("mode_id", "")
     accent = mode.get("badge_color", "#38bdf8")
@@ -965,8 +967,14 @@ def _render_dynamic_mode_telemetry_hud(
     energy_kwh: float,
     speed_avg: float,
     fuel_saved: float,
-    co2_saved: float
+    co2_saved: float,
+    lang: Optional[str] = None
 ) -> str:
+    curr_lang = lang or "en"
+    try:
+        from src.i18n import t
+    except ImportError:
+        def t(k, **kw): return kw.get("default", k)
     """
     Renders dynamic real-time powertrain telemetry:
     1. 4 Real-time engineering gauges (RPM & Load, Flow & Efficiency, Aerodynamic Drag, Ledger)
@@ -1008,35 +1016,35 @@ def _render_dynamic_mode_telemetry_hud(
         ]
 
     elif mode_id == "DRIVE_FASTEST":
-        g1_title = "⚡ POWERTRAIN POWER BAND"
+        g1_title = "⚡ " + t("telemetry.power_band", default="POWERTRAIN POWER BAND", lang=curr_lang)
         g1_val = telemetry.get("rpm", "3,150 RPM")
-        g1_badge = "HIGH-TORQUE BAND"
-        g1_sub = "Cam phase advance active for immediate power response during expressway merges."
+        g1_badge = t("telemetry.high_torque", default="HIGH-TORQUE BAND", lang=curr_lang)
+        g1_sub = t("telemetry.power_sub", default="Cam phase advance active for immediate power response during expressway merges.", lang=curr_lang)
         g1_pct = 72
 
-        g2_title = "🏎️ EXPRESS FLOW RATE"
+        g2_title = "🏎️ " + t("telemetry.flow_rate", default="EXPRESS FLOW RATE", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(fuel_l / max(0.1, distance_km) * 100, 1)} L/100km")
-        g2_badge = "TIME-OPTIMIZED FLOW"
-        g2_sub = f"Calibrated for earliest arrival ETA ({mode_info.get('duration_minutes', 0)} mins) across verified thoroughfares."
+        g2_badge = t("telemetry.time_opt_flow", default="TIME-OPTIMIZED FLOW", lang=curr_lang)
+        g2_sub = t("telemetry.flow_sub", default=f"Calibrated for earliest arrival ETA ({mode_info.get('duration_minutes', 0)} mins) across verified thoroughfares.", lang=curr_lang, eta=mode_info.get('duration_minutes', 0))
         g2_pct = 92
 
-        g3_title = "💨 AERODYNAMIC DRAG FORCE"
+        g3_title = "💨 " + t("telemetry.drag_force", default="AERODYNAMIC DRAG FORCE", lang=curr_lang)
         g3_val = telemetry.get("aero_drag_force", "325 N")
-        g3_badge = "EXPRESSWAY CARRIAGEWAY"
-        g3_sub = "Divided highway corridor minimizes crosswind turbulence and lateral steering correction."
+        g3_badge = t("telemetry.expressway_lane", default="EXPRESSWAY CARRIAGEWAY", lang=curr_lang)
+        g3_sub = t("telemetry.drag_sub", default="Divided highway corridor minimizes crosswind turbulence and lateral steering correction.", lang=curr_lang)
         g3_pct = 75
 
-        g4_title = "⏱️ TRANSIT PRODUCTIVITY"
+        g4_title = "⏱️ " + t("telemetry.productivity", default="TRANSIT PRODUCTIVITY", lang=curr_lang)
         g4_val = f"{speed_avg:g} km/h"
-        g4_badge = "EARLIEST ARRIVAL"
-        g4_sub = f"Trip Fuel ₹{round(fuel_l * 102)}. Prioritizes minimum travel duration across viable corridors."
+        g4_badge = t("telemetry.earliest_arrival", default="EARLIEST ARRIVAL", lang=curr_lang)
+        g4_sub = t("telemetry.prod_sub", default=f"Trip Fuel ₹{round(fuel_l * 102)}. Prioritizes minimum travel duration across viable corridors.", lang=curr_lang, cost=round(fuel_l * 102))
         g4_pct = 95
 
         strategy_items = [
-            ("🏎️ Express Corridor Prioritization", "Routes through divided multi-lane expressways with grade-separated interchanges for continuous speed flow."),
-            ("⏱️ ETA Confidence Interval", "Maintains 96% punctuality window by avoiding localized bottlenecks and signalized intersections."),
-            ("🛣️ Highway Overtake Clearance", "Corridor survey verifies wide multi-lane infrastructure for safe cruising and lane flexibility."),
-            ("🚦 Active Throughput Pacing", "Maintains consistent momentum to minimize unnecessary deceleration cycles on open bypasses.")
+            (t("strategy.express_corridor", default="🏎️ Express Corridor Prioritization", lang=curr_lang), t("strategy.express_corridor_desc", default="Routes through divided multi-lane expressways with grade-separated interchanges for continuous speed flow.", lang=curr_lang)),
+            (t("strategy.eta_confidence", default="⏱️ ETA Confidence Interval", lang=curr_lang), t("strategy.eta_confidence_desc", default="Maintains 96% punctuality window by avoiding localized bottlenecks and signalized intersections.", lang=curr_lang)),
+            (t("strategy.overtake_clearance", default="🛣️ Highway Overtake Clearance", lang=curr_lang), t("strategy.overtake_clearance_desc", default="Corridor survey verifies wide multi-lane infrastructure for safe cruising and lane flexibility.", lang=curr_lang)),
+            (t("strategy.throughput_pacing", default="🚦 Active Throughput Pacing", lang=curr_lang), t("strategy.throughput_pacing_desc", default="Maintains consistent momentum to minimize unnecessary deceleration cycles on open bypasses.", lang=curr_lang))
         ]
 
     elif mode_id == "DRIVE_SAFEST":
@@ -1367,10 +1375,10 @@ def render_cockpit_mode_functionality_hud(
         fuel_saved = mode_info.get("fuel_saved_l") or 0.0
         co2_saved = mode_info.get("co2_saved_kg") or 0.0
         features_list = [
-            ("🏎️ Express Highway Routing", t('cockpit.fastest_title'), "#38bdf8"),
-            ("⏱️ Minimum ETA Strategy", t('cockpit.earliest_arrival'), "#34d399"),
-            ("🚦 Average Cruise Speed", f"{speed_avg} km/h", "#fbbf24"),
-            ("🗺️ Google Maps Live Sync", "Google Maps", "#a855f7")
+            (t('cockpit.express_highway_routing', default="🏎️ Express Highway Routing", lang=curr_lang), t('cockpit.fastest_title', lang=curr_lang), "#38bdf8"),
+            (t('cockpit.min_eta_strategy', default="⏱️ Minimum ETA Strategy", lang=curr_lang), t('cockpit.earliest_arrival', lang=curr_lang), "#34d399"),
+            (t('cockpit.avg_cruise_speed', default="🚦 Average Cruise Speed", lang=curr_lang), f"{speed_avg} km/h", "#fbbf24"),
+            (t('cockpit.gmaps_sync', default="🗺️ Google Maps Live Sync", lang=curr_lang), "Google Maps", "#a855f7")
         ]
         action_label = f"🏎️ {t('cockpit.fastest_action')}"
         extra_hud = f"""
@@ -1484,7 +1492,8 @@ def render_cockpit_mode_functionality_hud(
         energy_kwh=energy_kwh,
         speed_avg=speed_avg,
         fuel_saved=fuel_saved,
-        co2_saved=co2_saved
+        co2_saved=co2_saved,
+        lang=curr_lang
     )
     extra_hud = f"{extra_hud}\n{dynamic_telemetry_hud}"
 

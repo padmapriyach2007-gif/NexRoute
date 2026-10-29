@@ -128,96 +128,168 @@ class AuraPoseAssetManager:
 
 
 class AuraSpeechGenerator:
-    """Generates warm, expressive speech and thoughts matching actual journey events."""
+    """Generates warm, expressive speech and thoughts matching actual journey events across all 8 languages."""
 
     @staticmethod
-    def get_speech_for_stage(stage: AuraJourneyStage, context: Optional[Dict[str, Any]] = None) -> Tuple[str, AuraPose]:
+    def get_speech_for_stage(stage: AuraJourneyStage, context: Optional[Dict[str, Any]] = None, language: Optional[str] = "en") -> Tuple[str, AuraPose]:
         ctx = context or {}
         orig = ctx.get("origin", "Start")
         dest = ctx.get("destination", "Destination")
         mode = ctx.get("travel_mode", "car").lower()
         dist = ctx.get("distance_km", "")
         time_est = ctx.get("duration_mins", "")
+        clean_lang = (language or "en").lower().split("-")[0]
+        if clean_lang not in ("en", "te", "hi", "ta", "kn", "ml", "bn", "mr"):
+            clean_lang = "en"
 
-        if stage == AuraJourneyStage.WELCOME:
-            return (
-                "Hey, traveler! I'm Aura, your NexRoute companion. Where shall our adventure begin?",
-                AuraPose.WAVING
-            )
-        elif stage == AuraJourneyStage.START_INPUT:
-            return (
-                "Let's choose our starting point. You can enter an address, a landmark, or use your current location.",
-                AuraPose.POINTING
-            )
-        elif stage == AuraJourneyStage.START_CONFIRMED:
-            return (
-                f"Great! I've got our starting point at {orig}. Now let's choose where we're heading.",
-                AuraPose.TALKING
-            )
-        elif stage == AuraJourneyStage.DEST_INPUT:
-            return (
-                "Where would you like to go? Tell me your destination and I'll help plan the journey.",
-                AuraPose.POINTING
-            )
-        elif stage == AuraJourneyStage.DEST_CONFIRMED:
-            return (
-                f"Destination selected: {dest}! Let's find a suitable route.",
-                AuraPose.THINKING
-            )
-        elif stage == AuraJourneyStage.MODE_SELECT:
-            return (
-                "How would you like to travel? I'll adjust the route to match your choice.",
-                AuraPose.POINTING
-            )
-        elif stage == AuraJourneyStage.ALTERNATIVES_READY:
-            return (
-                "I've found some ways to get there. Let's choose the route that works best for you.",
-                AuraPose.TALKING
-            )
-        elif stage == AuraJourneyStage.ROUTE_OVERVIEW:
-            return (
-                f"Route ready! {dist} km across approximately {time_est} mins. Ready to begin?",
-                AuraPose.THINKING
-            )
-        elif stage == AuraJourneyStage.JOURNEY_CONFIRMED:
-            return (
-                "Ready? Let's begin our adventure. I'll guide you step by step.",
-                AuraPose.WAVING
-            )
-        elif stage == AuraJourneyStage.NAVIGATING:
-            return (
-                "Our adventure is underway! Following the mapped corridor safely.",
-                AuraPose.TALKING
-            )
-        elif stage == AuraJourneyStage.MANEUVER_APPROACHING:
-            next_turn = ctx.get("next_turn", "the upcoming junction")
-            return (
-                f"We're getting closer to {next_turn}. Check the road signs ahead.",
-                AuraPose.POINTING
-            )
-        elif stage == AuraJourneyStage.LANDMARK_DISCOVERED:
-            landmark = ctx.get("landmark_name", "an interesting place")
-            return (
-                f"I found a landmark you might enjoy: {landmark} is just along our route!",
-                AuraPose.TALKING
-            )
-        elif stage == AuraJourneyStage.OFF_ROUTE:
-            return (
-                "It looks like we're off the planned route. Let's find the way back.",
-                AuraPose.THINKING
-            )
-        elif stage == AuraJourneyStage.NEAR_DESTINATION:
-            return (
-                f"Our destination {dest} is just ahead! Preparing for arrival.",
-                AuraPose.TALKING
-            )
-        elif stage == AuraJourneyStage.ARRIVED:
-            return (
-                "We made it! You've reached your destination. Would you like to explore nearby places or plan your next adventure?",
-                AuraPose.EXCITED
-            )
-        else:
-            return ("Guiding you safely along your journey.", AuraPose.TALKING)
+        MULTILINGUAL_SPEECH = {
+            AuraJourneyStage.WELCOME: {
+                "en": "Hey, traveler! I'm Aura, your NexRoute companion. Where shall our adventure begin?",
+                "te": "హలో ప్రయాణికుడా! నేను మీ నెక్స్‌రూట్ సహచరి ఔరాను. మన ప్రయాణం ఎక్కడి నుండి మొదలవుతుంది?",
+                "hi": "नमस्ते यात्री! मैं ऑरा हूँ, आपकी नेक्ससूट साथी। हमारी यात्रा कहाँ से शुरू होगी?",
+                "ta": "வணக்கம் பயணியே! நான் உங்கள் நெக்ஸ்ரூட் துணைவி ஆரா. நமது பயணம் எங்கிருந்து தொடங்குகிறது?",
+                "kn": "ನಮಸ್ಕಾರ ಪ್ರಯಾಣಿಕರೇ! ನಾನು ನಿಮ್ಮ ನೆಕ್ಸ್‌ರೂಟ್ ಒಡನಾಡಿ ಔರಾ. ನಮ್ಮ ಸಾಹಸ ಎಲ್ಲಿಂದ ಪ್ರಾರಂಭವಾಗಲಿದೆ?",
+                "ml": "നമസ്കാരം യാത്രികാ! ഞാൻ നിങ്ങളുടെ നെക്സ്റൂട്ട് കൂട്ടുകാരി ഓറ. നമ്മുടെ യാത്ര എവിടെ നിന്ന് തുടങ്ങണം?",
+                "bn": "নমস্কার যাত্রী! আমি অরা, আপনার নেক্সরুট সঙ্গী। আমাদের যাত্রা কোথা থেকে শুরু হবে?",
+                "mr": "नमस्कार प्रवाशा! मी ऑरा आहे, तुमची नेक्सरूट साथीदार. आपला प्रवास कुठून सुरू करायचा?"
+            },
+            AuraJourneyStage.START_INPUT: {
+                "en": "Let's choose our starting point. You can enter an address, a landmark, or use your current location.",
+                "te": "మన ప్రారంభ స్థానాన్ని ఎంచుకుందాం. మీరు చిరునామా, మైలురాయిని నమోదు చేయవచ్చు లేదా మీ ప్రస్తుత స్థానాన్ని ఉపయోగించవచ్చు.",
+                "hi": "आइए अपना शुरुआती बिंदु चुनें। आप कोई पता, लैंडमार्क दर्ज कर सकते हैं या अपने वर्तमान स्थान का उपयोग कर सकते हैं।",
+                "ta": "நமது தொடக்கப் புள்ளியைத் தேர்ந்தெடுப்போம். நீங்கள் முகவரி, அடையாளக் குறியீட்டை உள்ளிடலாம் அல்லது தற்போதைய இருப்பிடத்தைப் பயன்படுத்தலாம்.",
+                "kn": "ನಮ್ಮ ಪ್ರಾರಂಭಿಕ ಬಿಂದುವನ್ನು ಆರಿಸೋಣ. ನೀವು ವಿಳಾಸ, ಹೆಗ್ಗುರುತನ್ನು ನಮೂದಿಸಬಹುದು ಅಥವಾ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಸ್ಥಳವನ್ನು ಬಳಸಬಹುದು.",
+                "ml": "നമുക്ക് ആരംഭ സ്ഥാനം തിരഞ്ഞെടുക്കാം. നിങ്ങൾക്ക് ഒരു വിലാസമോ ലാൻഡ്‌മാർക്കോ നൽകാം അല്ലെങ്കിൽ നിങ്ങളുടെ നിലവിലെ ലൊക്കേഷൻ ഉപയോഗിക്കാം.",
+                "bn": "আসুন আমাদের শুরুর স্থান নির্বাচন করি। আপনি একটি ঠিকানা, ল্যান্ডমার্ক প্রবেশ করাতে পারেন বা আপনার বর্তমান অবস্থান ব্যবহার করতে পারেন।",
+                "mr": "चला आपला सुरुवातीचा बिंदू निवडूया. आपण पत्ता, लँडमार्क प्रविष्ट करू शकता किंवा आपले वर्तमान स्थान वापरू शकता."
+            },
+            AuraJourneyStage.START_CONFIRMED: {
+                "en": f"Great! I've got our starting point at {orig}. Now let's choose where we're heading.",
+                "te": f"చాలా బాగుంది! మన ప్రారంభ స్థానం {orig} వద్ద సెట్ చేయబడింది. ఇప్పుడు మనం ఎక్కడికి వెళ్తున్నామో ఎంచుకుందాం.",
+                "hi": f"शानदार! हमारे पास {orig} पर प्रारंभिक बिंदु है। अब चुनते हैं कि हम कहाँ जा रहे हैं।",
+                "ta": f"அருமை! {orig} இல் நமது தொடக்கப் புள்ளி அமைக்கப்பட்டது. இப்போது நாம் எங்கு செல்கிறோம் என்பதைத் தேர்ந்தெடுப்போம்.",
+                "kn": f"ಉತ್ತಮ! {orig} ನಲ್ಲಿ ನಮ್ಮ ಆರಂಭಿಕ ಬಿಂದು ಸಿದ್ಧವಾಗಿದೆ. ಈಗ ನಾವು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದ್ದೇವೆ ಎಂಬುದನ್ನು ಆರಿಸೋಣ.",
+                "ml": f"വളരെ നല്ലത്! {orig} ൽ നമ്മുടെ ആരംഭ സ്ഥാനം രേഖപ്പെടുത്തി. ഇനി നമ്മൾ എങ്ങോട്ടാണ് പോകുന്നതെന്ന് തിരഞ്ഞെടുക്കാം.",
+                "bn": f"চমৎকার! {orig}-এ আমাদের শুরুর স্থান নির্ধারণ হয়েছে। এখন বেছে নিন আমরা কোথায় যাচ্ছি।",
+                "mr": f"छान! आपल्याकडे {orig} येथे सुरुवातीचा बिंदू आहे. आता आपण कुठे जात आहोत ते निवडूया."
+            },
+            AuraJourneyStage.DEST_INPUT: {
+                "en": "Where would you like to go? Tell me your destination and I'll help plan the journey.",
+                "te": "మీరు ఎక్కడికి వెళ్లాలనుకుంటున్నారు? మీ గమ్యస్థానాన్ని చెప్పండి, ప్రయాణాన్ని ప్లాన్ చేయడంలో నేను మీకు సహాయం చేస్తాను.",
+                "hi": "आप कहाँ जाना चाहेंगे? मुझे अपना गंतव्य बताएं और मैं यात्रा की योजना बनाने में मदद करूँगी।",
+                "ta": "நீங்கள் எங்கு செல்ல விரும்புகிறீர்கள்? உங்கள் சேருமிடத்தைச் சொல்லுங்கள், பயணத்தைத் திட்டமிட உதவுகிறேன்.",
+                "kn": "ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗಲು ಬಯಸುತ್ತೀರಿ? ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನವನ್ನು ತಿಳಿಸಿ, ಪ್ರಯಾಣವನ್ನು ಯೋಜಿಸಲು ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.",
+                "ml": "നിങ്ങൾക്ക് എങ്ങോട്ടാണ് പോകേണ്ടത്? ലക്ഷ്യസ്ഥാനം പറയൂ, യാത്ര പ്ലാൻ ചെയ്യാൻ ഞാൻ സഹായിക്കാം.",
+                "bn": "আপনি কোথায় যেতে চান? আপনার গন্তব্য বলুন এবং আমি ভ্রমণের পরিকল্পনা করতে সহায়তা করব।",
+                "mr": "आपण कुठे जाऊ इच्छिता? मला आपले गंतव्य सांगा आणि मी प्रवासाचे नियोजन करण्यास मदत करेन."
+            },
+            AuraJourneyStage.DEST_CONFIRMED: {
+                "en": f"Destination selected: {dest}! Let's find a suitable route.",
+                "te": f"గమ్యస్థానం ఎంచుకోబడింది: {dest}! అనువైన మార్గాన్ని కనుగొందాం.",
+                "hi": f"गंतव्य चुना गया: {dest}! आइए एक उपयुक्त मार्ग खोजें।",
+                "ta": f"சேருமிடம் தேர்ந்தெடுக்கப்பட்டது: {dest}! பொருத்தமான வழியைக் கண்டுபிடிப்போம்.",
+                "kn": f"ಗಮ್ಯಸ್ಥಾನವನ್ನು ಆಯ್ಕೆ ಮಾಡಲಾಗಿದೆ: {dest}! ಸೂಕ್ತವಾದ ಮಾರ್ಗವನ್ನು ಕಂಡುಹಿಡಿಯೋಣ.",
+                "ml": f"ലക്ഷ്യസ്ഥാനം തിരഞ്ഞെടുത്തു: {dest}! അനുയോജ്യമായ വഴി കണ്ടെത്താം.",
+                "bn": f"গন্তব্য নির্বাচিত: {dest}! আসুন একটি উপযুক্ত রুট খুঁজে বের করি।",
+                "mr": f"गंतव्य निवडले: {dest}! चला एक योग्य मार्ग शोधूया."
+            },
+            AuraJourneyStage.MODE_SELECT: {
+                "en": "How would you like to travel? I'll adjust the route to match your choice.",
+                "te": "మీరు ఎలా ప్రయాణించాలనుకుంటున్నారు? మీ ఎంపికకు తగినట్లుగా మార్గాన్ని సర్దుబాటు చేస్తాను.",
+                "hi": "आप कैसे यात्रा करना चाहेंगे? मैं आपकी पसंद के अनुसार मार्ग समायोजित करूँगी।",
+                "ta": "நீங்கள் எவ்வாறு பயணிக்க விரும்புகிறீர்கள்? உங்கள் விருப்பத்திற்கு ஏற்ப வழியை மாற்றியமைப்பேன்.",
+                "kn": "ನೀವು ಹೇಗೆ ಪ್ರಯಾಣಿಸಲು ಬಯಸುತ್ತೀರಿ? ನಿಮ್ಮ ಆಯ್ಕೆಗೆ ತಕ್ಕಂತೆ ಮಾರ್ಗವನ್ನು ಹೊಂದಿಸುತ್ತೇನೆ.",
+                "ml": "നിങ്ങൾ എങ്ങനെ യാത്ര ചെയ്യാനാണ് ആഗ്രഹിക്കുന്നത്? നിങ്ങളുടെ ഇഷ്ടത്തിനനുസരിച്ച് ഞാൻ വഴി ക്രമീകരിക്കും.",
+                "bn": "আপনি কীভাবে ভ্রমণ করতে চান? আপনার পছন্দ অনুসারে আমি রুটটি সাজিয়ে দেব।",
+                "mr": "आपण कसा प्रवास करू इच्छिता? मी आपल्या पसंतीनुसार मार्ग जुळवून घेईन."
+            },
+            AuraJourneyStage.ALTERNATIVES_READY: {
+                "en": "I've found some ways to get there. Let's choose the route that works best for you.",
+                "te": "అక్కడికి చేరుకోవడానికి కొన్ని మార్గాలను కనుగొన్నాను. మీకు ఉత్తమంగా సరిపోయే మార్గాన్ని ఎంచుకుందాం.",
+                "hi": "मुझे वहां पहुंचने के कुछ रास्ते मिले हैं। आइए वह मार्ग चुनें जो आपके लिए सबसे अच्छा हो।",
+                "ta": "அங்கு செல்ல சில வழிகளைக் கண்டுபிடித்துள்ளேன். உங்களுக்கு மிகவும் பொருத்தமான வழியைத் தேர்ந்தெடுப்போம்.",
+                "kn": "ಅಲ್ಲಿಗೆ ತಲುಪಲು ಕೆಲವು ಮಾರ್ಗಗಳನ್ನು ಕಂಡುಕೊಂಡಿದ್ದೇನೆ. ನಿಮಗೆ ಉತ್ತಮವಾಗಿ ಹೊಂದಿಕೊಳ್ಳುವ ಮಾರ್ಗವನ್ನು ಆರಿಸೋಣ.",
+                "ml": "അവിടെയെത്താൻ ചില വഴികൾ ഞാൻ കണ്ടെത്തിയിട്ടുണ്ട്. നിങ്ങൾക്ക് ഏറ്റവും അനുയോജ്യമായത് തിരഞ്ഞെടുക്കാം.",
+                "bn": "সেখানে পৌঁছানোর কয়েকটি রুট পেয়েছি। আপনার জন্য যেটি সবচেয়ে উপযুক্ত তা বেছে নিন।",
+                "mr": "मला तिथे पोहोचण्यासाठी काही मार्ग सापडले आहेत. आपल्यासाठी सर्वोत्तम मार्ग निवडूया."
+            },
+            AuraJourneyStage.ROUTE_OVERVIEW: {
+                "en": f"Route ready! {dist} km across approximately {time_est} mins. Ready to begin?",
+                "te": f"మార్గం సిద్ధంగా ఉంది! దాదాపు {time_est} నిమిషాలలో {dist} కి.మీ. ప్రారంభించడానికి సిద్ధంగా ఉన్నారా?",
+                "hi": f"मार्ग तैयार है! लगभग {time_est} मिनट में {dist} किमी। क्या आप शुरू करने के लिए तैयार हैं?",
+                "ta": f"பயணப்பாதை தயார்! சுமார் {time_est} நிமிடங்களில் {dist} கி.மீ. தொடங்கத் தயாரா?",
+                "kn": f"ಮಾರ್ಗ ಸಿದ್ಧವಾಗಿದೆ! ಸುಮಾರು {time_est} ನಿಮಿಷಗಳಲ್ಲಿ {dist} ಕಿ.ಮೀ. ಪ್ರಾರಂಭಿಸಲು ಸಿದ್ಧರಿದ್ದೀರಾ?",
+                "ml": f"റൂട്ട് തയ്യാറാണ്! ഏകദേശം {time_est} മിനിറ്റിൽ {dist} കി.മീ. ആരംഭിക്കാൻ തയ്യാറാണോ?",
+                "bn": f"রুট প্রস্তুত! প্রায় {time_est} মিনিটে {dist} কিমি। যাত্রা শুরু করতে প্রস্তুত?",
+                "mr": f"मार्ग तयार आहे! सुमारे {time_est} मिनिटांत {dist} किमी। सुरू करण्यास तयार आहात?"
+            },
+            AuraJourneyStage.JOURNEY_CONFIRMED: {
+                "en": "Ready? Let's begin our adventure. I'll guide you step by step.",
+                "te": "సిద్ధంగా ఉన్నారా? మన ప్రయాణాన్ని ప్రారంభిద్దాం. నేను అడుగడుగునా మీకు మార్గదర్శనం చేస్తాను.",
+                "hi": "तैयार हैं? आइए अपनी यात्रा शुरू करें। मैं कदम दर कदम आपका मार्गदर्शन करूँगी।",
+                "ta": "தயாரா? நமது பயணத்தைத் தொடங்குவோம். நான் படிப்படியாக உங்களுக்கு வழிகாட்டுவேன்.",
+                "kn": "ಸಿದ್ಧರಿದ್ದೀರಾ? ನಮ್ಮ ಸಾಹಸವನ್ನು ಪ್ರಾರಂಭಿಸೋಣ. ನಾನು ಹಂತ ಹಂತವಾಗಿ ನಿಮಗೆ ಮಾರ್ಗದರ್ಶನ ನೀಡುತ್ತೇನೆ.",
+                "ml": "തയ്യാറാണോ? നമുക്ക് യാത്ര തുടങ്ങാം. ഓരോ ഘട്ടത്തിലും ഞാൻ വഴികാട്ടാം.",
+                "bn": "প্রস্তুত? আসুন আমাদের যাত্রা শুরু করি। আমি ধাপে ধাপে পথ দেখাব।",
+                "mr": "तयार आहात? चला आपला प्रवास सुरू करूया. मी प्रत्येक टप्प्यावर मार्गदर्शन करेन."
+            },
+            AuraJourneyStage.NAVIGATING: {
+                "en": "Our adventure is underway! Following the mapped corridor safely.",
+                "te": "మన ప్రయాణం ప్రారంభమైంది! మ్యాప్ చేయబడిన కారిడార్‌ను సురక్షితంగా అనుసరిస్తున్నాము.",
+                "hi": "हमारी यात्रा शुरू हो चुकी है! मैप किए गए कॉरिडोर का सुरक्षित रूप से पालन कर रहे हैं।",
+                "ta": "நமது பயணம் தொடங்கிவிட்டது! வழிகாட்டப்பட்ட பாதையை பாதுகாப்பாகப் பின்பற்றுகிறோம்.",
+                "kn": "ನಮ್ಮ ಸಾಹಸ ಪ್ರಾರಂಭವಾಗಿದೆ! ಮ್ಯಾಪ್ ಮಾಡಿದ ಕಾರಿಡಾರ್ ಅನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಅನುಸರಿಸುತ್ತಿದ್ದೇವೆ.",
+                "ml": "നമ്മുടെ യാത്ര ആരംഭിച്ചു! മാപ്പ് ചെയ്ത വഴിയിലൂടെ സുരക്ഷിതമായി മുന്നോട്ട് പോകുന്നു.",
+                "bn": "আমাদের যাত্রা শুরু হয়েছে! ম্যাপ করা করিডোর নিরাপদে অনুসরণ করছি।",
+                "mr": "आपला प्रवास सुरू झाला आहे! मॅप केलेल्या कॉरिडॉरचे सुरक्षितपणे अनुसरण करत आहोत."
+            },
+            AuraJourneyStage.ARRIVED: {
+                "en": "We made it! You've reached your destination. Would you like to explore nearby places or plan your next adventure?",
+                "te": "మనం చేరుకున్నాము! మీరు మీ గమ్యస్థానానికి చేరుకున్నారు. సమీప ప్రదేశాలను అన్వేషించాలనుకుంటున్నారా లేదా మీ తదుపరి ప్రయాణాన్ని ప్లాన్ చేయాలనుకుంటున్నారా?",
+                "hi": "हम पहुंच गए! आप अपने गंतव्य पर पहुंच गए हैं। क्या आप आस-पास के स्थानों का पता लगाना चाहते हैं या अपनी अगली यात्रा की योजना बनाना चाहते हैं?",
+                "ta": "நாம் அடைந்துவிட்டோம்! உங்கள் சேருமிடத்தை அடைந்துவிட்டீர்கள். அருகிலுள்ள இடங்களை ஆராய விரும்புகிறீர்களா அல்லது அடுத்த பயணத்தைத் திட்டமிட விரும்புகிறீர்களா?",
+                "kn": "ನಾವು ತಲುಪಿದೆವು! ನೀವು ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನವನ್ನು ತಲುಪಿದ್ದೀರಿ. ಹತ್ತಿರದ ಸ್ಥಳಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ಅಥವಾ ನಿಮ್ಮ ಮುಂದಿನ ಸಾಹಸವನ್ನು ಯೋಜಿಸಲು ಬಯಸುತ್ತೀರಾ?",
+                "ml": "നമ്മൾ എത്തിച്ചേർന്നു! നിങ്ങൾ ലക്ഷ്യസ്ഥാനത്ത് എത്തി. സമീപ സ്ഥലങ്ങൾ പര്യവേക്ഷണം ചെയ്യാനോ അടുത്ത യാത്ര പ്ലാൻ ചെയ്യാനോ ആഗ്രഹിക്കുന്നുണ്ടോ?",
+                "bn": "আমরা পৌঁছে গেছি! আপনি আপনার গন্তব্যে পৌঁছেছেন। আপনি কি আশেপাশের স্থানগুলি ঘুরে দেখতে চান নাকি আপনার পরবর্তী ভ্রমণের পরিকল্পনা করতে চান?",
+                "mr": "आम्ही पोहोचलो! आपण आपल्या गंतव्यावर पोहोचला आहात. आपण जवळील ठिकाणे पाहू इच्छिता की पुढील प्रवासाचे नियोजन करू इच्छिता?"
+            }
+        }
+
+        pose_map = {
+            AuraJourneyStage.WELCOME: AuraPose.WAVING,
+            AuraJourneyStage.START_INPUT: AuraPose.POINTING,
+            AuraJourneyStage.START_CONFIRMED: AuraPose.TALKING,
+            AuraJourneyStage.DEST_INPUT: AuraPose.POINTING,
+            AuraJourneyStage.DEST_CONFIRMED: AuraPose.THINKING,
+            AuraJourneyStage.MODE_SELECT: AuraPose.POINTING,
+            AuraJourneyStage.ALTERNATIVES_READY: AuraPose.TALKING,
+            AuraJourneyStage.ROUTE_OVERVIEW: AuraPose.THINKING,
+            AuraJourneyStage.JOURNEY_CONFIRMED: AuraPose.WAVING,
+            AuraJourneyStage.NAVIGATING: AuraPose.TALKING,
+            AuraJourneyStage.MANEUVER_APPROACHING: AuraPose.POINTING,
+            AuraJourneyStage.LANDMARK_DISCOVERED: AuraPose.TALKING,
+            AuraJourneyStage.OFF_ROUTE: AuraPose.THINKING,
+            AuraJourneyStage.NEAR_DESTINATION: AuraPose.TALKING,
+            AuraJourneyStage.ARRIVED: AuraPose.EXCITED
+        }
+
+        stage_dict = MULTILINGUAL_SPEECH.get(stage, {})
+        speech_text = stage_dict.get(clean_lang) or stage_dict.get("en")
+        if not speech_text:
+            if stage == AuraJourneyStage.MANEUVER_APPROACHING:
+                next_turn = ctx.get("next_turn", "the upcoming junction")
+                speech_text = f"Approaching {next_turn}. Stay alert."
+            elif stage == AuraJourneyStage.LANDMARK_DISCOVERED:
+                lm = ctx.get("landmark_name", "a sight")
+                speech_text = f"Landmark nearby: {lm}!"
+            elif stage == AuraJourneyStage.OFF_ROUTE:
+                speech_text = "Off route! Recalculating the optimal path."
+            elif stage == AuraJourneyStage.NEAR_DESTINATION:
+                speech_text = f"Destination {dest} is just ahead!"
+            else:
+                speech_text = "Guiding you safely along your journey."
+
+        return (speech_text, pose_map.get(stage, AuraPose.TALKING))
 
 
 class ManeuverSequenceBuilder:
@@ -229,63 +301,74 @@ class ManeuverSequenceBuilder:
         origin_label: str,
         dest_label: str,
         total_distance_m: float,
-        travel_mode: str = "car"
+        travel_mode: str = "car",
+        language: Optional[str] = "en"
     ) -> List[AuraManeuverStep]:
+        curr_l = (language or "en").lower().split("-")[0]
         clean_orig = origin_label.split(",")[0].strip() or "Departure Point"
         clean_dest = dest_label.split(",")[0].strip() or "Destination"
 
         if not steps or len(steps) < 2:
             # Fallback when provider returns empty steps list
+            try:
+                from src.i18n import t
+            except ImportError:
+                def t(k, **kw): return kw.get("default", k)
+
+            h1 = f"{clean_orig} నుండి ప్రారంభించండి" if curr_l == "te" else (f"{clean_orig} से प्रस्थान करें" if curr_l == "hi" else f"Depart from {clean_orig}")
+            h2 = "కనెక్టింగ్ హైవే వెంట కొనసాగండి" if curr_l == "te" else ("कनेक्टिंग हाईवे पर आगे बढ़ें" if curr_l == "hi" else "Continue along Connecting Highway")
+            h3 = f"{clean_dest} వద్దకు సురక్షితంగా చేరుకోండి" if curr_l == "te" else (f"{clean_dest} पर सुरक्षित पहुंचे" if curr_l == "hi" else f"Arrive safely at {clean_dest}")
+
             return [
                 AuraManeuverStep(
                     step_num=1,
                     total_steps=3,
                     direction_type="START",
-                    headline=f"Depart from {clean_orig}",
-                    instruction=f"Head out from {clean_orig} along the main access corridor.",
-                    spoken_text=f"Welcome! Let's begin our journey from {clean_orig}.",
-                    aura_speech="Hello traveler! I am Aura, your companion. Let's head out together!",
+                    headline=h1,
+                    instruction=f"{clean_orig} -> {clean_dest}",
+                    spoken_text=h1,
+                    aura_speech=h1,
                     road_name="Departure Access Corridor",
                     distance_m=round(total_distance_m * 0.15, 1),
                     distance_human=f"{round(total_distance_m * 0.15 / 1000.0, 1)} km",
                     time_estimate="2 mins",
                     icon="🟢",
                     aura_pose=AuraPose.WAVING,
-                    what_to_look_for="Access gate, navigation signs, and paved roadway.",
+                    what_to_look_for="Access corridor",
                     status="ACTIVE"
                 ),
                 AuraManeuverStep(
                     step_num=2,
                     total_steps=3,
                     direction_type="STRAIGHT",
-                    headline="Continue along Connecting Highway",
-                    instruction=f"Follow the main corridor toward {clean_dest}.",
-                    spoken_text=f"Continue straight ahead along the main road toward {clean_dest}.",
-                    aura_speech="Cruising smoothly! The route ahead is clear and verified by satellite telemetry.",
+                    headline=h2,
+                    instruction=h2,
+                    spoken_text=h2,
+                    aura_speech=h2,
                     road_name="Main Regional Highway",
                     distance_m=round(total_distance_m * 0.70, 1),
                     distance_human=f"{round(total_distance_m * 0.70 / 1000.0, 1)} km",
                     time_estimate="6 mins",
                     icon="⬆️",
                     aura_pose=AuraPose.TALKING,
-                    what_to_look_for="Highway mile markers and overhead direction gantries.",
+                    what_to_look_for="Main corridor",
                     status="UPCOMING"
                 ),
                 AuraManeuverStep(
                     step_num=3,
                     total_steps=3,
                     direction_type="ARRIVE",
-                    headline=f"Arrive safely at {clean_dest}",
-                    instruction=f"Arrive at {clean_dest} terminal entrance plaza.",
-                    spoken_text=f"You have safely arrived at {clean_dest}. Journey complete!",
-                    aura_speech="Hooray! We made it! Thank you for traveling with NexRoute and Aura!",
+                    headline=h3,
+                    instruction=h3,
+                    spoken_text=h3,
+                    aura_speech=h3,
                     road_name="Arrival Plaza Drive",
                     distance_m=round(total_distance_m * 0.15, 1),
                     distance_human="150 m",
                     time_estimate="1 min",
                     icon="🏁",
                     aura_pose=AuraPose.EXCITED,
-                    what_to_look_for="Destination arrival arch, visitor parking, and main entrance.",
+                    what_to_look_for="Destination arrival",
                     status="UPCOMING"
                 )
             ]
@@ -450,9 +533,17 @@ def build_aura_journey_cockpit_html(
     - Integrated View All Pictures Journey Storybook Modal
     - Live audio synthesizer chime and SpeechSynthesis narration
     """
-    from src.i18n import get_current_language, get_bcp47_code
+    from src.i18n import get_current_language, get_bcp47_code, t
     curr_lang = lang or get_current_language()
     bcp47_code = get_bcp47_code(curr_lang)
+
+    STAGE_LOCALIZED = {
+        "WELCOME": {"en": "WELCOME", "te": "స్వాగతం", "hi": "स्वागत", "ta": "வரவேற்பு", "kn": "ಸ್ವಾಗತ", "ml": "സ്വാഗതം", "bn": "স্বাগতম", "mr": "स्वागत"},
+        "NAVIGATING": {"en": "GUIDING LIVE", "te": "లైవ్ మార్గదర్శనం", "hi": "लाइव मार्गदर्शन", "ta": "நேரடி வழிகாட்டல்", "kn": "ಲೈವ್ ಮಾರ್ಗದರ್ಶನ", "ml": "തത്സമയ വഴികാട്ടൽ", "bn": "লাইভ নির্দেশিকা", "mr": "थेट मार्गदर्शन"},
+        "ARRIVED": {"en": "ARRIVED", "te": "చేరుకున్నారు", "hi": "पहुंच गए", "ta": "வந்து சேர்ந்தீர்கள்", "kn": "ತಲುಪಿದೆ", "ml": "എത്തിച്ചേർന്നു", "bn": "পৌঁছে গেছেন", "mr": "पोहोचले"}
+    }
+    stage_key = str(aura_stage).upper()
+    aura_stage_display = STAGE_LOCALIZED.get(stage_key, {}).get(curr_lang, aura_stage)
     poses = AuraPoseAssetManager.load_poses()
     mascot_waving = poses.get("waving", "")
     mascot_pointing = poses.get("pointing", "")
@@ -1046,22 +1137,32 @@ def build_aura_journey_cockpit_html(
                 </div>
                 <div class='aura-title-block'>
                     <div style='font-size: 1.05rem; font-weight: 900; color: #ffffff; display: flex; align-items: center; gap: 8px;'>
-                        <span>AURA • 3D JOURNEY COMPANION</span>
-                        <span class='aura-stage-pill'>● {aura_stage}</span>
+                        <span>{t('companion.cockpit_title', default='AURA • 3D JOURNEY COMPANION', lang=curr_lang)}</span>
+                        <span class='aura-stage-pill'>● {aura_stage_display}</span>
                     </div>
                     <div style='font-size: 0.78rem; color: #94a3b8;'>
-                        Guiding from <b>{clean_orig}</b> to <b>{clean_dest}</b> ({total_distance_km:.1f} km • ~{int(total_duration_mins)} min)
+                        {t('companion.guiding_from_to', default=f'Guiding from {clean_orig} to {clean_dest} ({total_distance_km:.1f} km • ~{int(total_duration_mins)} min)', orig=clean_orig, dest=clean_dest, dist=f'{total_distance_km:.1f} km', time=f'{int(total_duration_mins)} min', lang=curr_lang)}
                     </div>
                 </div>
             </div>
 
-            <!-- Header Quick Actions -->
-            <div style='display: flex; gap: 8px; align-items: center;'>
+            <!-- Header Quick Actions + Direct Language Selector -->
+            <div style='display: flex; gap: 8px; align-items: center; flex-wrap: wrap;'>
+                <select id='cockpit-lang-select' onchange='handleCockpitLangChange(this.value)' style='background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 20px; padding: 4px 10px; font-size: 0.74rem; font-weight: 800; cursor: pointer; outline: none; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);'>
+                    <option value="en" {"selected" if curr_lang=="en" else ""}>🌐 English</option>
+                    <option value="te" {"selected" if curr_lang=="te" else ""}>తెలుగు</option>
+                    <option value="hi" {"selected" if curr_lang=="hi" else ""}>हिन्दी</option>
+                    <option value="ta" {"selected" if curr_lang=="ta" else ""}>தமிழ்</option>
+                    <option value="kn" {"selected" if curr_lang=="kn" else ""}>ಕನ್ನಡ</option>
+                    <option value="ml" {"selected" if curr_lang=="ml" else ""}>മലയാളം</option>
+                    <option value="bn" {"selected" if curr_lang=="bn" else ""}>বাংলা</option>
+                    <option value="mr" {"selected" if curr_lang=="mr" else ""}>मराठी</option>
+                </select>
                 <button class='btn-action-pill' onclick='toggleVoiceAudio()'>
-                    <span id='audio-icon'>🔊</span> <span id='audio-text'>Voice: On</span>
+                    <span id='audio-icon'>🔊</span> <span id='audio-text'>{t('companion.voice_on', default='Voice: On', lang=curr_lang)}</span>
                 </button>
                 <button class='btn-action-pill' onclick='openPicturesGallery()'>
-                    <span>🖼️</span> <span>View All Pictures</span>
+                    <span>🖼️</span> <span>{t('companion.view_pictures', default='View All Pictures', lang=curr_lang)}</span>
                 </button>
             </div>
         </div>
@@ -1070,7 +1171,7 @@ def build_aura_journey_cockpit_html(
         <div class='aura-thought-banner'>
             <div style='font-size: 1.8rem;'>🤖</div>
             <div class='aura-thought-text' id='aura-thought-box'>
-                <span style='color: #38bdf8; font-weight: 800;'>Aura says: </span>
+                <span style='color: #38bdf8; font-weight: 800;'>{t('companion.aura_says', default='Aura says:', lang=curr_lang)} </span>
                 <span id='aura-speech-content'>{aura_thought}</span>
             </div>
         </div>
@@ -1188,6 +1289,20 @@ def build_aura_journey_cockpit_html(
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
+    window.handleCockpitLangChange = function(newLang) {{
+        try {{
+            localStorage.setItem('nexroute_app_language', newLang);
+            if (window.parent) {{
+                window.parent.postMessage({{type: 'nexroute_set_language', language: newLang}}, '*');
+            }}
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', newLang);
+            window.location.href = url.toString();
+        }} catch(e) {{
+            console.error(e);
+        }}
+    }};
+
     (function() {{
         const MANEUVERS = {maneuvers_json};
         let activeIdx = {current_step_idx};

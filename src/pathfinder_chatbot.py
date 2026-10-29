@@ -56,6 +56,19 @@ class PathfinderChatbot(AuraAssistantMixin):
             emergency_service_manager=emergency_service_manager
         )
 
+    def _query_llm_or_cognitive(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> str:
+        prompt = f"Answer clearly: {raw_query}"
+        resp, prov = self.llm_client.generate(prompt)
+        if resp:
+            return resp
+        err_notice = ""
+        if getattr(self.llm_client, "last_error_category", None) == "AUTH_ERROR":
+            err_notice = "*(Notice: AI Provider Authentication Error. Using Built-in Intelligence)*\n\n"
+        elif getattr(self.llm_client, "last_error_category", None) == "RATE_LIMIT_ERROR":
+            err_notice = "*(Notice: AI Provider Rate Limit. Using Built-in Intelligence)*\n\n"
+        builtin_resp = self.cognitive_engine.reason(raw_query)
+        return f"{err_notice}{builtin_resp}"
+
     def reset_conversation(self):
         """Resets active conversation context and history."""
         self.conv_manager.clear()

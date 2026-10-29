@@ -491,7 +491,7 @@ class AuraAssistantMixin:
                 "response": (
                     "### 🧠 What is Artificial Intelligence (AI) in Simple Terms?\n\n"
                     "**Artificial Intelligence (AI)** is computer software designed to perform tasks that typically require human intelligence.\n\n"
-                    "Instead of following rigid, pre-written rules, AI systems **learn from vast amounts of data and examples**.\n\n"
+                    "Instead of following rigid, pre-written rules, AI systems use **machine learning and reasoning** to learn from vast amounts of data and examples.\n\n"
                     "**Everyday Examples:**\n"
                     "• 🗺️ **Smart Navigation (like NexRoute):** Predicting real-time traffic jams and finding the fastest road routes.\n"
                     "• 📱 **Smartphone Assistants:** Recognizing your voice and understanding speech.\n"
@@ -502,10 +502,13 @@ class AuraAssistantMixin:
             }
 
         if "photosynthesis" in q:
+            err_pfx = ""
+            if getattr(getattr(self, 'llm_client', None), 'last_error_category', None) == 'RATE_LIMIT_ERROR':
+                err_pfx = "*(Notice: AI Provider Rate Limit. Using Built-in Intelligence)*\n\n"
             return {
                 "badge": "🌱 AURA • SCIENCE",
                 "response": (
-                    "### 🌱 Photosynthesis in Simple Terms\n\n"
+                    err_pfx + "### 🌱 Photosynthesis in Simple Terms\n\n"
                     "**Photosynthesis** is the biological process by which green plants, algae, and some bacteria use **sunlight** to make their own food.\n\n"
                     "• **Recipe:** Carbon Dioxide (CO2) from air + Water (H2O) from soil + Sunlight absorbed by Chlorophyll.\n"
                     "• **Output:** Glucose (sugar used for plant energy & growth) + **Oxygen (O2)** released back into the air for humans and animals to breathe.\n\n"
