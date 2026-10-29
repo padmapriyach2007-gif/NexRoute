@@ -992,35 +992,35 @@ def _render_dynamic_mode_telemetry_hud(
 
     # Mode-specific telemetry parameters
     if mode_id == "DRIVE_ECO":
-        g1_title = "⚡ ENGINE SPEED & LOAD"
+        g1_title = "⚡ " + t("telemetry.eco.rpm_title", default="ENGINE SPEED & LOAD", lang=curr_lang)
         g1_val = telemetry.get("rpm", "1,780 RPM")
-        g1_badge = "BSFC PEAK (λ=1.0)"
-        g1_sub = "Optimal thermal efficiency band (1,600–1,950 RPM). Cuts pumping losses by 28%."
+        g1_badge = t("telemetry.eco.rpm_badge", default="BSFC PEAK (λ=1.0)", lang=curr_lang)
+        g1_sub = t("telemetry.eco.rpm_sub", default="Optimal thermal efficiency band (1,600–1,950 RPM). Cuts pumping losses by 28%.", lang=curr_lang)
         g1_pct = 38
 
-        g2_title = "💧 DYNAMIC FUEL FLOW"
+        g2_title = "💧 " + t("telemetry.eco.flow_title", default="DYNAMIC FUEL FLOW", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(fuel_l / max(0.1, distance_km) * 100, 1)} L/100km")
-        g2_badge = "DFCO COASTING ACTIVE"
-        g2_sub = f"Overrun fuel cut-off active during coasting. Saves {fuel_saved:.2f} L fuel vs highway pace."
+        g2_badge = t("telemetry.eco.flow_badge", default="DFCO COASTING ACTIVE", lang=curr_lang)
+        g2_sub = t("telemetry.eco.flow_sub", default=f"Overrun fuel cut-off active during coasting. Saves {fuel_saved:.2f} L fuel vs highway pace.", lang=curr_lang, saved=f"{fuel_saved:.2f}")
         g2_pct = 85
 
-        g3_title = "💨 AERODYNAMIC DRAG FORCE"
+        g3_title = "💨 " + t("telemetry.eco.drag_title", default="AERODYNAMIC DRAG FORCE", lang=curr_lang)
         g3_val = telemetry.get("aero_drag_force", "178 N")
-        g3_badge = "LAMINAR FLOW (0.31 Cd·A)"
-        g3_sub = "Governing at ~60 km/h cuts quadratic aero drag (F ∝ v²) by 42% vs 90 km/h."
+        g3_badge = t("telemetry.eco.drag_badge", default="LAMINAR FLOW (0.31 Cd·A)", lang=curr_lang)
+        g3_sub = t("telemetry.eco.drag_sub", default="Governing at ~60 km/h cuts quadratic aero drag (F ∝ v²) by 42% vs 90 km/h.", lang=curr_lang)
         g3_pct = 32
 
-        g4_title = "💰 TRIP FINANCIAL LEDGER"
+        g4_title = "💰 " + t("telemetry.eco.ledger_title", default="TRIP FINANCIAL LEDGER", lang=curr_lang)
         g4_val = f"₹{round(fuel_l * 102)}"
-        g4_badge = f"SAVES ₹{round(fuel_saved * 102)}"
-        g4_sub = f"Direct fuel savings. Total trip CO₂: {round(fuel_l * 2.31, 2)} kg (Offset: 1.8 mature trees)."
+        g4_badge = t("telemetry.eco.ledger_badge", default=f"SAVES ₹{round(fuel_saved * 102)}", lang=curr_lang, amount=round(fuel_saved * 102))
+        g4_sub = t("telemetry.eco.ledger_sub", default=f"Direct fuel savings. Total trip CO₂: {round(fuel_l * 2.31, 2)} kg (Offset: 1.8 mature trees).", lang=curr_lang, co2=round(fuel_l * 2.31, 2))
         g4_pct = 92
 
         strategy_items = [
-            ("🌿 Linear Throttle Dampening", "Progressive accelerator mapping filters out sudden pedal twitching, preventing excess fuel dumping and unburnt hydrocarbons."),
-            ("⚙️ Overdrive Transmission Lockup", "Locks in 5th/6th overdrive gear between 52–62 km/h, reducing crankshaft mechanical drag and engine friction."),
-            ("❄️ Thermal HVAC Optimization", "Intelligently duty-cycles the AC compressor clutch, reducing engine parasitic accessory draw by 0.25 L/100km."),
-            ("🛑 Anticipatory Coasting Horizon", "Anticipates deceleration points 200m ahead, maximizing coasting with 0.0 L/h instantaneous fuel flow.")
+            (t("strategy.eco.throttle_title", default="🌿 Linear Throttle Dampening", lang=curr_lang), t("strategy.eco.throttle_desc", default="Progressive accelerator mapping filters out sudden pedal twitching, preventing excess fuel dumping and unburnt hydrocarbons.", lang=curr_lang)),
+            (t("strategy.eco.overdrive_title", default="⚙️ Overdrive Transmission Lockup", lang=curr_lang), t("strategy.eco.overdrive_desc", default="Locks in 5th/6th overdrive gear between 52–62 km/h, reducing crankshaft mechanical drag and engine friction.", lang=curr_lang)),
+            (t("strategy.eco.hvac_title", default="❄️ Thermal HVAC Optimization", lang=curr_lang), t("strategy.eco.hvac_desc", default="Intelligently duty-cycles the AC compressor clutch, reducing engine parasitic accessory draw by 0.25 L/100km.", lang=curr_lang)),
+            (t("strategy.eco.coasting_title", default="🛑 Anticipatory Coasting Horizon", lang=curr_lang), t("strategy.eco.coasting_desc", default="Anticipates deceleration points 200m ahead, maximizing coasting with 0.0 L/h instantaneous fuel flow.", lang=curr_lang))
         ]
 
     elif mode_id == "DRIVE_FASTEST":
@@ -1056,99 +1056,99 @@ def _render_dynamic_mode_telemetry_hud(
         ]
 
     elif mode_id == "DRIVE_SAFEST":
-        g1_title = "🛡️ DEFENSIVE ENGINE DYNAMICS"
+        g1_title = "🛡️ " + t("telemetry.safest.rpm_title", default="DEFENSIVE ENGINE DYNAMICS", lang=curr_lang)
         g1_val = telemetry.get("rpm", "1,920 RPM")
-        g1_badge = "LOW TORQUE RIPPLE"
-        g1_sub = "Smooth harmonic balance reduces driver physical fatigue and preserves total vehicle stability."
+        g1_badge = t("telemetry.safest.rpm_badge", default="LOW TORQUE RIPPLE", lang=curr_lang)
+        g1_sub = t("telemetry.safest.rpm_sub", default="Smooth harmonic balance reduces driver physical fatigue and preserves total vehicle stability.", lang=curr_lang)
         g1_pct = 42
 
-        g2_title = "🛑 PROGRESSIVE DECELERATION"
+        g2_title = "🛑 " + t("telemetry.safest.flow_title", default="PROGRESSIVE DECELERATION", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(fuel_l / max(0.1, distance_km) * 100, 1)} L/100km")
-        g2_badge = "GENTLE BRAKING CURVE"
-        g2_sub = "Predictive pacing eliminates sudden friction braking, avoiding tire skids and ABS interventions."
+        g2_badge = t("telemetry.safest.flow_badge", default="GENTLE BRAKING CURVE", lang=curr_lang)
+        g2_sub = t("telemetry.safest.flow_sub", default="Predictive pacing eliminates sudden friction braking, avoiding tire skids and ABS interventions.", lang=curr_lang)
         g2_pct = 60
 
-        g3_title = "🛡️ BRAKING SAFETY ENVELOPE"
-        g3_val = "48m Buffer"
-        g3_badge = "3.2s HEADWAY SHIELD"
-        g3_sub = "Provides 2.8s emergency reaction margin with 0 reported surface hazards on surveyed pavement."
+        g3_title = "🛡️ " + t("telemetry.safest.drag_title", default="BRAKING SAFETY ENVELOPE", lang=curr_lang)
+        g3_val = t("telemetry.safest.drag_val", default="48m Buffer", lang=curr_lang)
+        g3_badge = t("telemetry.safest.drag_badge", default="3.2s HEADWAY SHIELD", lang=curr_lang)
+        g3_sub = t("telemetry.safest.drag_sub", default="Provides 2.8s emergency reaction margin with 0 reported surface hazards on surveyed pavement.", lang=curr_lang)
         g3_pct = 98
 
-        g4_title = "🚨 ACTIVE SAFETY INDEX"
+        g4_title = "🚨 " + t("telemetry.safest.index_title", default="ACTIVE SAFETY INDEX", lang=curr_lang)
         g4_val = "100 / 100"
-        g4_badge = "0 THREAT CORRIDOR"
-        g4_sub = "Zero active incidents or construction barriers in 40m perpendicular polyline buffer."
+        g4_badge = t("telemetry.safest.index_badge", default="0 THREAT CORRIDOR", lang=curr_lang)
+        g4_sub = t("telemetry.safest.index_sub", default="Zero active incidents or construction barriers in 40m perpendicular polyline buffer.", lang=curr_lang)
         g4_pct = 100
 
         strategy_items = [
-            ("🛡️ 360° Corridor Hazard Screening", "Continuous spatial intersection analysis against active incident databases, potholes, and construction work."),
-            ("🚨 Emergency SOS Armed", "Pre-calibrated links to emergency national helpline 112 and nearest trauma care facilities within corridor reach."),
-            ("🛣️ High Pavement Traction", "Prioritizes asphalt-paved dual-carriageway corridors with verified lane markings and physical median barriers."),
-            ("🧠 Low Cognitive Fatigue Pacing", "Governs cruising velocity to reduce driver eye strain, micro-sleep risk, and stress spikes.")
+            (t("strategy.safest.screening_title", default="🛡️ 360° Corridor Hazard Screening", lang=curr_lang), t("strategy.safest.screening_desc", default="Continuous spatial intersection analysis against active incident databases, potholes, and construction work.", lang=curr_lang)),
+            (t("strategy.safest.sos_title", default="🚨 Emergency SOS Armed", lang=curr_lang), t("strategy.safest.sos_desc", default="Pre-calibrated links to emergency national helpline 112 and nearest trauma care facilities within corridor reach.", lang=curr_lang)),
+            (t("strategy.safest.traction_title", default="🛣️ High Pavement Traction", lang=curr_lang), t("strategy.safest.traction_desc", default="Prioritizes asphalt-paved dual-carriageway corridors with verified lane markings and physical median barriers.", lang=curr_lang)),
+            (t("strategy.safest.fatigue_title", default="🧠 Low Cognitive Fatigue Pacing", lang=curr_lang), t("strategy.safest.fatigue_desc", default="Governs cruising velocity to reduce driver eye strain, micro-sleep risk, and stress spikes.", lang=curr_lang))
         ]
 
     elif mode_id == "DRIVE_TOLL_FREE":
-        g1_title = "🪙 ARTERIAL OVERDRIVE"
+        g1_title = "🪙 " + t("telemetry.toll.rpm_title", default="ARTERIAL OVERDRIVE", lang=curr_lang)
         g1_val = telemetry.get("rpm", "1,850 RPM")
-        g1_badge = "STEADY BYPASS CRUISE"
-        g1_sub = "Navigates public highways at steady cruising speeds without toll plaza thermal fatigue."
+        g1_badge = t("telemetry.toll.rpm_badge", default="STEADY BYPASS CRUISE", lang=curr_lang)
+        g1_sub = t("telemetry.toll.rpm_sub", default="Navigates public highways at steady cruising speeds without toll plaza thermal fatigue.", lang=curr_lang)
         g1_pct = 45
 
-        g2_title = "💵 NET TOLL EXPENSE"
+        g2_title = "💵 " + t("telemetry.toll.flow_title", default="NET TOLL EXPENSE", lang=curr_lang)
         g2_val = "₹0 FASTag"
-        g2_badge = "100% TOLLS AVOIDED"
-        g2_sub = "Avoids commercial toll plazas, preserving ₹85 - ₹160 in FASTag fees per one-way transit."
+        g2_badge = t("telemetry.toll.flow_badge", default="100% TOLLS AVOIDED", lang=curr_lang)
+        g2_sub = t("telemetry.toll.flow_sub", default="Avoids commercial toll plazas, preserving ₹85 - ₹160 in FASTag fees per one-way transit.", lang=curr_lang)
         g2_pct = 100
 
-        g3_title = "🛑 ZERO IDLING LOSS"
-        g3_val = "0.00 L Wasted"
-        g3_badge = "BYPASSES TOLL QUEUES"
-        g3_sub = "Eliminates stop-start crawling and overheating at highway toll barrier choke points."
+        g3_title = "🛑 " + t("telemetry.toll.idling_title", default="ZERO IDLING LOSS", lang=curr_lang)
+        g3_val = "0.00 L"
+        g3_badge = t("telemetry.toll.idling_badge", default="BYPASSES TOLL QUEUES", lang=curr_lang)
+        g3_sub = t("telemetry.toll.idling_sub", default="Eliminates stop-start crawling and overheating at highway toll barrier choke points.", lang=curr_lang)
         g3_pct = 90
 
-        g4_title = "💰 TOTAL TRIP BUDGET"
+        g4_title = "💰 " + t("telemetry.toll.budget_title", default="TOTAL TRIP BUDGET", lang=curr_lang)
         g4_val = f"₹{round(fuel_l * 102)}"
-        g4_badge = "BUDGET OPTIMIZED"
-        g4_sub = f"Pure fuel expense with zero surcharge. Saves 100% on toll barrier tariffs."
+        g4_badge = t("telemetry.toll.budget_badge", default="BUDGET OPTIMIZED", lang=curr_lang)
+        g4_sub = t("telemetry.toll.budget_sub", default="Pure fuel expense with zero surcharge. Saves 100% on toll barrier tariffs.", lang=curr_lang)
         g4_pct = 94
 
         strategy_items = [
-            ("🪙 Complete FASTag Exemption", "Corridor strictly utilizes public non-tolled bypasses and state arterial corridors without automated toll collection."),
-            ("🛣️ Arterial Service Verification", "Verified pavement quality across public state corridors avoiding rugged unpaved surfaces."),
-            ("⏱️ Predictable Transit Flow", "Bypasses unpredictable peak-hour toll plaza bottleneck queues and electronic scanner delays."),
-            ("💵 Budget Conservation", "Maximum financial savings per kilometer, ideal for daily commuter routes and commercial delivery trips.")
+            (t("strategy.toll.exemption_title", default="🪙 Complete FASTag Exemption", lang=curr_lang), t("strategy.toll.exemption_desc", default="Corridor strictly utilizes public non-tolled bypasses and state arterial corridors without automated toll collection.", lang=curr_lang)),
+            (t("strategy.toll.arterial_title", default="🛣️ Arterial Service Verification", lang=curr_lang), t("strategy.toll.arterial_desc", default="Verified pavement quality across public state corridors avoiding rugged unpaved surfaces.", lang=curr_lang)),
+            (t("strategy.toll.flow_title", default="⏱️ Predictable Transit Flow", lang=curr_lang), t("strategy.toll.flow_desc", default="Bypasses unpredictable peak-hour toll plaza bottleneck queues and electronic scanner delays.", lang=curr_lang)),
+            (t("strategy.toll.conservation_title", default="💵 Budget Conservation", lang=curr_lang), t("strategy.toll.conservation_desc", default="Maximum financial savings per kilometer, ideal for daily commuter routes and commercial delivery trips.", lang=curr_lang))
         ]
 
     else:  # DRIVE_EV
-        g1_title = "⚡ MOTOR SPEED & INVERTER"
+        g1_title = "⚡ " + t("telemetry.ev.rpm_title", default="MOTOR SPEED & INVERTER", lang=curr_lang)
         g1_val = telemetry.get("rpm", "6,200 Motor RPM")
-        g1_badge = "94.2% INVERTER EFF"
-        g1_sub = "Field-oriented permanent magnet motor control with ultra-low thermal dissipation."
+        g1_badge = t("telemetry.ev.rpm_badge", default="94.2% INVERTER EFF", lang=curr_lang)
+        g1_sub = t("telemetry.ev.rpm_sub", default="Field-oriented permanent magnet motor control with ultra-low thermal dissipation.", lang=curr_lang)
         g1_pct = 48
 
-        g2_title = "🔋 SPECIFIC ENERGY DRAW"
+        g2_title = "🔋 " + t("telemetry.ev.flow_title", default="SPECIFIC ENERGY DRAW", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(energy_kwh / max(0.1, distance_km) * 100, 1)} kWh/100km")
-        g2_badge = "+0.45 kWh REGEN"
-        g2_sub = f"One-pedal regenerative braking captures kinetic deceleration back into the battery pack."
+        g2_badge = t("telemetry.ev.flow_badge", default="+0.45 kWh REGEN", lang=curr_lang)
+        g2_sub = t("telemetry.ev.flow_sub", default="One-pedal regenerative braking captures kinetic deceleration back into the battery pack.", lang=curr_lang)
         g2_pct = 88
 
-        g3_title = "💨 ROLLING & AERO DRAG"
+        g3_title = "💨 " + t("telemetry.ev.drag_title", default="ROLLING & AERO DRAG", lang=curr_lang)
         g3_val = telemetry.get("aero_drag_force", "110 N")
-        g3_badge = "AERO DISC WHEELS"
-        g3_sub = "Flush wheel covers and closed front grille minimize boundary wake drag."
+        g3_badge = t("telemetry.ev.drag_badge", default="AERO DISC WHEELS", lang=curr_lang)
+        g3_sub = t("telemetry.ev.drag_sub", default="Flush wheel covers and closed front grille minimize boundary wake drag.", lang=curr_lang)
         g3_pct = 28
 
-        g4_title = "⚡ BATTERY ARRIVAL SOC"
+        g4_title = "⚡ " + t("telemetry.ev.soc_title", default="BATTERY ARRIVAL SOC", lang=curr_lang)
         g4_val = f"{mode_info.get('arrival_soc_pct', 74.7)}%"
-        g4_badge = f"{mode_info.get('battery_used_pct', 15.3)}% USED"
-        g4_sub = f"Net grid cost: ~₹{round(energy_kwh * 15)} (70% savings vs ₹{round(fuel_l * 102)} petrol). 0 g/km CO₂."
+        g4_badge = t("telemetry.ev.soc_badge", default=f"{mode_info.get('battery_used_pct', 15.3)}% USED", lang=curr_lang, used=mode_info.get('battery_used_pct', 15.3))
+        g4_sub = t("telemetry.ev.soc_sub", default=f"Net grid cost: ~₹{round(energy_kwh * 15)} (70% savings vs ₹{round(fuel_l * 102)} petrol). 0 g/km CO₂.", lang=curr_lang, cost=round(energy_kwh * 15), petrol=round(fuel_l * 102))
         g4_pct = int(mode_info.get('arrival_soc_pct', 75))
 
         strategy_items = [
-            ("🔋 Intelligent Regenerative Pacing", "Maximizes energy capture on downhills and coasting horizons, extending effective battery range by 4-6%."),
-            ("❄️ Thermal Battery Pack Conditioning", "Maintains lithium-ion pack cells within 24°C–32°C optimal chemical temperature window."),
-            ("🔌 En-Route Fast Charger Registry", "Monitors active CCS2 / Type-2 EV DC Fast Chargers within 5 km corridor radius for emergency top-up."),
-            ("🌱 Zero Tailpipe Emissions", "True zero emission transit with pure quiet electric torque and zero acoustic passenger fatigue.")
+            (t("strategy.ev.regen_title", default="🔋 Intelligent Regenerative Pacing", lang=curr_lang), t("strategy.ev.regen_desc", default="Maximizes energy capture on downhills and coasting horizons, extending effective battery range by 4-6%.", lang=curr_lang)),
+            (t("strategy.ev.thermal_title", default="❄️ Thermal Battery Pack Conditioning", lang=curr_lang), t("strategy.ev.thermal_desc", default="Maintains lithium-ion pack cells within 24°C–32°C optimal chemical temperature window.", lang=curr_lang)),
+            (t("strategy.ev.charger_title", default="🔌 En-Route Fast Charger Registry", lang=curr_lang), t("strategy.ev.charger_desc", default="Monitors active CCS2 / Type-2 EV DC Fast Chargers within 5 km corridor radius for emergency top-up.", lang=curr_lang)),
+            (t("strategy.ev.zero_emission_title", default="🌱 Zero Tailpipe Emissions", lang=curr_lang), t("strategy.ev.zero_emission_desc", default="True zero emission transit with pure quiet electric torque and zero acoustic passenger fatigue.", lang=curr_lang))
         ]
 
     gauges_html = f"""
@@ -1157,7 +1157,7 @@ def _render_dynamic_mode_telemetry_hud(
             <div style='display: flex; align-items: center; gap: 8px;'>
                 <span style='display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {accent}; box-shadow: 0 0 8px {accent};'></span>
                 <span style='font-size: 0.82rem; font-weight: 900; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.04em;'>
-                    {t('telemetry.header', default='LIVE POWERTRAIN TELEMETRY', lang=curr_lang)} • {mode_info.get("title", mode_id).upper()}
+                    {t('telemetry.header', default='LIVE POWERTRAIN TELEMETRY', lang=curr_lang)} • {t(f"mode.{mode_id.lower()}.title", default=mode_info.get("title", mode_id), lang=curr_lang).upper()}
                 </span>
             </div>
             <span style='background: {accent}22; color: {accent}; border: 1px solid {accent}66; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.03em;'>
@@ -1353,11 +1353,11 @@ def render_cockpit_mode_functionality_hud(
             <div style='display: flex; align-items: center; gap: 10px;'>
                 <span style='font-size: 1.5rem;'>🌱</span>
                 <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #34d399;'>Eco-Score: 98 / 100 • Saves {fuel_saved} L Fuel & Reduces {co2_saved} kg CO₂</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>Steady speed profiling minimizes transmission shifts, cuts brake thermal wear & eliminates stop-and-go idling spikes.</div>
+                    <div style='font-size: 0.82rem; font-weight: 800; color: #34d399;'>{t('cockpit.eco_score_banner', default=f"Eco-Score: 98 / 100 • Saves {fuel_saved} L Fuel & Reduces {co2_saved} kg CO₂", lang=curr_lang, fuel=fuel_saved, co2=co2_saved)}</div>
+                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.eco_score_sub', default="Steady speed profiling minimizes transmission shifts, cuts brake thermal wear & eliminates stop-and-go idling spikes.", lang=curr_lang)}</div>
                 </div>
             </div>
-            <span style='background: #34d399; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>ECO OPTIMIZED</span>
+            <span style='background: #34d399; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.eco_optimized_badge', default="ECO OPTIMIZED", lang=curr_lang)}</span>
         </div>
         """
 
@@ -1429,31 +1429,39 @@ def render_cockpit_mode_functionality_hud(
         corridor_title = f"{clean_orig} → {clean_dest}" if (clean_dest and clean_dest != "Destination") else "Active Highway Corridor"
 
     rec_speed = mode_info.get("recommended_speed_kmh", speed_avg)
-    speed_eval = mode_info.get("speed_evaluation", "🟢 OPTIMAL (SAFE & HEALTHY)" if mode_id == "DRIVE_ECO" else "🟢 OPTIMAL (GOOD SPEED)")
-    speed_health = mode_info.get("speed_health_analysis", "Optimal cruise pacing balances reaction time buffer and minimal cognitive fatigue.")
-    
-    dynamic_reason = mode_info.get("dynamic_route_reason")
-    if not dynamic_reason or "Standard Travel Corridor" in dynamic_reason or (mode_id == "DRIVE_ECO" and "prevents" in dynamic_reason):
-        if mode_id == "DRIVE_ECO":
-            dynamic_reason = (
-                f"Optimized for smooth throttle modulation and steady 55-65 km/h cruising. Burns only {fuel_l} L fuel "
-                f"(saving {fuel_saved} L fuel and reducing CO₂ by {co2_saved} kg vs fastest highway speed) on {corridor_title} ({distance_km} km)."
-            )
-        elif mode_id == "DRIVE_FASTEST":
-            dynamic_reason = f"Takes advantage of high-speed bypass segments ({speed_avg} km/h avg flow) on {corridor_title} ({distance_km} km) to achieve earliest arrival."
-        elif mode_id == "DRIVE_SAFEST":
-            hz_cnt = mode_info.get("hazard_count", 0)
-            dynamic_reason = f"Screened across active hazard registries with {hz_cnt} reported road obstacles. Prioritizes well-lit, divided corridors on {corridor_title} ({distance_km} km)."
-        elif mode_id == "DRIVE_TOLL_FREE":
-            toll_inr = mode_info.get("toll_cost_inr", 0)
-            toll_str = f"₹{toll_inr} FASTag fee" if toll_inr > 0 else "₹0 FASTag toll"
-            dynamic_reason = f"Navigates public arterial bypasses on {corridor_title} ({distance_km} km) to avoid toll charges ({toll_str}), costing only ₹{round(fuel_l * 102)} in fuel."
-        elif mode_id == "DRIVE_EV":
-            bat_pct = mode_info.get("battery_used_pct", max(2, round((energy_kwh / 40.0) * 100, 1)))
-            arr_soc = mode_info.get("arrival_soc_pct", round(90.0 - bat_pct, 1))
-            dynamic_reason = f"Paces acceleration to maximize regenerative braking energy recovery on {corridor_title} ({distance_km} km), consuming {energy_kwh:.2f} kWh with projected {arr_soc}% arrival SoC."
+    raw_eval = str(mode_info.get("speed_evaluation", ""))
+    if "SAFE" in raw_eval.upper() or "HEALTHY" in raw_eval.upper() or mode_id == "DRIVE_ECO":
+        speed_eval = t("speed.optimal_safe_healthy", default="🟢 OPTIMAL (SAFE & HEALTHY)", lang=curr_lang)
+    elif "OPTIMAL" in raw_eval.upper() or "GOOD" in raw_eval.upper() or mode_id == "DRIVE_FASTEST":
+        speed_eval = t("speed.optimal_good_speed", default="🟢 OPTIMAL (GOOD SPEED)", lang=curr_lang)
+    else:
+        speed_eval = raw_eval or t("speed.optimal_good_speed", default="🟢 OPTIMAL (GOOD SPEED)", lang=curr_lang)
 
-    health_benefit = mode_info.get("health_safety_benefit", "Reduces cognitive stress and maintains 2.6s headway reaction buffer.")
+    if mode_id == "DRIVE_ECO":
+        dynamic_reason = t("strategy.reason_eco", default=f"Optimized for smooth throttle modulation and steady 55-65 km/h cruising. Burns only {fuel_l} L fuel (saving {fuel_saved} L fuel and reducing CO₂ by {co2_saved} kg vs fastest highway speed) on {corridor_title} ({distance_km} km).", lang=curr_lang, fuel=fuel_l, saved_fuel=fuel_saved, saved_co2=co2_saved, corridor=corridor_title, dist=distance_km)
+        health_benefit = t("strategy.health_eco", default="Healthy & Low-Stress Drive: Eliminates stop-and-go spikes, cuts cabin acoustic vibration, and reduces brake micro-particulates by 35%.", lang=curr_lang)
+        speed_health = t("strategy.health_analysis_eco", default=f"Governed at {rec_speed:g} km/h. OPTIMAL SAFE & HEALTHY VELOCITY: Maximizes engine thermal efficiency, reduces driver heart rate and mental fatigue.", lang=curr_lang, speed=f"{rec_speed:g}")
+    elif mode_id == "DRIVE_FASTEST":
+        dynamic_reason = t("strategy.reason_fastest", default=f"Takes advantage of high-speed bypass segments ({speed_avg} km/h avg flow) on {corridor_title} ({distance_km} km) to achieve earliest arrival.", lang=curr_lang, speed=speed_avg, corridor=corridor_title, dist=distance_km)
+        health_benefit = t("strategy.health_fastest", default="Time-optimized transit: Minimizes prolonged sitting duration; requires active driver vigilance for high-speed highway merging.", lang=curr_lang)
+        speed_health = t("strategy.health_analysis_fastest", default=f"Governed at {rec_speed:g} km/h. Good highway cruising pace; maintains safe 3-second headway buffer while achieving lowest transit time.", lang=curr_lang, speed=f"{rec_speed:g}")
+    elif mode_id == "DRIVE_SAFEST":
+        hz_cnt = mode_info.get("hazard_count", 0)
+        dynamic_reason = t("strategy.reason_safest", default=f"Screened across active hazard registries with {hz_cnt} reported road obstacles. Prioritizes well-lit, divided corridors on {corridor_title} ({distance_km} km).", lang=curr_lang, hz=hz_cnt, corridor=corridor_title, dist=distance_km)
+        health_benefit = t("strategy.health_safest", default="Maximum safety margin: Minimizes driver stress, maximizes reaction headway buffer, and eliminates collision risk factors.", lang=curr_lang)
+        speed_health = t("strategy.health_analysis_safest", default=f"Governed at {rec_speed:g} km/h. DEFENSIVE PACE: High reaction time margin; provides complete stop capability within visible road distance.", lang=curr_lang, speed=f"{rec_speed:g}")
+    elif mode_id == "DRIVE_TOLL_FREE":
+        toll_inr = mode_info.get("toll_cost_inr", 0)
+        toll_str = f"₹{toll_inr} FASTag fee" if toll_inr > 0 else "₹0 FASTag toll"
+        dynamic_reason = t("strategy.reason_toll_free", default=f"Navigates public arterial bypasses on {corridor_title} ({distance_km} km) to avoid toll charges ({toll_str}), costing only ₹{round(fuel_l * 102)} in fuel.", lang=curr_lang, corridor=corridor_title, dist=distance_km, toll=toll_str, cost=round(fuel_l * 102))
+        health_benefit = t("strategy.health_toll_free", default="Financial and mental ease: Completely avoids toll booth queues and transaction delays.", lang=curr_lang)
+        speed_health = t("strategy.health_analysis_toll_free", default=f"Governed at {rec_speed:g} km/h. STEADY ARTERIAL CRUISE: Avoids toll bottlenecks and reduces frequent deceleration stress.", lang=curr_lang, speed=f"{rec_speed:g}")
+    else:  # DRIVE_EV
+        bat_pct = mode_info.get("battery_used_pct", max(2, round((energy_kwh / 40.0) * 100, 1)))
+        arr_soc = mode_info.get("arrival_soc_pct", round(90.0 - bat_pct, 1))
+        dynamic_reason = t("strategy.reason_ev", default=f"Paces acceleration to maximize regenerative braking energy recovery on {corridor_title} ({distance_km} km), consuming {energy_kwh:.2f} kWh with projected {arr_soc}% arrival SoC.", lang=curr_lang, corridor=corridor_title, dist=distance_km, energy=f"{energy_kwh:.2f}", arr_soc=arr_soc)
+        health_benefit = t("strategy.health_ev", default="Acoustic tranquility: Zero tailpipe emissions and whisper-quiet electric cabin reduce driver mental fatigue.", lang=curr_lang)
+        speed_health = t("strategy.health_analysis_ev", default=f"Governed at {rec_speed:g} km/h. EV REGEN CADENCE: Smooth torque delivery keeps passenger vestibular comfort high.", lang=curr_lang, speed=f"{rec_speed:g}")
 
     lbl_calibrated_spd = t("strategy.calibrated_speed", default="CALIBRATED DRIVING SPEED", lang=curr_lang)
     lbl_reason_title = t("strategy.reason_title", default="Corridor Dynamic Strategy Reason", lang=curr_lang)
@@ -1494,9 +1502,9 @@ def render_cockpit_mode_functionality_hud(
             </div>
         </div>
         <div style='margin-top: 8px; font-size: 0.68rem; color: #94a3b8; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
-            <span>⏱️ {lbl_rxn_buf}: <b style="color: #38bdf8;">2.6s headway</b></span>
+            <span>⏱️ {lbl_rxn_buf}: <b style="color: #38bdf8;">{t('strategy.headway_val', default='2.6s headway', lang=curr_lang)}</b></span>
             <span>•</span>
-            <span>🧠 {lbl_cog_load}: <b style="color: #10b981;">Low / Alert</b></span>
+            <span>🧠 {lbl_cog_load}: <b style="color: #10b981;">{t('strategy.low_alert', default='Low / Alert', lang=curr_lang)}</b></span>
             <span>•</span>
             <span>💡 {lbl_analysis}: <span style='color: #e2e8f0;'>{speed_health}</span></span>
         </div>
