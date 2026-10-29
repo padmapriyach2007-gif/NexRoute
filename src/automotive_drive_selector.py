@@ -784,9 +784,13 @@ def render_driving_mode_cockpit_card_html(
             curr_lang = "en"
 
     try:
-        from src.i18n import t
+        from src.i18n import t as _raw_t
+        def t(k, *args, **kw):
+            if "lang" not in kw:
+                kw["lang"] = curr_lang
+            return _raw_t(k, *args, **kw)
     except ImportError:
-        def t(k, **kw): return kw.get("default", k)
+        def t(k, *args, **kw): return kw.get("default", k)
 
     mode_id = mode.get("mode_id", "")
     accent = mode.get("badge_color", "#38bdf8")
@@ -972,9 +976,13 @@ def _render_dynamic_mode_telemetry_hud(
 ) -> str:
     curr_lang = lang or "en"
     try:
-        from src.i18n import t
+        from src.i18n import t as _raw_t
+        def t(k, *args, **kw):
+            if "lang" not in kw:
+                kw["lang"] = curr_lang
+            return _raw_t(k, *args, **kw)
     except ImportError:
-        def t(k, **kw): return kw.get("default", k)
+        def t(k, *args, **kw): return kw.get("default", k)
     """
     Renders dynamic real-time powertrain telemetry:
     1. 4 Real-time engineering gauges (RPM & Load, Flow & Efficiency, Aerodynamic Drag, Ledger)
@@ -1251,10 +1259,22 @@ def render_cockpit_mode_functionality_hud(
     dest_str = f"{dest_coords[0]:.5f},{dest_coords[1]:.5f}" if dest_coords else urllib.parse.quote_plus(dest_name)
     gmaps_base = f"https://www.google.com/maps/dir/?api=1&origin={orig_str}&destination={dest_str}&travelmode=driving"
 
+    curr_lang = lang or kwargs.get("lang")
+    if not curr_lang:
+        try:
+            import streamlit as st
+            curr_lang = st.session_state.get("app_language", "en")
+        except Exception:
+            curr_lang = "en"
+
     try:
-        from src.i18n import t
+        from src.i18n import t as _raw_t
+        def t(k, *args, **kw):
+            if "lang" not in kw:
+                kw["lang"] = curr_lang
+            return _raw_t(k, *args, **kw)
     except ImportError:
-        def t(k, **kw): return k
+        def t(k, *args, **kw): return kw.get("default", k)
 
     mode_info = mode_info or {}
     fuel_l = mode_info.get("fuel_liters", round(distance_km * 0.070, 2))
