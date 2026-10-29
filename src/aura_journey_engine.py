@@ -435,7 +435,8 @@ def build_aura_journey_cockpit_html(
     is_live_moving: bool = False,
     user_speed_kmh: float = 0.0,
     camera_mode: str = "drone",  # pov, drone, iso
-    env_lighting: str = "day"    # day, sunset, night
+    env_lighting: str = "day",   # day, sunset, night
+    lang: Optional[str] = None
 ) -> str:
     """
     Renders the complete high-fidelity Aura 3D / 2.5D Journey Cockpit HTML5/CSS3/JavaScript.
@@ -449,6 +450,9 @@ def build_aura_journey_cockpit_html(
     - Integrated View All Pictures Journey Storybook Modal
     - Live audio synthesizer chime and SpeechSynthesis narration
     """
+    from src.i18n import get_current_language, get_bcp47_code
+    curr_lang = lang or get_current_language()
+    bcp47_code = get_bcp47_code(curr_lang)
     poses = AuraPoseAssetManager.load_poses()
     mascot_waving = poses.get("waving", "")
     mascot_pointing = poses.get("pointing", "")
@@ -1239,7 +1243,17 @@ def build_aura_journey_cockpit_html(
             try {{
                 window.speechSynthesis.cancel();
                 const u = new SpeechSynthesisUtterance(txt);
+                u.lang = '{bcp47_code}';
                 u.rate = 1.05;
+                const voices = window.speechSynthesis.getVoices();
+                const targetPrefix = u.lang.split('-')[0].toLowerCase();
+                for (let i = 0; i < voices.length; i++) {{
+                    const vLang = (voices[i].lang || '').toLowerCase().replace('_', '-');
+                    if (vLang === u.lang.toLowerCase() || vLang.startsWith(targetPrefix)) {{
+                        u.voice = voices[i];
+                        break;
+                    }}
+                }}
                 window.speechSynthesis.speak(u);
             }} catch(e) {{}}
         }}

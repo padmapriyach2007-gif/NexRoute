@@ -12,6 +12,7 @@ Features:
 """
 
 from typing import Dict, Any, List, Optional
+from src.i18n import get_current_language, get_bcp47_code, t, format_distance, format_duration
 
 
 def generate_simple_spoken_narrative(
@@ -24,7 +25,8 @@ def generate_simple_spoken_narrative(
     active_restrictions: Optional[List[Any]] = None,
     active_hazards: Optional[List[Any]] = None,
     travel_mode: str = "Driving",
-    unit: str = "km"
+    unit: str = "km",
+    lang: Optional[str] = None
 ) -> str:
     """
     Produces ultra-clear, simple, reassuring spoken text designed for
@@ -115,8 +117,72 @@ def generate_simple_spoken_narrative(
     else:
         hazard_speech = "Good news: All roads on your route are currently reported open and clear."
 
-    # Construct the full spoken narrative
-    narrative = (
+    curr_lang = lang or get_current_language()
+
+    # Multilingual Spoken Narrative Templates
+    if curr_lang == "te":
+        narrative = (
+            f"నమస్కారం. ఇది మీ ఆడియో నావిగేషన్ గైడ్. మీరు స్క్రీన్ చూడవలసిన అవసరం లేకుండా సురక్షితంగా ప్రయాణించవచ్చు. "
+            f"మీరు {clean_origin} నుండి బయలుదేరుతున్నారు. మీ గమ్యస్థానం {clean_dest}. "
+            f"మీ ప్రయాణ విధానం {travel_mode}. ఉత్తమ మరియు సురక్షితమైన మార్గం సిద్ధంగా ఉంది. "
+            f"మొత్తం దూరం సుమారు {dist_phrase}, అంచనా సమయం {time_phrase}. "
+            f"{hazard_speech} "
+            f"మొదటి దశ: {clean_origin} నుండి ప్రధాన రహదారిపైకి బయలుదేరండి. "
+            f"రెండవ దశ: {via_phrase} వెంట ముందుకు సాగండి. "
+            f"మూడవ దశ: {clean_dest} వైపు ప్రయాణించండి, మీ గమ్యస్థానం ఎదురుగా ఉంటుంది. "
+            f"మీ ప్రయాణం సురక్షితంగా మరియు సుఖవంతంగా సాగాలని కోరుకుంటున్నాము!"
+        )
+    elif curr_lang == "hi":
+        narrative = (
+            f"नमस्ते। यह आपका ऑडियो नेविगेशन गाइड है। "
+            f"आप {clean_origin} से प्रस्थान कर रहे हैं। आपका गंतव्य {clean_dest} है। "
+            f"आपका यात्रा साधन {travel_mode} है। सर्वोत्तम और सुरक्षित मार्ग तैयार है। "
+            f"कुल दूरी लगभग {dist_phrase} है, और अनुमानित यात्रा समय {time_phrase} है। "
+            f"{hazard_speech} "
+            f"पहला चरण: {clean_origin} से मुख्य सड़क की ओर बढ़ें। "
+            f"दूसरा चरण: {via_phrase} के साथ आगे बढ़ें। "
+            f"तीसरा चरण: {clean_dest} की ओर बढ़ते रहें, आपका गंतव्य सीधे आगे होगा। "
+            f"आपकी यात्रा मंगलमय और सुरक्षित हो!"
+        )
+    elif curr_lang == "ta":
+        narrative = (
+            f"வணக்கம். இது உங்கள் ஆடியோ வழிசெலுத்தல் வழிகாட்டி. "
+            f"நீங்கள் {clean_origin} இலிருந்து தொடங்குகிறீர்கள். உங்கள் இலக்கு {clean_dest}. "
+            f"பயண முறை {travel_mode}. சிறந்த மற்றும் பாதுகாப்பான வழி தயாராக உள்ளது. "
+            f"மொத்த தூரம் சுமார் {dist_phrase}, பயண நேரம் {time_phrase}. "
+            f"{hazard_speech} இனிய மற்றும் பாதுகாப்பான பயணம் அமைய வாழ்த்துகள்!"
+        )
+    elif curr_lang == "kn":
+        narrative = (
+            f"ನಮಸ್ಕಾರ. ಇದು ನಿಮ್ಮ ಆಡಿಯೋ ನ್ಯಾವಿಗೇಷನ್ ಮಾರ್ಗದರ್ಶಿ. "
+            f"ನೀವು {clean_origin} ನಿಂದ ಪ್ರಾರಂಭಿಸುತ್ತಿದ್ದೀರಿ. ನಿಮ್ಮ ಗಮ್ಯಸ್ಥಾನ {clean_dest}. "
+            f"ಪ್ರಯಾಣ ವಿಧಾನ {travel_mode}. ಸುರಕ್ಷಿತ ಮಾರ್ಗ ಸಿದ್ಧವಾಗಿದೆ. "
+            f"ಒಟ್ಟು ದೂರ ಸುಮಾರು {dist_phrase}, ಅಂದಾಜು ಸಮಯ {time_phrase}. "
+            f"{hazard_speech} ನಿಮ್ಮ ಪ್ರಯಾಣ ಸುಖಕರವಾಗಿರಲಿ!"
+        )
+    elif curr_lang == "ml":
+        narrative = (
+            f"നമസ്കാരം. ഇത് നിങ്ങളുടെ ഓഡിയോ നാവിഗേഷൻ ഗൈഡാണ്. "
+            f"നിങ്ങൾ {clean_origin} ൽ നിന്ന് ആരംഭിക്കുന്നു. നിങ്ങളുടെ ലക്ഷ്യസ്ഥാനം {clean_dest} ആണ്. "
+            f"ആകെ ദൂരം ഏകദേശം {dist_phrase}, യാത്രാ സമയം {time_phrase}. "
+            f"{hazard_speech} ശുഭയാത്ര നേരുന്നു!"
+        )
+    elif curr_lang == "bn":
+        narrative = (
+            f"নমস্কার। এটি আপনার অডিও নেভিগেশন গাইড। "
+            f"আপনি {clean_origin} থেকে শুরু করছেন। আপনার গন্তব্য {clean_dest}। "
+            f"মোট দূরত্ব প্রায় {dist_phrase}, আনুমানিক সময় {time_phrase}. "
+            f"{hazard_speech} আপনার যাত্রা শুভ ও নিরাপদ হোক!"
+        )
+    elif curr_lang == "mr":
+        narrative = (
+            f"नमस्कार. हे आपले ऑडिओ नेव्हिगेशन मार्गदर्शक आहे. "
+            f"आपण {clean_origin} येथून निघत आहात. आपले गंतव्य {clean_dest} आहे. "
+            f"एकूण अंतर सुमारे {dist_phrase} आहे, अंदाजे वेळ {time_phrase} आहे. "
+            f"{hazard_speech} आपला प्रवास सुखकर व सुरक्षित होवो!"
+        )
+    else:
+        narrative = (
         f"Hello. This is your audio navigation guide. I will read your route aloud in simple steps so you do not need to look at the screen. "
         f"You are starting from {clean_origin}. Your destination is {clean_dest}. "
         f"Your travel mode is {travel_mode}. "
@@ -141,7 +207,8 @@ def build_voice_assistant_html(
     summary_roads: Optional[List[str]] = None,
     active_restrictions: Optional[List[Any]] = None,
     active_hazards: Optional[List[Any]] = None,
-    unit: str = "km"
+    unit: str = "km",
+    lang: Optional[str] = None
 ) -> str:
     """
     Renders an advanced, deeply interactive Voice Navigation Assistant featuring:
@@ -152,6 +219,8 @@ def build_voice_assistant_html(
     - Dynamic Voice Selection (system speech synthesis voices) & pace switcher
     - Screen-reader accessible and high-contrast styling
     """
+    curr_lang = lang or get_current_language()
+    bcp47_code = get_bcp47_code(curr_lang)
     clean_origin = origin_name.replace("My Current Location", "your current location").replace("📍", "").strip()
     clean_dest = destination_name.replace("Map Pin", "your destination").replace("🏁", "").strip()
 
@@ -576,13 +645,52 @@ def build_voice_assistant_html(
         }}
 
         function speakText(text, onComplete) {{
-            // Silenced: AI voice assistant removed per user request
-            if ('speechSynthesis' in window) {{
-                try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
-            }}
             setCaption(text);
-            if (onComplete) onComplete();
-            return;
+            if (!('speechSynthesis' in window)) {{
+                if (onComplete) onComplete();
+                return;
+            }}
+            try {{
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = '{bcp47_code}';
+                utter.rate = speechRate;
+                utter.pitch = 1.0;
+
+                const voices = window.speechSynthesis.getVoices();
+                const targetPrefix = utter.lang.split('-')[0].toLowerCase();
+                let matched = null;
+                for (let i = 0; i < voices.length; i++) {{
+                    const vLang = (voices[i].lang || '').toLowerCase().replace('_', '-');
+                    if (vLang === utter.lang.toLowerCase() || vLang.startsWith(targetPrefix)) {{
+                        matched = voices[i];
+                        break;
+                    }}
+                }}
+                if (matched) utter.voice = matched;
+
+                utter.onstart = function() {{
+                    isSpeaking = true;
+                    updateUIStatus('SPEAKING...', true);
+                }};
+                utter.onend = function() {{
+                    isSpeaking = false;
+                    updateUIStatus('READY', false);
+                    if (onComplete) onComplete();
+                }};
+                utter.onerror = function() {{
+                    isSpeaking = false;
+                    updateUIStatus('READY', false);
+                    if (onComplete) onComplete();
+                }};
+
+                window.speechSynthesis.speak(utter);
+            }} catch(e) {{
+                console.warn('SpeechSynthesis error:', e);
+                isSpeaking = false;
+                updateUIStatus('READY', false);
+                if (onComplete) onComplete();
+            }}
         }}
 
         function playCurrentStep() {{
@@ -693,7 +801,7 @@ def build_voice_assistant_html(
                 recognition = new SpeechRec();
                 recognition.continuous = false;
                 recognition.interimResults = false;
-                recognition.lang = 'en-US';
+                recognition.lang = '{bcp47_code}';
 
                 recognition.onstart = () => {{
                     isListening = true;
@@ -707,20 +815,28 @@ def build_voice_assistant_html(
                     const transcript = event.results[0][0].transcript.toLowerCase();
                     setCaption('Heard: "' + transcript + '"');
 
-                    if (transcript.includes('hazard') || transcript.includes('danger') || transcript.includes('road')) {{
+                    const lower = transcript.toLowerCase();
+                    const isHazards = /hazard|danger|caution|road|ప్రమాదం|హెచ్చరిక|खतरा|चेतावनी|ஆபத்து|எச்சரிக்கை|ಅಪಾಯ|ഹസാർഡ്|বিপদ|धोका/.test(lower);
+                    const isEta = /time|eta|far|distance|దూరం|సమయం|समय|दूरी|நேரம்|தூரம்|ಸಮಯ|ದೂರ|സമയം|ദൂരം|সময়|দূরত্ব|वेळ|अंतर/.test(lower);
+                    const isNext = /next|forward|తర్వాత|ముందుకు|अगला|आगे|அடுத்து|ಮುಂದೆ|അടുത്തത്|পরবর্তী|पुढे/.test(lower);
+                    const isPrev = /prev|back|వెనుక|మునుపటి|पिछला|पीछे|முந்தைய|ಹಿಂದೆ|മുമ്പത്തെ|পূর্ববর্তী|मागे/.test(lower);
+                    const isRepeat = /repeat|again|current|మళ్ళీ|ప్రస్తుత|फिर|पुनः|மீண்டும்|ಮತ್ತೊಮ್ಮೆ|വീണ്ടും|আবার|पुन्हा/.test(lower);
+                    const isWhere = /where|location|ఎక్కడ|ప్రదేశం|कहाँ|स्थान|எங்கே|ఎಲ್ಲಿ|എവിടെ|কোথায়|कुठे/.test(lower);
+
+                    if (isHazards) {{
                         askQuestion('hazards');
-                    }} else if (transcript.includes('time') || transcript.includes('eta') || transcript.includes('far') || transcript.includes('distance')) {{
+                    }} else if (isEta) {{
                         askQuestion('eta');
-                    }} else if (transcript.includes('next') || transcript.includes('forward')) {{
+                    }} else if (isNext) {{
                         nextStep();
-                    }} else if (transcript.includes('prev') || transcript.includes('back')) {{
+                    }} else if (isPrev) {{
                         prevStep();
-                    }} else if (transcript.includes('repeat') || transcript.includes('again') || transcript.includes('current')) {{
+                    }} else if (isRepeat) {{
                         playCurrentStep();
-                    }} else if (transcript.includes('where') || transcript.includes('location')) {{
+                    }} else if (isWhere) {{
                         askQuestion('where');
                     }} else {{
-                        speakText('You asked: ' + transcript + '. ' + answers.eta);
+                        speakText(transcript);
                     }}
                 }};
 

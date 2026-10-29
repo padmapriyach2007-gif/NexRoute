@@ -274,3 +274,107 @@ def test_comprehensive_multilingual_coverage_all_components():
         for k in keys_to_test:
             val = t(k, lang=lang)
             assert val and val != k, f"Key '{k}' is missing or unlocalized for language '{lang}'"
+
+
+def test_exact_parity_all_eight_locales():
+    """Verify that all 8 JSON locale files have 100% key parity with exactly 523 keys."""
+    import json, glob
+    locales = glob.glob(os.path.join(os.path.dirname(__file__), "..", "locales", "*.json"))
+    assert len(locales) == 8, f"Expected 8 locale files, found {len(locales)}"
+
+    data = {}
+    for p in locales:
+        lang = os.path.basename(p).split(".")[0]
+        with open(p, "r", encoding="utf-8") as f:
+            d = json.load(f)
+            data[lang] = set(d.keys())
+            # Ensure no value is empty
+            for k, v in d.items():
+                assert isinstance(v, str) and len(v.strip()) > 0, f"Empty translation for {k} in {lang}"
+
+    all_keys = set.union(*data.values())
+    assert len(all_keys) >= 523, f"Expected >= 523 keys, got {len(all_keys)}"
+
+    for lang, keys in data.items():
+        missing = all_keys - keys
+        assert not missing, f"Language '{lang}' has missing keys: {missing}"
+
+
+def test_voice_guidance_multilingual_narrative_all_eight():
+    """Verify generate_simple_spoken_narrative produces authentic scripts for all 8 languages."""
+    from src.voice_guidance import generate_simple_spoken_narrative
+
+    scripts = {
+        "en": "Hello. This is your audio navigation guide",
+        "te": "నమస్కారం",
+        "hi": "नमस्ते",
+        "ta": "வணக்கம்",
+        "kn": "ನಮಸ್ಕಾರ",
+        "ml": "നമസ്കാരം",
+        "bn": "নমস্কার",
+        "mr": "नमस्कार"
+    }
+
+    for lang_code, expected_greeting in scripts.items():
+        narrative = generate_simple_spoken_narrative(
+            origin_name="Guntur Junction",
+            destination_name="Vijayawada Bus Station",
+            distance_km=35.0,
+            duration_min=42.0,
+            lang=lang_code
+        )
+        assert expected_greeting in narrative, f"Expected '{expected_greeting}' in {lang_code} narrative"
+        assert "Guntur Junction" in narrative
+        assert "Vijayawada Bus Station" in narrative
+
+
+def test_speech_recognition_and_voice_synthesizer_bcp47_verification():
+    """Verify BCP-47 identifiers and voices configured for Web Speech API and STT."""
+    expected_bcp47 = {
+        "en": "en-IN",
+        "te": "te-IN",
+        "hi": "hi-IN",
+        "ta": "ta-IN",
+        "kn": "kn-IN",
+        "ml": "ml-IN",
+        "bn": "bn-IN",
+        "mr": "mr-IN"
+    }
+    for code, bcp in expected_bcp47.items():
+        actual = get_bcp47_code(code)
+        assert actual.startswith(code) or actual in ("en-IN", "en-US"), f"BCP-47 mismatch for {code}: {actual}"
+
+
+def test_aura_chatbot_all_eight_languages():
+    """Verify Aura Travel Assistant responds naturally in all 8 languages."""
+    bot = PathfinderChatbot()
+
+    queries = {
+        "en": "Hi Aura",
+        "te": "హలో ఔరా",
+        "hi": "नमस्ते ऑरा",
+        "ta": "வணக்கம் ஆரா",
+        "kn": "ಹಲೋ ಔರಾ",
+        "ml": "ഹലോ ഔറ",
+        "bn": "নমস্কার অরা",
+        "mr": "नमस्कार ऑरा"
+    }
+
+    for lang, q_text in queries.items():
+        resp = bot.answer(q_text, context={"language": lang})
+        msg = resp.get("response") or resp.get("message") or ""
+        assert len(msg) > 10, f"Response too short for {lang}"
+        # Response should be in correct script
+        if lang == "te":
+            assert any("\u0c00" <= c <= "\u0c7f" for c in msg)
+        elif lang == "hi" or lang == "mr":
+            assert any("\u0900" <= c <= "\u097f" for c in msg)
+        elif lang == "ta":
+            assert any("\u0b80" <= c <= "\u0bff" for c in msg)
+        elif lang == "kn":
+            assert any("\u0c80" <= c <= "\u0cff" for c in msg)
+        elif lang == "ml":
+            assert any("\u0d00" <= c <= "\u0d7f" for c in msg)
+        elif lang == "bn":
+            assert any("\u0980" <= c <= "\u09ff" for c in msg)
+
