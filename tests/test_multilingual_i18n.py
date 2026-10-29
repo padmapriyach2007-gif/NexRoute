@@ -245,3 +245,32 @@ def test_t_function_call_signatures_and_type_safety():
     # 8. Non-existent key with default
     res8 = t("non_existent_key_123", "Custom Fallback Text", lang="mr")
     assert res8 == "Custom Fallback Text"
+
+
+def test_comprehensive_multilingual_coverage_all_components():
+    """Verify that all new UI components are fully localized across all 8 languages."""
+    keys_to_test = [
+        # Image 1: Action buttons
+        "places.view_map", "places.directions", "places.info", "places.save", "places.saved",
+        # Image 2: Header & categories
+        "places.nearby_facilities_header", "places.verified_pois", "places.search_placeholder",
+        "places.categories_label", "places.cat_all", "places.cat_hospitals", "places.cat_supermarkets",
+        "places.cat_fuel", "places.cat_ev", "places.cat_restaurants", "places.cat_atms",
+        "places.cat_police", "places.cat_hotels", "places.cat_tourist", "places.cat_malls",
+        "places.cat_parks", "places.cat_rest_stops",
+        # Image 3: Speed cockpit
+        "speed.header", "speed.subtitle", "speed.digital_cockpit", "speed.velocity_locked",
+        "speed.balanced_cruise", "speed.throttle_demand", "speed.driver_analysis",
+        "speed.healthy_badge", "speed.presets_label", "speed.exclusions_header", "speed.exclusions_sub",
+        # Image 4: Telemetry, directives & companion
+        "telemetry.header", "telemetry.active_stream", "telemetry.power_band", "telemetry.high_torque",
+        "telemetry.flow_rate", "telemetry.time_optimized", "telemetry.drag_force",
+        "telemetry.directives", "telemetry.dir_express", "telemetry.dir_eta",
+        "telemetry.dir_overtake", "telemetry.dir_pacing", "strategy.calibrated_speed",
+        "strategy.reason_title", "strategy.impact_title", "strategy.reaction_buffer",
+        "strategy.cognitive_load", "companion.banner_title", "companion.banner_sub"
+    ]
+    for lang in SUPPORTED_LANGUAGES:
+        for k in keys_to_test:
+            val = t(k, lang=lang)
+            assert val and val != k, f"Key '{k}' is missing or unlocalized for language '{lang}'"

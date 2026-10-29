@@ -778,6 +778,14 @@ def render_driving_mode_cockpit_card_html(
     except ImportError:
         def t(k, **kw): return k
 
+    curr_lang = lang or kwargs.get("lang")
+    if not curr_lang:
+        try:
+            import streamlit as st
+            curr_lang = st.session_state.get("app_language", "en")
+        except Exception:
+            curr_lang = "en"
+
     mode_id = mode.get("mode_id", "")
     accent = mode.get("badge_color", "#38bdf8")
 
@@ -1133,11 +1141,11 @@ def _render_dynamic_mode_telemetry_hud(
             <div style='display: flex; align-items: center; gap: 8px;'>
                 <span style='display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {accent}; box-shadow: 0 0 8px {accent};'></span>
                 <span style='font-size: 0.82rem; font-weight: 900; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.04em;'>
-                    LIVE POWERTRAIN TELEMETRY • {mode_info.get("title", mode_id).upper()}
+                    {t('telemetry.header', default='LIVE POWERTRAIN TELEMETRY', lang=curr_lang)} • {mode_info.get("title", mode_id).upper()}
                 </span>
             </div>
             <span style='background: {accent}22; color: {accent}; border: 1px solid {accent}66; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.03em;'>
-                ACTIVE TELEMETRY STREAM
+                {t('telemetry.active_stream', default='ACTIVE TELEMETRY STREAM', lang=curr_lang)}
             </span>
         </div>
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;'>
@@ -1204,7 +1212,7 @@ def _render_dynamic_mode_telemetry_hud(
     directives_html = f"""
     <div style='background: rgba(15, 23, 42, 0.80); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; margin-top: 10px;'>
         <div style='font-size: 0.74rem; font-weight: 900; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px;'>
-            🎯 ENGAGED CORRIDOR OPERATIONAL DIRECTIVES
+            🎯 {t('telemetry.directives', default='ENGAGED CORRIDOR OPERATIONAL DIRECTIVES', lang=curr_lang)}
         </div>
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;'>
             {strat_cards}
@@ -1224,6 +1232,7 @@ def render_cockpit_mode_functionality_hud(
     distance_km: float = 8.5,
     mode_info: Optional[Dict[str, Any]] = None,
     return_components: bool = False,
+    lang: Optional[str] = None,
     **kwargs: Any
 ) -> Any:
     """
@@ -1418,13 +1427,20 @@ def render_cockpit_mode_functionality_hud(
 
     health_benefit = mode_info.get("health_safety_benefit", "Reduces cognitive stress and maintains 2.6s headway reaction buffer.")
 
+    lbl_calibrated_spd = t("strategy.calibrated_speed", default="CALIBRATED DRIVING SPEED", lang=curr_lang)
+    lbl_reason_title = t("strategy.reason_title", default="Corridor Dynamic Strategy Reason", lang=curr_lang)
+    lbl_impact_title = t("strategy.impact_title", default="Safer & Healthy Travel Impact", lang=curr_lang)
+    lbl_rxn_buf = t("strategy.reaction_buffer", default="Reaction Buffer", lang=curr_lang)
+    lbl_cog_load = t("strategy.cognitive_load", default="Cognitive Load", lang=curr_lang)
+    lbl_analysis = t("strategy.analysis", default="Analysis", lang=curr_lang)
+
     speed_health_hud = f"""
     <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid {accent}66; border-radius: 12px; padding: 12px 16px; margin: 10px 0; box-shadow: 0 4px 16px rgba(0,0,0,0.3);'>
         <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;'>
             <div style='display: flex; align-items: center; gap: 8px;'>
                 <span style='font-size: 1.1rem;'>🚗</span>
                 <span style='font-size: 0.84rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.02em;'>
-                    CALIBRATED DRIVING SPEED: <span style='color: {accent}; font-weight: 900;'>{rec_speed:g} km/h</span>
+                    {lbl_calibrated_spd}: <span style='color: {accent}; font-weight: 900;'>{rec_speed:g} km/h</span>
                 </span>
             </div>
             <span style='background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); font-size: 0.70rem; font-weight: 800; padding: 3px 10px; border-radius: 9999px;'>
@@ -1434,7 +1450,7 @@ def render_cockpit_mode_functionality_hud(
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;'>
             <div style='background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px;'>
                 <div style='font-size: 0.70rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 2px;'>
-                    🛣️ Corridor Dynamic Strategy Reason
+                    🛣️ {lbl_reason_title}
                 </div>
                 <div style='font-size: 0.72rem; color: #cbd5e1; line-height: 1.4;'>
                     {dynamic_reason}
@@ -1442,7 +1458,7 @@ def render_cockpit_mode_functionality_hud(
             </div>
             <div style='background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px;'>
                 <div style='font-size: 0.70rem; font-weight: 800; color: #10b981; text-transform: uppercase; margin-bottom: 2px;'>
-                    🛡️ Safer & Healthy Travel Impact
+                    🛡️ {lbl_impact_title}
                 </div>
                 <div style='font-size: 0.72rem; color: #cbd5e1; line-height: 1.4;'>
                     {health_benefit}
@@ -1450,11 +1466,11 @@ def render_cockpit_mode_functionality_hud(
             </div>
         </div>
         <div style='margin-top: 8px; font-size: 0.68rem; color: #94a3b8; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
-            <span>⏱️ Reaction Buffer: <b style="color: #38bdf8;">2.6s headway</b></span>
+            <span>⏱️ {lbl_rxn_buf}: <b style="color: #38bdf8;">2.6s headway</b></span>
             <span>•</span>
-            <span>🧠 Cognitive Load: <b style="color: #10b981;">Low / Alert</b></span>
+            <span>🧠 {lbl_cog_load}: <b style="color: #10b981;">Low / Alert</b></span>
             <span>•</span>
-            <span>💡 Analysis: <span style='color: #e2e8f0;'>{speed_health}</span></span>
+            <span>💡 {lbl_analysis}: <span style='color: #e2e8f0;'>{speed_health}</span></span>
         </div>
     </div>
     """

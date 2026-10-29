@@ -129,17 +129,9 @@ def _safe_st_markdown(body, *args, **kwargs):
 
             body = re.sub(r'<[a-zA-Z0-9_\-]+(?:\s+[^>]*)?>', _collapse_tag, body, flags=re.DOTALL)
 
-            # Strip leading/trailing whitespace from each line so CommonMark
-            # never treats indented lines (>= 4 spaces) as raw code blocks (<pre><code>)
-            cleaned_lines = []
-            for line in body.splitlines():
-                stripped = line.strip()
-                # Skip leading blank lines or blank lines directly adjacent to HTML tags
-                if not stripped:
-                    if not cleaned_lines or cleaned_lines[-1] == "" or cleaned_lines[-1].startswith("<") or cleaned_lines[-1].endswith(">"):
-                        continue
-                cleaned_lines.append(stripped)
-            body = "\n".join(cleaned_lines).strip()
+            # Strip leading/trailing whitespace and drop empty lines inside HTML
+            cleaned_lines = [l.strip() for l in body.splitlines() if l.strip()]
+            body = "\n".join(cleaned_lines)
     return _orig_st_markdown(body, *args, **kwargs)
 
 st.markdown = _safe_st_markdown
@@ -16015,8 +16007,11 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-        speed_title = "⚡ SPEED MODE & TRANSIT PROFILE"
-        speed_subtitle = "Choose how you want to travel."
+        # ⚡ SPEED MODE & TRANSIT PROFILE
+        # Choose how you want to travel.
+        curr_l = st.session_state.get("app_language", "en")
+        speed_title = t("speed.header", default="SPEED MODE & TRANSIT PROFILE", lang=curr_l)
+        speed_subtitle = t("speed.subtitle", default="Choose how you want to travel.", lang=curr_l)
 
         st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 6px;'>
 <div style='font-size: 0.82rem; font-weight: 800; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;'>
@@ -16958,13 +16953,7 @@ body {{
 
 
             <span style='font-size: 0.82rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.05em; text-transform: uppercase;'>
-
-
-
-                DIGITAL SPEEDOMETER COCKPIT
-
-
-
+                {t('speed.digital_cockpit', default='DIGITAL SPEEDOMETER COCKPIT', lang=st.session_state.get('app_language', 'en'))}
             </span>
 
 
@@ -17278,13 +17267,7 @@ body {{
 
 
         <div style='font-size: 0.68rem; font-weight: 700; color: #94a3b8;'>
-
-
-
-            THROTTLE DEMAND: <span style='color: #f8fafc; font-weight: 800;'>{int(round(pct * 100))}%</span>
-
-
-
+            {t('speed.throttle_demand', default='THROTTLE DEMAND', lang=st.session_state.get('app_language', 'en'))}: <span style='color: #f8fafc; font-weight: 800;'>{int(round(pct * 100))}%</span>
         </div>
 
 
@@ -17533,11 +17516,8 @@ body {{
 
 
 
-                    <span style='font-size: 0.72rem; font-weight: 800; color: {spd_verdict_col}; text-transform: uppercase;'>DRIVER SPEED & HEALTH ANALYSIS:</span>
-
-
-
-                    <span style='font-size: 0.72rem; color: #cbd5e1; margin-left: 4px;'>{spd_health_msg}</span>
+                    <span style='font-size: 0.72rem; font-weight: 800; color: {spd_verdict_col}; text-transform: uppercase;'>{t('speed.driver_analysis', default='DRIVER SPEED & HEALTH ANALYSIS', lang=curr_l)}:</span>
+                    <span style='font-size: 0.72rem; color: #cbd5e1; margin-left: 4px;'>{t('speed.driver_analysis_text', default=spd_health_msg, lang=curr_l, speed=int(round(cur_spd)))}</span>
 
 
 
@@ -17569,7 +17549,8 @@ body {{
 
 
 
-        st.markdown("<div style='font-size: 0.74rem; font-weight: 700; color: #a78bfa; margin-top: 6px; margin-bottom: 4px;'>⚡ QUICK SPEED PRESETS & TACTILE CONTROLS:</div>", unsafe_allow_html=True)
+        lbl_presets = t("speed.presets_label", default="QUICK SPEED PRESETS & TACTILE CONTROLS", lang=curr_l)
+        st.markdown(f"<div style='font-size: 0.74rem; font-weight: 700; color: #a78bfa; margin-top: 6px; margin-bottom: 4px;'>⚡ {lbl_presets}:</div>", unsafe_allow_html=True)
 
 
 
@@ -17845,22 +17826,10 @@ body {{
 
 
 
-                <span>🛡️</span> CORRIDOR EXCLUSIONS & AVOIDANCE FILTERS
-
-
-
+                <span>🛡️</span> {t('speed.exclusions_header', default='CORRIDOR EXCLUSIONS & AVOIDANCE FILTERS', lang=curr_l)}
             </div>
-
-
-
             <div style='font-size: 0.70rem; color: #94a3b8;'>
-
-
-
-                Multi-Objective Autonomous Bypass Engine
-
-
-
+                {t('speed.exclusions_sub', default='Multi-Objective Autonomous Bypass Engine', lang=curr_l)}
             </div>
 
 
@@ -27554,25 +27523,10 @@ body {{
 
 
                         <div style="font-size: 1.0rem; font-weight: 900; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.03em;">
-
-
-
-                            Aura • 3D Virtual Companion Journey Experience
-
-
-
+                            {t('companion.banner_title', default='Aura • 3D Virtual Companion Journey Experience', lang=st.session_state.get('app_language', 'en'))}
                         </div>
-
-
-
                         <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px;">
-
-
-
-                            Complete 19-stage interactive guidance from departure to destination with 3D robot animations, audio chimes, and maneuvers
-
-
-
+                            {t('companion.banner_sub', default='Complete 19-stage interactive guidance from departure to destination with 3D robot animations, audio chimes, and maneuvers', lang=st.session_state.get('app_language', 'en'))}
                         </div>
 
 
@@ -29756,47 +29710,55 @@ if st.session_state.get("current_view") == "places":
 
 
 
+    cur_l = st.session_state.get("app_language", "en")
+    hdr_places_nearby = t("places.nearby_facilities_header", default="PLACES & NEARBY FACILITIES", lang=cur_l)
+    hdr_places_sub = t("places.header_sub", default="Discover useful places near your location or along your selected route.", lang=cur_l)
+    lbl_verified_pois = t("places.verified_pois", default="VERIFIED POIS", lang=cur_l)
+    search_placeholder = t("places.search_placeholder", default="Search places, landmarks, or addresses...", lang=cur_l)
+    lbl_categories = t("places.categories_label", default="Categories", lang=cur_l)
+
     st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;'>
 <div style='display: flex; align-items: center; gap: 10px;'>
 <span style='font-size: 1.4rem;'>📍</span>
 <div>
 <div style='font-size: 1.05rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.02em;'>
-📍 PLACES & NEARBY FACILITIES • {ref_label.upper()}
+📍 {hdr_places_nearby} • {ref_label.upper()}
 </div>
 <div style='font-size: 0.74rem; color: #94a3b8;'>
-Discover useful places near your location or along your selected route.
+{hdr_places_sub}
 </div>
 </div>
 </div>
 <span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;'>
-● VERIFIED POIS
+● {lbl_verified_pois}
 </span>
 </div>""", unsafe_allow_html=True)
 
     # Search & Category Filters
     places_search_query = st.text_input(
         "Search places",
-        placeholder="Search places, landmarks, or addresses...",
+        placeholder=search_placeholder,
         key="txt_places_main_search_box",
         label_visibility="collapsed"
     )
 
-    places_categories = [
-        "🌐 All Categories",
-        "🏥 Hospitals & Clinics",
-        "🛒 Supermarkets",
-        "⛽ Fuel Stations",
-        "⚡ EV Charging",
-        "🍽️ Restaurants",
-        "🏧 ATMs & Banking",
-        "🚓 Police & Emergency Services",
-        "🏨 Hotels",
-        "🏛️ Tourist Attractions",
-        "🛍️ Shopping Malls",
-        "🌳 Parks",
-        "🛣️ Rest Stops",
+    cat_defs = [
+        ("all", "🌐", t("places.cat_all", default="All Categories", lang=cur_l)),
+        ("hospital", "🏥", t("places.cat_hospitals", default="Hospitals & Clinics", lang=cur_l)),
+        ("supermarket", "🛒", t("places.cat_supermarkets", default="Supermarkets", lang=cur_l)),
+        ("fuel", "⛽", t("places.cat_fuel", default="Fuel Stations", lang=cur_l)),
+        ("ev", "⚡", t("places.cat_ev", default="EV Charging", lang=cur_l)),
+        ("restaurant", "🍽️", t("places.cat_restaurants", default="Restaurants", lang=cur_l)),
+        ("bank", "🏧", t("places.cat_atms", default="ATMs & Banking", lang=cur_l)),
+        ("police", "🚓", t("places.cat_police", default="Police & Emergency Services", lang=cur_l)),
+        ("hotel", "🏨", t("places.cat_hotels", default="Hotels", lang=cur_l)),
+        ("tourist", "🏛️", t("places.cat_tourist", default="Tourist Attractions", lang=cur_l)),
+        ("mall", "🛍️", t("places.cat_malls", default="Shopping Malls", lang=cur_l)),
+        ("park", "🌳", t("places.cat_parks", default="Parks", lang=cur_l)),
+        ("rest", "🛣️", t("places.cat_rest_stops", default="Rest Stops", lang=cur_l)),
     ]
-    selected_p_cat = st.pills("Categories", options=places_categories, default="🌐 All Categories", key="pills_places_main_cat")
+    places_categories = [f"{icon} {label}" for _, icon, label in cat_defs]
+    selected_p_cat = st.pills(lbl_categories, options=places_categories, default=places_categories[0], key="pills_places_main_cat")
 
 
 
@@ -29815,12 +29777,13 @@ Discover useful places near your location or along your selected route.
             or q_clean in p.get("address", "").lower()
             or q_clean in p.get("category", "").lower()
         ]
-    if selected_p_cat and selected_p_cat != "🌐 All Categories":
-        cat_key = selected_p_cat.split()[-1].lower()
-        suggested_places = [
-            p for p in suggested_places
-            if cat_key in p.get("category", "").lower() or any(cat_key in h.lower() for h in p.get("highlights", []))
-        ]
+    if selected_p_cat and selected_p_cat != places_categories[0]:
+        cat_match = next((cid for cid, icon, label in cat_defs if f"{icon} {label}" == selected_p_cat), "")
+        if cat_match and cat_match != "all":
+            suggested_places = [
+                p for p in suggested_places
+                if cat_match in p.get("category", "").lower() or any(cat_match in str(h).lower() for h in p.get("highlights", []))
+            ]
 
     if not suggested_places:
 
@@ -29889,9 +29852,16 @@ Discover useful places near your location or along your selected route.
 
 
 
+                cur_l = st.session_state.get("app_language", "en")
+                lbl_view_map = f"🗺️ {t('places.view_map', default='View Map', lang=cur_l)}"
+                lbl_directions = f"🧭 {t('places.directions', default='Directions', lang=cur_l)}"
+                lbl_info = f"ℹ️ {t('places.info', default='Info', lang=cur_l)}"
+                is_saved = any(s.get("name") == place["name"] for s in st.session_state.get("saved_locations", []))
+                save_lbl = f"⭐ {t('places.saved', default='Saved', lang=cur_l)}" if is_saved else f"⭐ {t('places.save', default='Save', lang=cur_l)}"
+
                 col_pb1, col_pb2, col_pb3, col_pb4 = st.columns([1.2, 1.2, 1.0, 1.0])
                 with col_pb1:
-                    if st.button("🗺️ View Map", key=f"btn_view_sug_{place['place_id']}", use_container_width=True, type="primary"):
+                    if st.button(lbl_view_map, key=f"btn_view_sug_{place['place_id']}", use_container_width=True, type="primary"):
                         st.session_state.map_center_lat = place["latitude"]
                         st.session_state.map_center_lon = place["longitude"]
                         st.session_state.map_zoom = 16
@@ -29903,7 +29873,7 @@ Discover useful places near your location or along your selected route.
                         st.toast(f"📍 Centered map on {place['name']}", icon="🗺️")
                         st.rerun()
                 with col_pb2:
-                    if st.button("🧭 Directions", key=f"btn_dir_sug_{place['place_id']}", use_container_width=True):
+                    if st.button(lbl_directions, key=f"btn_dir_sug_{place['place_id']}", use_container_width=True):
                         st.session_state.selected_dest_coords = (place["latitude"], place["longitude"])
                         st.session_state.selected_dest_label = place["name"]
                         st.session_state.pending_dest = place["name"]
@@ -29917,15 +29887,13 @@ Discover useful places near your location or along your selected route.
                         st.toast(f"🧭 Calculating route to {place['name']}...", icon="🛣️")
                         st.rerun()
                 with col_pb3:
-                    if st.button("ℹ️ Info", key=f"btn_info_sug_{place['place_id']}", use_container_width=True):
+                    if st.button(lbl_info, key=f"btn_info_sug_{place['place_id']}", use_container_width=True):
                         st.session_state.active_info_target = {"type": "place", "data": place}
                         st.session_state.selected_marker_coords = (place["latitude"], place["longitude"])
                         st.session_state.selected_marker_data = place
                         st.session_state.show_info_modal = True
                         st.rerun()
                 with col_pb4:
-                    is_saved = any(s.get("name") == place["name"] for s in st.session_state.get("saved_locations", []))
-                    save_lbl = "⭐ Saved" if is_saved else "⭐ Save"
                     if st.button(save_lbl, key=f"btn_save_sug_{place['place_id']}", use_container_width=True):
                         if "saved_locations" not in st.session_state:
                             st.session_state.saved_locations = []
