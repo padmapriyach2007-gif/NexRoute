@@ -23268,11 +23268,8 @@ body {{
                             st.session_state.is_custom_start_place = True
                             st.session_state.orig_candidates = []
                             st.session_state._prev_route_sig = None
-                            try:
-                                from src.real_location_service import real_location_service
-                                real_location_service.set_manual_location(click_lat, click_lon, pin_orig)
-                            except Exception:
-                                pass
+                            if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
+                                st.session_state.real_location_service.set_manual_location(click_lat, click_lon, pin_orig)
                             st.toast(f"🟢 Starting Point pinned: {pin_orig}", icon="📍")
                             st.rerun()
                     else:
