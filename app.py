@@ -1004,15 +1004,11 @@ else:
 
 
 
-AURA_LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "aura_chatbot_logo_thumb.png")
-
-
-
+AURA_LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "aura_3d_robot_mascot_256.png")
 if not os.path.exists(AURA_LOGO_PATH):
-
-
-
     AURA_LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "aura_chatbot_logo.png")
+if not os.path.exists(AURA_LOGO_PATH):
+    AURA_LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "aura_chatbot_logo_thumb.png")
 
 
 
@@ -3804,9 +3800,9 @@ st.markdown("""
     .floating-tour-welcome-tooltip,
     .floating-aura-welcome-tooltip {
         position: fixed !important;
-        bottom: 28px !important;
+        bottom: 180px !important;
         right: 98px !important;
-        z-index: 9999998 !important;
+        z-index: 2147483645 !important;
         background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important;
         border: 1.5px solid #00f0ff !important;
         border-radius: 16px !important;
@@ -3823,6 +3819,49 @@ st.markdown("""
         user-select: none !important;
         animation: auraTooltipFloat 4s infinite ease-in-out !important;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Button 1: Dedicated 3D AI Guide Guided Tour Trigger */
+    #pathfinder-tour-fab-trigger,
+    .pathfinder-tour-fab-trigger {
+        position: fixed !important;
+        bottom: 176px !important;
+        right: 24px !important;
+        width: 64px !important;
+        height: 64px !important;
+        min-width: 64px !important;
+        max-width: 64px !important;
+        min-height: 64px !important;
+        max-height: 64px !important;
+        box-sizing: border-box !important;
+        border-radius: 50% !important;
+        border: 2.5px solid #00f0ff !important;
+        box-shadow: 0 0 24px rgba(0, 240, 255, 0.75), 0 8px 24px rgba(0, 0, 0, 0.85) !important;
+        background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        z-index: 2147483645 !important;
+        pointer-events: auto !important;
+        user-select: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    #pathfinder-tour-fab-trigger:hover,
+    .pathfinder-tour-fab-trigger:hover {
+        transform: scale(1.10) translateY(-3px) !important;
+        box-shadow: 0 0 35px rgba(0, 240, 255, 0.95), 0 10px 28px rgba(0, 0, 0, 0.85) !important;
+        border-color: #38bdf8 !important;
+    }
+    #pathfinder-tour-fab-trigger img,
+    .pathfinder-tour-fab-trigger img {
+        width: 52px !important;
+        height: 52px !important;
+        object-fit: contain !important;
+        pointer-events: none !important;
+        filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.75)) !important;
     }
 
     .floating-aura-welcome-tooltip:hover {
@@ -3909,12 +3948,19 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(0, 240, 255, 0.65), 0 8px 24px rgba(0, 0, 0, 0.85) !important;
         pointer-events: none !important;
         z-index: 9999998 !important;
-        object-fit: cover !important;
+        object-fit: contain !important;
+        padding: 4px !important;
         animation: auraMascotFloat 3.6s infinite ease-in-out !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         background: linear-gradient(135deg, #07152d 0%, #0c234a 100%) !important;
-        padding: 0 !important;
         margin: 0 !important;
+    }
+
+    /* Prevent any popover or overlay from interfering when tour is active */
+    body.pathfinder-tour-in-progress div[data-testid="stPopoverBody"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 
     /* Holographic concentric projector glow under the robot */
@@ -30367,8 +30413,10 @@ with st.popover(" ", help="Open AURA • Adaptive User Route Assistant"):
 
     st.markdown(f"""
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(56, 189, 248, 0.35); padding-bottom: 8px; margin-bottom: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="{aura_logo_uri}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #00f0ff; object-fit: cover; box-shadow: 0 0 14px rgba(0, 240, 255, 0.65);" />
+        <div style="display: flex; align-items: center; gap: 10px; cursor: pointer;" class="aura-tour-btn" id="aura-chat-header-tour-trigger" title="Click to start Guided Tour!">
+            <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #00f0ff; background: radial-gradient(circle, rgba(0,240,255,0.2) 0%, rgba(10,25,47,0.9) 80%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px rgba(0, 240, 255, 0.65); overflow: hidden;">
+                <img src="{aura_logo_uri}" style="width: 36px; height: 36px; object-fit: contain;" alt="AURA AI Guide" />
+            </div>
             <div>
                 <div style="font-weight: 800; font-size: 0.96rem; color: #f8fafc; letter-spacing: 0.04em; display: flex; align-items: center; gap: 6px;">
                     <span style="color: #00f0ff; font-size: 0.85rem;">✦</span> AURA • AI Guide

@@ -250,7 +250,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             #pathfinder-tour-backdrop.active {{
                 display: block !important;
                 opacity: 1 !important;
-                pointer-events: all !important;
+                pointer-events: auto !important;
             }}
 
             /* Quantum Target Spotlight Box */
@@ -287,7 +287,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             #pathfinder-guide-stage.active {{
                 display: flex !important;
                 opacity: 1 !important;
-                pointer-events: all !important;
+                pointer-events: auto !important;
             }}
 
             /* Inner Wrapper holding 3D Character Canvas + Speech Bubble Card */
@@ -1435,6 +1435,19 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     // =========================================================================
     function startTour(fromIndex) {{
         isTourActive = true;
+        if (pDoc && pDoc.body) {{
+            pDoc.body.classList.add('pathfinder-tour-in-progress');
+        }}
+
+        // Dismiss Chatbot Popover if open so it never blocks or overlaps the tour
+        try {{
+            var popoverBody = pDoc.querySelector('[data-testid="stPopoverBody"]');
+            if (popoverBody) {{
+                var pBtn = pDoc.querySelector('div[data-testid="stPopover"] > button, button[aria-haspopup="dialog"]');
+                if (pBtn) pBtn.click();
+            }}
+        }} catch(err) {{}}
+
         var els = getOrCreateTourElements();
         els.backdrop.classList.add('active');
         els.stage.classList.add('active');
@@ -1472,6 +1485,9 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
     function endTour(isCompleted) {{
         isTourActive = false;
+        if (pDoc && pDoc.body) {{
+            pDoc.body.classList.remove('pathfinder-tour-in-progress');
+        }}
         stopSpeaking();
 
         var els = getOrCreateTourElements();
@@ -1514,11 +1530,15 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
     // Global Click Listener for Tour Triggers
     function onDocClick(e) {{
-        var trigger = e.target && e.target.closest && e.target.closest('#btn-hero-quick-tour, .quick-tour-trigger-btn, [data-tour-trigger], #lang-box-walking-aura, .lang-box-walking-aura, .lang-bot-speech-bubble, #aura-walking-3d-canvas');
+        var trigger = e.target && e.target.closest && e.target.closest('#pathfinder-tour-fab-trigger, .pathfinder-tour-fab-trigger, #floating-tour-welcome-tooltip, .floating-tour-welcome-tooltip, .floating-aura-welcome-tooltip, .aura-tour-btn, #btn-hero-quick-tour, .quick-tour-trigger-btn, [data-tour-trigger], #lang-box-walking-aura, .lang-box-walking-aura, .lang-bot-speech-bubble, #aura-walking-3d-canvas');
         if (trigger) {{
             e.preventDefault();
             e.stopPropagation();
-            startTour(0);
+            if (isTourActive) {{
+                endTour();
+            }} else {{
+                startTour(0);
+            }}
         }}
     }}
     pDoc.addEventListener('click', onDocClick, true);
@@ -1884,7 +1904,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         fab.title = 'NexRoute AI Guide • Start Quick Tour (3D రోబోట్ టూర్)';
 
         var iconHtml = welcomeSrc 
-            ? '<img src="' + welcomeSrc + '" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; pointer-events: none; filter: drop-shadow(0 0 8px #00f0ff);" alt="3D AI Guide" />'
+            ? '<img src="' + welcomeSrc + '" style="width: 52px; height: 52px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.75));" alt="3D AI Guide" />'
             : '<span style="font-size: 1.55rem; pointer-events: none; filter: drop-shadow(0 0 8px #00f0ff);">🤖</span>';
 
         fab.innerHTML = iconHtml + '<span style="position: absolute !important; top: 3px !important; right: 3px !important; width: 10px !important; height: 10px !important; border-radius: 50% !important; background: #10b981 !important; border: 1.5px solid #081d38 !important; box-shadow: 0 0 8px #10b981 !important;"></span>';
@@ -1908,7 +1928,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             'align-items: center !important',
             'justify-content: center !important',
             'cursor: pointer !important',
-            'z-index: 99998 !important',
+            'z-index: 2147483645 !important',
             'transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important',
             'user-select: none !important',
             'padding: 0 !important',
@@ -1936,7 +1956,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             'position: fixed !important',
             'bottom: 180px !important',
             'right: 98px !important',
-            'z-index: 99998 !important',
+            'z-index: 2147483645 !important',
             'background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important',
             'border: 1.5px solid #00f0ff !important',
             'border-radius: 16px !important',
@@ -1956,6 +1976,14 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
         tooltip.onclick = function(e) {{
             e.stopPropagation();
+            e.preventDefault();
+            try {{
+                var openPopover = pDoc.querySelector('[data-testid="stPopoverBody"]');
+                if (openPopover) {{
+                    var pBtn = pDoc.querySelector('div[data-testid="stPopover"] > button, button[aria-haspopup="dialog"]');
+                    if (pBtn) pBtn.click();
+                }}
+            }} catch(err) {{}}
             if (isTourActive) {{
                 endTour();
             }} else {{
@@ -1983,6 +2011,14 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
         fab.onclick = function(e) {{
             e.stopPropagation();
+            e.preventDefault();
+            try {{
+                var openPopover = pDoc.querySelector('[data-testid="stPopoverBody"]');
+                if (openPopover) {{
+                    var pBtn = pDoc.querySelector('div[data-testid="stPopover"] > button, button[aria-haspopup="dialog"]');
+                    if (pBtn) pBtn.click();
+                }}
+            }} catch(err) {{}}
             if (isTourActive) {{
                 endTour();
             }} else {{
