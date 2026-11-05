@@ -11,6 +11,7 @@ import os
 import json
 import logging
 from typing import Dict, Any, List, Optional
+from pathlib import Path
 import textwrap
 import streamlit as st
 
@@ -1318,21 +1319,26 @@ _AURA_ROBOT_B64 = None
 def _get_aura_robot_b64() -> str:
     global _AURA_ROBOT_B64
     if _AURA_ROBOT_B64 is None:
-        candidate_paths = [
-            Path(__file__).resolve().parent.parent / "assets" / "aura_3d_robot_mascot_thumbsup_trans.png",
-            Path(__file__).resolve().parent.parent / "assets" / "aura_3d_robot_mascot_thumbsup.png",
-            Path(__file__).resolve().parent.parent / "assets" / "aura_3d_robot_mascot_256.png",
-            Path(__file__).resolve().parent.parent / "assets" / "mascot_welcome_trans.png",
-            Path(__file__).resolve().parent.parent / "assets" / "aura_chatbot_logo.png"
-        ]
-        import base64
-        for p in candidate_paths:
-            if p.exists() and p.stat().st_size > 0:
-                try:
-                    _AURA_ROBOT_B64 = base64.b64encode(p.read_bytes()).decode("ascii")
-                    break
-                except Exception:
-                    pass
+        try:
+            from pathlib import Path
+            import base64
+            base_assets = Path(__file__).resolve().parent.parent / "assets"
+            candidate_paths = [
+                base_assets / "aura_3d_robot_mascot_thumbsup_trans.png",
+                base_assets / "aura_3d_robot_mascot_thumbsup.png",
+                base_assets / "aura_3d_robot_mascot_256.png",
+                base_assets / "mascot_welcome_trans.png",
+                base_assets / "aura_chatbot_logo.png"
+            ]
+            for p in candidate_paths:
+                if p.exists() and p.stat().st_size > 0:
+                    try:
+                        _AURA_ROBOT_B64 = base64.b64encode(p.read_bytes()).decode("ascii")
+                        break
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         if _AURA_ROBOT_B64 is None:
             _AURA_ROBOT_B64 = ""
     return _AURA_ROBOT_B64
