@@ -41,6 +41,16 @@ else:
 # Ensure working directory is project root
 os.chdir(str(ROOT_DIR))
 
-# Execute main application entrypoint
-runpy.run_path(str(ROOT_DIR / "app.py"), run_name="__main__")
+# Execute main application entrypoint with diagnostic error capture
+try:
+    runpy.run_path(str(ROOT_DIR / "app.py"), run_name="__main__")
+except Exception as e:
+    import streamlit as st
+    import traceback
+    st.error(f"⚠️ Application encountered an issue: {e}")
+    with st.expander("🔍 View Error Diagnostics & Traceback", expanded=True):
+        st.code(traceback.format_exc(), language="python")
+    if st.button("🔄 Reload Pathfinder Application"):
+        st.rerun()
+
 

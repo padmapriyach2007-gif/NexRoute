@@ -21,3 +21,4 @@ __all__ = [
     "bearing_to_cardinal",
     "real_location_service",
 ]
+
