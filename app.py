@@ -3801,6 +3801,7 @@ st.markdown("""
     }
 
     /* Clean rounded welcome tooltip (matches reference image) */
+    .floating-tour-welcome-tooltip,
     .floating-aura-welcome-tooltip {
         position: fixed !important;
         bottom: 28px !important;
@@ -4375,7 +4376,8 @@ st.markdown("""
             width: 56px !important;
             height: 12px !important;
         }
-        .floating-aura-welcome-tooltip {
+        .floating-tour-welcome-tooltip,
+    .floating-aura-welcome-tooltip {
             right: 70px !important;
             bottom: 18px !important;
             padding: 5px 12px !important;
@@ -30003,19 +30005,7 @@ with st.popover(" ", help="Open AURA • Adaptive User Route Assistant"):
 if aura_logo_uri:
     st.markdown(f"""
     <div class="floating-aura-container" id="floating-aura-container">
-        <!-- Clean, rounded welcome tooltip (matches reference image) -->
-        <div class="floating-aura-welcome-tooltip" id="floating-aura-welcome-tooltip" title="Click to start the interactive AI guided tour!" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else{{var p=document.querySelector('div[data-testid=\'stPopover\'] button')||(window.parent&&window.parent.document.querySelector('div[data-testid=\'stPopover\'] button'));if(p)p.click();}}">
-            <div class="aura-tooltip-pill">
-                <span class="aura-tooltip-sparkle">✦</span>
-                <span class="aura-tooltip-badge-text">AI Guide</span>
-            </div>
-            <div class="aura-tooltip-main">
-                <span class="aura-tooltip-label">Click me for a tour!</span>
-                <span class="aura-tooltip-sparkle-end">✨</span>
-            </div>
-            <div class="aura-tooltip-arrow"></div>
-        </div>
-        <!-- Polished White-and-Silver 3D AI Robot Mascot Avatar -->
+        <!-- Polished White-and-Silver 3D AI Robot Mascot Avatar for AI Chatbot (Button 3) -->
         <img src="{aura_logo_uri}" class="floating-aura-logo-overlay" alt="AURA AI Guide" />
         <div class="floating-aura-holo-disc"></div>
     </div>

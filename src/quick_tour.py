@@ -1842,14 +1842,16 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         var existingFab = pDoc.getElementById('pathfinder-tour-fab-trigger');
         if (existingFab) return;
 
-        var welcomeSrc = (mascotPoses && (mascotPoses['welcome'] || mascotPoses['waving'])) || '';
+        // Button 1: White-and-Silver 3D AI Robot Mascot from reference
+        var welcomeSrc = botLogoUri || (mascotPoses && (mascotPoses['welcome'] || mascotPoses['waving'])) || '';
         var fab = pDoc.createElement('div');
         fab.id = 'pathfinder-tour-fab-trigger';
-        fab.title = 'NexRoute 3D Guide • Start Quick Tour (3D రోబోట్ టూర్)';
+        fab.className = 'pathfinder-tour-fab-trigger';
+        fab.title = 'NexRoute AI Guide • Start Quick Tour (3D రోబోట్ టూర్)';
 
         var iconHtml = welcomeSrc 
-            ? '<img src="' + welcomeSrc + '" style="width: 46px; height: 46px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 0 6px #38bdf8);" alt="3D Guide" />'
-            : '<span style="font-size: 1.55rem; pointer-events: none; filter: drop-shadow(0 0 6px #38bdf8);">🚀</span>';
+            ? '<img src="' + welcomeSrc + '" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; pointer-events: none; filter: drop-shadow(0 0 8px #00f0ff);" alt="3D AI Guide" />'
+            : '<span style="font-size: 1.55rem; pointer-events: none; filter: drop-shadow(0 0 8px #00f0ff);">🤖</span>';
 
         fab.innerHTML = iconHtml + '<span style="position: absolute !important; top: 3px !important; right: 3px !important; width: 10px !important; height: 10px !important; border-radius: 50% !important; background: #10b981 !important; border: 1.5px solid #081d38 !important; box-shadow: 0 0 8px #10b981 !important;"></span>';
 
@@ -1865,9 +1867,9 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             'max-height: 64px !important',
             'box-sizing: border-box !important',
             'border-radius: 50% !important',
-            'background: linear-gradient(135deg, #081d38 0%, #0369a1 50%, #0284c7 100%) !important',
-            'border: 2.5px solid #38bdf8 !important',
-            'box-shadow: 0 0 24px rgba(56, 189, 248, 0.75), 0 8px 22px rgba(0,0,0,0.85) !important',
+            'background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(3, 105, 161, 0.90) 50%, rgba(2, 132, 199, 0.95) 100%) !important',
+            'border: 2.5px solid #00f0ff !important',
+            'box-shadow: 0 0 24px rgba(0, 240, 255, 0.75), 0 8px 24px rgba(0, 0, 0, 0.85) !important',
             'display: flex !important',
             'align-items: center !important',
             'justify-content: center !important',
@@ -1879,15 +1881,70 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             'margin: 0 !important'
         ].join(';');
 
-        fab.onmouseenter = function() {{
-            this.style.transform = 'scale(1.12) translateY(-3px)';
-            this.style.boxShadow = '0 0 35px rgba(56, 189, 248, 0.95), 0 10px 28px rgba(0,0,0,0.85)';
-            this.style.borderColor = '#67e8f9';
+        // Welcome Tooltip attached directly to Button 1 (matches user requirement)
+        var tooltip = pDoc.createElement('div');
+        tooltip.id = 'floating-tour-welcome-tooltip';
+        tooltip.className = 'floating-tour-welcome-tooltip';
+        tooltip.title = 'Click to start the interactive AI guided tour!';
+        tooltip.innerHTML = [
+            '<div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.15); border: 1px solid rgba(0, 240, 255, 0.5); border-radius: 9999px; padding: 1px 8px; font-size: 0.65rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.06em;">',
+            '    <span style="font-size: 0.65rem; color: #00f0ff; filter: drop-shadow(0 0 4px #00f0ff);">✦</span>',
+            '    <span>AI Guide</span>',
+            '</div>',
+            '<div style="display: flex; align-items: center; gap: 6px; font-size: 0.86rem; font-weight: 800; color: #ffffff; letter-spacing: 0.02em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">',
+            '    <span>Click me for a tour!</span>',
+            '    <span style="font-size: 0.82rem; filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8));">✨</span>',
+            '</div>',
+            '<div style="position: absolute; right: -7px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 7px solid #00f0ff;"></div>'
+        ].join('');
+
+        tooltip.style.cssText = [
+            'position: fixed !important',
+            'bottom: 180px !important',
+            'right: 98px !important',
+            'z-index: 99998 !important',
+            'background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important',
+            'border: 1.5px solid #00f0ff !important',
+            'border-radius: 16px !important',
+            'padding: 8px 16px !important',
+            'display: flex !important',
+            'flex-direction: column !important',
+            'align-items: flex-start !important',
+            'gap: 2px !important',
+            'box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 18px rgba(0, 240, 255, 0.35) !important',
+            'backdrop-filter: blur(12px) !important',
+            '-webkit-backdrop-filter: blur(12px) !important',
+            'cursor: pointer !important',
+            'pointer-events: auto !important',
+            'user-select: none !important',
+            'transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important'
+        ].join(';');
+
+        tooltip.onclick = function(e) {{
+            e.stopPropagation();
+            if (isTourActive) {{
+                endTour();
+            }} else {{
+                startTour(0);
+            }}
         }};
-        fab.onmouseleave = function() {{
-            this.style.transform = 'scale(1) translateY(0)';
-            this.style.boxShadow = '0 0 24px rgba(56, 189, 248, 0.75), 0 8px 22px rgba(0,0,0,0.85)';
-            this.style.borderColor = '#38bdf8';
+
+        fab.onmouseenter = tooltip.onmouseenter = function() {{
+            fab.style.transform = 'scale(1.10) translateY(-3px)';
+            fab.style.boxShadow = '0 0 35px rgba(0, 240, 255, 0.95), 0 10px 28px rgba(0, 0, 0, 0.85)';
+            fab.style.borderColor = '#38bdf8';
+            tooltip.style.transform = 'translateY(-3px) scale(1.03)';
+            tooltip.style.borderColor = '#38bdf8';
+            tooltip.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.8), 0 0 26px rgba(0, 240, 255, 0.55)';
+        }};
+
+        fab.onmouseleave = tooltip.onmouseleave = function() {{
+            fab.style.transform = 'scale(1) translateY(0)';
+            fab.style.boxShadow = '0 0 24px rgba(0, 240, 255, 0.75), 0 8px 24px rgba(0, 0, 0, 0.85)';
+            fab.style.borderColor = '#00f0ff';
+            tooltip.style.transform = 'translateY(0) scale(1)';
+            tooltip.style.borderColor = '#00f0ff';
+            tooltip.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.7), 0 0 18px rgba(0, 240, 255, 0.35)';
         }};
 
         fab.onclick = function(e) {{
@@ -1899,6 +1956,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             }}
         }};
 
+        pDoc.body.appendChild(tooltip);
         pDoc.body.appendChild(fab);
     }}
 
