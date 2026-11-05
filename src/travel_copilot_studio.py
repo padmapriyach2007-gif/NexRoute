@@ -955,6 +955,36 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
         min-height: 50px !important;
         max-height: 50px !important;
     }
+    #pathfinder-tour-fab-trigger,
+    .pathfinder-tour-fab-trigger {
+        bottom: 148px !important;
+        right: 14px !important;
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+    }
+    #pathfinder-tour-fab-trigger img {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    .floating-tour-welcome-tooltip,
+    .floating-aura-welcome-tooltip {
+        right: 70px !important;
+        bottom: 150px !important;
+        padding: 5px 12px !important;
+    }
+    div[data-testid="stPopoverBody"] {
+        width: calc(100vw - 24px) !important;
+        max-width: 420px !important;
+        max-height: 80vh !important;
+        bottom: 74px !important;
+        right: 12px !important;
+        left: 12px !important;
+        margin: 0 auto !important;
+        padding: 12px !important;
+        border-radius: 16px !important;
+    }
 
     /* Responsive Map Viewport */
     iframe[title="streamlit_folium.st_folium"],

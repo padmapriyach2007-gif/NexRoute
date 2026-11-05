@@ -4177,28 +4177,146 @@ st.markdown("""
         margin: 0 auto 6px auto;
     }
 
+    /* =============================================================
+       COMPREHENSIVE 6-TIER MOBILE-FIRST RESPONSIVE DESIGN SYSTEM
+       - Tier 6: Large Desktops (1440px and above / 1441px+)
+       - Tier 5: Laptops (1024px–1439px / 1025px - 1440px)
+       - Tier 4: Tablets (768px–1023px / 601px - 1024px)
+       - Tier 3: Large Mobile (481px–767px / 431px - 600px)
+       - Tier 2: Standard Mobile (376px–480px / 375px - 430px)
+       - Tier 1: Small Mobile (320px–375px / max-width: 374px)
+       ============================================================= */
+
     /* -------------------------------------------------------------
-       TIER 6: Large Desktops (> 1440px)
+       GLOBAL TOUCH & CONTAINMENT RULES (All screens)
+       ------------------------------------------------------------- */
+    html, body, .stApp, .main {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+
+    *, *::before, *::after {
+        box-sizing: border-box !important;
+    }
+
+    /* Prevent mobile double-tap zoom & ensure responsive touch targets */
+    button, [role="button"], input, select, textarea {
+        touch-action: manipulation !important;
+    }
+
+    /* Universal fluid typography */
+    h1, .qr-hero-heading {
+        font-size: clamp(1.4rem, 4.5vw, 2.3rem) !important;
+        line-height: 1.25 !important;
+        word-break: break-word !important;
+    }
+    h2 {
+        font-size: clamp(1.15rem, 3.8vw, 1.75rem) !important;
+        line-height: 1.3 !important;
+        word-break: break-word !important;
+    }
+    h3 {
+        font-size: clamp(1.0rem, 3.0vw, 1.35rem) !important;
+        line-height: 1.35 !important;
+    }
+    p, span, div, label {
+        overflow-wrap: break-word !important;
+    }
+
+    /* Responsive Input Elements & Forms */
+    input[type="text"],
+    input[type="search"],
+    input[type="number"],
+    div[data-testid="stTextInput"] input,
+    div[data-baseweb="input"] input,
+    div[data-baseweb="select"] {
+        min-height: 44px !important;
+        font-size: 15px !important;
+        touch-action: manipulation !important;
+        border-radius: 10px !important;
+    }
+
+    /* Responsive Data Tables */
+    div[data-testid="stTable"],
+    div[data-testid="stDataFrame"],
+    div[data-testid="stTable"] table {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block !important;
+    }
+
+    /* Touch-accessible Action Buttons */
+    div[data-testid="stButton"] > button {
+        min-height: 44px !important;
+        touch-action: manipulation !important;
+    }
+
+    /* Responsive Horizontal Tabs Ribbon across all devices */
+    div[data-testid="stTabs"] > div:first-child,
+    div[data-testid="stTabs"] [data-baseweb="tab-list"],
+    div[role="tablist"] {
+        max-width: 100% !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        flex-wrap: nowrap !important;
+    }
+    div[role="tablist"]::-webkit-scrollbar {
+        display: none !important;
+    }
+    div[role="tab"] {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        min-height: 44px !important;
+        touch-action: manipulation !important;
+    }
+
+    /* -------------------------------------------------------------
+       TIER 6: Large Desktops (> 1440px / min-width: 1441px)
        ------------------------------------------------------------- */
     @media (min-width: 1441px) {
         .main .block-container {
             max-width: 1560px !important;
+            margin: 0 auto !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+        }
+        .st-key-qr_workspace_cards_deck div[data-testid="stHorizontalBlock"] {
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 16px !important;
         }
     }
 
     /* -------------------------------------------------------------
-       TIER 5: Laptops (1025px - 1440px)
+       TIER 5: Laptops (1024px - 1439px / min-width: 1025px and max-width: 1440px)
        ------------------------------------------------------------- */
     @media (min-width: 1025px) and (max-width: 1440px) {
         .main .block-container {
             max-width: 1380px !important;
+            margin: 0 auto !important;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+        }
+        .st-key-qr_workspace_cards_deck div[data-testid="stHorizontalBlock"] {
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 12px !important;
         }
     }
 
     /* -------------------------------------------------------------
-       TIER 4: Tablets (601px - 1024px)
+       TIER 4: Tablets (768px - 1023px / 601px - 1024px)
        ------------------------------------------------------------- */
     @media (max-width: 1024px) {
+        .main .block-container {
+            padding-left: 1.25rem !important;
+            padding-right: 1.25rem !important;
+        }
         .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
             display: grid !important;
             grid-template-columns: repeat(5, 1fr) !important;
@@ -4216,6 +4334,23 @@ st.markdown("""
         .st-key-speed_deck_container div[data-testid="stColumn"] {
             flex: none !important;
             width: auto !important;
+        }
+        .st-key-qr_workspace_cards_deck div[data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 12px !important;
+        }
+        .st-key-qr_workspace_cards_deck div[data-testid="stColumn"] {
+            flex: none !important;
+            width: auto !important;
+        }
+        .qr-workspace-card {
+            min-height: 210px !important;
+        }
+        div[data-testid="stPopoverBody"] {
+            width: 380px !important;
+            max-width: 90vw !important;
+            max-height: 540px !important;
         }
     }
 
@@ -4254,7 +4389,7 @@ st.markdown("""
     }
 
     /* -------------------------------------------------------------
-       TIER 3 & 2: Mobile Devices (<= 768px)
+       TIER 3 & 2: Mobile Devices (481px - 767px & 376px - 480px / <= 768px)
        ------------------------------------------------------------- */
     @media (max-width: 768px) {
         /* Mobile Safe Area Padding */
@@ -4265,6 +4400,17 @@ st.markdown("""
             padding-left: calc(0.6rem + env(safe-area-inset-left, 0px)) !important;
             padding-right: calc(0.6rem + env(safe-area-inset-right, 0px)) !important;
             max-width: 100vw !important;
+        }
+
+        /* Sub-view navigation header responsive stacking */
+        div[class*="st-key-view_nav_header_container"] div[data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+        div[class*="st-key-view_nav_header_container"] div[data-testid="stColumn"] {
+            width: 100% !important;
+            flex: none !important;
         }
 
         /* 1 Card per row for Route Recommendation Cards */
@@ -4325,7 +4471,7 @@ st.markdown("""
             flex: 1 1 100% !important;
         }
 
-        /* Vehicle Fleet Deck on Mobile: 3 columns */
+        /* Vehicle Fleet Deck on Mobile: 3 columns (Standard phones: 375px–430px) */
         .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
             display: grid !important;
             grid-template-columns: repeat(3, 1fr) !important;
@@ -4359,12 +4505,19 @@ st.markdown("""
             min-height: 40px !important;
         }
 
-        /* Floating Aura Chatbot FAB & Tooltip */
+        /* Floating Aura Chatbot FAB & Tooltips on Mobile */
         [data-testid="stElementContainer"]:has([data-testid="stPopover"]),
         div[data-testid="stPopover"],
         .floating-aura-logo-overlay {
             bottom: 16px !important;
             right: 14px !important;
+            width: 50px !important;
+            height: 50px !important;
+            min-width: 50px !important;
+            min-height: 50px !important;
+        }
+        div[data-testid="stPopover"] > button,
+        div[data-testid="stPopover"] button {
             width: 50px !important;
             height: 50px !important;
             min-width: 50px !important;
@@ -4376,23 +4529,107 @@ st.markdown("""
             width: 56px !important;
             height: 12px !important;
         }
+
+        /* Button 1 (Quick Tour FAB) on Mobile */
+        #pathfinder-tour-fab-trigger,
+        .pathfinder-tour-fab-trigger {
+            bottom: 148px !important;
+            right: 14px !important;
+            width: 50px !important;
+            height: 50px !important;
+            min-width: 50px !important;
+            min-height: 50px !important;
+        }
+        #pathfinder-tour-fab-trigger img {
+            width: 40px !important;
+            height: 40px !important;
+        }
+
+        /* Welcome Tooltip attached to Button 1 on Mobile */
         .floating-tour-welcome-tooltip,
-    .floating-aura-welcome-tooltip {
+        .floating-aura-welcome-tooltip {
             right: 70px !important;
-            bottom: 18px !important;
+            bottom: 150px !important;
             padding: 5px 12px !important;
         }
+        .floating-tour-welcome-tooltip .aura-tooltip-main,
         .floating-aura-welcome-tooltip .aura-tooltip-main {
             font-size: 0.76rem !important;
         }
+        .floating-tour-welcome-tooltip .aura-tooltip-pill,
         .floating-aura-welcome-tooltip .aura-tooltip-pill {
             font-size: 0.58rem !important;
             padding: 1px 6px !important;
         }
+
+        /* Chatbot Popover Modal on Mobile */
+        div[data-testid="stPopoverBody"] {
+            width: calc(100vw - 24px) !important;
+            max-width: 420px !important;
+            max-height: 80vh !important;
+            bottom: 74px !important;
+            right: 12px !important;
+            left: 12px !important;
+            margin: 0 auto !important;
+            padding: 12px !important;
+            border-radius: 16px !important;
+        }
     }
 
     /* -------------------------------------------------------------
-       TIER 1: Small Phones (320px - 374px)
+       TIER 3: Large Phones (481px - 767px / 431px - 600px)
+       ------------------------------------------------------------- */
+    @media (max-width: 600px) {
+        /* Stack 4-Workspace Landing Cards vertically */
+        .st-key-qr_workspace_cards_deck div[data-testid="stHorizontalBlock"] {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+        }
+        .qr-workspace-card {
+            min-height: auto !important;
+            padding: 16px 14px 12px 14px !important;
+        }
+        /* Scale Walking Robot Runway so it stays inside mobile viewport */
+        .lang-box-walking-stage {
+            height: 64px !important;
+            transform: scale(0.75) !important;
+            transform-origin: bottom center !important;
+            margin-bottom: 0 !important;
+        }
+    }
+
+    /* -------------------------------------------------------------
+       TIER 2: Standard Mobile (376px - 480px / 375px - 430px)
+       ------------------------------------------------------------- */
+    @media (max-width: 480px) {
+        .main .block-container,
+        div[data-testid="stAppViewBlockContainer"] {
+            padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+            padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
+            padding-left: calc(0.45rem + env(safe-area-inset-left, 0px)) !important;
+            padding-right: calc(0.45rem + env(safe-area-inset-right, 0px)) !important;
+        }
+        .st-key-main_lang_bar_container div[data-testid="stHorizontalBlock"] {
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 4px !important;
+        }
+        .st-key-main_lang_bar_container .stButton > button {
+            min-height: 40px !important;
+            font-size: 0.72rem !important;
+            padding: 4px 2px !important;
+            letter-spacing: 0 !important;
+        }
+        div[data-testid="stPopoverBody"] {
+            width: calc(100vw - 18px) !important;
+            max-width: calc(100vw - 18px) !important;
+            left: 9px !important;
+            right: 9px !important;
+            bottom: 72px !important;
+        }
+    }
+
+    /* -------------------------------------------------------------
+       TIER 1: Small Phones (320px - 375px / max-width: 374px)
        ------------------------------------------------------------- */
     @media (max-width: 374px) {
         .main .block-container,
@@ -4426,6 +4663,14 @@ st.markdown("""
         .stButton > button {
             font-size: 0.76rem !important;
         }
+        div[data-testid="stPopoverBody"] {
+            width: calc(100vw - 12px) !important;
+            max-width: calc(100vw - 12px) !important;
+            left: 6px !important;
+            right: 6px !important;
+            bottom: 70px !important;
+            padding: 10px !important;
+        }
     }
 
     /* Desktop Bottom Sheet Toggle Hide */
@@ -4445,7 +4690,6 @@ st.markdown("""
             scroll-behavior: auto !important;
         }
     }
-    
     /* Hide Leaflet bottom attribution bar */
 
 

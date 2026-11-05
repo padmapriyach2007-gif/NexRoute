@@ -1230,7 +1230,7 @@ def _render_dynamic_mode_telemetry_hud(
         <div style='font-size: 0.74rem; font-weight: 900; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px;'>
             🎯 {t('telemetry.directives', default='ENGAGED CORRIDOR OPERATIONAL DIRECTIVES', lang=curr_lang)}
         </div>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px;'>
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 8px;'>
             {strat_cards}
         </div>
     </div>
@@ -1483,7 +1483,7 @@ def render_cockpit_mode_functionality_hud(
                 {speed_eval}
             </span>
         </div>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;'>
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px;'>
             <div style='background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px;'>
                 <div style='font-size: 0.70rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 2px;'>
                     🛣️ {lbl_reason_title}

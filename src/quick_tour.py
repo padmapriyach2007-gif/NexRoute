@@ -703,6 +703,40 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
                 transform: translateY(0) !important;
             }}
 
+            /* Mobile & Tablet Responsive Adaptations */
+            @media (max-width: 768px) {{
+                .guide-stage-layout {{
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    max-width: calc(100vw - 24px) !important;
+                    gap: 8px !important;
+                }}
+                .guide-character-3d-box {{
+                    width: 95px !important;
+                    height: 110px !important;
+                }}
+                .guide-character-pose-img {{
+                    width: 95px !important;
+                    height: 110px !important;
+                }}
+                #pathfinder-tour-card {{
+                    width: calc(100vw - 24px) !important;
+                    max-width: calc(100vw - 24px) !important;
+                    max-height: calc(85vh - 20px) !important;
+                    padding: 14px !important;
+                    border-radius: 16px !important;
+                }}
+                #pathfinder-welcome-dialog {{
+                    width: calc(100vw - 24px) !important;
+                    max-width: 420px !important;
+                    padding: 18px 16px !important;
+                }}
+                .floating-tour-welcome-tooltip {{
+                    right: 70px !important;
+                    bottom: 150px !important;
+                }}
+            }}
+
             /* Backward compatibility selectors for tests */
             .tour-bot-3d-scene {{ display: none !important; }}
             .tour-bot-chassis {{ display: none !important; }}

@@ -123,3 +123,40 @@ def test_reduced_motion_accessibility():
 
     assert "prefers-reduced-motion: reduce" in content
 
+
+def test_navigation_tabs_horizontal_scroll_ribbon():
+    """Tabs ribbon must be a swipeable horizontal ribbon that prevents overflow."""
+    with open("app.py", "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert "scrollbar-width: none !important;" in content
+    assert "flex-wrap: nowrap !important;" in content
+
+
+def test_chatbot_popover_responsive_viewport():
+    """Chatbot popover must adapt to viewport width and height on mobile screens."""
+    with open("app.py", "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert "calc(100vw - 24px) !important;" in content or "calc(100vw - 20px) !important;" in content
+    assert "max-height: 80vh !important;" in content
+
+
+def test_quick_tour_fab_and_tooltip_mobile_docking():
+    """Button 1 Tour FAB and tooltip must dock properly on mobile without overlapping."""
+    with open("app.py", "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert "#pathfinder-tour-fab-trigger" in content
+    assert ".floating-tour-welcome-tooltip" in content
+
+
+def test_form_inputs_and_tables_responsive():
+    """Tables must support horizontal scrolling and input fields must be touch-accessible."""
+    with open("app.py", "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert 'div[data-testid="stTable"]' in content
+    assert "overflow-x: auto !important;" in content
+
+
