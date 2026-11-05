@@ -109,11 +109,36 @@ def test_mobile_journey_controls_grid():
 
 
 def test_mobile_aura_chatbot_chips_deck():
-    """Aura quick action chips must wrap gracefully on small screens without horizontal clipping."""
+    """Aura suggested questions must replace emoji toolbar and render clean Lucide vector icons."""
     with open("app.py", "r", encoding="utf-8") as f:
         content = f.read()
 
     assert "aura_quick_chips_deck" in content
+    assert "aura.suggested_title" in content
+    assert "btn_sq_route" in content
+    assert "btn_sq_cost" in content
+    assert "btn_sq_places" in content
+    assert "chip_clear" in content
+    assert "aura-suggested-title-badge" in content
+    # Lucide SVG vector icons embedded with cyan strokes
+    assert "%2300f0ff" in content or "#00f0ff" in content
+    assert "stroke-width" in content
+
+
+def test_aura_suggested_questions_multilingual_keys():
+    """Suggested question keys must be present across all 8 supported languages."""
+    from src.i18n import t, SUPPORTED_LANGUAGES
+    test_keys = [
+        "aura.suggested_title",
+        "aura.suggest_route",
+        "aura.suggest_cost",
+        "aura.suggest_places",
+        "aura.clear_chat",
+    ]
+    for lang in SUPPORTED_LANGUAGES:
+        for k in test_keys:
+            val = t(k, lang=lang)
+            assert val and val != k, f"Missing {k} for {lang}"
 
 
 def test_reduced_motion_accessibility():

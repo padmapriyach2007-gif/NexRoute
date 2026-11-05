@@ -1722,6 +1722,68 @@ for _l_code, _entries in {'en': {'nav.route_corridor': 'Route Corridor', 'nav.ac
     if _l_code in TRANSLATIONS:
         TRANSLATIONS[_l_code].update(_entries)
 
+_suggested_translations = {
+    'en': {
+        'aura.suggested_title': 'Suggested Questions',
+        'aura.suggest_route': 'Fastest route & traffic',
+        'aura.suggest_cost': 'Estimate fuel cost & stops',
+        'aura.suggest_places': 'Discover top sights nearby',
+        'aura.clear_chat': 'Clear Chat'
+    },
+    'te': {
+        'aura.suggested_title': 'సూచించబడిన ప్రశ్నలు',
+        'aura.suggest_route': 'వేగవంతమైన మార్గం & ట్రాఫిక్',
+        'aura.suggest_cost': 'ఇంధన ఖర్చు & స్టాప్‌లు',
+        'aura.suggest_places': 'సమీపంలోని ముఖ్య ప్రదేశాలు',
+        'aura.clear_chat': 'చాట్ క్లియర్ చేయండి'
+    },
+    'hi': {
+        'aura.suggested_title': 'सुझाए गए प्रश्न',
+        'aura.suggest_route': 'सबसे तेज़ मार्ग और ट्रैफ़िक',
+        'aura.suggest_cost': 'ईंधन लागत और पड़ाव',
+        'aura.suggest_places': 'आस-पास के प्रमुख स्थल',
+        'aura.clear_chat': 'चैट साफ़ करें'
+    },
+    'ta': {
+        'aura.suggested_title': 'பரிந்துரைக்கப்பட்ட கேள்விகள்',
+        'aura.suggest_route': 'விரைவான பாதை மற்றும் போக்குவரத்து',
+        'aura.suggest_cost': 'எரிபொருள் செலவு & ஓய்வு இடங்கள்',
+        'aura.suggest_places': 'அருகிலுள்ள முக்கிய இடங்கள்',
+        'aura.clear_chat': 'அரட்டையை அழிக்கவும்'
+    },
+    'kn': {
+        'aura.suggested_title': 'ಸೂಚಿಸಲಾದ ಪ್ರಶ್ನೆಗಳು',
+        'aura.suggest_route': 'ವೇಗದ ಮಾರ್ಗ ಮತ್ತು ಸಂಚಾರ',
+        'aura.suggest_cost': 'ಇಂಧನ ವೆಚ್ಚ ಮತ್ತು ನಿಲುಗಡೆಗಳು',
+        'aura.suggest_places': 'ಹತ್ತಿರದ ಪ್ರಮುಖ ತಾಣಗಳು',
+        'aura.clear_chat': 'ಚಾಟ್ ತೆರವುಗೊಳಿಸಿ'
+    },
+    'ml': {
+        'aura.suggested_title': 'നിർദ്ദേശിച്ച ചോദ്യങ്ങൾ',
+        'aura.suggest_route': 'വേഗമേറിയ റൂട്ടും ട്രാഫിക്കും',
+        'aura.suggest_cost': 'ഇന്ധനച്ചെലവും സ്റ്റോപ്പുകളും',
+        'aura.suggest_places': 'സമീപത്തെ പ്രധാന കാഴ്ചകൾ',
+        'aura.clear_chat': 'ചാറ്റ് മായ്ക്കുക'
+    },
+    'bn': {
+        'aura.suggested_title': 'প্রস্তাবিত প্রশ্নাবলী',
+        'aura.suggest_route': 'দ্রুততম রুট ও ট্রাফিক',
+        'aura.suggest_cost': 'জ্বালানি খরচ ও বিরতির স্থান',
+        'aura.suggest_places': 'কাছাকাছি দর্শনীয় স্থান',
+        'aura.clear_chat': 'চ্যাট মুছুন'
+    },
+    'mr': {
+        'aura.suggested_title': 'सुचवलेले प्रश्न',
+        'aura.suggest_route': 'सर्वात जलद मार्ग आणि ट्रॅफिक',
+        'aura.suggest_cost': 'इंधन खर्च आणि थांबे अंदाज',
+        'aura.suggest_places': 'जवळपासची मुख्य ठिकाणे',
+        'aura.clear_chat': 'चॅट साफ करा'
+    }
+}
+for _c, _d in _suggested_translations.items():
+    if _c in TRANSLATIONS:
+        TRANSLATIONS[_c].update(_d)
+
 try:
     _load_locale_overrides()
 except Exception:

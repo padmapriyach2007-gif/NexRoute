@@ -677,5 +677,10 @@
   "strategy.ev.charger_title": "🔌 మార్గమధ్య ఫాస్ట్ ఛార్జర్ రిజిస్ట్రీ",
   "strategy.ev.charger_desc": "అత్యవసర రీఛార్జ్ కోసం 5 కి.మీ పరిధిలోని యాక్టివ్ CCS2/Type-2 ఫాస్ట్ ఛార్జర్లను పర్యవేక్షిస్తుంది.",
   "strategy.ev.zero_emission_title": "🌱 జీరో టైల్‌పైప్ ఉద్గారాలు",
-  "strategy.ev.zero_emission_desc": "పూర్తి నిశ్శబ్ద ఎలక్ట్రిక్ టార్క్ మరియు జీరో ఉద్గారాలతో కూడిన ప్రయాణం."
+  "strategy.ev.zero_emission_desc": "పూర్తి నిశ్శబ్ద ఎలక్ట్రిక్ టార్క్ మరియు జీరో ఉద్గారాలతో కూడిన ప్రయాణం.",
+  "aura.suggested_title": "సూచించబడిన ప్రశ్నలు",
+  "aura.suggest_route": "వేగవంతమైన మార్గం & ట్రాఫిక్",
+  "aura.suggest_cost": "ఇంధన ఖర్చు & స్టాప్‌లు",
+  "aura.suggest_places": "సమీపంలోని ముఖ్య ప్రదేశాలు",
+  "aura.clear_chat": "చాట్ క్లియర్ చేయండి"
 }

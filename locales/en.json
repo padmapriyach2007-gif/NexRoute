@@ -677,5 +677,10 @@
   "strategy.ev.charger_title": "🔌 En-Route Fast Charger Registry",
   "strategy.ev.charger_desc": "Monitors active CCS2 / Type-2 EV DC Fast Chargers within 5 km corridor radius for emergency top-up.",
   "strategy.ev.zero_emission_title": "🌱 Zero Tailpipe Emissions",
-  "strategy.ev.zero_emission_desc": "True zero emission transit with pure quiet electric torque and zero acoustic passenger fatigue."
+  "strategy.ev.zero_emission_desc": "True zero emission transit with pure quiet electric torque and zero acoustic passenger fatigue.",
+  "aura.suggested_title": "Suggested Questions",
+  "aura.suggest_route": "Fastest route & traffic",
+  "aura.suggest_cost": "Estimate fuel cost & stops",
+  "aura.suggest_places": "Discover top sights nearby",
+  "aura.clear_chat": "Clear Chat"
 }

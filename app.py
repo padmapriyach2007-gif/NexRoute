@@ -4119,6 +4119,146 @@ st.markdown("""
 
     }
 
+    /* =========================================================================
+       AURA CHATBOT: SUGGESTED QUESTIONS & CLEAN TOOLBAR
+       ========================================================================= */
+    div[class*="st-key-aura_quick_chips_deck"] {
+        margin-top: 12px !important;
+        padding: 10px 12px 10px 12px !important;
+        background: rgba(10, 20, 38, 0.72) !important;
+        border: 1px solid rgba(56, 189, 248, 0.24) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(14px) !important;
+        -webkit-backdrop-filter: blur(14px) !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .aura-suggested-title-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        color: #38bdf8 !important;
+        margin-bottom: 2px !important;
+        user-select: none !important;
+    }
+
+    /* Discreet, elegant Clear Chat button in the header row */
+    div[class*="st-key-chip_clear"] button {
+        min-height: 28px !important;
+        height: 28px !important;
+        padding: 2px 10px !important;
+        font-size: 0.70rem !important;
+        font-weight: 500 !important;
+        color: #94a3b8 !important;
+        background: rgba(15, 23, 42, 0.6) !important;
+        border: 1px solid rgba(148, 163, 184, 0.25) !important;
+        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+    }
+    div[class*="st-key-chip_clear"] button:hover {
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.55) !important;
+        background: rgba(239, 68, 68, 0.12) !important;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.2) !important;
+    }
+    div[class*="st-key-chip_clear"] button::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 11px !important;
+        height: 11px !important;
+        margin-right: 5px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        flex-shrink: 0 !important;
+    }
+    div[class*="st-key-chip_clear"] button:hover::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f87171' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Suggested Question Buttons: Minimal, Dark Navy & Cyan */
+    div[class*="st-key-btn_sq_"] {
+        margin-top: 6px !important;
+    }
+    div[class*="st-key-btn_sq_"] button {
+        background: rgba(15, 23, 42, 0.8) !important;
+        border: 1px solid rgba(56, 189, 248, 0.28) !important;
+        border-radius: 9px !important;
+        color: #e2e8f0 !important;
+        font-size: 0.76rem !important;
+        font-weight: 500 !important;
+        line-height: 1.3 !important;
+        padding: 8px 12px !important;
+        min-height: 42px !important;
+        width: 100% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+    div[class*="st-key-btn_sq_"] button:hover {
+        border-color: #00f0ff !important;
+        background: rgba(14, 165, 233, 0.16) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 14px rgba(0, 240, 255, 0.28), 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+        transform: translateY(-1px) !important;
+    }
+    div[class*="st-key-btn_sq_"] button:active {
+        transform: translateY(0px) scale(0.99) !important;
+    }
+
+    /* Lucide Icon: Route / Navigation */
+    div[class*="st-key-btn_sq_route"] button::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 15px !important;
+        height: 15px !important;
+        min-width: 15px !important;
+        margin-right: 8px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='3 11 22 2 13 21 11 13 3 11'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Lucide Icon: Fuel & Cost */
+    div[class*="st-key-btn_sq_cost"] button::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 15px !important;
+        height: 15px !important;
+        min-width: 15px !important;
+        margin-right: 8px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M4 9h10'/%3E%3Cpath d='M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18'/%3E%3Cpath d='M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.8a2 2 0 0 0-.6-1.4L18 5'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Lucide Icon: Places / Sights */
+    div[class*="st-key-btn_sq_places"] button::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 15px !important;
+        height: 15px !important;
+        min-width: 15px !important;
+        margin-right: 8px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        flex-shrink: 0 !important;
+    }
+
 
 
     /* =========================================================================
@@ -4444,20 +4584,25 @@ st.markdown("""
             font-size: 0.82rem !important;
         }
 
-        /* Aura Chatbot Quick Chips Deck */
+        /* Aura Chatbot Suggested Questions Deck */
         div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stHorizontalBlock"] {
             display: flex !important;
-            flex-wrap: wrap !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
+            align-items: center !important;
             gap: 6px !important;
         }
         div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stColumn"] {
-            flex: 1 1 calc(33.33% - 6px) !important;
-            min-width: 85px !important;
+            flex: 0 0 auto !important;
+            width: auto !important;
+        }
+        div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stColumn"]:first-child {
+            flex: 1 1 auto !important;
         }
         div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stButton"] > button {
-            min-height: 44px !important;
-            font-size: 0.78rem !important;
-            padding: 4px 6px !important;
+            min-height: 42px !important;
+            font-size: 0.74rem !important;
+            padding: 7px 10px !important;
         }
 
         /* Places Controls Deck */
@@ -4651,8 +4796,13 @@ st.markdown("""
             gap: 6px !important;
         }
         div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stColumn"] {
-            flex: 1 1 calc(50% - 6px) !important;
-            min-width: 75px !important;
+            flex: 0 0 auto !important;
+            width: auto !important;
+        }
+        div[class*="st-key-aura_quick_chips_deck"] div[data-testid="stButton"] > button {
+            min-height: 40px !important;
+            font-size: 0.72rem !important;
+            padding: 6px 8px !important;
         }
         h1, .qr-hero-heading {
             font-size: 1.35rem !important;
@@ -6435,38 +6585,40 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         st.rerun()
 
     with st.container(key=f"aura_quick_chips_deck_{key_prefix}"):
-        # 6 Quick-Action Chips & Clear Chat (Dynamically Localized across 8 languages)
         qc_cur_l = st.session_state.get("app_language", "en")
-    qc1, qc2, qc3, qc4, qc5, qc6, qc_clear = st.columns([1, 1, 1, 1, 1, 1, 0.8])
-    with qc1:
-        if st.button(t("aura.chip_route", default="🗺️ Route", lang=qc_cur_l), key=f"chip_route_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_route", default="Find a route from Vijayawada to Hyderabad", lang=qc_cur_l))
+        
+        # Section Header: "Suggested Questions" on left, subtle "Clear Chat" on right
+        hdr_col_title, hdr_col_clear = st.columns([3.2, 1.3])
+        with hdr_col_title:
+            st.markdown(f"""
+            <div class="aura-suggested-title-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+                <span>{t("aura.suggested_title", default="Suggested Questions", lang=qc_cur_l)}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with hdr_col_clear:
+            if st.button(t("aura.clear_chat", default="Clear", lang=qc_cur_l), key=f"chip_clear_{key_prefix}", use_container_width=True):
+                st.session_state.aura_chat_history = [get_aura_welcome_message(qc_cur_l)]
+                if "pathfinder_bot" in st.session_state:
+                    st.session_state.pathfinder_bot.reset_conversation()
+                st.rerun()
+
+        # 3 Clean Text Suggestions with Consistent Lucide Icons
+        lbl_r = t("aura.suggest_route", default="Fastest route & avoid traffic", lang=qc_cur_l)
+        if st.button(lbl_r, key=f"btn_sq_route_{key_prefix}", use_container_width=True):
+            _execute_chat_turn(t("aura.prompt_route", default="Find the fastest route and avoid live traffic", lang=qc_cur_l))
             st.rerun()
-    with qc2:
-        if st.button(t("aura.chip_places", default="📍 Places", lang=qc_cur_l), key=f"chip_places_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_places", default="Find restaurants and rest stops along my route", lang=qc_cur_l))
+
+        lbl_c = t("aura.suggest_cost", default="Estimate fuel cost & rest stops", lang=qc_cur_l)
+        if st.button(lbl_c, key=f"btn_sq_cost_{key_prefix}", use_container_width=True):
+            _execute_chat_turn(t("aura.prompt_cost", default="Estimate my fuel cost and rest stops for this journey", lang=qc_cur_l))
             st.rerun()
-    with qc3:
-        if st.button(t("aura.chip_plan", default="✈️ Plan", lang=qc_cur_l), key=f"chip_plan_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_plan", default="Plan a 2-day weekend trip from Vijayawada to Araku Valley", lang=qc_cur_l))
-            st.rerun()
-    with qc4:
-        if st.button(t("aura.chip_cost", default="⛽ Cost", lang=qc_cur_l), key=f"chip_cost_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_cost", default="Estimate my fuel cost for this journey", lang=qc_cur_l))
-            st.rerun()
-    with qc5:
-        if st.button(t("aura.chip_stays", default="🏨 Stays", lang=qc_cur_l), key=f"chip_hotel_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_stays", default="Find nearby hotels and accommodation", lang=qc_cur_l))
-            st.rerun()
-    with qc6:
-        if st.button(t("aura.chip_ask", default="💬 Ask", lang=qc_cur_l), key=f"chip_ask_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_ask", default="What can you do?", lang=qc_cur_l))
-            st.rerun()
-    with qc_clear:
-        if st.button(t("aura.chip_clear", default="🗑️ Clear", lang=qc_cur_l), key=f"chip_clear_{key_prefix}", use_container_width=True):
-            st.session_state.aura_chat_history = [get_aura_welcome_message(qc_cur_l)]
-            if "pathfinder_bot" in st.session_state:
-                st.session_state.pathfinder_bot.reset_conversation()
+
+        lbl_p = t("aura.suggest_places", default="Discover top sights & places nearby", lang=qc_cur_l)
+        if st.button(lbl_p, key=f"btn_sq_places_{key_prefix}", use_container_width=True):
+            _execute_chat_turn(t("aura.prompt_places", default="Discover top tourist attractions and food stops nearby", lang=qc_cur_l))
             st.rerun()
 
 

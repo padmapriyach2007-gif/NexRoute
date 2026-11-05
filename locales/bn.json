@@ -677,5 +677,10 @@
   "strategy.ev.charger_title": "🔌 मार्ग में फास्ट चार्जर रजिस्ट्री",
   "strategy.ev.charger_desc": "आपातकालीन चार्जिंग के लिए 5 किमी के दायरे में फास्ट चार्जर की निगरानी करता है।",
   "strategy.ev.zero_emission_title": "🌱 शून्य टेलपाइप उत्सर्जन",
-  "strategy.ev.zero_emission_desc": "शांत इलेक्ट्रिक टॉर्क के साथ शून्य उत्सर्जन पारगमन।"
+  "strategy.ev.zero_emission_desc": "शांत इलेक्ट्रिक टॉर्क के साथ शून्य उत्सर्जन पारगमन।",
+  "aura.suggested_title": "প্রস্তাবিত প্রশ্নাবলী",
+  "aura.suggest_route": "দ্রুততম রুট ও ট্রাফিক",
+  "aura.suggest_cost": "জ্বালানি খরচ ও বিরতির স্থান",
+  "aura.suggest_places": "কাছাকাছি দর্শনীয় স্থান",
+  "aura.clear_chat": "চ্যাট মুছুন"
 }
