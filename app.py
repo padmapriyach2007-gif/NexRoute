@@ -27936,17 +27936,8 @@ body {{
 
 
                 <div style="display: flex; align-items: center; gap: 12px;">
-
-
-
-                    <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, #0284c7, #0369a1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);">
-
-
-
-                        🤖
-
-
-
+                    <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, rgba(2, 132, 199, 0.4), rgba(3, 105, 161, 0.6)); border: 1.5px solid rgba(56, 189, 248, 0.6); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 18px rgba(56, 189, 248, 0.55);">
+                        <img src="{aura_mascot_3d_uri or aura_logo_uri}" style="width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 0 10px #38bdf8);" alt="3D AURA Mascot" />
                     </div>
 
 
