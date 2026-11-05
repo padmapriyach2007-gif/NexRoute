@@ -373,15 +373,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
    3D CUTE ROBOT CHATBOT STATION (Stationed at Left of Main Dashboard)
    ========================================================================= */
 .dashboard-robot-left-station {
-    flex: 0 0 auto !important;
-    max-width: 170px !important;
-    position: relative !important;
-    text-align: center !important;
-    margin: 0 20px 0 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: none !important; /* Single robot only: duplicate static robot permanently removed */
 }
 
 .dashboard-robot-station-inner {
@@ -581,211 +573,355 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 }
 
 /* =========================================================================
-   AURA AUTOMATIC WALKING ROBOT ON THE LANGUAGE BOX (REALISTIC BIPEDAL GAIT)
+   SINGLE 3D AI ROBOT GUIDE ANIMATION (CURVED CYAN GLOWING FLIGHT PATH)
    ========================================================================= */
+.aura-travel-stage,
 .lang-box-walking-stage {
     position: relative !important;
     width: 100% !important;
-    height: 96px !important;
-    margin-bottom: 2px !important;
+    height: 104px !important;
+    margin-bottom: 4px !important;
     overflow: visible !important;
 }
 
-/* Glowing Neon Runway Track along the top of the Language Box */
-.lang-box-runway-track {
+/* Curved Glowing Path SVG */
+.aura-flight-svg {
     position: absolute !important;
-    bottom: 2px !important;
-    left: 10px !important;
-    right: 10px !important;
-    height: 3px !important;
-    background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.75) 12%, rgba(168, 85, 247, 0.85) 50%, rgba(56, 189, 248, 0.75) 88%, transparent 100%) !important;
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.9), 0 0 24px rgba(168, 85, 247, 0.6) !important;
-    border-radius: 999px !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    overflow: visible !important;
 }
 
-/* The Robot Patrol: Moves automatically side-to-side across the language box with realistic deceleration and turnaround */
+.aura-track-guide {
+    opacity: 0.65 !important;
+}
+
+.aura-track-stream {
+    animation: auraStreamDash 1.25s linear infinite !important;
+}
+
+@keyframes auraStreamDash {
+    from { stroke-dashoffset: 36; }
+    to { stroke-dashoffset: 0; }
+}
+
+/* Destination Landmark Holographic Platform */
+.aura-destination-dock {
+    position: absolute !important;
+    bottom: 4px !important;
+    right: 28px !important;
+    width: 78px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+}
+
+.aura-dock-ring-pulse {
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: 50% !important;
+    border: 1.5px solid rgba(0, 240, 255, 0.85) !important;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.75), inset 0 0 10px rgba(0, 240, 255, 0.45) !important;
+    animation: dockRingPulse 2s infinite ease-in-out !important;
+}
+
+@keyframes dockRingPulse {
+    0%, 100% { transform: scale(0.95); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 1; }
+}
+
+.aura-dock-core {
+    position: absolute !important;
+    inset: 3px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.75) 0%, rgba(168, 85, 247, 0.4) 55%, transparent 80%) !important;
+}
+
+/* The SINGLE Moving 3D AI Robot Guide */
+.aura-single-traveler,
 .lang-box-walking-aura {
     position: absolute !important;
-    bottom: 2px !important;
-    width: 90px !important;
-    height: 96px !important;
+    bottom: 4px !important;
+    width: 86px !important;
+    height: 98px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-end !important;
-    animation: auraAutoWalkAcross 32s infinite ease-in-out !important;
-    pointer-events: auto !important;
     cursor: pointer !important;
-    z-index: 20 !important;
-    transition: filter 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    z-index: 15 !important;
     user-select: none !important;
+    pointer-events: auto !important;
+    animation: auraSingleRobotJourney 4.0s cubic-bezier(0.25, 0.85, 0.35, 1) forwards !important;
+    transition: filter 0.25s ease, transform 0.25s ease !important;
 }
 
+.aura-single-traveler:hover,
 .lang-box-walking-aura:hover {
-    animation-play-state: paused !important;
-    filter: drop-shadow(0 0 18px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 32px rgba(168, 85, 247, 0.85)) !important;
-    transform: translateY(-2px) scale(1.04) !important;
+    filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 32px rgba(168, 85, 247, 0.85)) !important;
 }
 
+.aura-single-traveler:active,
 .lang-box-walking-aura:active {
-    transform: scale(0.94) !important;
+    transform: scale(0.95) !important;
 }
 
-.lang-box-walking-aura:focus-visible {
-    outline: 2px solid #00f0ff !important;
-    outline-offset: 4px !important;
-    border-radius: 12px !important;
+/* Keyframes: ONE Robot travels smoothly along curved path to destination, stops, greets, and settles */
+@keyframes auraSingleRobotJourney {
+    0% {
+        left: 20px;
+        transform: translateY(12px) scale(0.92);
+        opacity: 0.2;
+    }
+    12% {
+        left: 60px;
+        transform: translateY(0px) rotate(-3deg) scale(1.0);
+        opacity: 1;
+    }
+    30% {
+        left: 28%;
+        transform: translateY(-22px) rotate(-4deg) scale(1.03);
+    }
+    50% {
+        left: 52%;
+        transform: translateY(-4px) rotate(3deg) scale(0.99);
+    }
+    70% {
+        left: 74%;
+        transform: translateY(-16px) rotate(-2deg) scale(1.02);
+    }
+    86% {
+        left: calc(100% - 110px);
+        transform: translateY(0px) rotate(0deg) scale(1.0);
+    }
+    93% {
+        /* Friendly greeting nod / rise gesture */
+        left: calc(100% - 110px);
+        transform: translateY(-8px) rotate(4deg) scale(1.05);
+    }
+    100% {
+        left: calc(100% - 110px);
+        transform: translateY(0px) rotate(0deg) scale(1.0);
+    }
 }
 
-/* Horizontal patrol keyframes with smooth deceleration, pause & turnaround at edges */
-@keyframes auraAutoWalkAcross {
-    0%   { left: 16px; transform: scaleX(1); }
-    46%  { left: calc(100% - 106px); transform: scaleX(1); }
-    50%  { left: calc(100% - 106px); transform: scaleX(-1); }
-    96%  { left: 16px; transform: scaleX(-1); }
-    100% { left: 16px; transform: scaleX(1); }
-}
-
+.aura-single-robot-avatar,
 .lang-bot-figure-wrap {
     position: relative !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transform-origin: center bottom !important;
-}
-
-/* Procedural 3D Articulated Robot Canvas (Realistic, Cute 3D Mascot) */
-.aura-walking-3d-canvas {
-    width: 90px !important;
-    height: 96px !important;
-    display: block !important;
-    pointer-events: none !important;
-    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 14px rgba(56, 189, 248, 0.6)) !important;
-    user-select: none !important;
-}
-
-/* Realistic Bipedal Stride: Full 4-phase gait cycle with double-bounce, pelvic sway, foot impact */
-.lang-bot-walking-img {
-    width: 66px !important;
-    height: 66px !important;
-    object-fit: contain !important;
-    filter: drop-shadow(0 6px 14px rgba(0, 240, 255, 0.75)) drop-shadow(0 0 10px rgba(168, 85, 247, 0.5)) !important;
-    animation: auraRealisticBipedalStride 0.74s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95) !important;
-    display: block !important;
-    transform-origin: 50% 92% !important;
-    user-select: none !important;
-}
-
-@keyframes auraRealisticBipedalStride {
-    0% {
-        /* Left foot contact: body down, left hip/torso forward */
-        transform: translateY(0px) rotate(-3deg) skewX(-2.5deg) scale(1.02, 0.98);
-    }
-    25% {
-        /* Mid-stance apex: body rises to highest point, hips level */
-        transform: translateY(-8px) rotate(0deg) skewX(0deg) scale(0.98, 1.02);
-    }
-    50% {
-        /* Right foot contact: body down, right hip/torso forward */
-        transform: translateY(0px) rotate(3deg) skewX(2.5deg) scale(1.02, 0.98);
-    }
-    75% {
-        /* Mid-stance apex: body rises to highest point, hips level */
-        transform: translateY(-8px) rotate(0deg) skewX(0deg) scale(0.98, 1.02);
-    }
-    100% {
-        /* Return to left foot contact */
-        transform: translateY(0px) rotate(-3deg) skewX(-2.5deg) scale(1.02, 0.98);
-    }
-}
-
-/* Glowing Holographic Footstep Disc pulsing synchronously with foot strikes */
-.lang-bot-hologram-disc {
-    position: absolute !important;
-    bottom: -3px !important;
-    width: 54px !important;
-    height: 15px !important;
-    border-radius: 50% !important;
-    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.90) 0%, rgba(2, 132, 199, 0.55) 45%, transparent 75%) !important;
-    box-shadow: 0 0 18px rgba(0, 240, 255, 0.9), inset 0 0 8px rgba(0, 240, 255, 0.6) !important;
-    z-index: -1 !important;
-    animation: auraDiscPulse 0.74s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95) !important;
-}
-
-@keyframes auraDiscPulse {
-    0% {
-        /* Foot strike ground contact: disc expands & glows intensely */
-        transform: scale(1.18);
-        opacity: 0.95;
-    }
-    25% {
-        /* Body in apex: disc shrinks as feet lift */
-        transform: scale(0.82);
-        opacity: 0.50;
-    }
-    50% {
-        /* Opposite foot strike ground contact: disc expands & glows */
-        transform: scale(1.18);
-        opacity: 0.95;
-    }
-    75% {
-        /* Body in apex: disc shrinks */
-        transform: scale(0.82);
-        opacity: 0.50;
-    }
-    100% {
-        transform: scale(1.18);
-        opacity: 0.95;
-    }
-}
-
-/* Speech Bubble / Welcome Tooltip floating above Aura's head */
-.lang-bot-speech-bubble {
-    position: absolute !important;
-    top: -38px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important;
-    border: 1.5px solid #00f0ff !important;
-    border-radius: 14px !important;
-    padding: 4px 14px !important;
-    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    gap: 2px !important;
-    font-size: 0.72rem !important;
+    justify-content: center !important;
+}
+
+.aura-single-mascot-img,
+.lang-bot-walking-img {
+    width: 74px !important;
+    height: 80px !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 8px 18px rgba(0, 240, 255, 0.75)) drop-shadow(0 0 12px rgba(168, 85, 247, 0.45)) !important;
+    display: block !important;
+    margin: 0 auto !important;
+    animation: auraFloatIdle 2.2s infinite ease-in-out !important;
+    animation-delay: 4.0s !important;
+    transition: filter 0.25s ease, transform 0.25s ease !important;
+}
+
+@keyframes auraFloatIdle {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(1.5deg); }
+}
+
+.aura-single-traveler:hover .aura-single-mascot-img,
+.lang-box-walking-aura:hover .lang-bot-walking-img {
+    transform: translateY(-8px) scale(1.06) !important;
+    filter: drop-shadow(0 12px 24px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 20px rgba(56, 189, 248, 0.75)) !important;
+}
+
+/* Holographic Footstep Disc */
+.aura-mascot-hologram-disc,
+.lang-bot-hologram-disc {
+    width: 64px !important;
+    height: 16px !important;
+    margin-top: -6px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.92) 0%, rgba(2, 132, 199, 0.55) 45%, transparent 75%) !important;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.9), inset 0 0 8px rgba(0, 240, 255, 0.5) !important;
+    animation: discGlowPulse 2.2s infinite ease-in-out !important;
+    animation-delay: 4.0s !important;
+}
+
+@keyframes discGlowPulse {
+    0%, 100% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.12); opacity: 1; }
+}
+
+.aura-travel-energy-glow {
+    position: absolute !important;
+    bottom: 0 !important;
+    width: 44px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    background: rgba(0, 240, 255, 0.45) !important;
+    filter: blur(6px) !important;
+    pointer-events: none !important;
+}
+
+/* Welcoming Speech Bubble Tooltip at Destination */
+.aura-travel-speech-bubble,
+.lang-bot-speech-bubble {
+    position: absolute !important;
+    top: -34px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.94) 100%) !important;
+    border: 1.5px solid #00f0ff !important;
+    border-radius: 14px !important;
+    padding: 4px 12px !important;
+    font-size: 0.74rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     white-space: nowrap !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 16px rgba(0, 240, 255, 0.45) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    pointer-events: auto !important;
-    cursor: pointer !important;
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.65), 0 0 12px rgba(168, 85, 247, 0.4) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    pointer-events: none !important;
     z-index: 25 !important;
     letter-spacing: 0.02em !important;
-    animation: langBubbleBob 1.48s infinite ease-in-out !important;
-    transition: all 0.25s ease !important;
+    animation: auraBubbleReveal 4.0s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 
+.aura-travel-speech-bubble::after,
+.lang-bot-speech-bubble::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -6px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 6px solid transparent !important;
+    border-right: 6px solid transparent !important;
+    border-top: 6px solid #00f0ff !important;
+}
+
+@keyframes auraBubbleReveal {
+    0%, 75% {
+        opacity: 0.3;
+        transform: translateX(-50%) scale(0.85);
+    }
+    86% {
+        opacity: 0.85;
+        transform: translateX(-50%) scale(0.96);
+    }
+    93% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.08);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.0);
+    }
+}
+
+.aura-speech-tag,
 .lang-bot-tag {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    background: rgba(0, 240, 255, 0.15) !important;
-    border: 1px solid rgba(0, 240, 255, 0.5) !important;
+    background: rgba(0, 240, 255, 0.22) !important;
+    border: 1px solid rgba(0, 240, 255, 0.7) !important;
     border-radius: 9999px !important;
     padding: 1px 7px !important;
-    font-size: 0.58rem !important;
+    font-size: 0.62rem !important;
     font-weight: 800 !important;
     color: #38bdf8 !important;
-    letter-spacing: 0.05em !important;
+    letter-spacing: 0.06em !important;
 }
 
-.lang-box-walking-aura:hover .lang-bot-speech-bubble {
-    background: linear-gradient(135deg, rgba(8, 20, 44, 0.98) 0%, rgba(2, 132, 199, 0.90) 100%) !important;
-    border-color: #38bdf8 !important;
+.aura-speech-text,
+#lang-bot-speech-text {
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
     color: #ffffff !important;
+    transition: opacity 0.25s ease !important;
+}
+
+/* Ensure no duplicate canvas or secondary robot appears */
+#aura-walking-3d-canvas,
+.aura-walking-3d-canvas {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .aura-travel-stage,
+    .lang-box-walking-stage {
+        height: 84px !important;
+    }
+    .aura-single-mascot-img,
+    .lang-bot-walking-img {
+        width: 58px !important;
+        height: 64px !important;
+    }
+    .aura-single-traveler,
+    .lang-box-walking-aura {
+        width: 66px !important;
+        height: 82px !important;
+    }
+    .aura-mascot-hologram-disc,
+    .lang-bot-hologram-disc {
+        width: 50px !important;
+        height: 13px !important;
+    }
+    .aura-destination-dock {
+        right: 12px !important;
+        width: 60px !important;
+        height: 18px !important;
+    }
+    @keyframes auraSingleRobotJourney {
+        0% { left: 8px; transform: translateY(6px) scale(0.9); opacity: 0.2; }
+        12% { left: 24px; transform: translateY(0px) scale(1); opacity: 1; }
+        50% { left: 45%; transform: translateY(-10px) scale(0.98); }
+        86% { left: calc(100% - 82px); transform: translateY(0) scale(1); }
+        93% { left: calc(100% - 82px); transform: translateY(-5px) scale(1.04); }
+        100% { left: calc(100% - 82px); transform: translateY(0) scale(1); }
+    }
+    .aura-travel-speech-bubble,
+    .lang-bot-speech-bubble {
+        font-size: 0.66rem !important;
+        padding: 3px 8px !important;
+        top: -30px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aura-single-traveler,
+    .lang-box-walking-aura {
+        animation: none !important;
+        left: calc(100% - 110px) !important;
+        transform: none !important;
+    }
+    .aura-single-mascot-img,
+    .lang-bot-walking-img {
+        animation: none !important;
+    }
+    .aura-track-stream {
+        animation: none !important;
+    }
+    .aura-travel-speech-bubble,
+    .lang-bot-speech-bubble {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: translateX(-50%) !important;
+    }
+}
     box-shadow: 0 0 24px rgba(0, 240, 255, 0.75), 0 8px 24px rgba(0, 0, 0, 0.8) !important;
 }
 .lang-bot-speech-bubble::after {
@@ -1355,7 +1491,50 @@ def render_main_language_bar():
     ld = DASHBOARD_I18N.get(cur_lang, DASHBOARD_I18N["en"])
 
     mascot_b64 = _get_aura_robot_b64()
-    walking_robot_html = f"""<div class="lang-box-walking-stage" id="lang-box-walking-stage"><div class="lang-box-runway-track"></div><div class="lang-box-walking-aura quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else if(window.top&&window.top.startPathfinderTour){{window.top.startPathfinderTour(0);}}else{{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}}"><div class="lang-bot-speech-bubble" id="lang-bot-speech-bubble"><span class="lang-bot-tag">✦ AI Guide</span><span id="lang-bot-speech-text">Click me for a tour! ✨</span></div><div class="lang-bot-figure-wrap" id="lang-bot-figure-wrap"><img src="data:image/png;base64,{mascot_b64}" class="lang-bot-walking-img" alt="3D AURA Walking Guide" /><canvas id="aura-walking-3d-canvas" class="aura-walking-3d-canvas" width="180" height="192" style="display:none;"></canvas></div><div class="lang-bot-hologram-disc"></div></div></div>"""
+    walking_robot_html = f"""<div class="aura-travel-stage" id="lang-box-walking-stage">
+    <!-- Glowing Curved Cyan Path Line -->
+    <svg class="aura-flight-svg" viewBox="0 0 1000 80" preserveAspectRatio="none">
+        <defs>
+            <linearGradient id="auraGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="rgba(0, 240, 255, 0.2)"/>
+                <stop offset="35%" stop-color="rgba(0, 240, 255, 0.9)"/>
+                <stop offset="70%" stop-color="rgba(56, 189, 248, 0.95)"/>
+                <stop offset="100%" stop-color="rgba(168, 85, 247, 0.95)"/>
+            </linearGradient>
+            <filter id="auraNeonGlow" x="-20%" y="-40%" width="140%" height="180%">
+                <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <path class="aura-track-guide" d="M 30,58 C 240,12 480,72 760,34 C 830,26 890,32 940,38" fill="none" stroke="rgba(0, 240, 255, 0.22)" stroke-width="2"/>
+        <path class="aura-track-stream" d="M 30,58 C 240,12 480,72 760,34 C 830,26 890,32 940,38" fill="none" stroke="url(#auraGlowGrad)" stroke-width="3" filter="url(#auraNeonGlow)" stroke-dasharray="10 8"/>
+    </svg>
+
+    <!-- Destination Landmark Holographic Platform Pad -->
+    <div class="aura-destination-dock" id="aura-destination-dock" title="AI Guide Destination Beacon">
+        <div class="aura-dock-ring-pulse"></div>
+        <div class="aura-dock-core"></div>
+    </div>
+
+    <!-- The ONE Single Moving 3D AI Robot -->
+    <div class="aura-single-traveler quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else if(window.top&&window.top.startPathfinderTour){{window.top.startPathfinderTour(0);}}else{{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}}">
+        <!-- Welcoming Speech Bubble Tooltip at Destination -->
+        <div class="aura-travel-speech-bubble" id="lang-bot-speech-bubble">
+            <span class="aura-speech-tag">✦ AI Guide</span>
+            <span class="aura-speech-text" id="lang-bot-speech-text">Click me for a tour! ✨</span>
+        </div>
+
+        <!-- Single Robot Character Figure (NO DUPLICATE CANVAS, NO DUPLICATE IMAGE!) -->
+        <div class="aura-single-robot-avatar" id="lang-bot-figure-wrap">
+            <img src="data:image/png;base64,{mascot_b64}" class="aura-single-mascot-img" alt="3D AI Robot Mascot" />
+            <div class="aura-mascot-hologram-disc"></div>
+            <div class="aura-travel-energy-glow"></div>
+        </div>
+    </div>
+</div>"""
 
     st.markdown(f"""<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.88) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 10px 18px 14px 18px; margin-bottom: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.50), 0 0 20px rgba(56, 189, 248, 0.18); position: relative;">
 {walking_robot_html}
@@ -1390,12 +1569,11 @@ def render_main_language_bar():
             var pWin = (window.parent && window.parent.window) || window;
             var pDoc = (window.parent && window.parent.document) || document;
 
-            // Speech rotation
+            // Speech rotation after arrival at destination
             var speechPhrases = [
-                "🚀 Click me to take a tour! ✨",
+                "Click me for a tour! ✨",
+                "🚀 Tap me to start guided tour! ✨",
                 "👋 Hi! I am AURA! Click me! 🧭",
-                "✨ Tap me to start guided tour! 🚀",
-                "🌐 Select your language below! 🗺️",
                 "🌸 నమస్కారం! టూర్ కోసం నన్ను క్లిక్ చేయండి ✨",
                 "🌟 नमस्ते! टूर के लिए मुझे क्लिक करें 🗺️",
                 "💫 Click me anytime for guided tour! 🚀"
@@ -1428,7 +1606,7 @@ def render_main_language_bar():
                     pDoc.getElementById("lang-box-walking-aura"),
                     document.getElementById("lang-box-walking-aura"),
                     pDoc.getElementById("lang-bot-speech-bubble"),
-                    pDoc.getElementById("aura-walking-3d-canvas")
+                    document.getElementById("lang-bot-speech-bubble")
                 ];
                 targets.forEach(function(walker) {
                     if (walker && !walker._tourClickBound) {
@@ -1455,224 +1633,30 @@ def render_main_language_bar():
             setTimeout(bindAuraClickListener, 300);
             setTimeout(bindAuraClickListener, 1000);
             setTimeout(bindAuraClickListener, 2500);
-            setInterval(bindAuraClickListener, 1500);
+            setInterval(bindAuraClickListener, 2000);
 
-            // Speech Rotation Timer
-            if (!window.parent._langBotWalkInterval) {
-                window.parent._langBotWalkInterval = setInterval(function() {
-                    sIdx = (sIdx + 1) % speechPhrases.length;
-                    var el = pDoc.getElementById("lang-bot-speech-text");
-                    if (el) {
-                        el.style.opacity = "0";
-                        setTimeout(function() {
-                            if (el) {
-                                el.innerHTML = speechPhrases[sIdx];
-                                el.style.opacity = "1";
-                            }
-                        }, 250);
-                    }
-                }, 3500);
-            }
-
-            // =========================================================================
-            // PROCEDURAL 3D CUTE WALKING AURA CHATBOT RENDERER (NO STATIC IMAGES!)
-            // =========================================================================
-            // =========================================================================
-            // POLISHED WHITE-AND-SILVER 3D AI ROBOT MASCOT RENDERER (NO CARTOON LEGS!)
-            // =========================================================================
-            var mascotImg3D = new Image();
-            mascotImg3D.src = "data:image/png;base64,__AURA_MASCOT_B64__";
-
-            function initCuteAuraWalker() {
-                var canvas = pDoc.getElementById("aura-walking-3d-canvas");
-                if (!canvas) {
-                    setTimeout(initCuteAuraWalker, 200);
-                    return;
-                }
-                if (canvas._auraActive) return;
-                canvas._auraActive = true;
-
-                var ctx = canvas.getContext("2d");
-                if (!ctx) return;
-
-                var dpr = pWin.devicePixelRatio || 2;
-                var w = 90;
-                var h = 96;
-                canvas.width = w * dpr;
-                canvas.height = h * dpr;
-                canvas.style.width = w + "px";
-                canvas.style.height = h + "px";
-
-                var auraWalker = pDoc.getElementById("lang-box-walking-aura");
-                var isHovered = false;
-                if (auraWalker) {
-                    auraWalker.addEventListener("mouseenter", function() { isHovered = true; });
-                    auraWalker.addEventListener("mouseleave", function() { isHovered = false; });
-                }
-
-                // Rising energy sparkle particles
-                var particles = [];
-                for (var i = 0; i < 9; i++) {
-                    particles.push({
-                        x: (Math.random() - 0.5) * 38,
-                        y: Math.random() * 24,
-                        speed: 0.22 + Math.random() * 0.38,
-                        size: 0.9 + Math.random() * 1.6
-                    });
-                }
-
-                var currentYaw = 1.0;
-                var currentStride = 1.0;
-                var lastTime = performance.now();
-
-                function renderFrame(now) {
-                    var dt = Math.min(64, now - lastTime);
-                    lastTime = now;
-
-                    ctx.save();
-                    ctx.scale(dpr, dpr);
-                    ctx.clearRect(0, 0, w, h);
-
-                    var cx = 45;
-                    var groundY = 82;
-
-                    // Synchronize with 32-second horizontal patrol
-                    var patrolPeriod = 32000;
-                    var cycle = (now % patrolPeriod) / patrolPeriod;
-
-                    var targetYaw = 1.0;
-                    var targetStride = 1.0;
-
-                    if (isHovered) {
-                        targetYaw = 0.0;     // Face front towards user
-                        targetStride = 0.0;  // Pause in place
-                    } else if (cycle >= 0.0 && cycle < 0.44) {
-                        targetYaw = 1.0;
-                        targetStride = 1.0;
-                    } else if (cycle >= 0.44 && cycle < 0.48) {
-                        targetYaw = 1.0;
-                        targetStride = Math.max(0, (0.48 - cycle) / 0.04);
-                    } else if (cycle >= 0.48 && cycle < 0.52) {
-                        targetStride = 0.0;
-                        targetYaw = (0.50 - cycle) / 0.02; // Turnaround
-                    } else if (cycle >= 0.52 && cycle < 0.94) {
-                        targetYaw = -1.0;
-                        targetStride = 1.0;
-                    } else if (cycle >= 0.94 && cycle < 0.98) {
-                        targetYaw = -1.0;
-                        targetStride = Math.max(0, (0.98 - cycle) / 0.04);
-                    } else {
-                        targetStride = 0.0;
-                        targetYaw = (cycle - 0.99) / 0.01;
-                    }
-
-                    currentYaw += (targetYaw - currentYaw) * 0.14;
-                    currentStride += (targetStride - currentStride) * 0.16;
-
-                    // Smooth anti-gravity floating bob
-                    var bob = isHovered 
-                        ? (Math.sin(now * 0.005) * 4.2)
-                        : (Math.sin(now * 0.0035) * 3.2);
-
-                    // 1. CONCENTRIC CYAN HOLOGRAPHIC PROJECTOR RINGS (FLOOR BASE)
-                    ctx.save();
-                    var discY = groundY + 2;
-                    var discGrad = ctx.createRadialGradient(cx, discY, 2, cx, discY, 28);
-                    discGrad.addColorStop(0, "rgba(0, 240, 255, 0.92)");
-                    discGrad.addColorStop(0.35, "rgba(2, 132, 199, 0.55)");
-                    discGrad.addColorStop(0.75, "rgba(0, 240, 255, 0.22)");
-                    discGrad.addColorStop(1, "rgba(0, 240, 255, 0)");
-                    ctx.fillStyle = discGrad;
-                    ctx.beginPath();
-                    var pulseR = 24 + Math.sin(now * 0.005) * 2.5 + (isHovered ? 4 : 0);
-                    ctx.ellipse(cx, discY, pulseR, 6.5, 0, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Rotating Cybernetic Dash Ring
-                    ctx.save();
-                    ctx.translate(cx, discY);
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, 18, 5.0, 0, 0, Math.PI * 2);
-                    ctx.strokeStyle = "rgba(0, 240, 255, 0.90)";
-                    ctx.lineWidth = 1.2;
-                    ctx.setLineDash([3, 3]);
-                    ctx.lineDashOffset = -now * 0.02;
-                    ctx.stroke();
-                    ctx.restore();
-
-                    // Upward drifting energy particles
-                    for (var p = 0; p < particles.length; p++) {
-                        var pt = particles[p];
-                        pt.y -= pt.speed;
-                        if (pt.y <= 0) {
-                            pt.y = 20;
-                            pt.x = (Math.random() - 0.5) * 30;
+            // Speech Rotation Timer (Starts after initial 4s flight journey)
+            setTimeout(function() {
+                if (!window.parent._langBotWalkInterval) {
+                    window.parent._langBotWalkInterval = setInterval(function() {
+                        sIdx = (sIdx + 1) % speechPhrases.length;
+                        var el = pDoc.getElementById("lang-bot-speech-text") || document.getElementById("lang-bot-speech-text");
+                        if (el) {
+                            el.style.opacity = "0";
+                            setTimeout(function() {
+                                if (el) {
+                                    el.innerHTML = speechPhrases[sIdx];
+                                    el.style.opacity = "1";
+                                }
+                            }, 250);
                         }
-                        var pAlpha = (pt.y / 20) * 0.75;
-                        ctx.fillStyle = "rgba(0, 240, 255, " + pAlpha + ")";
-                        ctx.beginPath();
-                        ctx.arc(cx + pt.x, discY - (20 - pt.y), pt.size, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.restore();
-
-                    // 2. RENDER POLISHED WHITE-AND-SILVER 3D AI ROBOT MASCOT
-                    ctx.save();
-                    var mascotCenterY = groundY - 42 - bob;
-                    var tilt = currentYaw * 0.04 * currentStride;
-
-                    ctx.translate(cx, mascotCenterY);
-                    ctx.rotate(tilt);
-
-                    // Smooth horizontal direction yaw
-                    if (currentYaw < -0.2) {
-                        ctx.scale(-1, 1);
-                    }
-
-                    if (mascotImg3D.complete && mascotImg3D.naturalWidth > 0) {
-                        var aspect = mascotImg3D.naturalWidth / mascotImg3D.naturalHeight;
-                        var mh = 82;
-                        var mw = Math.round(mh * aspect);
-                        ctx.shadowColor = "rgba(0, 240, 255, 0.65)";
-                        ctx.shadowBlur = 12;
-                        ctx.drawImage(mascotImg3D, -mw / 2, -mh / 2, mw, mh);
-                        ctx.shadowBlur = 0;
-                    } else {
-                        // Fallback sleek white ceramic robot torso & visor (never cartoon legs!)
-                        ctx.fillStyle = "#ffffff";
-                        ctx.beginPath();
-                        ctx.ellipse(0, 8, 14, 18, 0, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        ctx.fillStyle = "#08142c";
-                        ctx.beginPath();
-                        ctx.ellipse(0, -10, 15, 12, 0, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        ctx.strokeStyle = "#00f0ff";
-                        ctx.lineWidth = 2.0;
-                        ctx.beginPath();
-                        ctx.arc(-5, -10, 3, 1.1 * Math.PI, 1.9 * Math.PI);
-                        ctx.arc(5, -10, 3, 1.1 * Math.PI, 1.9 * Math.PI);
-                        ctx.stroke();
-                    }
-
-                    ctx.restore();
-                    ctx.restore();
-
-                    pWin.requestAnimationFrame(renderFrame);
+                    }, 4500);
                 }
-
-                pWin.requestAnimationFrame(renderFrame);
-            }
-
-            initCuteAuraWalker();
-            setTimeout(initCuteAuraWalker, 300);
-            setTimeout(initCuteAuraWalker, 1000);
+            }, 4200);
         })();
         </script>
         """
-        components.html(aura_walker_script.replace("__AURA_MASCOT_B64__", _get_aura_robot_b64()), height=0, width=0)
+        components.html(aura_walker_script, height=0, width=0)
     except Exception:
         pass
 
@@ -1703,22 +1687,10 @@ def render_main_language_bar():
 
 def render_dashboard_3d_robot_mascot():
     """
-    Renders an interactive, animated 3D cute robot mascot.
-    Stationed prominently with soft glowing holographic pedestal and floating stride.
+    Deprecated: Replaced with unified single 3D AI robot guide animation.
+    Maintained as empty stub for backward compatibility.
     """
-    mascot_b64 = _get_aura_robot_b64()
-    st.markdown(f"""
-    <div class="dashboard-robot-left-station quick-tour-trigger-btn" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}">
-        <div class="lang-bot-speech-bubble" style="top: -24px !important; white-space: nowrap;">
-            <span class="lang-bot-tag">✦ AI Guide</span>
-            <span>Click me for a tour! ✨</span>
-        </div>
-        <div class="dashboard-robot-canvas-container">
-            <img src="data:image/png;base64,{mascot_b64}" class="dashboard-robot-chibi-img" alt="3D AI Robot Mascot" />
-            <div class="lang-bot-hologram-disc" style="bottom: 2px !important; width: 90px !important; height: 22px !important;"></div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    pass
 
 
 def render_quantum_hero_section():
@@ -1726,26 +1698,15 @@ def render_quantum_hero_section():
     Renders the Quantum Realm inspired landing hero with emblem, bold gradient title,
     tagline, language selector directly below Pathfinder, and 4 interactive glassmorphic
     workspace cards, all dynamically localized across 8 languages.
-    Features the 3D moving robot mascot stationed proudly at the main dashboard!
+    Features the single 3D moving robot guide companion on the dashboard flight track.
     """
     cur_lang = st.session_state.get("app_language", "en")
     ld = DASHBOARD_I18N.get(cur_lang, DASHBOARD_I18N["en"])
-    mascot_b64 = _get_aura_robot_b64()
 
     st.markdown(f"""
     <div class="qr-hero-wrapper" id="pathfinder-hero-wrapper">
         <!-- Hidden button for legacy quick-tour trigger compatibility -->
         <button id="btn-hero-quick-tour" class="quick-tour-trigger-btn" style="display:none;"></button>
-        <div class="dashboard-robot-left-station quick-tour-trigger-btn" id="dashboard-robot-hero-station" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else if(window.top&&window.top.startPathfinderTour){{window.top.startPathfinderTour(0);}}">
-            <div class="lang-bot-speech-bubble" style="top: -24px !important; white-space: nowrap;">
-                <span class="lang-bot-tag">✦ AI Guide</span>
-                <span>Click me for a tour! ✨</span>
-            </div>
-            <div class="dashboard-robot-canvas-container">
-                <img src="data:image/png;base64,{mascot_b64}" class="dashboard-robot-chibi-img" alt="3D AI Robot Mascot" />
-                <div class="lang-bot-hologram-disc" style="bottom: 2px !important; width: 90px !important; height: 22px !important;"></div>
-            </div>
-        </div>
         <div class="qr-hero-main-content">
             <div class="qr-hero-emblem">🧭</div>
             <h1 class="qr-hero-heading" id="pathfinder-hero-title">{ld['title']}</h1>
