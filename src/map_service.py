@@ -902,19 +902,37 @@ class MapService:
 
         return res[:limit]
 
-    def reverse_geocode(self, lat: float, lon: float) -> str:
-        """Translates lat/lon into human-readable landmark or address worldwide."""
-        # Check proximity to known cached landmarks (< 350 meters) - find closest
-        best_match = None
-        min_dist_sq = 0.0035 ** 2
-        for k, v in self.cache.items():
-            dist_sq = (v["lat"] - lat) ** 2 + (v["lon"] - lon) ** 2
-            if dist_sq < min_dist_sq:
-                min_dist_sq = dist_sq
-                best_match = v.get("display_name", v.get("name", "Known Landmark"))
-        if best_match:
-            return best_match
+    def reverse_geocode_details(self, lat: float, lon: float) -> Dict[str, Any]:
+        """
+        Translates lat/lon into structured address details:
+        name, street, suburb, city, state, postcode, country, formatted_address.
+        Never fabricates fictional places or snaps to distant cached coordinates.
+        """
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+            return {
+                "name": "Invalid Coordinates",
+                "street": "",
+                "suburb": "",
+                "city": "",
+                "state": "",
+                "postcode": "",
+                "country": "",
+                "formatted_address": f"Invalid Coordinates ({lat}, {lon})",
+                "latitude": lat,
+                "longitude": lon
+            }
 
+        # 1. Try Google Maps Platform reverse geocoding API if configured
+        try:
+            from src.google_maps_platform import reverse_geocode_with_google_api, is_google_maps_key_configured
+            if is_google_maps_key_configured():
+                g_res = reverse_geocode_with_google_api(lat, lon, timeout=self.timeout_sec)
+                if g_res and g_res.get("formatted_address"):
+                    return g_res
+        except Exception:
+            pass
+
+        # 2. Query OpenStreetMap Nominatim reverse geocoding
         try:
             self._respect_rate_limit()
             url = f"{self.base_url}/reverse"
@@ -927,11 +945,70 @@ class MapService:
             resp = self.session.get(url, params=params, timeout=self.timeout_sec)
             if resp.status_code == 200:
                 data = resp.json()
-                return data.get("display_name", f"{lat:.4f}, {lon:.4f}")
+                addr = data.get("address", {})
+                name = (
+                    data.get("name")
+                    or addr.get("road")
+                    or addr.get("pedestrian")
+                    or addr.get("amenity")
+                    or addr.get("suburb")
+                    or addr.get("village")
+                    or addr.get("town")
+                    or addr.get("city")
+                    or f"{lat:.5f}, {lon:.5f}"
+                )
+                formatted = data.get("display_name", f"{lat:.5f}, {lon:.5f}")
+                return {
+                    "name": name,
+                    "street": addr.get("road", addr.get("pedestrian", "")),
+                    "suburb": addr.get("suburb", addr.get("neighbourhood", "")),
+                    "city": addr.get("city", addr.get("town", addr.get("village", ""))),
+                    "state": addr.get("state", ""),
+                    "postcode": addr.get("postcode", ""),
+                    "country": addr.get("country", ""),
+                    "formatted_address": formatted,
+                    "latitude": lat,
+                    "longitude": lon
+                }
         except Exception:
             pass
 
-        return f"Geographic Point ({lat:.4f}° N, {lon:.4f}° E)"
+        # 3. Only match known cached landmarks if within extremely close proximity (< 25m)
+        min_dist_sq = 0.00025 ** 2
+        for k, v in self.cache.items():
+            dist_sq = (v["lat"] - lat) ** 2 + (v["lon"] - lon) ** 2
+            if dist_sq < min_dist_sq:
+                return {
+                    "name": v.get("name", "Known Landmark"),
+                    "street": "",
+                    "suburb": "",
+                    "city": "",
+                    "state": "",
+                    "postcode": "",
+                    "country": "",
+                    "formatted_address": v.get("display_name", v.get("name", f"{lat:.5f}, {lon:.5f}")),
+                    "latitude": lat,
+                    "longitude": lon
+                }
+
+        # 4. Standard verified geographic coordinates fallback
+        return {
+            "name": f"Map Location ({lat:.5f}, {lon:.5f})",
+            "street": "",
+            "suburb": "",
+            "city": "",
+            "state": "",
+            "postcode": "",
+            "country": "",
+            "formatted_address": f"Geographic Point ({lat:.5f}° N, {lon:.5f}° E)",
+            "latitude": lat,
+            "longitude": lon
+        }
+
+    def reverse_geocode(self, lat: float, lon: float) -> str:
+        """Translates lat/lon into human-readable landmark or address worldwide without inaccurate snapping."""
+        details = self.reverse_geocode_details(lat, lon)
+        return details.get("formatted_address") or details.get("name") or f"{lat:.5f}, {lon:.5f}"
 
     def create_interactive_map(
         self,

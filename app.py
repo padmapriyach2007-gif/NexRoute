@@ -23252,77 +23252,45 @@ body {{
 
 
                         if (click_lat, click_lon) != st.session_state.user_live_coords:
-
-
-
                             st.session_state.user_live_coords = (click_lat, click_lon)
-
-
-
-                            pin_orig = f"Map Pin ({click_lat}, {click_lon})"
-
-
+                            try:
+                                rev_name = st.session_state.map_service.reverse_geocode(click_lat, click_lon)
+                                if rev_name and not rev_name.startswith("Geographic Point"):
+                                    pin_orig = rev_name.split(",")[0].strip() + f" ({click_lat:.4f}, {click_lon:.4f})"
+                                else:
+                                    pin_orig = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
+                            except Exception:
+                                pin_orig = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
 
                             st.session_state.user_live_label = pin_orig
-
-
-
                             st.session_state.pending_orig = pin_orig
-
-
-
                             st.session_state.last_synced_orig = pin_orig
-
-
-
                             st.session_state.is_custom_start_place = True
-
-
-
                             st.session_state.orig_candidates = []
-
-
-
                             st.session_state._prev_route_sig = None
-
-
-
-                            st.toast(f"🟢 Starting Point pinned to ({click_lat}, {click_lon})", icon="📍")
-
-
-
+                            try:
+                                from src.real_location_service import real_location_service
+                                real_location_service.set_manual_location(click_lat, click_lon, pin_orig)
+                            except Exception:
+                                pass
+                            st.toast(f"🟢 Starting Point pinned: {pin_orig}", icon="📍")
                             st.rerun()
-
-
-
                     else:
-
-
-
                         if (click_lat, click_lon) != st.session_state.selected_dest_coords:
-
-
-
                             st.session_state.selected_dest_coords = (click_lat, click_lon)
-
-
-
-                            pin_dest = f"Map Pin ({click_lat}, {click_lon})"
-
-
+                            try:
+                                rev_name = st.session_state.map_service.reverse_geocode(click_lat, click_lon)
+                                if rev_name and not rev_name.startswith("Geographic Point"):
+                                    pin_dest = rev_name.split(",")[0].strip() + f" ({click_lat:.4f}, {click_lon:.4f})"
+                                else:
+                                    pin_dest = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
+                            except Exception:
+                                pin_dest = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
 
                             st.session_state.selected_dest_label = pin_dest
-
-
-
                             st.session_state.pending_dest = pin_dest
-
-
-
                             st.session_state.last_synced_dest = pin_dest
-
-
-
+                            st.toast(f"🏁 Destination pinned: {pin_dest}", icon="📍")
                             st.rerun()
 
 

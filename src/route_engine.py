@@ -1723,27 +1723,58 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
 
         if routes:
-
             distinct_routes = filter_distinct_routes(
-
                 routes,
-
                 max_overlap=0.82,
-
                 origin_coords=(origin_lat, origin_lon),
-
                 dest_coords=(dest_lat, dest_lon)
-
             )
 
+            # If only 1 route returned by standard OSRM endpoint for driving/cycling, query alternative via-corridor
+            if len(distinct_routes) < 2 and mode in [TravelMode.DRIVING, TravelMode.BICYCLING]:
+                try:
+                    import math
+                    mid_lat = (origin_lat + dest_lat) / 2.0
+                    mid_lon = (origin_lon + dest_lon) / 2.0
+                    d_lat = dest_lat - origin_lat
+                    cos_m = math.cos(math.radians(mid_lat))
+                    d_lon = (dest_lon - origin_lon) * cos_m
+
+                    for offset_frac in [0.12, -0.12, 0.20, -0.20]:
+                        perp_lat = -d_lon * offset_frac
+                        perp_lon = (d_lat * offset_frac) / max(0.0001, cos_m)
+                        via_lat = mid_lat + perp_lat
+                        via_lon = mid_lon + perp_lon
+
+                        via_coords = f"{origin_lon:.6f},{origin_lat:.6f};{via_lon:.6f},{via_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
+                        via_url = f"{self.base_url}/route/v1/{profile}/{via_coords}?overview=full&geometries=geojson&steps=true"
+                        via_routes = self._fetch_osrm(
+                            via_url, mode, require_accessible,
+                            origin_coords=(origin_lat, origin_lon),
+                            dest_coords=(dest_lat, dest_lon),
+                            speed_mode=speed_mode,
+                            custom_speed_kmh=custom_speed_kmh
+                        )
+                        if via_routes:
+                            for vr in via_routes:
+                                if vr.distance_meters <= routes[0].distance_meters * 1.65:
+                                    routes.append(vr)
+                            distinct_routes = filter_distinct_routes(
+                                routes,
+                                max_overlap=0.82,
+                                origin_coords=(origin_lat, origin_lon),
+                                dest_coords=(dest_lat, dest_lon)
+                            )
+                            if len(distinct_routes) >= 2:
+                                break
+                except Exception:
+                    pass
+
             # Re-index unique route IDs sequentially to ensure clean distinct IDs
-
             for r_idx, r in enumerate(distinct_routes):
-
                 r.route_id = f"OSRM_{r_idx + 1}"
 
             if distinct_routes:
-
                 self._CACHE[cache_key] = distinct_routes
 
             return distinct_routes

@@ -231,6 +231,63 @@ def geocode_with_google_api(
     return None
 
 
+def reverse_geocode_with_google_api(
+    lat: float,
+    lon: float,
+    api_key: Optional[str] = None,
+    timeout: float = 4.0
+) -> Optional[Dict[str, Any]]:
+    """
+    Reverse-geocodes exact geographic coordinates using Google Geocoding API.
+    Extracts structured address: street, suburb, city, state, postal_code, country, formatted_address.
+    """
+    if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+        return None
+
+    key = api_key or get_google_maps_api_key()
+    if key and not key.startswith("YOUR_"):
+        url = "https://maps.googleapis.com/maps/api/geocode/json"
+        params = {"latlng": f"{lat:.6f},{lon:.6f}", "key": key}
+        try:
+            resp = requests.get(url, params=params, timeout=timeout)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("status") == "OK" and data.get("results"):
+                    res = data["results"][0]
+                    components = res.get("address_components", [])
+                    details = {
+                        "name": res.get("formatted_address", "").split(",")[0].strip(),
+                        "street": "",
+                        "suburb": "",
+                        "city": "",
+                        "state": "",
+                        "postcode": "",
+                        "country": "",
+                        "formatted_address": res.get("formatted_address", ""),
+                        "latitude": lat,
+                        "longitude": lon,
+                        "place_id": res.get("place_id", "")
+                    }
+                    for c in components:
+                        types = c.get("types", [])
+                        if "route" in types or "street_address" in types:
+                            details["street"] = c.get("long_name", "")
+                        elif "sublocality" in types or "sublocality_level_1" in types or "neighborhood" in types:
+                            details["suburb"] = c.get("long_name", "")
+                        elif "locality" in types or "postal_town" in types:
+                            details["city"] = c.get("long_name", "")
+                        elif "administrative_area_level_1" in types:
+                            details["state"] = c.get("long_name", "")
+                        elif "postal_code" in types:
+                            details["postcode"] = c.get("long_name", "")
+                        elif "country" in types:
+                            details["country"] = c.get("long_name", "")
+                    return details
+        except Exception:
+            pass
+    return None
+
+
 def build_google_maps_javascript_html(
     center_lat: float,
     center_lon: float,
@@ -2406,7 +2463,7 @@ def build_google_maps_javascript_html(
         function getCompactPointerLabel(raw, fallbackPrefix) {{
             if (!raw) return fallbackPrefix;
             var s = String(raw).replace(/^[🟢🏁📍🛰️🚶🚗✈️]+\\s*/, '').trim();
-            s = s.replace(/^(?:START|DEST|ORIGIN|TARGET)\\s*[•\-\:]?\\s*/i, '').trim();
+            s = s.replace(/^(?:START|DEST|ORIGIN|TARGET)\\s*[•\\-:]?\\s*/i, '').trim();
             var head = s.split(',')[0].split('(')[0].trim();
             if (!head || /^(?:current location|selected start|selected destination|origin|target|custom start|custom destination)$/i.test(head)) {{
                 return fallbackPrefix;
@@ -3162,7 +3219,7 @@ def build_google_maps_javascript_html(
                 return;
             }}
 
-            var nearby = window.findNearbyLoadedPlace(lat, lng, 0.0006);
+            var nearby = window.findNearbyLoadedPlace(lat, lng, 0.00008);
             if (nearby) {{
                 window.renderPlaceDrawerContent(nearby, lat, lng);
                 return;
@@ -3197,10 +3254,7 @@ def build_google_maps_javascript_html(
                         address: fullAddr,
                         latitude: Number(lat),
                         longitude: Number(lng),
-                        rating: 4.8,
-                        reviews_count: 520,
-                        open_status: "Open Now",
-                        phone: "+91 800 108 000 (Local Service)",
+                        open_status: "Verified Coordinate",
                         photo_url: getCategoryPhoto(cat)
                     }};
                     window.renderPlaceDrawerContent(placeInfo, lat, lng);
@@ -3209,13 +3263,10 @@ def build_google_maps_javascript_html(
                     var placeInfo = {{
                         name: "Selected Map Coordinate",
                         category: "Geographic Location",
-                        address: "Latitude: " + Number(lat).toFixed(5) + ", Longitude: " + Number(lng).toFixed(5),
+                        address: "Latitude: " + Number(lat).toFixed(6) + "°, Longitude: " + Number(lng).toFixed(6) + "°",
                         latitude: Number(lat),
                         longitude: Number(lng),
-                        rating: 4.9,
-                        reviews_count: 240,
-                        open_status: "Open Passage",
-                        phone: "GPS Verified",
+                        open_status: "Verified Coordinate",
                         photo_url: categoryPhotoPresets["DEFAULT"]
                     }};
                     window.renderPlaceDrawerContent(placeInfo, lat, lng);
@@ -3298,18 +3349,24 @@ def build_google_maps_javascript_html(
                     if (card) card.style.display = 'none';
                 }}
 
-                // 2. Silently synchronize URL searchParams via history.replaceState (ZERO page reload)
+                // 2. Synchronize URL searchParams and notify parent Streamlit runtime
                 try {{
-                    if (pWin && pWin.location && pWin.history && pWin.history.replaceState) {{
+                    if (pWin && pWin.location) {{
                         var url = new URL(pWin.location.href);
                         for (var k in paramsObj) {{
                             if (paramsObj.hasOwnProperty(k) && paramsObj[k] !== undefined && paramsObj[k] !== null) {{
                                 url.searchParams.set(k, paramsObj[k]);
                             }}
                         }}
-                        pWin.history.replaceState(null, '', url.toString());
+                        if (paramsObj.picked_target || paramsObj.detect_gps) {{
+                            pWin.location.href = url.toString();
+                        }} else if (pWin.history && pWin.history.replaceState) {{
+                            pWin.history.replaceState(null, '', url.toString());
+                        }}
                     }}
-                }} catch(eHist) {{}}
+                }} catch(eHist) {{
+                    console.warn("[safeNavigateParent] History update note:", eHist);
+                }}
             }} catch(err) {{
                 console.warn("[safeNavigateParent] Navigation error:", err);
             }}
@@ -3360,14 +3417,30 @@ def build_google_maps_javascript_html(
             if (card) card.style.display = 'block';
 
             if (window.lMapInstance) {{
-                if (pickedMapMarker) window.lMapInstance.removeLayer(pickedMapMarker);
+                if (pickedMapMarker) try {{ window.lMapInstance.removeLayer(pickedMapMarker); }} catch(e) {{}}
                 var pickIcon = L.divIcon({{
                     className: 'pf-picking-pin',
-                    html: '<div style="background:' + (isOrig ? '#10b981' : '#f43f5e') + '; width:26px; height:26px; border-radius:50%; border:2.5px solid #fff; box-shadow:0 0 14px ' + (isOrig ? '#10b981' : '#f43f5e') + '; display:flex; align-items:center; justify-content:center; font-size:13px; animation:markerDotPulse 1.2s infinite ease-in-out;">' + (isOrig ? '🟢' : '🏁') + '</div>',
-                    iconSize: [26, 26],
-                    iconAnchor: [13, 13]
+                    html: '<div style="background:' + (isOrig ? '#10b981' : '#f43f5e') + '; width:28px; height:28px; border-radius:50%; border:2.5px solid #fff; box-shadow:0 0 16px ' + (isOrig ? '#10b981' : '#f43f5e') + '; display:flex; align-items:center; justify-content:center; font-size:14px; cursor:move; animation:markerDotPulse 1.2s infinite ease-in-out;" title="Drag marker to refine exact coordinates">' + (isOrig ? '🟢' : '🏁') + '</div>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
                 }});
-                pickedMapMarker = L.marker([lat, lng], {{ icon: pickIcon, zIndexOffset: 9999 }}).addTo(window.lMapInstance);
+                pickedMapMarker = L.marker([lat, lng], {{ icon: pickIcon, draggable: true, zIndexOffset: 99999 }}).addTo(window.lMapInstance);
+                pickedMapMarker.on('dragend', function(e) {{
+                    var newPos = e.target.getLatLng();
+                    window.handleMapPickingClick(newPos.lat, newPos.lng);
+                }});
+            }} else if (window.gMap && typeof google !== 'undefined' && google.maps) {{
+                if (window.pickedGMapMarker) try {{ window.pickedGMapMarker.setMap(null); }} catch(e) {{}}
+                window.pickedGMapMarker = new google.maps.Marker({{
+                    position: {{ lat: Number(lat), lng: Number(lng) }},
+                    map: window.gMap,
+                    draggable: true,
+                    title: isOrig ? "Selected Starting Point (Drag to refine position)" : "Selected Destination (Drag to refine position)",
+                    zIndex: 99999
+                }});
+                google.maps.event.addListener(window.pickedGMapMarker, 'dragend', function(evt) {{
+                    window.handleMapPickingClick(evt.latLng.lat(), evt.latLng.lng());
+                }});
             }}
 
             pendingMapPickData = {{
@@ -3652,12 +3725,15 @@ def build_google_maps_javascript_html(
                     iconAnchor: [17, 34]
                 }});
                 currentSearchMarker = L.marker([lat, lng], {{ icon: searchIcon }}).addTo(window.lMapInstance);
+                var safeName = (name || 'Selected Location').replace(/'/g, "\\'");
                 var popupContent = '<div class="iw-title">🔍 ' + name + '</div>' +
-                                   '<div class="iw-cat">NexRoute Live Map Pinpoint</div>' +
-                                   '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(5) + ', Lon: ' + Number(lng).toFixed(5) + '</div>' +
-                                   '<div class="iw-actions">' +
-                                   '<button class="iw-btn" onclick="window.toggleFullScreen(true)">⛶ Full Screen View</button>' +
-                                   '<button class="iw-btn secondary" onclick="window.lMapInstance.setView([' + lat + ',' + lng + '], 18)">🔍 Zoom Closer</button>' +
+                                   '<div class="iw-cat">NexRoute Accurate Location Pinpoint</div>' +
+                                   '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(6) + '°, Lon: ' + Number(lng).toFixed(6) + '°</div>' +
+                                   '<div class="iw-actions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">' +
+                                   '<button class="iw-btn" style="flex:1 1 45%; background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(lat).toFixed(6) + '\', orig_lon:\'' + Number(lng).toFixed(6) + '\', orig_name:\'' + safeName + '\'}})">🟢 Set as Start</button>' +
+                                   '<button class="iw-btn" style="flex:1 1 45%; background:#059669; color:#fff;" onclick="window.safeNavigateParent({{dest_lat:\'' + Number(lat).toFixed(6) + '\', dest_lon:\'' + Number(lng).toFixed(6) + '\', dest_name:\'' + safeName + '\'}})">🏁 Set as Dest</button>' +
+                                   '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.lMapInstance.setView([' + lat + ',' + lng + '], 18)">🔍 Zoom Closer</button>' +
+                                   '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.toggleFullScreen(true)">⛶ Full Screen</button>' +
                                    '</div>';
                 currentSearchMarker.bindPopup(popupContent).openPopup();
                 window.lMapInstance.flyTo([lat, lng], 16, {{ animate: true, duration: 1.2 }});
@@ -3674,12 +3750,15 @@ def build_google_maps_javascript_html(
                     animation: google.maps.Animation.DROP,
                     icon: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png'
                 }});
+                var safeNameG = (name || 'Selected Location').replace(/'/g, "\\'");
                 var content = '<div class="iw-title">🔍 ' + name + '</div>' +
-                              '<div class="iw-cat">NexRoute Live Map Pinpoint</div>' +
-                              '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(5) + ', Lon: ' + Number(lng).toFixed(5) + '</div>' +
-                              '<div class="iw-actions">' +
-                              '<button class="iw-btn" onclick="window.toggleFullScreen(true)">⛶ Full Screen View</button>' +
-                              '<button class="iw-btn secondary" onclick="window.gMap.setZoom(18); window.gMap.setCenter({{lat:' + lat + ',lng:' + lng + '}})">🔍 Zoom Closer</button>' +
+                              '<div class="iw-cat">NexRoute Accurate Location Pinpoint</div>' +
+                              '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(6) + '°, Lon: ' + Number(lng).toFixed(6) + '°</div>' +
+                              '<div class="iw-actions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">' +
+                              '<button class="iw-btn" style="flex:1 1 45%; background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(lat).toFixed(6) + '\', orig_lon:\'' + Number(lng).toFixed(6) + '\', orig_name:\'' + safeNameG + '\'}})">🟢 Set as Start</button>' +
+                              '<button class="iw-btn" style="flex:1 1 45%; background:#059669; color:#fff;" onclick="window.safeNavigateParent({{dest_lat:\'' + Number(lat).toFixed(6) + '\', dest_lon:\'' + Number(lng).toFixed(6) + '\', dest_name:\'' + safeNameG + '\'}})">🏁 Set as Dest</button>' +
+                              '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.gMap.setZoom(18); window.gMap.setCenter({{lat:' + lat + ',lng:' + lng + '}})">🔍 Zoom Closer</button>' +
+                              '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.toggleFullScreen(true)">⛶ Full Screen</button>' +
                               '</div>';
                 if (window.infoWindow) {{
                     window.infoWindow.setContent(content);
@@ -3807,8 +3886,13 @@ def build_google_maps_javascript_html(
                         iconSize: [24, 24],
                         iconAnchor: [12, 12]
                     }});
+                    var myPopup = '<div class="iw-title">📍 My Real-Time GPS Location</div>' +
+                                  '<div class="iw-meta">Lat: ' + uLat.toFixed(6) + '°, Lon: ' + uLng.toFixed(6) + '°<br>Accuracy: ±' + Math.round(acc) + ' meters</div>' +
+                                  '<div class="iw-actions" style="margin-top:6px;">' +
+                                  '<button class="iw-btn" style="background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(uLat).toFixed(6) + '\', orig_lon:\'' + Number(uLng).toFixed(6) + '\', orig_name:\'My Real-Time Location\'}})">🟢 Set as Starting Point</button>' +
+                                  '</div>';
                     activeUserGpsMarker = L.marker([uLat, uLng], {{ icon: myIcon, zIndexOffset: 9000 }}).addTo(window.lMapInstance);
-                    activeUserGpsMarker.bindPopup('<div class="iw-title">📍 My Real-Time GPS Location</div><div class="iw-meta">Coordinates: ' + uLat.toFixed(5) + ', ' + uLng.toFixed(5) + '<br>Accuracy: ±' + Math.round(acc) + ' meters</div>').openPopup();
+                    activeUserGpsMarker.bindPopup(myPopup).openPopup();
                 }} else if (window.gMap) {{
                     var posLatLng = new google.maps.LatLng(uLat, uLng);
                     window.gMap.panTo(posLatLng);
@@ -3842,6 +3926,16 @@ def build_google_maps_javascript_html(
                         }},
                         zIndex: 9000
                     }});
+
+                    var myPopupG = '<div class="iw-title">📍 My Real-Time GPS Location</div>' +
+                                   '<div class="iw-meta">Lat: ' + uLat.toFixed(6) + '°, Lon: ' + uLng.toFixed(6) + '°<br>Accuracy: ±' + Math.round(acc) + ' meters</div>' +
+                                   '<div class="iw-actions" style="margin-top:6px;">' +
+                                   '<button class="iw-btn" style="background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(uLat).toFixed(6) + '\', orig_lon:\'' + Number(uLng).toFixed(6) + '\', orig_name:\'My Real-Time Location\'}})">🟢 Set as Starting Point</button>' +
+                                   '</div>';
+                    if (window.infoWindow) {{
+                        window.infoWindow.setContent(myPopupG);
+                        window.infoWindow.open(window.gMap, activeUserGpsMarker);
+                    }}
                 }}
 
                 try {{
@@ -3868,7 +3962,7 @@ def build_google_maps_javascript_html(
                 else if (err && err.code === 2) errMsg = "Position unavailable. Device GPS could not be resolved.";
                 else if (err && err.code === 3) errMsg = "GPS request timed out. Please try again.";
                 window.showMapToast(errMsg, "⚠️");
-            }}, {{ enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }});
+            }}, {{ enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 }});
         }};
 
         window.fitAllMapBounds = function() {{
@@ -5497,7 +5591,7 @@ def build_google_maps_javascript_html(
                     function getCompactPointerLabel(raw, fallbackPrefix) {{
                         if (!raw) return fallbackPrefix;
                         var s = String(raw).replace(/^[🟢🏁📍🛰️🚶🚗✈️]+\\s*/, '').trim();
-                        s = s.replace(/^(?:START|DEST|ORIGIN|TARGET)\\s*[•\-\:]?\\s*/i, '').trim();
+                        s = s.replace(/^(?:START|DEST|ORIGIN|TARGET)\\s*[•\\-:]?\\s*/i, '').trim();
                         var head = s.split(',')[0].split('(')[0].trim();
                         if (!head || /^(?:current location|selected start|selected destination|origin|target|custom start|custom destination)$/i.test(head)) {{
                             return fallbackPrefix;
