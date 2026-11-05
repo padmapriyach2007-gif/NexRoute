@@ -3788,122 +3788,182 @@ st.markdown("""
 
 
 
-    /* Floating A.U.R.A. AI Chatbot Logo Overlay */
-
-
-
-    .floating-aura-logo-overlay {
-
-
-
+    /* Floating A.U.R.A. AI Chatbot Trigger & Welcome Tooltip */
+    .floating-aura-container {
         position: fixed !important;
-
-
-
         bottom: 24px !important;
-
-
-
         right: 24px !important;
-
-
-
-        width: 64px !important;
-
-
-
-        height: 64px !important;
-
-
-
-        min-width: 64px !important;
-
-
-
-        max-width: 64px !important;
-
-
-
-        min-height: 64px !important;
-
-
-
-        max-height: 64px !important;
-
-
-
-        box-sizing: border-box !important;
-
-
-
-        border-radius: 50% !important;
-
-
-
-        border: 2.5px solid #a855f7 !important;
-
-
-
-        box-shadow: 0 0 24px rgba(168, 85, 247, 0.65), 0 8px 22px rgba(0, 0, 0, 0.85) !important;
-
-
-
-        pointer-events: none !important;
-
-
-
         z-index: 9999998 !important;
-
-
-
-        object-fit: cover !important;
-
-
-
-        animation: aura-fab-glow 2.8s infinite alternate ease-in-out !important;
-
-
-
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-
-
-
-        background: linear-gradient(135deg, #1e1136 0%, #3b0764 100%) !important;
-
-
-
-        padding: 0 !important;
-
-
-
-        margin: 0 !important;
-
-
-
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        pointer-events: none !important;
     }
 
+    /* Clean rounded welcome tooltip (matches reference image) */
+    .floating-aura-welcome-tooltip {
+        position: fixed !important;
+        bottom: 28px !important;
+        right: 98px !important;
+        z-index: 9999998 !important;
+        background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important;
+        border: 1.5px solid #00f0ff !important;
+        border-radius: 16px !important;
+        padding: 8px 16px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 18px rgba(0, 240, 255, 0.35) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        user-select: none !important;
+        animation: auraTooltipFloat 4s infinite ease-in-out !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
 
+    .floating-aura-welcome-tooltip:hover {
+        transform: translateY(-3px) scale(1.03) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 26px rgba(0, 240, 255, 0.55) !important;
+    }
+
+    .floating-aura-welcome-tooltip:active {
+        transform: scale(0.97) !important;
+    }
+
+    .aura-tooltip-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        background: rgba(0, 240, 255, 0.15) !important;
+        border: 1px solid rgba(0, 240, 255, 0.5) !important;
+        border-radius: 9999px !important;
+        padding: 1px 8px !important;
+        font-size: 0.65rem !important;
+        font-weight: 800 !important;
+        color: #38bdf8 !important;
+        letter-spacing: 0.06em !important;
+    }
+
+    .aura-tooltip-sparkle {
+        font-size: 0.65rem !important;
+        color: #00f0ff !important;
+        filter: drop-shadow(0 0 4px #00f0ff) !important;
+    }
+
+    .aura-tooltip-main {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-size: 0.86rem !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+        letter-spacing: 0.02em !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+
+    .aura-tooltip-sparkle-end {
+        font-size: 0.82rem !important;
+        filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8)) !important;
+    }
+
+    .aura-tooltip-arrow {
+        position: absolute !important;
+        right: -7px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: 0 !important;
+        height: 0 !important;
+        border-top: 6px solid transparent !important;
+        border-bottom: 6px solid transparent !important;
+        border-left: 7px solid #00f0ff !important;
+    }
+
+    @keyframes auraTooltipFloat {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+
+    /* Polished White-and-Silver 3D AI Robot Mascot Overlay */
+    .floating-aura-logo-overlay {
+        position: fixed !important;
+        bottom: 24px !important;
+        right: 24px !important;
+        width: 64px !important;
+        height: 64px !important;
+        min-width: 64px !important;
+        max-width: 64px !important;
+        min-height: 64px !important;
+        max-height: 64px !important;
+        box-sizing: border-box !important;
+        border-radius: 50% !important;
+        border: 2px solid #00f0ff !important;
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.65), 0 8px 24px rgba(0, 0, 0, 0.85) !important;
+        pointer-events: none !important;
+        z-index: 9999998 !important;
+        object-fit: cover !important;
+        animation: auraMascotFloat 3.6s infinite ease-in-out !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        background: linear-gradient(135deg, #07152d 0%, #0c234a 100%) !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Holographic concentric projector glow under the robot */
+    .floating-aura-holo-disc {
+        position: fixed !important;
+        bottom: 16px !important;
+        right: 20px !important;
+        width: 72px !important;
+        height: 16px !important;
+        border-radius: 50% !important;
+        background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.75) 0%, rgba(2, 132, 199, 0.35) 50%, transparent 80%) !important;
+        box-shadow: 0 0 16px rgba(0, 240, 255, 0.8), inset 0 0 6px rgba(0, 240, 255, 0.5) !important;
+        pointer-events: none !important;
+        z-index: 9999997 !important;
+        animation: auraHoloDiscPulse 3.6s infinite ease-in-out !important;
+    }
+
+    @keyframes auraMascotFloat {
+        0%, 100% {
+            transform: translateY(0px) scale(1);
+            filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.55));
+        }
+        50% {
+            transform: translateY(-6px) scale(1.02);
+            filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.8));
+        }
+    }
+
+    @keyframes auraHoloDiscPulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 0.85;
+        }
+        50% {
+            transform: scale(0.88);
+            opacity: 0.55;
+        }
+    }
+
+    @keyframes aura-fab-glow {
+        0% { box-shadow: 0 0 14px rgba(0, 240, 255, 0.4), 0 4px 14px rgba(0,0,0,0.6); }
+        100% { box-shadow: 0 0 28px rgba(0, 240, 255, 0.85), 0 0 10px #00f0ff, 0 8px 22px rgba(0,0,0,0.8); }
+    }
 
     body:has(div[data-testid="stPopover"] > button:hover) .floating-aura-logo-overlay,
-
-
-
+    div[data-testid="stPopover"]:hover ~ .floating-aura-container .floating-aura-logo-overlay,
     div[data-testid="stPopover"]:hover ~ .floating-aura-logo-overlay {
-
-
-
-        transform: scale(1.12) translateY(-3px) !important;
-
-
-
-        border-color: #c084fc !important;
-
-
-
-        box-shadow: 0 0 35px rgba(168, 85, 247, 0.95), 0 10px 28px rgba(0, 0, 0, 0.85) !important;
-
-
-
+        transform: scale(1.08) translateY(-4px) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 32px rgba(0, 240, 255, 0.95), 0 12px 28px rgba(0, 0, 0, 0.9) !important;
     }
 
 
@@ -4298,7 +4358,7 @@ st.markdown("""
             min-height: 40px !important;
         }
 
-        /* Floating Aura Chatbot FAB */
+        /* Floating Aura Chatbot FAB & Tooltip */
         [data-testid="stElementContainer"]:has([data-testid="stPopover"]),
         div[data-testid="stPopover"],
         .floating-aura-logo-overlay {
@@ -4308,6 +4368,24 @@ st.markdown("""
             height: 50px !important;
             min-width: 50px !important;
             min-height: 50px !important;
+        }
+        .floating-aura-holo-disc {
+            bottom: 10px !important;
+            right: 11px !important;
+            width: 56px !important;
+            height: 12px !important;
+        }
+        .floating-aura-welcome-tooltip {
+            right: 70px !important;
+            bottom: 18px !important;
+            padding: 5px 12px !important;
+        }
+        .floating-aura-welcome-tooltip .aura-tooltip-main {
+            font-size: 0.76rem !important;
+        }
+        .floating-aura-welcome-tooltip .aura-tooltip-pill {
+            font-size: 0.58rem !important;
+            padding: 1px 6px !important;
         }
     }
 
@@ -29890,73 +29968,22 @@ with st.popover(" ", help="Open AURA • Adaptive User Route Assistant"):
 
 
     st.markdown(f"""
-
-
-
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(168, 85, 247, 0.35); padding-bottom: 8px; margin-bottom: 10px;">
-
-
-
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(56, 189, 248, 0.35); padding-bottom: 8px; margin-bottom: 10px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-
-
-
-            <img src="{aura_logo_uri}" style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid #a855f7; object-fit: cover; box-shadow: 0 0 12px rgba(168, 85, 247, 0.65);" />
-
-
-
+            <img src="{aura_logo_uri}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #00f0ff; object-fit: cover; box-shadow: 0 0 14px rgba(0, 240, 255, 0.65);" />
             <div>
-
-
-
-                <div style="font-weight: 800; font-size: 0.96rem; color: #f8fafc; letter-spacing: 0.04em;">
-
-
-
-                    🤖 AURA • Route Assistant
-
-
-
+                <div style="font-weight: 800; font-size: 0.96rem; color: #f8fafc; letter-spacing: 0.04em; display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #00f0ff; font-size: 0.85rem;">✦</span> AURA • AI Guide
                 </div>
-
-
-
-                <div style="font-size: 0.66rem; color: #c084fc; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
-
-
-
-                    ADAPTIVE USER ROUTE ASSISTANT
-
-
-
+                <div style="font-size: 0.66rem; color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
+                    ADAPTIVE ROUTE & TRAVEL ASSISTANT
                 </div>
-
-
-
             </div>
-
-
-
         </div>
-
-
-
-        <span style="font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; color: #d8b4fe; letter-spacing: 0.05em;">
-
-
-
-            ● ONLINE
-
-
-
+        <span style="font-size: 0.65rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; background: rgba(0, 240, 255, 0.15); border: 1px solid rgba(0, 240, 255, 0.45); color: #38bdf8; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 5px;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #00f0ff; box-shadow: 0 0 6px #00f0ff;"></span> ONLINE
         </span>
-
-
-
     </div>
-
-
-
     """, unsafe_allow_html=True)
 
 
@@ -29974,10 +30001,25 @@ with st.popover(" ", help="Open AURA • Adaptive User Route Assistant"):
 
 
 if aura_logo_uri:
-
-
-
-    st.markdown(f'<img src="{aura_logo_uri}" class="floating-aura-logo-overlay" alt="AURA Chatbot Logo" />', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="floating-aura-container" id="floating-aura-container">
+        <!-- Clean, rounded welcome tooltip (matches reference image) -->
+        <div class="floating-aura-welcome-tooltip" id="floating-aura-welcome-tooltip" title="Click to start the interactive AI guided tour!" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else{{var p=document.querySelector('div[data-testid=\'stPopover\'] button')||(window.parent&&window.parent.document.querySelector('div[data-testid=\'stPopover\'] button'));if(p)p.click();}}">
+            <div class="aura-tooltip-pill">
+                <span class="aura-tooltip-sparkle">✦</span>
+                <span class="aura-tooltip-badge-text">AI Guide</span>
+            </div>
+            <div class="aura-tooltip-main">
+                <span class="aura-tooltip-label">Click me for a tour!</span>
+                <span class="aura-tooltip-sparkle-end">✨</span>
+            </div>
+            <div class="aura-tooltip-arrow"></div>
+        </div>
+        <!-- Polished White-and-Silver 3D AI Robot Mascot Avatar -->
+        <img src="{aura_logo_uri}" class="floating-aura-logo-overlay" alt="AURA AI Guide" />
+        <div class="floating-aura-holo-disc"></div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 

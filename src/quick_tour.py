@@ -71,7 +71,7 @@ TOUR_STEPS = {
             "title": "Ask Anything in Natural Language",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "Here is your 24/7 AI travel copilot! Click this purple button anytime to ask about destinations, routes, packing advice, or budgets in plain English or local languages.",
+            "bot_dialogue": "Here is your 24/7 AI travel copilot! Click this floating robot button anytime to ask about destinations, routes, packing advice, or budgets in plain English or local languages.",
             "bot_mood": "explaining",
             "content": (
                 "Meet <b>A.U.R.A.</b> (<i>Adaptive User Route Assistant</i>), your built-in AI copilot.<br><br>"
@@ -267,7 +267,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             }}
             @keyframes tourSpotlightPulse {{
                 0% {{ border-color: #00f0ff; box-shadow: 0 0 0 9999px rgba(3, 7, 18, 0.78), 0 0 25px rgba(0, 240, 255, 0.65); }}
-                100% {{ border-color: #a855f7; box-shadow: 0 0 0 9999px rgba(3, 7, 18, 0.78), 0 0 42px rgba(168, 85, 247, 0.85); }}
+                100% {{ border-color: #0284c7; box-shadow: 0 0 0 9999px rgba(3, 7, 18, 0.78), 0 0 42px rgba(0, 240, 255, 0.85); }}
             }}
 
             /* =========================================================================
@@ -790,7 +790,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         rimLight1.position.set(-2, 1, 1);
         scene.add(rimLight1);
 
-        var rimLight2 = new THREE.PointLight(0xa855f7, 1.8, 6);
+        var rimLight2 = new THREE.PointLight(0x0284c7, 1.8, 6);
         rimLight2.position.set(2, -1, 1);
         scene.add(rimLight2);
 
@@ -798,14 +798,14 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         var companionGroup = new THREE.Group();
         scene.add(companionGroup);
 
-        // 1. Torso / Chassis
+        // 1. Torso / Chassis (Polished White & Silver Ceramic)
         var torsoGeo = new THREE.CylinderGeometry(0.36, 0.25, 0.6, 24);
         var torsoMat = new THREE.MeshStandardMaterial({{
-            color: 0x0f172a,
-            metalness: 0.85,
-            roughness: 0.25,
-            emissive: 0x032840,
-            emissiveIntensity: 0.25
+            color: 0xf1f5f9,
+            metalness: 0.35,
+            roughness: 0.20,
+            emissive: 0x001a28,
+            emissiveIntensity: 0.10
         }});
         var torso = new THREE.Mesh(torsoGeo, torsoMat);
         companionGroup.add(torso);
@@ -818,7 +818,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         companionGroup.add(coreRing);
 
         var innerCoreGeo = new THREE.OctahedronGeometry(0.08);
-        var innerCoreMat = new THREE.MeshBasicMaterial({{ color: 0xa855f7 }});
+        var innerCoreMat = new THREE.MeshBasicMaterial({{ color: 0x00f0ff }});
         var innerCore = new THREE.Mesh(innerCoreGeo, innerCoreMat);
         innerCore.position.set(0, 0.04, 0.32);
         companionGroup.add(innerCore);
@@ -838,11 +838,11 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
         var helmetGeo = new THREE.SphereGeometry(0.34, 24, 20);
         var helmetMat = new THREE.MeshStandardMaterial({{
-            color: 0x1e293b,
-            metalness: 0.9,
-            roughness: 0.2,
-            emissive: 0x0b192c,
-            emissiveIntensity: 0.3
+            color: 0xffffff,
+            metalness: 0.25,
+            roughness: 0.15,
+            emissive: 0x002233,
+            emissiveIntensity: 0.12
         }});
         var helmet = new THREE.Mesh(helmetGeo, helmetMat);
         headGroup.add(helmet);
@@ -889,7 +889,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         antR.rotation.z = -0.3;
         headGroup.add(antR);
 
-        var beaconR = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshBasicMaterial({{ color: 0xa855f7 }}));
+        var beaconR = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshBasicMaterial({{ color: 0x00f0ff }}));
         beaconR.position.set(0.41, 0.28, 0);
         headGroup.add(beaconR);
 
@@ -899,7 +899,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         rightArmGroup.position.set(0.42, 0.18, 0);
         companionGroup.add(rightArmGroup);
 
-        var rForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.35), new THREE.MeshStandardMaterial({{ color: 0x1e293b, metalness: 0.8 }}));
+        var rForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.35), new THREE.MeshStandardMaterial({{ color: 0xf1f5f9, metalness: 0.4 }}));
         rForearm.position.set(0, -0.16, 0);
         rightArmGroup.add(rForearm);
 
@@ -912,7 +912,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         leftArmGroup.position.set(-0.42, 0.18, 0);
         companionGroup.add(leftArmGroup);
 
-        var lForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.35), new THREE.MeshStandardMaterial({{ color: 0x1e293b, metalness: 0.8 }}));
+        var lForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.35), new THREE.MeshStandardMaterial({{ color: 0xf1f5f9, metalness: 0.4 }}));
         lForearm.position.set(0, -0.16, 0);
         leftArmGroup.add(lForearm);
 
@@ -1688,7 +1688,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             rimCyan.position.set(-2, 1, 1);
             scene.add(rimCyan);
 
-            var rimViolet = new THREE.PointLight(0xa855f7, 2.0, 6);
+            var rimViolet = new THREE.PointLight(0x0284c7, 2.0, 6);
             rimViolet.position.set(2, -1, 1);
             scene.add(rimViolet);
 
@@ -1696,13 +1696,13 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             var mascotGroup = new THREE.Group();
             scene.add(mascotGroup);
 
-            // 1. Torso
+            // 1. Torso (Polished White & Silver Ceramic)
             var torsoMat = new THREE.MeshStandardMaterial({{
-                color: 0x0f172a,
-                metalness: 0.85,
-                roughness: 0.25,
-                emissive: 0x032840,
-                emissiveIntensity: 0.3
+                color: 0xf1f5f9,
+                metalness: 0.35,
+                roughness: 0.20,
+                emissive: 0x001a28,
+                emissiveIntensity: 0.10
             }});
             var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.26, 0.62, 24), torsoMat);
             mascotGroup.add(torso);
@@ -1712,7 +1712,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             coreRing.position.set(0, 0.05, 0.33);
             mascotGroup.add(coreRing);
 
-            var innerCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), new THREE.MeshBasicMaterial({{ color: 0xa855f7 }}));
+            var innerCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), new THREE.MeshBasicMaterial({{ color: 0x00f0ff }}));
             innerCore.position.set(0, 0.05, 0.33);
             mascotGroup.add(innerCore);
 
@@ -1728,11 +1728,11 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             mascotGroup.add(headGroup);
 
             var helmet = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 20), new THREE.MeshStandardMaterial({{
-                color: 0x1e293b,
-                metalness: 0.9,
-                roughness: 0.2,
-                emissive: 0x0b192c,
-                emissiveIntensity: 0.35
+                color: 0xffffff,
+                metalness: 0.25,
+                roughness: 0.15,
+                emissive: 0x002233,
+                emissiveIntensity: 0.12
             }}));
             headGroup.add(helmet);
 
@@ -1774,7 +1774,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             antR.rotation.z = -0.32;
             headGroup.add(antR);
 
-            var beaconR = new THREE.Mesh(new THREE.SphereGeometry(0.045), new THREE.MeshBasicMaterial({{ color: 0xa855f7 }}));
+            var beaconR = new THREE.Mesh(new THREE.SphereGeometry(0.045), new THREE.MeshBasicMaterial({{ color: 0x00f0ff }}));
             beaconR.position.set(0.45, 0.30, 0);
             headGroup.add(beaconR);
 
@@ -1782,7 +1782,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             var rArm = new THREE.Group();
             rArm.position.set(0.44, 0.20, 0);
             mascotGroup.add(rArm);
-            rArm.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.35), new THREE.MeshStandardMaterial({{ color: 0x1e293b, metalness: 0.8 }})));
+            rArm.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.35), new THREE.MeshStandardMaterial({{ color: 0xf1f5f9, metalness: 0.4 }})));
             var rHand = new THREE.Mesh(new THREE.SphereGeometry(0.07), new THREE.MeshBasicMaterial({{ color: 0x00f0ff }}));
             rHand.position.set(0, -0.34, 0.04);
             rArm.add(rHand);

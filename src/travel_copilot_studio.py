@@ -705,7 +705,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     width: 54px !important;
     height: 15px !important;
     border-radius: 50% !important;
-    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.85) 0%, rgba(168, 85, 247, 0.5) 45%, transparent 75%) !important;
+    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.90) 0%, rgba(2, 132, 199, 0.55) 45%, transparent 75%) !important;
     box-shadow: 0 0 18px rgba(0, 240, 255, 0.9), inset 0 0 8px rgba(0, 240, 255, 0.6) !important;
     z-index: -1 !important;
     animation: auraDiscPulse 0.74s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95) !important;
@@ -738,21 +738,27 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     }
 }
 
-/* Speech Bubble floating above Aura's head while walking with natural head bounce */
+/* Speech Bubble / Welcome Tooltip floating above Aura's head */
 .lang-bot-speech-bubble {
     position: absolute !important;
-    top: -26px !important;
+    top: -38px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(14, 165, 233, 0.92) 100%) !important;
+    background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important;
     border: 1.5px solid #00f0ff !important;
-    border-radius: 12px !important;
-    padding: 3px 12px !important;
+    border-radius: 14px !important;
+    padding: 4px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 2px !important;
     font-size: 0.72rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     white-space: nowrap !important;
-    box-shadow: 0 4px 16px rgba(0, 240, 255, 0.55), 0 0 10px rgba(168, 85, 247, 0.45) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 16px rgba(0, 240, 255, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
     pointer-events: auto !important;
     cursor: pointer !important;
     z-index: 25 !important;
@@ -761,22 +767,37 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     transition: all 0.25s ease !important;
 }
 
+.lang-bot-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: rgba(0, 240, 255, 0.15) !important;
+    border: 1px solid rgba(0, 240, 255, 0.5) !important;
+    border-radius: 9999px !important;
+    padding: 1px 7px !important;
+    font-size: 0.58rem !important;
+    font-weight: 800 !important;
+    color: #38bdf8 !important;
+    letter-spacing: 0.05em !important;
+}
+
 .lang-box-walking-aura:hover .lang-bot-speech-bubble {
-    background: linear-gradient(135deg, #0284c7 0%, #00f0ff 100%) !important;
-    color: #030712 !important;
-    box-shadow: 0 0 22px rgba(0, 240, 255, 0.9), 0 0 35px rgba(168, 85, 247, 0.65) !important;
+    background: linear-gradient(135deg, rgba(8, 20, 44, 0.98) 0%, rgba(2, 132, 199, 0.90) 100%) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.75), 0 8px 24px rgba(0, 0, 0, 0.8) !important;
 }
 .lang-bot-speech-bubble::after {
     content: '' !important;
     position: absolute !important;
-    bottom: -5px !important;
+    bottom: -6px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 0 !important;
     height: 0 !important;
-    border-left: 5px solid transparent !important;
-    border-right: 5px solid transparent !important;
-    border-top: 5px solid #00f0ff !important;
+    border-left: 6px solid transparent !important;
+    border-right: 6px solid transparent !important;
+    border-top: 6px solid #00f0ff !important;
 }
 @keyframes langBubbleBob {
     0%, 100% { transform: translateX(-50%) translateY(0); }
@@ -1273,7 +1294,7 @@ def render_main_language_bar():
     cur_lang = st.session_state.get("app_language", "en")
     ld = DASHBOARD_I18N.get(cur_lang, DASHBOARD_I18N["en"])
 
-    walking_robot_html = """<div class="lang-box-walking-stage" id="lang-box-walking-stage"><div class="lang-box-runway-track"></div><div class="lang-box-walking-aura quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){window.triggerAuraTourLaunch();}else if(window.parent&&window.parent.triggerAuraTourLaunch){window.parent.triggerAuraTourLaunch();}else if(window.startPathfinderTour){window.startPathfinderTour(0);}else if(window.parent&&window.parent.startPathfinderTour){window.parent.startPathfinderTour(0);}else if(window.top&&window.top.startPathfinderTour){window.top.startPathfinderTour(0);}else{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}"><div class="lang-bot-speech-bubble" id="lang-bot-speech-bubble"><span id="lang-bot-speech-text">🚀 Click me for a tour! ✨</span></div><div class="lang-bot-figure-wrap" id="lang-bot-figure-wrap"><canvas id="aura-walking-3d-canvas" class="aura-walking-3d-canvas" width="180" height="192"></canvas></div><div class="lang-bot-hologram-disc"></div></div></div>"""
+    walking_robot_html = """<div class="lang-box-walking-stage" id="lang-box-walking-stage"><div class="lang-box-runway-track"></div><div class="lang-box-walking-aura quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){window.triggerAuraTourLaunch();}else if(window.parent&&window.parent.triggerAuraTourLaunch){window.parent.triggerAuraTourLaunch();}else if(window.startPathfinderTour){window.startPathfinderTour(0);}else if(window.parent&&window.parent.startPathfinderTour){window.parent.startPathfinderTour(0);}else if(window.top&&window.top.startPathfinderTour){window.top.startPathfinderTour(0);}else{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}"><div class="lang-bot-speech-bubble" id="lang-bot-speech-bubble"><span class="lang-bot-tag">✦ AI Guide</span><span id="lang-bot-speech-text">Click me for a tour! ✨</span></div><div class="lang-bot-figure-wrap" id="lang-bot-figure-wrap"><canvas id="aura-walking-3d-canvas" class="aura-walking-3d-canvas" width="180" height="192"></canvas></div><div class="lang-bot-hologram-disc"></div></div></div>"""
 
     st.markdown(f"""<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.88) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 10px 18px 14px 18px; margin-bottom: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.50), 0 0 20px rgba(56, 189, 248, 0.18); position: relative;">
 {walking_robot_html}
@@ -1539,9 +1560,9 @@ def render_main_language_bar():
                     ctx.save();
                     var discY = groundY + 4;
                     var discGrad = ctx.createRadialGradient(cx, discY, 2, cx, discY, 28);
-                    discGrad.addColorStop(0, "rgba(0, 240, 255, 0.8)");
-                    discGrad.addColorStop(0.45, "rgba(168, 85, 247, 0.45)");
-                    discGrad.addColorStop(0.85, "rgba(56, 189, 248, 0.15)");
+                    discGrad.addColorStop(0, "rgba(0, 240, 255, 0.9)");
+                    discGrad.addColorStop(0.40, "rgba(2, 132, 199, 0.55)");
+                    discGrad.addColorStop(0.80, "rgba(0, 240, 255, 0.2)");
                     discGrad.addColorStop(1, "rgba(0, 240, 255, 0)");
                     ctx.fillStyle = discGrad;
                     ctx.beginPath();
@@ -1800,33 +1821,23 @@ def render_main_language_bar():
                     // 3D Yaw Perspective Shift on Chest Core
                     var coreProjX = currentYaw * 2.8;
 
-                    // Cute Quantum Reactor Core (Concentric Cyan Rings)
+                    // Chest Core Badge with "AI" Emblem (Matches White-and-Silver 3D Mascot)
                     ctx.beginPath();
-                    ctx.arc(coreProjX, 0, 4.2, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(14, 165, 233, 0.22)";
+                    ctx.arc(coreProjX, 0, 4.8, 0, Math.PI * 2);
+                    ctx.fillStyle = "#08142c";
                     ctx.fill();
                     ctx.strokeStyle = "#00f0ff";
                     ctx.lineWidth = 1.2;
                     ctx.stroke();
 
-                    // Inner Pulsating 4-Point Navigation Star
-                    var starScale = 1.0 + Math.sin(now * 0.006) * 0.15;
-                    ctx.save();
-                    ctx.translate(coreProjX, 0);
-                    ctx.scale(starScale, starScale);
-                    ctx.fillStyle = "#38bdf8";
-                    ctx.beginPath();
-                    ctx.moveTo(0, -3.2);
-                    ctx.lineTo(0.9, -0.8);
-                    ctx.lineTo(3.2, -0.8);
-                    ctx.lineTo(0.9, 0.2);
-                    ctx.lineTo(0, 2.8);
-                    ctx.lineTo(-0.9, 0.2);
-                    ctx.lineTo(-3.2, -0.8);
-                    ctx.lineTo(-0.9, -0.8);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
+                    ctx.fillStyle = "#00f0ff";
+                    ctx.font = "bold 5px -apple-system, BlinkMacSystemFont, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.shadowColor = "#00f0ff";
+                    ctx.shadowBlur = 4;
+                    ctx.fillText("AI", coreProjX, 0.5);
+                    ctx.shadowBlur = 0;
 
                     ctx.restore(); // End Torso
 
@@ -1943,11 +1954,11 @@ def render_main_language_bar():
                         ctx.arc(eyeR_X, 1.0, 3.0, 1.15 * Math.PI, 1.85 * Math.PI, false);
                         ctx.stroke();
 
-                        // Sweet blushing pink cheek dots
-                        ctx.fillStyle = "rgba(244, 114, 182, 0.65)";
+                        // Subtle cyan optical highlights
+                        ctx.fillStyle = "rgba(0, 240, 255, 0.35)";
                         ctx.beginPath();
-                        ctx.arc(eyeL_X - 2.5, 4.5, 1.8, 0, Math.PI * 2);
-                        ctx.arc(eyeR_X + 2.5, 4.5, 1.8, 0, Math.PI * 2);
+                        ctx.arc(eyeL_X - 2.0, 4.5, 1.2, 0, Math.PI * 2);
+                        ctx.arc(eyeR_X + 2.0, 4.5, 1.2, 0, Math.PI * 2);
                         ctx.fill();
                     } else {
                         // Warm cheerful curved smile eyes (^ ^)
@@ -1959,11 +1970,11 @@ def render_main_language_bar():
                         ctx.arc(eyeR_X, 1.6, 2.8, 1.15 * Math.PI, 1.85 * Math.PI, false);
                         ctx.stroke();
 
-                        // Subtle pink cheek blush
-                        ctx.fillStyle = "rgba(244, 114, 182, 0.45)";
+                        // Subtle cyan optical highlights
+                        ctx.fillStyle = "rgba(0, 240, 255, 0.20)";
                         ctx.beginPath();
-                        ctx.arc(eyeL_X - 2.2, 4.8, 1.5, 0, Math.PI * 2);
-                        ctx.arc(eyeR_X + 2.2, 4.8, 1.5, 0, Math.PI * 2);
+                        ctx.arc(eyeL_X - 2.0, 4.8, 1.1, 0, Math.PI * 2);
+                        ctx.arc(eyeR_X + 2.0, 4.8, 1.1, 0, Math.PI * 2);
                         ctx.fill();
                     }
 
@@ -1979,16 +1990,23 @@ def render_main_language_bar():
                     function drawHeadphone(hx, isLeft) {
                         ctx.save();
                         var hpGrad = ctx.createRadialGradient(hx, 1, 1, hx, 1, 4.8);
-                        hpGrad.addColorStop(0, "#38bdf8");
-                        hpGrad.addColorStop(0.6, "#0284c7");
-                        hpGrad.addColorStop(1, "#0369a1");
+                        hpGrad.addColorStop(0, "#ffffff");
+                        hpGrad.addColorStop(0.4, "#cbd5e1");
+                        hpGrad.addColorStop(0.7, "#0284c7");
+                        hpGrad.addColorStop(1, "#08142c");
                         ctx.fillStyle = hpGrad;
 
                         ctx.beginPath();
-                        ctx.ellipse(hx, 1.2, 3.0, 5.5, 0, 0, Math.PI * 2);
+                        ctx.ellipse(hx, 1.2, 3.2, 5.6, 0, 0, Math.PI * 2);
                         ctx.fill();
                         ctx.strokeStyle = "#00f0ff";
                         ctx.lineWidth = 1.2;
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.ellipse(hx, 1.2, 1.8, 3.4, 0, 0, Math.PI * 2);
+                        ctx.strokeStyle = "#38bdf8";
+                        ctx.lineWidth = 0.9;
                         ctx.stroke();
 
                         // Dynamic radiating soundwave WiFi arcs
