@@ -638,11 +638,11 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 
 /* Horizontal patrol keyframes with smooth deceleration, pause & turnaround at edges */
 @keyframes auraAutoWalkAcross {
-    0%   { left: 16px; }
-    46%  { left: calc(100% - 106px); }
-    54%  { left: calc(100% - 106px); }
-    96%  { left: 16px; }
-    100% { left: 16px; }
+    0%   { left: 16px; transform: scaleX(1); }
+    46%  { left: calc(100% - 106px); transform: scaleX(1); }
+    50%  { left: calc(100% - 106px); transform: scaleX(-1); }
+    96%  { left: 16px; transform: scaleX(-1); }
+    100% { left: 16px; transform: scaleX(1); }
 }
 
 .lang-bot-figure-wrap {
@@ -1318,13 +1318,22 @@ _AURA_ROBOT_B64 = None
 def _get_aura_robot_b64() -> str:
     global _AURA_ROBOT_B64
     if _AURA_ROBOT_B64 is None:
-        p = Path(__file__).resolve().parent.parent / "assets" / "aura_3d_robot_mascot_256.png"
-        if not p.exists():
-            p = Path(__file__).resolve().parent.parent / "assets" / "aura_chatbot_logo.png"
-        if p.exists():
-            import base64
-            _AURA_ROBOT_B64 = base64.b64encode(p.read_bytes()).decode("ascii")
-        else:
+        candidate_paths = [
+            Path(__file__).resolve().parent.parent / "assets" / "aura_3d_robot_mascot_thumbsup_trans.png",
+            Path(__file__).resolve().parent.parent / "assets" / "aura_3d_robot_mascot_thumbsup.png",
+            Path(__file__).resolve().parent.parent / "assets" / "aura_3d_robot_mascot_256.png",
+            Path(__file__).resolve().parent.parent / "assets" / "mascot_welcome_trans.png",
+            Path(__file__).resolve().parent.parent / "assets" / "aura_chatbot_logo.png"
+        ]
+        import base64
+        for p in candidate_paths:
+            if p.exists() and p.stat().st_size > 0:
+                try:
+                    _AURA_ROBOT_B64 = base64.b64encode(p.read_bytes()).decode("ascii")
+                    break
+                except Exception:
+                    pass
+        if _AURA_ROBOT_B64 is None:
             _AURA_ROBOT_B64 = ""
     return _AURA_ROBOT_B64
 
@@ -1339,7 +1348,8 @@ def render_main_language_bar():
     cur_lang = st.session_state.get("app_language", "en")
     ld = DASHBOARD_I18N.get(cur_lang, DASHBOARD_I18N["en"])
 
-    walking_robot_html = """<div class="lang-box-walking-stage" id="lang-box-walking-stage"><div class="lang-box-runway-track"></div><div class="lang-box-walking-aura quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){window.triggerAuraTourLaunch();}else if(window.parent&&window.parent.triggerAuraTourLaunch){window.parent.triggerAuraTourLaunch();}else if(window.startPathfinderTour){window.startPathfinderTour(0);}else if(window.parent&&window.parent.startPathfinderTour){window.parent.startPathfinderTour(0);}else if(window.top&&window.top.startPathfinderTour){window.top.startPathfinderTour(0);}else{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}"><div class="lang-bot-speech-bubble" id="lang-bot-speech-bubble"><span class="lang-bot-tag">✦ AI Guide</span><span id="lang-bot-speech-text">Click me for a tour! ✨</span></div><div class="lang-bot-figure-wrap" id="lang-bot-figure-wrap"><canvas id="aura-walking-3d-canvas" class="aura-walking-3d-canvas" width="180" height="192"></canvas></div><div class="lang-bot-hologram-disc"></div></div></div>"""
+    mascot_b64 = _get_aura_robot_b64()
+    walking_robot_html = f"""<div class="lang-box-walking-stage" id="lang-box-walking-stage"><div class="lang-box-runway-track"></div><div class="lang-box-walking-aura quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else if(window.top&&window.top.startPathfinderTour){{window.top.startPathfinderTour(0);}}else{{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}}"><div class="lang-bot-speech-bubble" id="lang-bot-speech-bubble"><span class="lang-bot-tag">✦ AI Guide</span><span id="lang-bot-speech-text">Click me for a tour! ✨</span></div><div class="lang-bot-figure-wrap" id="lang-bot-figure-wrap"><img src="data:image/png;base64,{mascot_b64}" class="lang-bot-walking-img" alt="3D AURA Walking Guide" /><canvas id="aura-walking-3d-canvas" class="aura-walking-3d-canvas" width="180" height="192" style="display:none;"></canvas></div><div class="lang-bot-hologram-disc"></div></div></div>"""
 
     st.markdown(f"""<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.88) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 10px 18px 14px 18px; margin-bottom: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.50), 0 0 20px rgba(56, 189, 248, 0.18); position: relative;">
 {walking_robot_html}
@@ -1688,9 +1698,21 @@ def render_main_language_bar():
 def render_dashboard_3d_robot_mascot():
     """
     Renders an interactive, animated 3D cute robot mascot.
-    Now roaming at the dashboard title banner!
+    Stationed prominently with soft glowing holographic pedestal and floating stride.
     """
-    pass
+    mascot_b64 = _get_aura_robot_b64()
+    st.markdown(f"""
+    <div class="dashboard-robot-left-station quick-tour-trigger-btn" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}">
+        <div class="lang-bot-speech-bubble" style="top: -24px !important; white-space: nowrap;">
+            <span class="lang-bot-tag">✦ AI Guide</span>
+            <span>Click me for a tour! ✨</span>
+        </div>
+        <div class="dashboard-robot-canvas-container">
+            <img src="data:image/png;base64,{mascot_b64}" class="dashboard-robot-chibi-img" alt="3D AI Robot Mascot" />
+            <div class="lang-bot-hologram-disc" style="bottom: 2px !important; width: 90px !important; height: 22px !important;"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def render_quantum_hero_section():
@@ -1698,15 +1720,26 @@ def render_quantum_hero_section():
     Renders the Quantum Realm inspired landing hero with emblem, bold gradient title,
     tagline, language selector directly below Pathfinder, and 4 interactive glassmorphic
     workspace cards, all dynamically localized across 8 languages.
+    Features the 3D moving robot mascot stationed proudly at the main dashboard!
     """
     cur_lang = st.session_state.get("app_language", "en")
     ld = DASHBOARD_I18N.get(cur_lang, DASHBOARD_I18N["en"])
+    mascot_b64 = _get_aura_robot_b64()
 
     st.markdown(f"""
     <div class="qr-hero-wrapper" id="pathfinder-hero-wrapper">
         <!-- Hidden button for legacy quick-tour trigger compatibility -->
         <button id="btn-hero-quick-tour" class="quick-tour-trigger-btn" style="display:none;"></button>
-        <div id="dashboard-robot-canvas-slot" style="display:none;"></div>
+        <div class="dashboard-robot-left-station quick-tour-trigger-btn" id="dashboard-robot-hero-station" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else if(window.top&&window.top.startPathfinderTour){{window.top.startPathfinderTour(0);}}">
+            <div class="lang-bot-speech-bubble" style="top: -24px !important; white-space: nowrap;">
+                <span class="lang-bot-tag">✦ AI Guide</span>
+                <span>Click me for a tour! ✨</span>
+            </div>
+            <div class="dashboard-robot-canvas-container">
+                <img src="data:image/png;base64,{mascot_b64}" class="dashboard-robot-chibi-img" alt="3D AI Robot Mascot" />
+                <div class="lang-bot-hologram-disc" style="bottom: 2px !important; width: 90px !important; height: 22px !important;"></div>
+            </div>
+        </div>
         <div class="qr-hero-main-content">
             <div class="qr-hero-emblem">🧭</div>
             <h1 class="qr-hero-heading" id="pathfinder-hero-title">{ld['title']}</h1>
