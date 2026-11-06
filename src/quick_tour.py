@@ -35,7 +35,8 @@ TOUR_STEPS = {
             "title": "Meet Your 3D AI Travel Companion",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "Greetings explorer! I'm your NexRoute 3D Guide. I'm here to show you around your travel assistant so you can plan journeys and navigate with total confidence!",
+            "bot_dialogue": "Hello! I am your 3D Guide AURA. I am here to help you plan your journey easily!",
+            "bot_speech_phonetic": "Hello! I am your 3D Guide Aura. I am here to help you plan your journey easily!",
             "bot_mood": "waving",
             "content": (
                 "Welcome to <b>P.A.T.H.F.I.N.D.E.R.</b> (<i>Predictive Adaptive Transit & Hazard-Free Intelligent Routing</i>).<br><br>"
@@ -52,7 +53,8 @@ TOUR_STEPS = {
             "title": "Explore the Main Workspaces",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "Take a look at these 4 dedicated travel modules right here! Click any workspace card to jump straight into AI Copilot, Navigation, Places, or your Virtual Guide.",
+            "bot_dialogue": "Explore 4 smart workspaces for itineraries, navigation, places, and virtual guide.",
+            "bot_speech_phonetic": "Explore four smart workspaces for itineraries, navigation, places, and virtual guide.",
             "bot_mood": "pointing",
             "content": (
                 "From this central dashboard, you can launch directly into 4 powerful workspaces:<br><br>"
@@ -71,7 +73,8 @@ TOUR_STEPS = {
             "title": "Ask Anything in Natural Language",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "Here is your 24/7 AI travel copilot! Click this floating robot button anytime to ask about destinations, routes, packing advice, or budgets in plain English or local languages.",
+            "bot_dialogue": "Click here to chat with me anytime for travel plans, routes, and advice.",
+            "bot_speech_phonetic": "Click here to chat with me anytime for travel plans, routes, and advice.",
             "bot_mood": "explaining",
             "content": (
                 "Meet <b>A.U.R.A.</b> (<i>Adaptive User Route Assistant</i>), your built-in AI copilot.<br><br>"
@@ -88,7 +91,8 @@ TOUR_STEPS = {
             "title": "Smart Route Customization & Toll Bypass",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "You can customize your route with a single click: avoid tolls to save cash, evade busy highways, or bypass water ferries for uninterrupted land travel!",
+            "bot_dialogue": "Customize your route with one click to avoid tolls, highways, and ferries.",
+            "bot_speech_phonetic": "Customize your route with one click to avoid tolls, highways, and ferries.",
             "bot_mood": "pointing",
             "content": (
                 "Take full control of your journeys with instant 1-click route preferences:<br><br>"
@@ -107,7 +111,8 @@ TOUR_STEPS = {
             "title": "Chat Answers & Conversational Refinement",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "When the chatbot responds, you can ask follow-ups to refine dates, transit types, or budgets. Answers are verified against live road and weather conditions!",
+            "bot_dialogue": "Refine your travel plans with real-time weather and road updates.",
+            "bot_speech_phonetic": "Refine your travel plans with real-time weather and road updates.",
             "bot_mood": "explaining",
             "content": (
                 "NexRoute generates structured, verified travel guidance grounded in reality:<br><br>"
@@ -125,7 +130,8 @@ TOUR_STEPS = {
             "title": "Live Map, Digital Speedometer & 3D Guide",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "Explore advanced cockpit tools: an interactive digital speedometer with speed limit warnings, live satellite hazard maps, and a 3D walking companion!",
+            "bot_dialogue": "Drive safely with live maps, digital speedometer, and 3D guide.",
+            "bot_speech_phonetic": "Drive safely with live maps, digital speedometer, and 3D guide.",
             "bot_mood": "scanning",
             "content": (
                 "NexRoute equips you with real-time driving cockpit intelligence:<br><br>"
@@ -143,7 +149,8 @@ TOUR_STEPS = {
             "title": "You're Ready to Explore with NexRoute!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "You're all set! You now know the basics of NexRoute. Tell me where you'd like to go, and let's plan your next journey!",
+            "bot_dialogue": "All set! Let's start planning your next amazing trip.",
+            "bot_speech_phonetic": "All set! Let's start planning your next amazing trip.",
             "bot_mood": "celebrating",
             "content": (
                 "Congratulations! You've mastered the essentials of <b>P.A.T.H.F.I.N.D.E.R.</b><br><br>"
@@ -1146,28 +1153,128 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     // =========================================================================
     // SPEECH SYNTHESIS & VOICE EQUALIZER
     // =========================================================================
-    function speakText(text) {{
+    var cachedVoices = [];
+    function refreshVoices() {{
+        if (!isSpeechSupported || !pWin.speechSynthesis) return [];
+        try {{
+            var v = pWin.speechSynthesis.getVoices();
+            if (v && v.length > 0) cachedVoices = v;
+        }} catch(e) {{}}
+        return cachedVoices;
+    }}
+    if (isSpeechSupported && pWin.speechSynthesis) {{
+        refreshVoices();
+        if (pWin.speechSynthesis.onvoiceschanged !== undefined) {{
+            pWin.speechSynthesis.onvoiceschanged = function() {{
+                refreshVoices();
+            }};
+        }}
+    }}
+
+    function findVoiceForLang(langCode) {{
+        var voices = refreshVoices();
+        if (!voices || voices.length === 0) return {{ voice: null, isNative: false }};
+        
+        var targetTag = (langCode || 'en-IN').toLowerCase().replace('_', '-');
+        var langPrefix = targetTag.split('-')[0];
+
+        // 1. Exact match e.g. "te-in", "hi-in", "ta-in"
+        var exact = voices.find(function(v) {{
+            return (v.lang || '').toLowerCase().replace('_', '-') === targetTag;
+        }});
+        if (exact) return {{ voice: exact, isNative: true }};
+
+        // 2. Prefix match e.g. starts with "te", "hi", "ta"
+        var prefix = voices.find(function(v) {{
+            var vl = (v.lang || '').toLowerCase().replace('_', '-');
+            return vl.startsWith(langPrefix + '-') || vl === langPrefix;
+        }});
+        if (prefix) return {{ voice: prefix, isNative: true }};
+
+        // 3. Name lookup for language keywords
+        var langKeywords = {{
+            'te': ['telugu'],
+            'hi': ['hindi'],
+            'ta': ['tamil'],
+            'kn': ['kannada'],
+            'ml': ['malayalam'],
+            'bn': ['bengali', 'bangla'],
+            'mr': ['marathi'],
+            'en': ['english']
+        }};
+        var keywords = langKeywords[langPrefix] || [];
+        if (keywords.length > 0) {{
+            var nameMatch = voices.find(function(v) {{
+                var vn = (v.name || '').toLowerCase();
+                return keywords.some(function(k) {{ return vn.includes(k); }});
+            }});
+            if (nameMatch) return {{ voice: nameMatch, isNative: true }};
+        }}
+
+        // If English, return best natural/Indian/default English voice
+        if (langPrefix === 'en') {{
+            var enVoice = voices.find(function(v) {{
+                var vl = (v.lang || '').toLowerCase();
+                return vl.includes('en-in') || vl.includes('en_in');
+            }}) || voices.find(function(v) {{
+                var vn = (v.name || '').toLowerCase();
+                return vn.includes('natural') || vn.includes('google') || vn.includes('india') || vn.includes('zira') || vn.includes('david');
+            }}) || voices.find(function(v) {{
+                return (v.lang || '').toLowerCase().startsWith('en');
+            }}) || voices[0];
+            return {{ voice: enVoice, isNative: true }};
+        }}
+
+        // Non-English language without native voice installed on this OS/browser:
+        // Fallback to Indian English or primary English voice to pronounce phonetic text
+        var fallbackVoice = voices.find(function(v) {{
+            var vl = (v.lang || '').toLowerCase();
+            return vl.includes('en-in') || vl.includes('en_in');
+        }}) || voices.find(function(v) {{
+            var vn = (v.name || '').toLowerCase();
+            return vn.includes('india') || vn.includes('natural') || vn.includes('google');
+        }}) || voices.find(function(v) {{
+            return (v.lang || '').toLowerCase().startsWith('en');
+        }}) || voices[0];
+
+        return {{ voice: fallbackVoice, isNative: false }};
+    }}
+
+    function speakText(text, phoneticFallback) {{
         if (!isSpeechSupported || isVoiceMuted || !text) return;
 
         try {{
+            // Unpause and cancel any stuck synthesis queue (Chrome bug workaround)
+            if (pWin.speechSynthesis.paused) {{
+                pWin.speechSynthesis.resume();
+            }}
             pWin.speechSynthesis.cancel();
 
-            var cleanText = text.replace(/<[^>]*>/g, '').replace(/💡|🚀|🤖|🧭|💳|🛣️|⛴️|⏱️|🗺️|📖|🎉/g, '');
-            var utt = new pWin.SpeechSynthesisUtterance(cleanText);
-            utt.lang = currentVoiceLang || 'en-IN';
-            utt.rate = 1.05;
-            utt.pitch = 1.1;
+            var voiceResult = findVoiceForLang(currentVoiceLang);
+            var chosenVoice = voiceResult.voice;
+            var isNative = voiceResult.isNative;
 
-            var voices = pWin.speechSynthesis.getVoices();
-            if (voices && voices.length > 0) {{
-                var langPrefix = (currentVoiceLang || 'en').split('-')[0].toLowerCase();
-                var preferredVoice = voices.find(function(v) {{
-                    return v.lang && v.lang.toLowerCase().startsWith(langPrefix);
-                }}) || voices.find(function(v) {{
-                    return v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('David'));
-                }}) || voices[0];
-                if (preferredVoice) utt.voice = preferredVoice;
+            // If we have a native voice for the selected language, speak the native script text.
+            // If the browser/OS lacks a native voice for this Indic script, speak the short phonetic transliteration so it is NEVER silent!
+            var rawTextToSpeak = (isNative || !phoneticFallback) ? text : phoneticFallback;
+            var cleanText = rawTextToSpeak
+                .replace(/<[^>]*>/g, '')
+                .replace(/["'""'']/g, '')
+                .replace(/💡|🚀|🤖|🧭|💳|🛣️|⛴️|⏱️|🗺️|📖|🎉|✨|💬|🌸|⭐/g, '')
+                .trim();
+
+            if (!cleanText) return;
+
+            var utt = new pWin.SpeechSynthesisUtterance(cleanText);
+            if (chosenVoice) {{
+                utt.voice = chosenVoice;
+                utt.lang = isNative ? (chosenVoice.lang || currentVoiceLang) : 'en-IN';
+            }} else {{
+                utt.lang = currentVoiceLang || 'en-IN';
             }}
+
+            utt.rate = 1.0;
+            utt.pitch = 1.05;
 
             var voiceBars = pDoc.querySelector('.tour-bot-voice-bars');
             utt.onstart = function() {{
@@ -1178,11 +1285,18 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
                 if (voiceBars) voiceBars.classList.remove('speaking');
                 if (character3DEngine) character3DEngine.setMood("idle");
             }};
-            utt.onerror = function() {{
+            utt.onerror = function(err) {{
                 if (voiceBars) voiceBars.classList.remove('speaking');
+                if (character3DEngine) character3DEngine.setMood("idle");
+                console.warn("[3DGuide] Speech playback notice:", err);
             }};
 
             activeUtterance = utt;
+
+            // Resume right before speak to defeat Chrome 15s pause bug
+            if (pWin.speechSynthesis.paused) {{
+                pWin.speechSynthesis.resume();
+            }}
             pWin.speechSynthesis.speak(utt);
         }} catch(e) {{
             console.warn("[3DGuide] Speech synthesis notice:", e);
@@ -1404,7 +1518,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             }}
 
             // Speak Dialogue
-            speakText(stepData.bot_dialogue);
+            speakText(stepData.bot_dialogue, stepData.bot_speech_phonetic);
 
         }}, 140);
 
@@ -1454,11 +1568,11 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
                 try {{
                     pWin.localStorage.setItem('pathfinder_voice_muted', isVoiceMuted ? '1' : '0');
                 }} catch(e) {{}}
-                btnVoice.innerHTML = isVoiceMuted ? '🔇 Unmute' : '🔊 Voice';
+                btnVoice.innerHTML = isVoiceMuted ? (uiStrings.unmute || '🔇 Unmute') : (uiStrings.voice || '🔊 Voice');
                 if (isVoiceMuted) {{
                     stopSpeaking();
                 }} else {{
-                    speakText(stepData.bot_dialogue);
+                    speakText(stepData.bot_dialogue, stepData.bot_speech_phonetic);
                 }}
             }};
         }}

@@ -165,7 +165,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "మీ 3D AI ప్రయాణ సహచరుడిని కలవండి",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "నమస్కారం అన్వేషకులారా! నేను మీ పాత్‌ఫైండర్ 3D గైడ్‌ని. మీరు సురక్షితంగా మరియు విశ్వాసంతో ప్రయాణాలు ప్లాన్ చేసుకునేలా మీకు సహాయం చేస్తాను!",
+            "bot_dialogue": "నమస్కారం! నేను మీ 3D గైడ్ AURA. ప్రయాణాన్ని సులభంగా ప్లాన్ చేసుకోవడానికి నేను మీకు సహాయం చేస్తాను.",
+            "bot_speech_phonetic": "Namaskaram! Nenu mee 3D guide Aura. Prayanaanni sulabhamga plan chesukovadaaniki nenu meeku sahayam chestanu.",
             "bot_mood": "waving",
             "content": (
                 "<b>P.A.T.H.F.I.N.D.E.R.</b> కు స్వాగతం.<br><br>"
@@ -182,7 +183,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ప్రధాన వర్క్‌స్పేస్‌లను అన్వేషించండి",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "ఇక్కడ ఉన్న 4 ప్రయాణ మాడ్యూల్స్‌ని చూడండి! AI కోపైలట్, నావిగేషన్, ప్రదేశాలు లేదా వర్చువల్ గైడ్‌లోకి ప్రవేశించడానికి ఏదైనా కార్డుపై క్లిక్ చేయండి.",
+            "bot_dialogue": "ఇక్కడ ఉన్న 4 వర్క్‌స్పేస్‌లలో ప్లానింగ్, మ్యాప్‌లు, ప్రదేశాలు మరియు వర్చువల్ గైడ్‌ను అన్వేషించండి.",
+            "bot_speech_phonetic": "Ikkada unna naalugu workspaces lo planning, maps, pradeshaalu mariyu virtual guide nu anveshinchandi.",
             "bot_mood": "pointing",
             "content": (
                 "ఈ డాష్‌బోర్డ్ నుండి మీరు 4 శక్తివంతమైన వర్క్‌స్పేస్‌లలోకి వెళ్ళవచ్చు:<br><br>"
@@ -201,7 +203,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "సహజ భాషలో ఏదైనా అడగండి",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "ఇది మీ 24/7 AI ట్రావెల్ కోపైలట్! గమ్యస్థానాలు, మార్గాలు, ప్యాకింగ్ చిట్కాలు లేదా బడ్జెట్ గురించి ఎప్పుడైనా అడగండి.",
+            "bot_dialogue": "ట్రావెల్ ప్లాన్స్, మార్గాలు మరియు చిట్కాల కోసం నాతో ఎప్పుడైనా చాట్ చేయండి.",
+            "bot_speech_phonetic": "Travel plans, maargaalu mariyu chitkaala kosam naatho eppudaina chat cheyandi.",
             "bot_mood": "explaining",
             "content": (
                 "<b>A.U.R.A.</b> (అడాప్టివ్ యూజర్ రూట్ అసిస్టెంట్) ను కలవండి.<br><br>"
@@ -218,7 +221,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "స్మార్ట్ రూట్ అనుకూలీకరణ & టోల్ బైపాస్",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "ఒక్క క్లిక్‌తో మీ మార్గాన్ని అనుకూలీకరించండి: టోల్స్ తప్పించండి, బిజీ హైవేలను నివారించండి లేదా నిరంతర భూ ప్రయాణం కోసం ఫెర్రీలను దాటవేయండి!",
+            "bot_dialogue": "ఒక్క క్లిక్‌తో టోల్స్, బిజీ హైవేలు మరియు ఫెర్రీలను తప్పించి ఉత్తమ మార్గాన్ని ఎంచుకోండి.",
+            "bot_speech_phonetic": "Okka click tho tolls, busy highways mariyu ferries nu thappinchi utthama maargaanni enchukondi.",
             "bot_mood": "pointing",
             "content": (
                 "తక్షణ 1-క్లిక్ మార్గ ప్రాధాన్యతలతో మీ ప్రయాణాలను నియంత్రించండి:<br><br>"
@@ -237,7 +241,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "లైవ్ సమాచారం & సంభాషణ సవరణ",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "చాట్‌బాట్ స్పందించినప్పుడు తేదీలు లేదా బడ్జెట్‌ను మార్చడానికి తదుపరి ప్రశ్నలను అడగవచ్చు. సమాధానాలు లైవ్ రోడ్ మరియు వాతావరణ పరిస్థితులతో సరిపోల్చబడతాయి!",
+            "bot_dialogue": "లైవ్ వాతావరణం మరియు రోడ్డు పరిస్థితులకు అనుగుణంగా ప్రయాణ వివరాలను సులభంగా మార్చుకోండి.",
+            "bot_speech_phonetic": "Live vaathaavaranam mariyu road paristhithulaku anugunanga prayana vivaraalanu sulabhamga maarchukondi.",
             "bot_mood": "explaining",
             "content": (
                 "పాత్‌ఫైండర్ వాస్తవికత ఆధారంగా ప్రయాణ మార్గదర్శకత్వాన్ని రూపొందిస్తుంది:<br><br>"
@@ -255,7 +260,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "లైవ్ మ్యాప్, డిజిటల్ స్పీడోమీటర్ & 3D గైడ్",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "డిజిటల్ స్పీడోమీటర్, లైవ్ ఉపగ్రహ ప్రమాద మ్యాప్‌లు మరియు 3D నడక సహచరుడితో కూడిన కాక్‌పిట్ సాధనాలను అన్వేషించండి!",
+            "bot_dialogue": "లైవ్ మ్యాప్, డిజిటల్ స్పీడోమీటర్ మరియు 3D గైడ్ సహాయంతో సురక్షితంగా డ్రైవ్ చేయండి.",
+            "bot_speech_phonetic": "Live map, digital speedometer mariyu 3D guide sahaayamtho surakshithamga drive cheyandi.",
             "bot_mood": "scanning",
             "content": (
                 "పాత్‌ఫైండర్ మీకు రియల్-టైమ్ డ్రైవింగ్ కాక్‌పిట్ ఇంటెలిజెన్స్‌ను అందిస్తుంది:<br><br>"
@@ -273,7 +279,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "మీరు పాత్‌ఫైండర్‌తో అన్వేషించడానికి సిద్ధంగా ఉన్నారు!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "అంతా సిద్ధమైంది! మీరు ఎక్కడికి వెళ్లాలనుకుంటున్నారో చెప్పండి, మీ తదుపరి ప్రయాణాన్ని కలిసి ప్లాన్ చేద్దాం!",
+            "bot_dialogue": "అంతా సిద్ధమైంది! మీ ప్రయాణాన్ని ప్రారంభించడానికి క్రింద స్టార్ట్ ప్లానింగ్ క్లిక్ చేయండి.",
+            "bot_speech_phonetic": "Anthaa siddhamaindi! Mee prayanaanni praarambhinchadaaniki krinda start planning click cheyandi.",
             "bot_mood": "celebrating",
             "content": (
                 "అభినందనలు! మీరు <b>పాత్‌ఫైండర్</b> ప్రాథమికాంశాలను తెలుసుకున్నారు.<br><br>"
@@ -296,7 +303,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "अपने 3D AI यात्रा साथी से मिलें",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "नमस्ते खोजकर्ताओं! मैं आपका पाथफाइंडर 3D गाइड हूँ। मैं आपको आपके यात्रा सहायक से परिचित कराने आया हूँ ताकि आप पूर्ण विश्वास के साथ यात्रा की योजना बना सकें!",
+            "bot_dialogue": "नमस्ते! मैं आपका 3D गाइड AURA हूँ। यात्रा की आसान योजना बनाने में मैं आपकी मदद करूँगा।",
+            "bot_speech_phonetic": "Namaste! Main aapka 3D guide Aura hoon. Yatra ki aasan yojana banane mein main aapki madad karunga.",
             "bot_mood": "waving",
             "content": (
                 "<b>P.A.T.H.F.I.N.D.E.R.</b> में आपका स्वागत है।<br><br>"
@@ -313,7 +321,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "मुख्य कार्यक्षेत्रों का अन्वेषण करें",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "यहाँ इन 4 समर्पित यात्रा मॉड्यूल्स को देखें! AI कोपायलट, नेविगेशन, दर्शनीय स्थल या वर्चुअल गाइड में जाने के लिए किसी भी कार्ड पर क्लिक करें।",
+            "bot_dialogue": "यहाँ 4 मुख्य वर्कस्पेस हैं—प्लानिंग, नेविगेशन, दर्शनीय स्थल और 3D वर्चुअल गाइड।",
+            "bot_speech_phonetic": "Yahan chaar mukhya workspaces hain - planning, navigation, darshaneeya sthal aur 3D virtual guide.",
             "bot_mood": "pointing",
             "content": (
                 "इस मुख्य डैशबोर्ड से आप 4 शक्तिशाली कार्यक्षेत्रों में जा सकते हैं:<br><br>"
@@ -332,7 +341,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "सरल भाषा में कुछ भी पूछें",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "यहाँ आपका 24/7 AI यात्रा कोपायलट है! गंतव्यों, मार्गों, पैकिंग सलाह या बजट के बारे में कभी भी पूछने के लिए इस बटन पर क्लिक करें।",
+            "bot_dialogue": "यात्रा योजना, नए मार्ग और बजट की जानकारी के लिए मुझसे कभी भी चैट करें।",
+            "bot_speech_phonetic": "Yatra yojana, naye marg aur budget ki jaankari ke liye mujhse kabhi bhi chat karein.",
             "bot_mood": "explaining",
             "content": (
                 "<b>A.U.R.A.</b> से मिलें, आपका अंतर्निहित AI कोपायलट।<br><br>"
@@ -349,7 +359,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "स्मार्ट रूट अनुकूलन और टोल बायपास",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "एक क्लिक में अपने मार्ग को कस्टमाइज़ करें: पैसे बचाने के लिए टोल से बचें, व्यस्त राजमार्गों से बचें, या निरंतर भूमि यात्रा के लिए घाटों को छोड़ें!",
+            "bot_dialogue": "एक क्लिक में टोल, हाईवे या फेरी से बचकर बेहतरीन रास्ता चुनें।",
+            "bot_speech_phonetic": "Ek click mein toll, highway ya ferry se bachkar behtareen rasta chunein.",
             "bot_mood": "pointing",
             "content": (
                 "त्वरित 1-क्लिक रूट प्राथमिकताओं के साथ अपनी यात्राओं पर पूर्ण नियंत्रण रखें:<br><br>"
@@ -368,7 +379,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "लाइव उत्तर और संवादात्मक संशोधन",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "जब चैटबॉट उत्तर देता है, तो आप तिथियों, पारगमन प्रकारों या बजट को बदलने के लिए आगे प्रश्न पूछ सकते हैं। उत्तर लाइव मौसम और सड़क स्थिति पर आधारित होते हैं!",
+            "bot_dialogue": "लाइव मौसम और सड़क स्थिति के अनुसार अपनी यात्रा का प्लान कभी भी बदलें।",
+            "bot_speech_phonetic": "Live mausam aur sadak sthiti ke anusaar apni yatra ka plan kabhi bhi badlein.",
             "bot_mood": "explaining",
             "content": (
                 "पाथफाइंडर वास्तविकता पर आधारित संरचित यात्रा मार्गदर्शन उत्पन्न करता है:<br><br>"
@@ -386,7 +398,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "लाइव मानचित्र, डिजिटल स्पीडोमीटर और 3D गाइड",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "उन्नत कॉकपिट टूल्स का अन्वेषण करें: गति सीमा चेतावनी के साथ डिजिटल स्पीडोमीटर, लाइव सैटेलाइट मैप और 3D साथी!",
+            "bot_dialogue": "लाइव मैप, डिजिटल स्पीडोमीटर और 3D गाइड के साथ सुरक्षित ड्राइव करें।",
+            "bot_speech_phonetic": "Live map, digital speedometer aur 3D guide ke saath surakshit drive karein.",
             "bot_mood": "scanning",
             "content": (
                 "पाथफाइंडर आपको वास्तविक समय ड्राइविंग कॉकपिट बुद्धिमत्ता से लैस करता है:<br><br>"
@@ -404,7 +417,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "आप पाथफाइंडर के साथ अन्वेषण के लिए तैयार हैं!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "आप पूरी तरह तैयार हैं! मुझे बताएं कि आप कहाँ जाना चाहते हैं, और आइए अपनी अगली यात्रा की योजना बनाएं!",
+            "bot_dialogue": "सब तैयार है! अपनी नई यात्रा शुरू करने के लिए नीचे स्टार्ट प्लानिंग पर क्लिक करें।",
+            "bot_speech_phonetic": "Sab taiyaar hai! Apni nayi yatra shuru karne ke liye neeche start planning par click karein.",
             "bot_mood": "celebrating",
             "content": (
                 "बधाई हो! आपने <b>पाथफाइंडर</b> की अनिवार्य बातें सीख ली हैं।<br><br>"
@@ -427,7 +441,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "உங்கள் 3D AI பயணத் தோழரைச் சந்தியுங்கள்",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "வணக்கம் பயணிகளே! நான் உங்கள் பாத்ஃபைண்டர் 3D வழிகாட்டி. நம்பிக்கையுடன் பயணங்களை திட்டமிட உங்களுக்கு வழிகாட்டுகிறேன்!",
+            "bot_dialogue": "வணக்கம்! நான் உங்கள் 3D வழிகாட்டி AURA. பயணத்தை எளிதாக திட்டமிட உதவுகிறேன்.",
+            "bot_speech_phonetic": "Vanakkam! Naan ungal 3D vazhikaatti Aura. Payanathai elidhaaga thittamida udhavugiren.",
             "bot_mood": "waving",
             "content": (
                 "<b>P.A.T.H.F.I.N.D.E.R.</b> க்கு நல்வரவு.<br><br>"
@@ -444,7 +459,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "முக்கிய பணித்தளங்களை ஆராயுங்கள்",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "இங்கே உள்ள 4 பிரத்யேக பயணப் பிரிவுகளைப் பாருங்கள்! AI கோபைலட், வரைபடம் அல்லது மெய்நிகர் வழிகாட்டியில் நுழைய எந்த அட்டையையும் கிளிக் செய்யவும்.",
+            "bot_dialogue": "பயணத் திட்டம், வரைபடம், சுற்றுலா இடங்கள் மற்றும் வழிகாட்டிக்கான 4 பிரிவுகளைப் பாருங்கள்.",
+            "bot_speech_phonetic": "Payana thittam, varaipadam, sutrula idangal matrum vazhikaattikkaana naangu pirivugalai paarungal.",
             "bot_mood": "pointing",
             "content": (
                 "இந்த முதன்மை முகப்பிலிருந்து 4 சக்திவாய்ந்த பிரிவுகளைத் தொடங்கலாம்:<br><br>"
@@ -463,7 +479,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "இயல்பான மொழியில் எதையும் கேளுங்கள்",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "உங்கள் 24/7 AI பயணத் துணை இங்கே உள்ளது! இலக்குகள், வழிகள் அல்லது பட்ஜெட் பற்றி எப்போது வேண்டுமானாலும் கேளுங்கள்.",
+            "bot_dialogue": "பயண வழிகள், திட்டங்கள் மற்றும் பட்ஜெட் பற்றி என்னிடம் எப்போது வேண்டுமானாலும் கேளுங்கள்.",
+            "bot_speech_phonetic": "Payana vazhigal, thittangal matrum budget patri ennidam eppodhu vendumaanaalum kelungal.",
             "bot_mood": "explaining",
             "content": (
                 "<b>A.U.R.A.</b> உடன் இணையுங்கள், உங்கள் உள்ளமைக்கப்பட்ட AI கோபைலட்.<br><br>"
@@ -480,7 +497,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "சுங்கச்சாவடி தவிர்ப்பு மற்றும் ஸ்மார்ட் ரூட்",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "ஒரே கிளிக்கில் உங்கள் வழியைத் தனிப்பயனாக்குங்கள்: பணத்தைச் சேமிக்க சுங்கச்சாவடிகளைத் தவிர்க்கவும், விரைவுச்சாலைகளைத் தவிர்க்கவும்!",
+            "bot_dialogue": "டோல் மற்றும் விரைவுச் சாலைகளைத் தவிர்த்து சிறந்த பாதையை எளிதாகத் தேர்ந்தெடுங்கள்.",
+            "bot_speech_phonetic": "Toll matrum viraivu saalaigalai thavirthu sirandha paadhaiyai elidhaaga thernthedungal.",
             "bot_mood": "pointing",
             "content": (
                 "உடனடி 1-கிளிக் விருப்பங்களுடன் உங்கள் பயணங்களை நிர்வகிக்கவும்:<br><br>"
@@ -499,7 +517,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "நேரலை பதில்கள் & உரையாடல் மேம்பாடு",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "சாட்பாட் பதிலளிக்கும் போது, தேதிகள் அல்லது பட்ஜெட்டை மாற்ற தொடர் கேள்விகளைக் கேட்கலாம். பதில்கள் நேரலை வானிலையுடன் சரிபார்க்கப்படுகின்றன!",
+            "bot_dialogue": "நேரலை வானிலை மற்றும் சாலைத் தகவல்களுடன் உங்கள் திட்டத்தை மாற்றிக் கொள்ளுங்கள்.",
+            "bot_speech_phonetic": "Neralai vaaanilai matrum saalai thagavalgaldan ungal thittathai maatri kollungal.",
             "bot_mood": "explaining",
             "content": (
                 "பாத்ஃபைண்டர் நேரலை சாலை நிலவரங்களுடன் கூடிய துல்லியமான வழிகாட்டுதலை வழங்குகிறது:<br><br>"
@@ -517,7 +536,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "நேரலை வரைபடம், வேகமானி & 3D வழிகாட்டி",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "வேக வரம்பு எச்சரிக்கையுடன் கூடிய டிஜிட்டல் ஸ்பீடோமீட்டர், நேரலை செயற்கைக்கோள் வரைபடம் மற்றும் 3D வழிகாட்டியை ஆராயுங்கள்!",
+            "bot_dialogue": "நேரலை வரைபடம், வேகமானி மற்றும் 3D வழிகாட்டியுடன் பாதுகாப்பாகப் பயணிக்கவும்.",
+            "bot_speech_phonetic": "Neralai varaipadam, vegamaani matrum 3D vazhikaattiyudan paadhugaappaaga payanikkavum.",
             "bot_mood": "scanning",
             "content": (
                 "பாத்ஃபைண்டர் நிகழ்நேர ஓட்டுநர் நுண்ணறிவை உங்களுக்கு வழங்குகிறது:<br><br>"
@@ -535,7 +555,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "பாத்ஃபைண்டருடன் பயணிக்க நீங்கள் தயார்!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "நீங்கள் தயார்! நீங்கள் எங்கு செல்ல விரும்புகிறீர்கள் என்று சொல்லுங்கள், உங்கள் அடுத்த பயணத்தைத் திட்டமிடுவோம்!",
+            "bot_dialogue": "அனைத்தும் தயார்! உங்கள் பயணத்தைத் தொடங்க கீழே கிளிக் செய்யுங்கள்.",
+            "bot_speech_phonetic": "Anaithum thayaar! Ungal payanathai thodanga keezhe click seyyungal.",
             "bot_mood": "celebrating",
             "content": (
                 "வாழ்த்துகள்! நீங்கள் <b>பாத்ஃபைண்டரின்</b> அடிப்படை அம்சங்களைக் கற்றுக்கொண்டீர்கள்.<br><br>"
@@ -558,7 +579,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ನಿಮ್ಮ 3D AI ಪ್ರಯಾಣ ಸಹಚರನನ್ನು ಭೇಟಿ ಮಾಡಿ",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "ನಮಸ್ಕಾರ ಪರಿಶೋಧಕರೇ! ನಾನು ನಿಮ್ಮ ಪಾತ್‌ಫೈಂಡರ್ 3D ಗೈಡ್. ಪೂರ್ಣ ವಿಶ್ವಾಸದೊಂದಿಗೆ ಪ್ರಯಾಣ ಯೋಜಿಸಲು ನಿಮಗೆ ಮಾರ್ಗದರ್ಶನ ನೀಡುತ್ತೇನೆ!",
+            "bot_dialogue": "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ 3D ಗೈಡ್ AURA. ಪ್ರಯಾಣವನ್ನು ಸುಲಭವಾಗಿ ಯೋಜಿಸಲು ನಾನು ಇಲ್ಲಿದ್ದೇನೆ.",
+            "bot_speech_phonetic": "Namaskara! Naanu nimma 3D guide Aura. Prayanavannu sulabhavagi yojisalu naanu illiddene.",
             "bot_mood": "waving",
             "content": (
                 "<b>P.A.T.H.F.I.N.D.E.R.</b> ಗೆ ಸುಸ್ವಾಗತ.<br><br>"
@@ -575,7 +597,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ಮುಖ್ಯ ಕಾರ್ಯಕ್ಷೇತ್ರಗಳನ್ನು ಅನ್ವೇಷಿಸಿ",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "ಇಲ್ಲಿರುವ 4 ಮೀಸಲಾದ ಪ್ರಯಾಣ ಮಾಡ್ಯೂಲ್‌ಗಳನ್ನು ನೋಡಿ! AI ಕೋಪೈಲಟ್, ನ್ಯಾವಿಗೇಷನ್ ಅಥವಾ ವರ್ಚುವಲ್ ಗೈಡ್‌ಗೆ ಹೋಗಲು ಯಾವುದೇ ಕಾರ್ಡ್ ಕ್ಲಿಕ್ ಮಾಡಿ.",
+            "bot_dialogue": "ಪ್ರವಾಸ ಯೋಜನೆ, ನಕ್ಷೆ, ಪ್ರೇಕ್ಷಣೀಯ ಸ್ಥಳಗಳು ಮತ್ತು ವರ್ಚುವಲ್ ಗೈಡ್‌ನ 4 ವಿಭಾಗಗಳನ್ನು ನೋಡಿ.",
+            "bot_speech_phonetic": "Pravasa yojana, nakshe, prekshaneeya sthalagalu matthu virtual guide na naalku vibhagagalannu nodi.",
             "bot_mood": "pointing",
             "content": (
                 "ಈ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ನಿಂದ ನೀವು 4 ಶಕ್ತಿಶಾಲಿ ಕಾರ್ಯಕ್ಷೇತ್ರಗಳಿಗೆ ಹೋಗಬಹುದು:<br><br>"
@@ -594,7 +617,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ಸರಳ ಭಾಷೆಯಲ್ಲಿ ಏನನ್ನಾದರೂ ಕೇಳಿ",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "ಇಲ್ಲಿ ನಿಮ್ಮ 24/7 AI ಪ್ರಯಾಣ ಸಹಾಯಕ ಲಭ್ಯವಿದೆ! ಗಮ್ಯಸ್ಥಾನಗಳು, ಮಾರ್ಗಗಳು ಅಥವಾ ಬಜೆಟ್ ಕುರಿತು ಯಾವುದೇ ಸಮಯದಲ್ಲಿ ಕೇಳಿ.",
+            "bot_dialogue": "ಪ್ರಯಾಣ ಯೋಜನೆಗಳು ಮತ್ತು ಮಾರ್ಗಗಳ ಬಗ್ಗೆ ನನ್ನೊಂದಿಗೆ ಯಾವಾಗ ಬೇಕಾದರೂ ಚಾಟ್ ಮಾಡಿ.",
+            "bot_speech_phonetic": "Prayana yojanegalu matthu margagala bagge nannondhige yaavaga bekadaru chat maadi.",
             "bot_mood": "explaining",
             "content": (
                 "<b>A.U.R.A.</b> ಅನ್ನು ಭೇಟಿ ಮಾಡಿ, ನಿಮ್ಮ ಅಂತರ್ನಿರ್ಮಿತ AI ಕೋಪೈಲಟ್.<br><br>"
@@ -611,7 +635,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ಟೋಲ್ ತಪ್ಪಿಸುವಿಕೆ ಮತ್ತು ಸ್ಮಾರ್ಟ್ ಮಾರ್ಗ",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "ಒಂದೇ ಕ್ಲಿಕ್‌ನಲ್ಲಿ ಮಾರ್ಗವನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ: ವೆಚ್ಚ ಉಳಿಸಲು ಟೋಲ್‌ಗಳನ್ನು ತಪ್ಪಿಸಿ, ಹೆದ್ದಾರಿಗಳನ್ನು ತಪ್ಪಿಸಿ!",
+            "bot_dialogue": "ಟೋಲ್ ಮತ್ತು ಹೆದ್ದಾರಿಗಳನ್ನು ತಪ್ಪಿಸಿ ಉತ್ತಮ ಮಾರ್ಗವನ್ನು ಸುಲಭವಾಗಿ ಆಯ್ಕೆಮಾಡಿ.",
+            "bot_speech_phonetic": "Toll matthu heddaari galannu thappisi utthama margavannu sulabhavagi aaykemaadi.",
             "bot_mood": "pointing",
             "content": (
                 "ತತ್ಕ್ಷಣದ 1-ಕ್ಲಿಕ್ ಆದ್ಯತೆಗಳೊಂದಿಗೆ ನಿಮ್ಮ ಪ್ರಯಾಣವನ್ನು ನಿಯಂತ್ರಿಸಿ:<br><br>"
@@ -630,7 +655,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ಲೈವ್ ಉತ್ತರಗಳು ಮತ್ತು ಸಂವಾದಾತ್ಮಕ ತಿದ್ದುಪಡಿ",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "ಚಾಟ್‌ಬಾಟ್ ಉತ್ತರಿಸಿದಾಗ, ದಿನಾಂಕಗಳು ಅಥವಾ ಬಜೆಟ್ ಬದಲಾಯಿಸಲು ಅನುಸರಣಾ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಬಹುದು. ಉತ್ತರಗಳು ಲೈವ್ ರಸ್ತೆ ಸ್ಥಿತಿಗೆ ಹೊಂದಿಕೆಯಾಗುತ್ತವೆ!",
+            "bot_dialogue": "ಲೈವ್ ಹವಾಮಾನ ಮತ್ತು ರಸ್ತೆ ಸ್ಥಿತಿಗೆ ಅನುಗುಣವಾಗಿ ಪ್ರವಾಸವನ್ನು ಸುಲಭವಾಗಿ ಬದಲಾಯಿಸಿಕೊಳ್ಳಿ.",
+            "bot_speech_phonetic": "Live havaamaana matthu rasthe sthithige anugunavaagi pravasavannu sulabhavagi badalaayisikolli.",
             "bot_mood": "explaining",
             "content": (
                 "ಪಾತ್‌ಫೈಂಡರ್ ನೈಜ ಪರಿಸ್ಥಿತಿಗಳಿಗೆ ಅನುಗುಣವಾಗಿ ಮಾರ್ಗದರ್ಶನ ನೀಡುತ್ತದೆ:<br><br>"
@@ -648,7 +674,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ಲೈವ್ ನಕ್ಷೆ, ಡಿಜಿಟಲ್ ಸ್ಪೀಡೋಮೀಟರ್ & 3D ಗೈಡ್",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "ವೇಗದ ಮಿತಿ ಎಚ್ಚರಿಕೆಗಳೊಂದಿಗೆ ಡಿಜಿಟಲ್ ಸ್ಪೀಡೋಮೀಟರ್, ಲೈವ್ ಉಪಗ್ರಹ ನಕ್ಷೆ ಮತ್ತು 3D ಒಡನಾಡಿಯನ್ನು ಅನ್ವೇಷಿಸಿ!",
+            "bot_dialogue": "ಲೈವ್ ನಕ್ಷೆ, ಸ್ಪೀಡೋಮೀಟರ್ ಮತ್ತು 3D ಗೈಡ್‌ನೊಂದಿಗೆ ಸುರಕ್ಷಿತವಾಗಿ ಚಲಿಸಿ.",
+            "bot_speech_phonetic": "Live nakshe, speedometer matthu 3D guide nondhige surakshithavaagi chalisi.",
             "bot_mood": "scanning",
             "content": (
                 "ಪಾತ್‌ಫೈಂಡರ್ ನಿಮಗೆ ನೈಜ-ಸಮಯದ ಚಾಲನಾ ಕಾಕ್‌ಪಿಟ್ ಬುದ್ಧಿವಂತಿಕೆಯನ್ನು ಒದಗಿಸುತ್ತದೆ:<br><br>"
@@ -666,7 +693,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ನೀವು ಪಾತ್‌ಫೈಂಡರ್‌ನೊಂದಿಗೆ ಅನ್ವೇಷಿಸಲು ಸಿದ್ಧರಿದ್ದೀರಿ!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "ಎಲ್ಲವೂ ಸಿದ್ಧವಾಗಿದೆ! ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕೆಂದು ಹೇಳಿ, ನಿಮ್ಮ ಮುಂದಿನ ಪ್ರಯಾಣವನ್ನು ಒಟ್ಟಾಗಿ ಯೋಜಿಸೋಣ!",
+            "bot_dialogue": "ಎಲ್ಲವೂ ಸಿದ್ಧವಾಗಿದೆ! ಹೊಸ ಪ್ರಯಾಣ ಪ್ರಾರಂಭಿಸಲು ಕೆಳಗೆ ಕ್ಲಿಕ್ ಮಾಡಿ.",
+            "bot_speech_phonetic": "Ellavoo siddhavaagide! Hosa prayana praarambhisaalu kelage click maadi.",
             "bot_mood": "celebrating",
             "content": (
                 "ಅಭಿನಂದನೆಗಳು! ನೀವು <b>ಪಾತ್‌ಫೈಂಡರ್</b> ಮೂಲ ಅಂಶಗಳನ್ನು ಕಲಿತಿದ್ದೀರಿ.<br><br>"
@@ -689,7 +717,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "നിങ്ങളുടെ 3D AI യാത്രാ സഹായിയെ പരിചയപ്പെടൂ",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "നമസ്കാരം സഞ്ചാരികളെ! ഞാൻ നിങ്ങളുടെ പാത്ത്‌ഫൈൻഡർ 3D ഗൈഡാണ്. യാത്രകൾ പൂർണ്ണ ആത്മവിശ്വാസത്തോടെ ആസൂത്രണം ചെയ്യാൻ സഹായിക്കാം!",
+            "bot_dialogue": "നമസ്കാരം! ഞാൻ നിങ്ങളുടെ 3D ഗൈഡ് AURA. യാത്ര എളുപ്പത്തിൽ ആസൂത്രണം ചെയ്യാൻ സഹായിക്കാം.",
+            "bot_speech_phonetic": "Namaskaram! Njan ningalude 3D guide Aura. Yaathra eluppathil aasoothranam cheyyaan sahaayikkaam.",
             "bot_mood": "waving",
             "content": (
                 "<b>P.A.T.H.F.I.N.D.E.R.</b> ലേക്ക് സ്വാഗതം.<br><br>"
@@ -706,7 +735,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "പ്രധാന വർക്ക്സ്പേസുകൾ പരിശോധിക്കുക",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "ഈ 4 യാത്രാ മൊഡ്യൂളുകൾ പരിശോധിക്കൂ! AI കോപൈലറ്റ്, നാവിഗേഷൻ, സ്ഥലങ്ങൾ എന്നിവയിലേക്ക് പോകാൻ കാർഡിൽ ക്ലിക്ക് ചെയ്യുക.",
+            "bot_dialogue": "യാത്രാ പ്ലാൻ, മാപ്പ്, സ്ഥലങ്ങൾ, വെർച്വൽ ഗൈഡ് എന്നിവയ്ക്കായി 4 വിഭാഗങ്ങൾ കാണുക.",
+            "bot_speech_phonetic": "Yaathra plan, map, sthalangal, virtual guide ennivaykkaayi naalu vibhaagangal kaanuka.",
             "bot_mood": "pointing",
             "content": (
                 "ഈ ഡാഷ്‌ബോർഡിൽ നിന്ന് നിങ്ങൾക്ക് 4 ശക്തമായ മേഖലകളിലേക്ക് കടക്കാം:<br><br>"
@@ -725,7 +755,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ലളിതമായ ഭാഷയിൽ എന്തും ചോദിക്കൂ",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "ഇതാ നിങ്ങളുടെ 24/7 AI യാത്രാ സഹായി! സ്ഥലങ്ങൾ, റൂട്ടുകൾ അല്ലെങ്കിൽ ബജറ്റ് എന്നിവയെക്കുറിച്ച് എപ്പോൾ വേണമെങ്കിലും ചോദിക്കാം.",
+            "bot_dialogue": "യാത്രാ വഴികളും വിവരങ്ങളും അറിയാൻ എപ്പോൾ വേണമെങ്കിലും എന്നോട് സംസാരിക്കാം.",
+            "bot_speech_phonetic": "Yaathra vazhikalum vivarangalum ariyan eppol venamenkilum ennodu samsaarikkaam.",
             "bot_mood": "explaining",
             "content": (
                 "<b>A.U.R.A.</b> യെ പരിചയപ്പെടൂ, നിങ്ങളുടെ AI കോപൈലറ്റ്.<br><br>"
@@ -742,7 +773,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "ടോൾ ഒഴിവാക്കലും സ്മാർട്ട് റൂട്ടും",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "ഒറ്റ ക്ലിക്കിൽ നിങ്ങളുടെ വഴി മാറ്റാം: പണം ലാഭിക്കാൻ ടോളുകൾ ഒഴിവാക്കൂ, തിരക്കുള്ള ഹൈവേകൾ ഒഴിവാക്കൂ!",
+            "bot_dialogue": "ടോളുകളും ഹൈവേകളും ഒഴിവാക്കി മികച്ച വഴി ഒറ്റ ക്ലിക്കിൽ കണ്ടെത്തൂ.",
+            "bot_speech_phonetic": "Tollukalum highwaysum ozhivaakki mikacha vazhi otta clickil kandethoo.",
             "bot_mood": "pointing",
             "content": (
                 "ലളിതമായ മുൻഗണനകളോടെ നിങ്ങളുടെ യാത്ര നിയന്ത്രിക്കുക:<br><br>"
@@ -761,7 +793,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "തത്സമയ മറുപടികളും മാറ്റങ്ങളും",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "ചാറ്റ്ബോട്ട് മറുപടി നൽകുമ്പോൾ തീയതികളോ ബജറ്റോ മാറ്റാൻ തുടർചോദ്യങ്ങൾ ചോദിക്കാം. തത്സമയ കാലാവസ്ഥ അടിസ്ഥാനമാക്കിയാണ് വിവരങ്ങൾ നൽകുന്നത്!",
+            "bot_dialogue": "തത്സമയ കാലാവസ്ഥയും റോഡ് വിവരങ്ങളും ഉപയോഗിച്ച് പ്ലാൻ എളുപ്പത്തിൽ മാറ്റാം.",
+            "bot_speech_phonetic": "Thalsamaya kaalaavasthayum road vivarangalum upayogichu plan eluppathil maattam.",
             "bot_mood": "explaining",
             "content": (
                 "പാത്ത്‌ഫൈൻഡർ യാഥാർത്ഥ്യത്തെ അടിസ്ഥാനമാക്കിയുള്ള യാത്രാ മാർഗ്ഗനിർദ്ദേശം നൽകുന്നു:<br><br>"
@@ -779,7 +812,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "തത്സമയ മാപ്പ്, ഡിജിറ്റൽ സ്പീഡോമീറ്റർ & 3D ഗൈഡ്",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "വേഗത പരിധി മുന്നറിയിപ്പുള്ള സ്പീഡോമീറ്റർ, തത്സമയ സാറ്റലൈറ്റ് മാപ്പ്, 3D യാത്രാ സഹായി എന്നിവ പരിശോധിക്കൂ!",
+            "bot_dialogue": "ലൈവ് മാപ്പും സ്പീഡോമീറ്ററും 3D ഗൈഡും ഉപയോഗിച്ച് സുരക്ഷിതമായി യാത്ര ചെയ്യൂ.",
+            "bot_speech_phonetic": "Live mappum speedometerum 3D guidum upayogichu surakshithamaayi yaathra cheyyoo.",
             "bot_mood": "scanning",
             "content": (
                 "പാത്ത്‌ഫൈൻഡർ ഡ്രൈവിംഗ് കോക്ക്പിറ്റ് ഇന്റലിജൻസ് നൽകുന്നു:<br><br>"
@@ -797,7 +831,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "നിങ്ങൾ പാത്ത്‌ഫൈൻഡറിനൊപ്പം യാത്ര ചെയ്യാൻ തയ്യാറാണ്!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "എല്ലാം തയ്യാറായിക്കഴിഞ്ഞു! എങ്ങോട്ടാണ് പോകേണ്ടതെന്ന് പറയൂ, നിങ്ങളുടെ അടുത്ത യാത്ര നമുക്ക് ഒരുമിച്ച് ആസൂത്രണം ചെയ്യാം!",
+            "bot_dialogue": "എല്ലാം തയ്യാറാണ്! യാത്ര തുടങ്ങാൻ താഴെ സ്റ്റാർട്ട് പ്ലാനിംഗ് ക്ലിക്ക് ചെയ്യുക.",
+            "bot_speech_phonetic": "Ellaam thayyaaraanu! Yaathra thudangaan thaazhe start planning click cheyyuka.",
             "bot_mood": "celebrating",
             "content": (
                 "അഭിനന്ദനങ്ങൾ! നിങ്ങൾ <b>പാത്ത്‌ഫൈൻഡർ</b> അടിസ്ഥാന വിവരങ്ങൾ മനസ്സിലാക്കിക്കഴിഞ്ഞു.<br><br>"
@@ -820,7 +855,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "আপনার 3D AI ভ্রমণ সঙ্গীর সাথে পরিচিত হন",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "নমস্কার অভিযাত্রী! আমি আপনার পাথফাইন্ডার 3D গাইড। আমি আপনাকে সম্পূর্ণ আত্মবিশ্বাসের সাথে ভ্রমণ পরিকল্পনা করতে সাহায্য করব!",
+            "bot_dialogue": "নমস্কার! আমি আপনার 3D গাইড AURA। সহজে ভ্রমণ পরিকল্পনা করতে সাহায্য করব।",
+            "bot_speech_phonetic": "Nomoshkar! Ami aapnar 3D guide Aura. Shohoje bhromon porikolpona korte sahajjo korbo.",
             "bot_mood": "waving",
             "content": (
                 "<b>P.A.T.H.F.I.N.D.E.R.</b>-এ স্বাগতম।<br><br>"
@@ -837,7 +873,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "মূল কাজের ক্ষেত্রগুলি অন্বেষণ করুন",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "এখানে এই 4টি নিবেদিত ভ্রমণ মডিউল দেখুন! AI কোপাইলট, নেভিগেশন, দর্শনীয় স্থানে যেতে যেকোনো কার্ডে ক্লিক করুন।",
+            "bot_dialogue": "ভ্রমণ পরিকল্পনা, মানচিত্র, দর্শনীয় স্থান ও 3D ভার্চুয়াল গাইডের ৪টি বিভাগ দেখুন।",
+            "bot_speech_phonetic": "Bhromon porikolpona, maanchitra, dorshoneeyo sthan o 3D virtual guider chaarti bibhaag dekhun.",
             "bot_mood": "pointing",
             "content": (
                 "এই প্রধান ড্যাশবোর্ড থেকে আপনি ৪টি শক্তিশালী বিভাগে যেতে পারেন:<br><br>"
@@ -856,7 +893,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "সহজ ভাষায় যেকোনো কিছু জিজ্ঞাসা করুন",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "এখানে আপনার 24/7 AI ভ্রমণ সহায়ক রয়েছে! গন্তব্য, রুট বা বাজেট সম্পর্কে যেকোনো সময় জিজ্ঞাসা করুন।",
+            "bot_dialogue": "ভ্রমণের তথ্য, সেরা রুট ও বাজেট জানতে আমার সাথে যেকোনো সময় চ্যাট করুন।",
+            "bot_speech_phonetic": "Bhromoner thothyo, shera route o budget jaante aamar saathe jekono shomoy chat korun.",
             "bot_mood": "explaining",
             "content": (
                 "<b>A.U.R.A.</b>-র সাথে পরিচিত হন, আপনার অন্তর্নির্মিত AI কোপাইলট।<br><br>"
@@ -873,7 +911,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "টোল বাইপাস ও স্মার্ট রুট কাস্টমাইজেশন",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "এক ক্লিকে আপনার রুট কাস্টমাইজ করুন: খরচ বাঁচাতে টোল এড়িয়ে চলুন, ব্যস্ত হাইওয়ে এড়িয়ে চলুন!",
+            "bot_dialogue": "এক ক্লিকে টোল ও ব্যস্ত হাইওয়ে এড়িয়ে সেরা রুট বেছে নিন।",
+            "bot_speech_phonetic": "Ek clicke toll o byasto highway eṛiye shera route beche nin.",
             "bot_mood": "pointing",
             "content": (
                 "সহজ ১-ক্লিক পছন্দের মাধ্যমে আপনার ভ্রমণ নিয়ন্ত্রণ করুন:<br><br>"
@@ -892,7 +931,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "লাইভ উত্তর এবং ইন্টারেক্টিভ পরিবর্তন",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "চ্যাটবট উত্তর দিলে তারিখ বা বাজেট পরিবর্তন করতে আরও প্রশ্ন করতে পারেন। উত্তরগুলি লাইভ আবহাওয়া ও রাস্তার পরিস্থিতির উপর ভিত্তি করে দেওয়া হয়!",
+            "bot_dialogue": "লাইভ আবহাওয়া ও রাস্তার অবস্থার সাথে ভ্রমণ পরিকল্পনা সহজে বদলান।",
+            "bot_speech_phonetic": "Live aabohaawa o raastaar obosthaar saathe bhromon porikolpona shohoje bodlaan.",
             "bot_mood": "explaining",
             "content": (
                 "পাথফাইন্ডার বাস্তবতার উপর ভিত্তি করে সঠিক ভ্রমণ নির্দেশিকা তৈরি করে:<br><br>"
@@ -910,7 +950,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "লাইভ মানচিত্র, ডিজিটাল স্পিডোমিটার এবং 3D গাইড",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "গতি সীমা সতর্কতা সহ স্পিডোমিটার, লাইভ স্যাটেলাইট মানচিত্র এবং 3D সঙ্গীর উন্নত সরঞ্জাম দেখুন!",
+            "bot_dialogue": "লাইভ ম্যাপ, স্পিডোমিটার এবং 3D গাইডের সাহায্যে নিরাপদে ভ্রমণ করুন।",
+            "bot_speech_phonetic": "Live map, speedometer ebong 3D guider saahajye niraapode bhromon korun.",
             "bot_mood": "scanning",
             "content": (
                 "পাথফাইন্ডার আপনাকে রিয়েল-টাইম ড্রাইভিং ককপিট বুদ্ধিমত্তা দেয়:<br><br>"
@@ -928,7 +969,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "আপনি পাথফাইন্ডারের সাথে অন্বেষণের জন্য প্রস্তুত!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "আপনি সম্পূর্ণ প্রস্তুত! আপনি কোথায় যেতে চান বলুন, আসুন আপনার পরবর্তী ভ্রমণের পরিকল্পনা করি!",
+            "bot_dialogue": "সব প্রস্তুত! নতুন ভ্রমণ शुरू করতে নিচে স্টার্ট প্ল্যানিং ক্লিক করুন।",
+            "bot_speech_phonetic": "Shob prostut! Notun bhromon shuru korte neeche start planning click korun.",
             "bot_mood": "celebrating",
             "content": (
                 "অভিনন্দন! আপনি <b>পাথফাইন্ডার</b>-এর মূল বিষয়গুলি শিখেছেন।<br><br>"
@@ -951,7 +993,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "आपल्या 3D AI प्रवास सोबत्याला भेटा",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "नमस्कार पर्यटकांनो! मी तुमचा पाथफाइंडर 3D गाइड आहे. मी तुम्हाला आत्मविश्वासाने प्रवासाचे नियोजन करण्यास मदत करेन!",
+            "bot_dialogue": "नमस्कार! मी तुमचा 3D गाइड AURA आहे. प्रवासाचे सोपे नियोजन करण्यासाठी मी तुम्हाला मदत करेन.",
+            "bot_speech_phonetic": "Namaskar! Mee tumcha 3D guide Aura aahe. Pravasache sope niyojan karnyasaathi mee tumhala madat karen.",
             "bot_mood": "waving",
             "content": (
                 "<b>P.A.T.H.F.I.N.D.E.R.</b> मध्ये आपले स्वागत आहे.<br><br>"
@@ -968,7 +1011,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "मुख्य कार्यक्षेत्रे एक्सप्लोर करा",
             "selector": "#tour-workspace-cards, .qr-navbar-container, .qr-workspace-card:first-child",
             "fallback_center": False,
-            "bot_dialogue": "येथे ही 4 समर्पित प्रवास मॉड्यूल्स पहा! AI कोपायलट, नेव्हिगेशन किंवा व्हर्च्युअल गाइडवर जाण्यासाठी कोणत्याही कार्डवर क्लिक करा.",
+            "bot_dialogue": "प्रवास नियोजन, नकाशा, पर्यटन स्थळे आणि व्हर्च्युअल गाइडचे ४ विभाग एक्सप्लोर करा.",
+            "bot_speech_phonetic": "Pravas niyojan, nakasha, paryatan sthale aani virtual guideche char vibhaag explore kara.",
             "bot_mood": "pointing",
             "content": (
                 "या मुख्य डॅशबोर्डवरून तुम्ही 4 शक्तिशाली विभागांमध्ये जाऊ शकता:<br><br>"
@@ -987,7 +1031,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "सोप्या भाषेत काहीही विचारा",
             "selector": ".floating-aura-logo-overlay, div[data-testid='stPopover'], button[aria-label*='Aura'], div[data-testid='stChatInput']",
             "fallback_center": False,
-            "bot_dialogue": "येथे तुमचा 24/7 AI प्रवास सहाय्यक उपलब्ध आहे! गंतव्यस्थान, मार्ग किंवा बजेटबद्दल कधीही विचारा.",
+            "bot_dialogue": "प्रवासाचे मार्ग, प्लॅन्स आणि बजेटबद्दल मला कधीही विचारा.",
+            "bot_speech_phonetic": "Pravasache maarg, plans aani budget baddal mala kadhihi vichara.",
             "bot_mood": "explaining",
             "content": (
                 "<b>A.U.R.A.</b> ला भेटा, तुमचा अंगभूत AI कोपायलट.<br><br>"
@@ -1004,7 +1049,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "स्मार्ट मार्ग सानुकूलन आणि टोल बायपास",
             "selector": "#tour-preferences-bar, #tour-card-nav, .qr-workspace-card:nth-child(2)",
             "fallback_center": False,
-            "bot_dialogue": "एका क्लिकवर तुमचा मार्ग सानुकूलित करा: पैसे वाचवण्यासाठी टोल टाळा, गर्दीचे महामार्ग टाळा!",
+            "bot_dialogue": "एका क्लिकवर टोल आणि महामार्ग टाळून सर्वोत्तम मार्ग निवडा.",
+            "bot_speech_phonetic": "Eka click var toll aani mahaamaarg taalun sarvottam maarg nivada.",
             "bot_mood": "pointing",
             "content": (
                 "झटपट 1-क्लिक प्राधान्यांसह तुमच्या प्रवासावर नियंत्रण ठेवा:<br><br>"
@@ -1023,7 +1069,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "थेट उत्तरे आणि संवादात्मक सुधारणा",
             "selector": "div[data-testid='stPopoverBody'], div[data-testid='stPopover'], .floating-aura-logo-overlay",
             "fallback_center": True,
-            "bot_dialogue": "चॅटबॉट उत्तर देतो तेव्हा तारखा किंवा बजेट बदलण्यासाठी तुम्ही पुढील प्रश्न विचारू शकता. उत्तरे थेट हवामानाशी पडताळून दिली जातात!",
+            "bot_dialogue": "थेट हवामान आणि रस्त्यांच्या माहितीनुसार तुमचा प्लॅन सहज बदला.",
+            "bot_speech_phonetic": "Thet havaamaan aani rastyanchya maahitinusaar tumcha plan sahaj badla.",
             "bot_mood": "explaining",
             "content": (
                 "पाथफाइंडर वास्तवतेवर आधारित अचूक प्रवास मार्गदर्शन प्रदान करतो:<br><br>"
@@ -1041,7 +1088,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "थेट नकाशा, डिजिटल स्पीडोमीटर आणि 3D गाइड",
             "selector": "#tour-card-guide, #tour-speedometer-cockpit, #tour-card-nav",
             "fallback_center": False,
-            "bot_dialogue": "वेग मर्यादा चेतावणीसह डिजिटल स्पीडोमीटर, थेट उपग्रह नकाशा आणि 3D सोबतीची प्रगत साधने एक्सप्लोर करा!",
+            "bot_dialogue": "लाइव्ह मॅप, स्पीडोमीटर आणि 3D गाइडच्या मदतीने सुरक्षित प्रवास करा.",
+            "bot_speech_phonetic": "Live map, speedometer aani 3D guidechya madatine surakshit pravas kara.",
             "bot_mood": "scanning",
             "content": (
                 "पाथफाइंडर तुम्हाला रिअल-टाइम ड्रायव्हिंग कॉकपिट बुद्धिमत्ता देतो:<br><br>"
@@ -1059,7 +1107,8 @@ TOUR_STEPS_LOCALIZED = {
             "title": "तुम्ही पाथफाइंडरसह प्रवासासाठी सज्ज आहात!",
             "selector": "#pathfinder-hero-wrapper, .qr-hero-wrapper, #pathfinder-hero-title",
             "fallback_center": True,
-            "bot_dialogue": "तुम्ही पूर्णपणे सज्ज आहात! तुम्हाला कुठे जायचे आहे ते सांगा, आणि चला तुमच्या पुढच्या प्रवासाचे नियोजन करूया!",
+            "bot_dialogue": "सर्व सज्ज आहे! नवीन प्रवास सुरू करण्यासाठी खाली स्टार्ट प्लॅनिंगवर क्लिक करा.",
+            "bot_speech_phonetic": "Sarva sajja aahe! Naveen pravas suru karnyasaathi khaali start planning var click kara.",
             "bot_mood": "celebrating",
             "content": (
                 "अभिनंदन! तुम्ही <b>पाथफाइंडर</b>च्या आवश्यक गोष्टी शिकला आहात.<br><br>"

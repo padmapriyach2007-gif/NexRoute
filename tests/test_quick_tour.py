@@ -138,3 +138,30 @@ def test_aura_robot_click_tour_integration():
     assert "aura-walking-3d-canvas" in studio_src
     assert "initCuteAuraWalker" in studio_src
 
+
+def test_multilingual_voice_dialogues_simple_and_short():
+    """Verify all 8 languages have exactly 7 steps with short, simple dialogues and phonetic speech fallbacks."""
+    expected_langs = ["en", "te", "hi", "ta", "kn", "ml", "bn", "mr"]
+    for lang in expected_langs:
+        assert lang in TOUR_STEPS, f"Missing language {lang} in TOUR_STEPS"
+        steps = TOUR_STEPS[lang]
+        assert len(steps) == 7, f"{lang} does not have 7 steps"
+        for s in steps:
+            assert "bot_dialogue" in s and s["bot_dialogue"], f"Empty dialogue in {lang} step {s['step']}"
+            assert "bot_speech_phonetic" in s and s["bot_speech_phonetic"], f"Empty phonetic in {lang} step {s['step']}"
+            assert len(s["bot_dialogue"]) < 125, f"{lang} step {s['step']} dialogue too long: {len(s['bot_dialogue'])} chars"
+            assert len(s["bot_speech_phonetic"]) < 140, f"{lang} step {s['step']} phonetic too long: {len(s['bot_speech_phonetic'])} chars"
+
+
+def test_speech_synthesis_multilingual_engine_in_html():
+    """Verify generated tour HTML includes resilient voice engine with language lookup and phonetic fallback."""
+    for lang in ["en", "te", "hi"]:
+        html = build_quick_tour_html(lang)
+        assert "findVoiceForLang" in html
+        assert "refreshVoices" in html
+        assert "phoneticFallback" in html
+        assert "speechSynthesis.resume()" in html
+        assert "tour-bot-voice-bars" in html
+        assert "allVoiceCatalog" in html
+
+

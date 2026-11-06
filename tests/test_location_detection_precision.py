@@ -55,3 +55,4 @@ def test_cloud_server_ip_location_filtering():
         # Must not be US AWS / GCP server datacenter
         is_us_server = (c_lat > 25.0 and c_lon < -50.0) or (abs(c_lat - 45.5999) < 2.0 and abs(c_lon - (-121.1871)) < 2.0)
         assert not is_us_server, f"Server IP location was not filtered: {loc}"
+
