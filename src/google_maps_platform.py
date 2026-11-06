@@ -2194,10 +2194,10 @@ def build_google_maps_javascript_html(
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(15, 23, 42, 0.98); border-bottom: 1px solid rgba(245, 158, 11, 0.3);">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="font-size: 18px;">🚶</span>
-                    <span style="font-size: 13px; font-weight: 800; color: #f8fafc;">Google Street View • 360° Interactive Panorama</span>
+                    <span style="font-size: 13px; font-weight: 800; color: #f8fafc;">NexRoute Maps View • 360° Interactive Panorama</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <a id="btn-open-streetview-ext" href="#" target="_blank" style="background: #f59e0b; color: #000; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-decoration: none;">🌐 Open in G-Maps</a>
+                    <a id="btn-open-streetview-ext" href="#" target="_blank" style="background: #f59e0b; color: #000; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-decoration: none;">🌐 Open NexRoute in Maps</a>
                     <button onclick="window.closeStreetViewModal()" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;">✕</button>
                 </div>
             </div>
@@ -2306,12 +2306,12 @@ def build_google_maps_javascript_html(
                     <span class="layer-item-label">Terrain</span>
                 </button>
 
-                <!-- Street View -->
-                <button class="layer-item-btn" id="layer-btn-streetview" onclick="window.launchStreetView()" title="Launch 360° Google Street View">
+                <!-- NexRoute Maps View (360° Panorama) -->
+                <button class="layer-item-btn" id="layer-btn-streetview" onclick="window.launchStreetView()" title="Launch 360° NexRoute Maps View">
                     <div class="layer-icon-circle bg-streetview">
                         <span style="font-size: 20px;">🚶</span>
                     </div>
-                    <span class="layer-item-label">Street View</span>
+                    <span class="layer-item-label">NexRoute View</span>
                 </button>
 
                 <!-- Wildfires & Hazards -->
@@ -2905,7 +2905,7 @@ def build_google_maps_javascript_html(
                     iconAnchor: [17, 34]
                 }});
                 window.leafletPegmanMarker = L.marker([lat, lng], {{ icon: pegmanIcon, zIndexOffset: 7000 }}).addTo(window.lMapInstance)
-                    .bindPopup('🚶 <strong>Street View Panorama Point</strong><br>Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5)).openPopup();
+                    .bindPopup('🚶 <strong>NexRoute Maps View Panorama Point</strong><br>Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5)).openPopup();
             }}
 
             var svModal = document.getElementById('gmap-streetview-modal');
@@ -2919,7 +2919,7 @@ def build_google_maps_javascript_html(
                 svModal.style.display = 'flex';
             }}
 
-            window.showMapToast('Google Street View: 360° Panorama Viewpoint Opened', '🚶');
+            window.showMapToast('NexRoute Maps View: 360° Panorama Viewpoint Opened', '🚶');
         }};
 
         window.closeStreetViewModal = function() {{
@@ -5439,7 +5439,7 @@ def build_google_maps_javascript_html(
                 }});
 
                 var panoBtn = item.street_view_url ? 
-                    '<a class="iw-btn secondary" href="' + item.street_view_url + '" target="_blank">360° Street View</a>' : '';
+                    '<a class="iw-btn secondary" href="' + item.street_view_url + '" target="_blank">360° NexRoute View</a>' : '';
 
                 var gmapsSearchUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name + ' ' + item.latitude + ',' + item.longitude);
                 var content = '<div class="iw-title">🏛️ ' + item.name + '</div>' +

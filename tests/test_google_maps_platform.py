@@ -97,6 +97,9 @@ def test_build_google_maps_javascript_html():
     assert "place-btn-save-fav" in html  # Save to Favourites button in place drawer
     assert "saveInspectedPlaceToFavourites" in html  # Save to favourites engine
     assert "All Markers" not in html  # All Markers tab removed as requested
+    assert "NexRoute Maps View • 360° Interactive Panorama" in html  # Rebranded NexRoute Maps View title
+    assert "Open NexRoute in Maps" in html  # Rebranded Open in Maps button
+    assert "btn-open-streetview-ext" in html
 
 
 
