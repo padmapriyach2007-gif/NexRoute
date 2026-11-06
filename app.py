@@ -17805,14 +17805,9 @@ body {{
 
 
 
+                st.session_state.pop("cached_candidate_routes", None)
                 if "_prev_endpoint_sig" in st.session_state:
-
-
-
                     del st.session_state["_prev_endpoint_sig"]
-
-
-
                 st.rerun()
 
 
@@ -17921,14 +17916,9 @@ body {{
 
 
 
+                st.session_state.pop("cached_candidate_routes", None)
                 if "_prev_endpoint_sig" in st.session_state:
-
-
-
                     del st.session_state["_prev_endpoint_sig"]
-
-
-
                 st.rerun()
 
 
@@ -18037,14 +18027,9 @@ body {{
 
 
 
+                st.session_state.pop("cached_candidate_routes", None)
                 if "_prev_endpoint_sig" in st.session_state:
-
-
-
                     del st.session_state["_prev_endpoint_sig"]
-
-
-
                 st.rerun()
 
 
