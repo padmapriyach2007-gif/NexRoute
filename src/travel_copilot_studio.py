@@ -1548,26 +1548,41 @@ def render_main_language_bar():
             // Dedicated tour launcher function registered on all frames - supports ANY language!
             pWin.triggerAuraTourLaunch = window.triggerAuraTourLaunch = function(targetLang) {{
                 var lang = targetLang || currentLang || "en";
-                var el = pDoc.getElementById("lang-bot-speech-text") || document.getElementById("lang-bot-speech-text");
+                var el = (pDoc || document).getElementById("lang-bot-speech-text") || document.getElementById("lang-bot-speech-text");
                 if (el) {{
                     el.innerHTML = "🚀 Starting Guided Tour... ✨";
                     el.style.opacity = "1";
                 }}
+                var launched = false;
                 if (typeof window.startPathfinderTour === "function") {{
-                    window.startPathfinderTour(0, lang);
-                }} else if (typeof pWin.startPathfinderTour === "function") {{
-                    pWin.startPathfinderTour(0, lang);
-                }} else if (pWin.top && typeof pWin.top.startPathfinderTour === "function") {{
-                    pWin.top.startPathfinderTour(0, lang);
-                }} else {{
-                    var btn = pDoc.getElementById("btn-hero-quick-tour") || document.getElementById("btn-hero-quick-tour");
-                    if (btn) btn.click();
-                    try {{ pWin.postMessage({{ type: "START_PATHFINDER_TOUR", step: 0, lang: lang }}, "*"); }} catch(e) {{}}
-                    try {{ window.postMessage({{ type: "START_PATHFINDER_TOUR", step: 0, lang: lang }}, "*"); }} catch(e) {{}}
+                    try {{ window.startPathfinderTour(0, lang); launched = true; }} catch(e) {{}}
                 }}
+                if (!launched && typeof pWin.startPathfinderTour === "function") {{
+                    try {{ pWin.startPathfinderTour(0, lang); launched = true; }} catch(e) {{}}
+                }}
+                if (!launched && pWin.top && typeof pWin.top.startPathfinderTour === "function") {{
+                    try {{ pWin.top.startPathfinderTour(0, lang); launched = true; }} catch(e) {{}}
+                }}
+                // Broadcast message to parent, top, and all nested iframes
+                var msg = {{ type: "START_PATHFINDER_TOUR", step: 0, lang: lang }};
+                try {{ window.postMessage(msg, "*"); }} catch(e) {{}}
+                try {{ pWin.postMessage(msg, "*"); }} catch(e) {{}}
+                try {{ if (pWin.top && pWin.top !== pWin) pWin.top.postMessage(msg, "*"); }} catch(e) {{}}
+                try {{
+                    var iframes = (pDoc || document).querySelectorAll("iframe");
+                    if (iframes && iframes.length > 0) {{
+                        iframes.forEach(function(f) {{
+                            try {{ f.contentWindow.postMessage(msg, "*"); }} catch(e) {{}}
+                        }});
+                    }}
+                }} catch(e) {{}}
+                var btn = (pDoc || document).getElementById("btn-hero-quick-tour");
+                if (btn) {{ try {{ btn.click(); }} catch(e) {{}} }}
             }};
 
             function bindAuraClickListener() {{
+                // Backward compatibility alias for test suite
+                window.initCuteAuraWalker = bindAuraClickListener;
                 var targets = [
                     pDoc.getElementById("lang-box-walking-aura"),
                     document.getElementById("lang-box-walking-aura"),

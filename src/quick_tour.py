@@ -202,8 +202,10 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 <div id="pathfinder-tour-root"></div>
 <script>
 (function() {{
-    var pWin = window.parent || window;
-    var pDoc = (pWin && pWin.document) ? pWin.document : document;
+    var pWin = window;
+    try {{ if (window.parent && window.parent !== window) pWin = window.parent; }} catch(e) {{ pWin = window; }}
+    var pDoc = document;
+    try {{ pDoc = (pWin && pWin.document) ? pWin.document : document; }} catch(e) {{ pDoc = document; }}
 
     var allTourCatalog = {all_tours_json};
     var allUiCatalog = {all_ui_json};
@@ -1612,13 +1614,17 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     try {{ window.addEventListener('click', onDocClick, true); }} catch(e) {{}}
 
     // Global Methods for Parent Window
-    pWin.startPathfinderTour = window.startPathfinderTour = function(idx, lang) {{
+    var globalTourStarter = function(idx, lang) {{
         startTour(idx || 0, lang);
     }};
-    pWin.closePathfinderTour = window.closePathfinderTour = function() {{
+    var globalTourCloser = function() {{
         endTour();
     }};
-    try {{ if (window.top) window.top.startPathfinderTour = pWin.startPathfinderTour; }} catch(e) {{}}
+    try {{ window.startPathfinderTour = globalTourStarter; }} catch(e) {{}}
+    try {{ pWin.startPathfinderTour = globalTourStarter; }} catch(e) {{}}
+    try {{ if (window.top) window.top.startPathfinderTour = globalTourStarter; }} catch(e) {{}}
+    try {{ window.closePathfinderTour = globalTourCloser; }} catch(e) {{}}
+    try {{ pWin.closePathfinderTour = globalTourCloser; }} catch(e) {{}}
 
     function handleTourMessage(ev) {{
         try {{
@@ -2010,7 +2016,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             '    <span style="font-size: 0.65rem; color: #00f0ff; filter: drop-shadow(0 0 4px #00f0ff);">✦</span>',
             '    <span>AI Guide</span>',
             '</div>',
-            '<div style="display: flex; align-items: center; gap: 6px; font-size: 0.86rem; font-weight: 800; color: #ffffff; letter-spacing: 0.02em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">',
+            '<div style="display: flex; align-items: center; gap: 6px; font-size: 0.86rem; font-weight: 800; color: #ffffff; letter-spacing: 0.02em; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;">',
             '    <span>Click me for a tour!</span>',
             '    <span style="font-size: 0.82rem; filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8));">✨</span>',
             '</div>',
