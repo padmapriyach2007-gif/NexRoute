@@ -225,6 +225,7 @@ class MapService:
         self.timeout_sec = timeout_sec
         self.cache: Dict[str, Dict[str, Any]] = dict(OFFLINE_GEOCODE_CACHE)
         self._query_candidates_cache: Dict[str, List[Dict[str, Any]]] = {}
+        self._reverse_geocode_cache: Dict[str, Dict[str, Any]] = {}
         try:
             from src.google_maps_platform import load_and_georeference_saved_locations
             for loc in load_and_georeference_saved_locations():
@@ -543,8 +544,11 @@ class MapService:
                     "limit": limit,
                     "addressdetails": 1
                 }
-                headers = {"User-Agent": self.user_agent}
-                resp = self.session.get(url, params=params, headers=headers, timeout=1.2)
+                if re.match(r"^\d{5,6}$", q_clean):
+                    params["postalcode"] = q_clean
+                    del params["q"]
+                headers = {"User-Agent": self.user_agent, "Accept-Language": "en"}
+                resp = self.session.get(url, params=params, headers=headers, timeout=2.8)
                 if resp.status_code == 200:
                     for item in resp.json():
                         addr = item.get("address", {})
@@ -619,8 +623,8 @@ class MapService:
                     photon_params["lat"] = origin_coords[0]
                     photon_params["lon"] = origin_coords[1]
 
-                headers = {"User-Agent": self.user_agent}
-                p_resp = self.session.get(photon_url, params=photon_params, headers=headers, timeout=1.2)
+                headers = {"User-Agent": self.user_agent, "Accept-Language": "en"}
+                p_resp = self.session.get(photon_url, params=photon_params, headers=headers, timeout=2.8)
                 if p_resp.status_code == 200:
                     p_data = p_resp.json()
                     features = p_data.get("features", [])
@@ -698,12 +702,12 @@ class MapService:
             fut_nom = executor.submit(_fetch_nominatim)
             fut_pho = executor.submit(_fetch_photon)
             try:
-                nom_cands = fut_nom.result(timeout=2.4)
+                nom_cands = fut_nom.result(timeout=3.5)
                 collected_candidates.extend(nom_cands)
             except Exception:
                 pass
             try:
-                pho_cands = fut_pho.result(timeout=2.4)
+                pho_cands = fut_pho.result(timeout=3.5)
                 collected_candidates.extend(pho_cands)
             except Exception:
                 pass
@@ -905,22 +909,49 @@ class MapService:
     def reverse_geocode_details(self, lat: float, lon: float) -> Dict[str, Any]:
         """
         Translates lat/lon into structured address details:
-        name, street, suburb, city, state, postcode, country, formatted_address.
+        name, street, suburb, village, city, district, state, postcode, country, formatted_address.
         Never fabricates fictional places or snaps to distant cached coordinates.
+        Uses a robust multi-provider architecture:
+        1. Memory Cache
+        2. Google Maps Platform Geocoding API (if key configured)
+        3. OpenStreetMap Nominatim reverse API (zoom=18, addressdetails=1)
+        4. Photon Komoot reverse API (backed by OSM, fast fallback)
+        5. BigDataCloud Client Reverse Geocoding API (hierarchical admin levels, village, locality)
+        6. Geoapify reverse API (if configured)
+        7. Nearest local gazetteer / campus landmarks within 35m
+        8. Unmapped Location fallback with exact coordinates
         """
         if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
             return {
                 "name": "Invalid Coordinates",
                 "street": "",
                 "suburb": "",
+                "village": "",
                 "city": "",
+                "district": "",
                 "state": "",
                 "postcode": "",
                 "country": "",
                 "formatted_address": f"Invalid Coordinates ({lat}, {lon})",
+                "display_name": f"Invalid Coordinates ({lat}, {lon})",
+                "lat": lat,
+                "lon": lon,
                 "latitude": lat,
-                "longitude": lon
+                "longitude": lon,
+                "provider": "Validation"
             }
+
+        cache_key = f"{lat:.5f}_{lon:.5f}"
+        if hasattr(self, "_reverse_geocode_cache") and cache_key in self._reverse_geocode_cache:
+            return dict(self._reverse_geocode_cache[cache_key])
+
+        def _build_formatted_address(name: str, parts_list: List[str]) -> str:
+            all_parts = [name]
+            for p in parts_list:
+                clean_p = (p or "").strip()
+                if clean_p and clean_p not in all_parts:
+                    all_parts.append(clean_p)
+            return ", ".join(all_parts)
 
         # 1. Try Google Maps Platform reverse geocoding API if configured
         try:
@@ -928,6 +959,9 @@ class MapService:
             if is_google_maps_key_configured():
                 g_res = reverse_geocode_with_google_api(lat, lon, timeout=self.timeout_sec)
                 if g_res and g_res.get("formatted_address"):
+                    g_res["provider"] = "Google Maps Platform"
+                    if hasattr(self, "_reverse_geocode_cache"):
+                        self._reverse_geocode_cache[cache_key] = g_res
                     return g_res
         except Exception:
             pass
@@ -940,70 +974,245 @@ class MapService:
                 "lat": lat,
                 "lon": lon,
                 "format": "jsonv2",
+                "zoom": 18,
                 "addressdetails": 1
             }
-            resp = self.session.get(url, params=params, timeout=self.timeout_sec)
+            headers = {"User-Agent": self.user_agent, "Accept-Language": "en"}
+            resp = self.session.get(url, params=params, headers=headers, timeout=self.timeout_sec)
             if resp.status_code == 200:
                 data = resp.json()
                 addr = data.get("address", {})
-                name = (
+                spec_name = (
                     data.get("name")
+                    or addr.get("building")
+                    or addr.get("amenity")
+                    or addr.get("shop")
+                    or addr.get("hospital")
+                    or addr.get("clinic")
+                    or addr.get("school")
+                    or addr.get("college")
+                    or addr.get("university")
+                    or addr.get("railway")
+                    or addr.get("highway")
+                    or addr.get("tourism")
+                    or addr.get("historic")
+                    or addr.get("leisure")
                     or addr.get("road")
                     or addr.get("pedestrian")
-                    or addr.get("amenity")
+                    or addr.get("neighbourhood")
                     or addr.get("suburb")
+                    or addr.get("residential")
+                    or addr.get("hamlet")
+                    or addr.get("isolated_dwelling")
                     or addr.get("village")
                     or addr.get("town")
                     or addr.get("city")
-                    or f"{lat:.5f}, {lon:.5f}"
                 )
-                formatted = data.get("display_name", f"{lat:.5f}, {lon:.5f}")
-                return {
-                    "name": name,
-                    "street": addr.get("road", addr.get("pedestrian", "")),
-                    "suburb": addr.get("suburb", addr.get("neighbourhood", "")),
-                    "city": addr.get("city", addr.get("town", addr.get("village", ""))),
-                    "state": addr.get("state", ""),
-                    "postcode": addr.get("postcode", ""),
-                    "country": addr.get("country", ""),
-                    "formatted_address": formatted,
-                    "latitude": lat,
-                    "longitude": lon
-                }
+                road = addr.get("road") or addr.get("pedestrian") or addr.get("footway") or ""
+                suburb = addr.get("suburb") or addr.get("neighbourhood") or addr.get("residential") or ""
+                village = addr.get("village") or addr.get("hamlet") or addr.get("isolated_dwelling") or ""
+                city = addr.get("city") or addr.get("town") or addr.get("municipality") or village or ""
+                district = addr.get("county") or addr.get("state_district") or addr.get("district") or ""
+                state = addr.get("state") or addr.get("region") or addr.get("province") or ""
+                postcode = addr.get("postcode") or ""
+                country = addr.get("country") or ""
+
+                if spec_name:
+                    formatted = data.get("display_name") or _build_formatted_address(spec_name, [road, suburb, village, city, district, state, postcode, country])
+                    res_item = {
+                        "name": spec_name,
+                        "street": road,
+                        "suburb": suburb,
+                        "village": village,
+                        "city": city,
+                        "district": district,
+                        "state": state,
+                        "postcode": postcode,
+                        "country": country,
+                        "formatted_address": formatted,
+                        "display_name": formatted,
+                        "lat": lat,
+                        "lon": lon,
+                        "latitude": lat,
+                        "longitude": lon,
+                        "provider": "OpenStreetMap Nominatim"
+                    }
+                    if hasattr(self, "_reverse_geocode_cache"):
+                        self._reverse_geocode_cache[cache_key] = res_item
+                    return res_item
         except Exception:
             pass
 
-        # 3. Only match known cached landmarks if within extremely close proximity (< 25m)
-        min_dist_sq = 0.00025 ** 2
+        # 3. Query Photon (Komoot / OSM) reverse geocoding fallback
+        try:
+            pho_url = "https://photon.komoot.io/reverse"
+            pho_params = {"lat": lat, "lon": lon}
+            pho_headers = {"User-Agent": self.user_agent, "Accept-Language": "en"}
+            pho_resp = self.session.get(pho_url, params=pho_params, headers=pho_headers, timeout=self.timeout_sec)
+            if pho_resp.status_code == 200:
+                p_data = pho_resp.json()
+                features = p_data.get("features", [])
+                if features:
+                    props = features[0].get("properties", {})
+                    p_name = props.get("name") or props.get("street") or props.get("village") or props.get("city") or props.get("district")
+                    p_street = props.get("street") or ""
+                    p_dist = props.get("district") or ""
+                    p_city = props.get("city") or props.get("town") or props.get("village") or ""
+                    p_state = props.get("state") or ""
+                    p_post = props.get("postcode") or ""
+                    p_country = props.get("country") or ""
+                    if p_name:
+                        formatted = _build_formatted_address(p_name, [p_street, p_dist, p_city, p_state, p_post, p_country])
+                        res_item = {
+                            "name": p_name,
+                            "street": p_street,
+                            "suburb": props.get("suburb", ""),
+                            "village": props.get("village", ""),
+                            "city": p_city,
+                            "district": p_dist,
+                            "state": p_state,
+                            "postcode": p_post,
+                            "country": p_country,
+                            "formatted_address": formatted,
+                            "display_name": formatted,
+                            "lat": lat,
+                            "lon": lon,
+                            "latitude": lat,
+                            "longitude": lon,
+                            "provider": "Photon (Komoot/OSM)"
+                        }
+                        if hasattr(self, "_reverse_geocode_cache"):
+                            self._reverse_geocode_cache[cache_key] = res_item
+                        return res_item
+        except Exception:
+            pass
+
+        # 4. Query BigDataCloud Client Reverse Geocoding API (free tier fallback, fast admin resolution)
+        try:
+            bdc_url = "https://api.bigdatacloud.net/data/reverse-geocode-client"
+            bdc_params = {"latitude": lat, "longitude": lon, "localityLanguage": "en"}
+            bdc_resp = self.session.get(bdc_url, params=bdc_params, timeout=self.timeout_sec)
+            if bdc_resp.status_code == 200:
+                b_data = bdc_resp.json()
+                b_locality = b_data.get("locality") or ""
+                b_city = b_data.get("city") or ""
+                b_state = b_data.get("principalSubdivision") or ""
+                b_country = b_data.get("countryName") or ""
+                b_postcode = b_data.get("postcode") or ""
+                b_name = b_locality or b_city or b_state
+                if b_name:
+                    formatted = _build_formatted_address(b_name, [b_locality, b_city, b_state, b_postcode, b_country])
+                    res_item = {
+                        "name": b_name,
+                        "street": "",
+                        "suburb": b_locality,
+                        "village": b_locality,
+                        "city": b_city,
+                        "district": "",
+                        "state": b_state,
+                        "postcode": b_postcode,
+                        "country": b_country,
+                        "formatted_address": formatted,
+                        "display_name": formatted,
+                        "lat": lat,
+                        "lon": lon,
+                        "latitude": lat,
+                        "longitude": lon,
+                        "provider": "BigDataCloud"
+                    }
+                    if hasattr(self, "_reverse_geocode_cache"):
+                        self._reverse_geocode_cache[cache_key] = res_item
+                    return res_item
+        except Exception:
+            pass
+
+        # 5. Query Geoapify Reverse Geocoding API if key configured
+        geoapify_key = os.environ.get("GEOAPIFY_API_KEY") or os.environ.get("GEOAPIFY_KEY")
+        if geoapify_key:
+            try:
+                g_url = f"https://api.geoapify.com/v1/geocode/reverse?lat={lat}&lon={lon}&apiKey={geoapify_key}"
+                g_resp = self.session.get(g_url, timeout=self.timeout_sec)
+                if g_resp.status_code == 200:
+                    g_json = g_resp.json()
+                    feats = g_json.get("features", [])
+                    if feats:
+                        pr = feats[0].get("properties", {})
+                        g_name = pr.get("name") or pr.get("street") or pr.get("city")
+                        if g_name:
+                            res_item = {
+                                "name": g_name,
+                                "street": pr.get("street", ""),
+                                "suburb": pr.get("suburb", ""),
+                                "village": pr.get("village", ""),
+                                "city": pr.get("city", ""),
+                                "district": pr.get("county", ""),
+                                "state": pr.get("state", ""),
+                                "postcode": pr.get("postcode", ""),
+                                "country": pr.get("country", ""),
+                                "formatted_address": pr.get("formatted", f"{g_name}, {pr.get('country', '')}"),
+                                "display_name": pr.get("formatted", f"{g_name}, {pr.get('country', '')}"),
+                                "lat": lat,
+                                "lon": lon,
+                                "latitude": lat,
+                                "longitude": lon,
+                                "provider": "Geoapify"
+                            }
+                            if hasattr(self, "_reverse_geocode_cache"):
+                                self._reverse_geocode_cache[cache_key] = res_item
+                            return res_item
+            except Exception:
+                pass
+
+        # 6. Check nearest cached landmarks within close proximity (< 35m)
+        min_dist_sq = 0.00035 ** 2
         for k, v in self.cache.items():
             dist_sq = (v["lat"] - lat) ** 2 + (v["lon"] - lon) ** 2
             if dist_sq < min_dist_sq:
-                return {
+                res_item = {
                     "name": v.get("name", "Known Landmark"),
                     "street": "",
                     "suburb": "",
-                    "city": "",
-                    "state": "",
+                    "village": "",
+                    "city": v.get("city", ""),
+                    "district": "",
+                    "state": v.get("state", ""),
                     "postcode": "",
-                    "country": "",
+                    "country": v.get("country", "India"),
                     "formatted_address": v.get("display_name", v.get("name", f"{lat:.5f}, {lon:.5f}")),
+                    "display_name": v.get("display_name", v.get("name", f"{lat:.5f}, {lon:.5f}")),
+                    "lat": lat,
+                    "lon": lon,
                     "latitude": lat,
-                    "longitude": lon
+                    "longitude": lon,
+                    "provider": "Verified Local Gazetteer"
                 }
+                if hasattr(self, "_reverse_geocode_cache"):
+                    self._reverse_geocode_cache[cache_key] = res_item
+                return res_item
 
-        # 4. Standard verified geographic coordinates fallback
-        return {
-            "name": f"Map Location ({lat:.5f}, {lon:.5f})",
+        # 7. Unmapped / Remote Physical Coordinates Fallback (Requirement 9)
+        unmapped_res = {
+            "name": f"Unmapped Location ({lat:.5f}, {lon:.5f})",
             "street": "",
             "suburb": "",
+            "village": "",
             "city": "",
+            "district": "",
             "state": "",
             "postcode": "",
             "country": "",
-            "formatted_address": f"Geographic Point ({lat:.5f}° N, {lon:.5f}° E)",
+            "formatted_address": f"Unmapped Location ({lat:.5f}° N, {lon:.5f}° E)",
+            "display_name": f"Unmapped Location ({lat:.5f}° N, {lon:.5f}° E)",
+            "lat": lat,
+            "lon": lon,
             "latitude": lat,
-            "longitude": lon
+            "longitude": lon,
+            "provider": "Physical Coordinates",
+            "type": "unmapped"
         }
+        if hasattr(self, "_reverse_geocode_cache"):
+            self._reverse_geocode_cache[cache_key] = unmapped_res
+        return unmapped_res
 
     def reverse_geocode(self, lat: float, lon: float) -> str:
         """Translates lat/lon into human-readable landmark or address worldwide without inaccurate snapping."""

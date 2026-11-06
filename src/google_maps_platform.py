@@ -3205,7 +3205,232 @@ def build_google_maps_javascript_html(
             return null;
         }};
 
-        window.inspectLocationDetails = function(lat, lng, knownData) {{
+        // =========================================================================
+        // RESILIENT MULTI-PROVIDER HIGH-PRECISION REVERSE GEOCODER
+        // Multi-tier resolution:
+        // 1. In-memory cache
+        // 2. Google Maps Platform Geocoder (if API key active)
+        // 3. OpenStreetMap Nominatim (zoom=18 for building/POI granularity)
+        // 4. BigDataCloud Free Reverse Geocoder (village, locality, mandal, district)
+        // 5. Preloaded verified campus landmarks & facilities (< 40m)
+        // 6. Precise physical coordinate fallback (unmapped location)
+        // =========================================================================
+        window._revGeoCache = window._revGeoCache || {{}};
+
+        window.reverseGeocodeMultiProvider = async function(lat, lng) {{
+            var numLat = Number(lat);
+            var numLng = Number(lng);
+            if (isNaN(numLat) || isNaN(numLng) || numLat < -90 || numLat > 90 || numLng < -180 || numLng > 180) {{
+                return {{
+                    name: "Invalid Coordinates",
+                    address: "Invalid Coordinates (" + lat + ", " + lng + ")",
+                    category: "Geographic Point",
+                    lat: numLat,
+                    lng: numLng,
+                    isUnmapped: true
+                }};
+            }}
+
+            var cacheKey = numLat.toFixed(5) + '_' + numLng.toFixed(5);
+            if (window._revGeoCache[cacheKey]) {{
+                return window._revGeoCache[cacheKey];
+            }}
+
+            function formatParts(parts) {{
+                var seen = {{}};
+                var res = [];
+                for (var i = 0; i < parts.length; i++) {{
+                    var p = (parts[i] || '').trim();
+                    if (p && !seen[p.toLowerCase()]) {{
+                        seen[p.toLowerCase()] = true;
+                        res.push(p);
+                    }}
+                }}
+                return res.join(', ');
+            }}
+
+            // 1. Google Maps Geocoder if available
+            if (window.google && google.maps && google.maps.Geocoder && window.GMAP_DATA && window.GMAP_DATA.hasLiveKey) {{
+                try {{
+                    var gCoder = new google.maps.Geocoder();
+                    var gPromise = new Promise(function(resolve) {{
+                        gCoder.geocode({{ location: {{ lat: numLat, lng: numLng }} }}, function(results, status) {{
+                            if (status === 'OK' && results && results.length > 0) {{
+                                var topRes = results[0];
+                                var name = topRes.address_components && topRes.address_components[0] ? topRes.address_components[0].long_name : topRes.formatted_address.split(',')[0];
+                                var gCat = (topRes.types && topRes.types[0]) ? topRes.types[0].replace(/_/g, ' ').toUpperCase() : "Point of Interest";
+                                resolve({{
+                                    name: name,
+                                    address: topRes.formatted_address,
+                                    category: gCat,
+                                    lat: numLat,
+                                    lng: numLng,
+                                    provider: 'Google Maps'
+                                }});
+                            }} else {{
+                                resolve(null);
+                            }}
+                        }});
+                    }});
+                    var gRes = await Promise.race([
+                        gPromise,
+                        new Promise(function(r) {{ setTimeout(function() {{ r(null); }}, 2200); }})
+                    ]);
+                    if (gRes) {{
+                        window._revGeoCache[cacheKey] = gRes;
+                        return gRes;
+                    }}
+                }} catch(eG) {{}}
+            }}
+
+            // 2. OpenStreetMap Nominatim reverse geocode (zoom=18 for micro-detail)
+            try {{
+                var nomUrl = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + numLat + '&lon=' + numLng + '&zoom=18&addressdetails=1';
+                var nomController = new AbortController();
+                var nomTimer = setTimeout(function() {{ nomController.abort(); }}, 2400);
+                var nomResp = await fetch(nomUrl, {{
+                    headers: {{ 'Accept-Language': 'en' }},
+                    signal: nomController.signal
+                }});
+                clearTimeout(nomTimer);
+                if (nomResp.ok) {{
+                    var nData = await nomResp.json();
+                    if (nData && (nData.name || nData.display_name || nData.address)) {{
+                        var addr = nData.address || {{}};
+                        var specName = nData.name ||
+                                       addr.building ||
+                                       addr.amenity ||
+                                       addr.shop ||
+                                       addr.hospital ||
+                                       addr.clinic ||
+                                       addr.school ||
+                                       addr.college ||
+                                       addr.university ||
+                                       addr.railway ||
+                                       addr.highway ||
+                                       addr.tourism ||
+                                       addr.historic ||
+                                       addr.leisure ||
+                                       addr.road ||
+                                       addr.pedestrian ||
+                                       addr.neighbourhood ||
+                                       addr.suburb ||
+                                       addr.residential ||
+                                       addr.village ||
+                                       addr.hamlet ||
+                                       addr.isolated_dwelling ||
+                                       addr.town ||
+                                       addr.city;
+                        var road = addr.road || addr.pedestrian || addr.footway || "";
+                        var sub = addr.suburb || addr.neighbourhood || addr.residential || "";
+                        var vill = addr.village || addr.hamlet || addr.isolated_dwelling || "";
+                        var city = addr.city || addr.town || addr.municipality || vill || "";
+                        var dist = addr.county || addr.state_district || addr.district || "";
+                        var state = addr.state || addr.region || addr.province || "";
+                        var post = addr.postcode || "";
+                        var country = addr.country || "";
+
+                        var fullAddr = nData.display_name || formatParts([specName, road, sub, vill, city, dist, state, post, country]);
+                        var catType = (nData.type || addr.amenity || addr.shop || "Point of Interest").replace(/_/g, ' ').toUpperCase();
+                        if (specName) {{
+                            var nItem = {{
+                                name: specName,
+                                address: fullAddr,
+                                category: catType,
+                                street: road,
+                                suburb: sub,
+                                village: vill,
+                                city: city,
+                                district: dist,
+                                state: state,
+                                postcode: post,
+                                country: country,
+                                lat: numLat,
+                                lng: numLng,
+                                provider: 'OpenStreetMap'
+                            }};
+                            window._revGeoCache[cacheKey] = nItem;
+                            return nItem;
+                        }}
+                    }}
+                }}
+            }} catch(eNom) {{}}
+
+            // 3. BigDataCloud Client Reverse Geocoding API (free browser fallback with administrative levels)
+            try {{
+                var bdcUrl = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + numLat + '&longitude=' + numLng + '&localityLanguage=en';
+                var bdcController = new AbortController();
+                var bdcTimer = setTimeout(function() {{ bdcController.abort(); }}, 2200);
+                var bdcResp = await fetch(bdcUrl, {{ signal: bdcController.signal }});
+                clearTimeout(bdcTimer);
+                if (bdcResp.ok) {{
+                    var bData = await bdcResp.json();
+                    var bLocality = bData.locality || "";
+                    var bCity = bData.city || "";
+                    var bState = bData.principalSubdivision || "";
+                    var bCountry = bData.countryName || "";
+                    var bPost = bData.postcode || "";
+                    var bName = bLocality || bCity || bState;
+                    if (bName) {{
+                        var bAddr = formatParts([bName, bLocality, bCity, bState, bPost, bCountry]);
+                        var bItem = {{
+                            name: bName,
+                            address: bAddr,
+                            category: "Locality",
+                            street: "",
+                            suburb: bLocality,
+                            village: bLocality,
+                            city: bCity,
+                            district: "",
+                            state: bState,
+                            postcode: bPost,
+                            country: bCountry,
+                            lat: numLat,
+                            lng: numLng,
+                            provider: 'BigDataCloud'
+                        }};
+                        window._revGeoCache[cacheKey] = bItem;
+                        return bItem;
+                    }}
+                }}
+            }} catch(eBdc) {{}}
+
+            // 4. Check loaded campus landmarks or saved locations if within 40m
+            if (window.GMAP_DATA && window.GMAP_DATA.savedLocations) {{
+                for (var sIdx = 0; sIdx < window.GMAP_DATA.savedLocations.length; sIdx++) {{
+                    var sLoc = window.GMAP_DATA.savedLocations[sIdx];
+                    var dLat = sLoc.latitude - numLat;
+                    var dLng = sLoc.longitude - numLng;
+                    if ((dLat*dLat + dLng*dLng) < 0.00000016) {{ // ~40m
+                        var sItem = {{
+                            name: sLoc.name,
+                            address: sLoc.name + (sLoc.section ? (", " + sLoc.section) : "") + ", Vignan University",
+                            category: "Campus Landmark",
+                            lat: numLat,
+                            lng: numLng,
+                            provider: 'Verified POI'
+                        }};
+                        window._revGeoCache[cacheKey] = sItem;
+                        return sItem;
+                    }}
+                }}
+            }}
+
+            // 5. Unmapped physical coordinate fallback (Requirement 9)
+            var unmappedItem = {{
+                name: "Unmapped Location (" + numLat.toFixed(5) + ", " + numLng.toFixed(5) + ")",
+                address: "Unmapped Location (" + numLat.toFixed(5) + "° N, " + numLng.toFixed(5) + "° E)",
+                category: "Geographic Point",
+                lat: numLat,
+                lng: numLng,
+                isUnmapped: true,
+                provider: 'Physical Coordinates'
+            }};
+            window._revGeoCache[cacheKey] = unmappedItem;
+            return unmappedItem;
+        }};
+
+        window.inspectLocationDetails = async function(lat, lng, knownData) {{
             var drawer = document.getElementById('gmap-place-info-drawer');
             if (drawer) {{
                 drawer.style.display = 'flex';
@@ -3227,50 +3452,31 @@ def build_google_maps_javascript_html(
 
             window.renderPlaceDrawerLoading(lat, lng);
 
-            var revUrl = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1';
-            fetch(revUrl, {{ headers: {{ 'Accept-Language': 'en' }} }})
-                .then(function(res) {{ return res.json(); }})
-                .then(function(data) {{
-                    if (!data) throw new Error("No geocode data");
-                    var addr = data.address || {{}};
-                    var name = data.name ||
-                               addr.railway ||
-                               addr.amenity ||
-                               addr.hospital ||
-                               addr.shop ||
-                               addr.building ||
-                               addr.tourism ||
-                               addr.road ||
-                               (addr.suburb ? (addr.suburb + " Landmark") : (addr.town || "Map Location"));
-
-                    var cat = data.type || addr.amenity || addr.shop || "Point of Interest";
-                    cat = cat.replace(/_/g, ' ').toUpperCase();
-
-                    var fullAddr = data.display_name || (name + ", " + (addr.city || addr.town || addr.county || ""));
-
-                    var placeInfo = {{
-                        name: name,
-                        category: cat,
-                        address: fullAddr,
-                        latitude: Number(lat),
-                        longitude: Number(lng),
-                        open_status: "Verified Coordinate",
-                        photo_url: getCategoryPhoto(cat)
-                    }};
-                    window.renderPlaceDrawerContent(placeInfo, lat, lng);
-                }})
-                .catch(function(err) {{
-                    var placeInfo = {{
-                        name: "Selected Map Coordinate",
-                        category: "Geographic Location",
-                        address: "Latitude: " + Number(lat).toFixed(6) + "°, Longitude: " + Number(lng).toFixed(6) + "°",
-                        latitude: Number(lat),
-                        longitude: Number(lng),
-                        open_status: "Verified Coordinate",
-                        photo_url: categoryPhotoPresets["DEFAULT"]
-                    }};
-                    window.renderPlaceDrawerContent(placeInfo, lat, lng);
-                }});
+            try {{
+                var geoInfo = await window.reverseGeocodeMultiProvider(lat, lng);
+                var cat = (geoInfo.category || "Point of Interest").replace(/_/g, ' ').toUpperCase();
+                var placeInfo = {{
+                    name: geoInfo.name,
+                    category: cat,
+                    address: geoInfo.address,
+                    latitude: Number(lat),
+                    longitude: Number(lng),
+                    open_status: geoInfo.isUnmapped ? "Unmapped Geographic Point" : "Verified Coordinate",
+                    photo_url: getCategoryPhoto(cat)
+                }};
+                window.renderPlaceDrawerContent(placeInfo, lat, lng);
+            }} catch(err) {{
+                var fallbackInfo = {{
+                    name: "Selected Map Coordinate",
+                    category: "Geographic Location",
+                    address: "Latitude: " + Number(lat).toFixed(6) + "°, Longitude: " + Number(lng).toFixed(6) + "°",
+                    latitude: Number(lat),
+                    longitude: Number(lng),
+                    open_status: "Verified Coordinate",
+                    photo_url: categoryPhotoPresets["DEFAULT"]
+                }};
+                window.renderPlaceDrawerContent(fallbackInfo, lat, lng);
+            }}
         }};
 
         window.safeNavigateParent = function(paramsObj) {{
@@ -3377,10 +3583,12 @@ def build_google_maps_javascript_html(
             var lat = window.inspectedLocation.lat;
             var lng = window.inspectedLocation.lng;
             var name = window.inspectedLocation.name || "Selected Starting Point";
+            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+            var nameWithCoords = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + ")";
             window.safeNavigateParent({{
                 "orig_lat": Number(lat).toFixed(6),
                 "orig_lon": Number(lng).toFixed(6),
-                "orig_name": name
+                "orig_name": nameWithCoords
             }});
         }};
 
@@ -3389,17 +3597,19 @@ def build_google_maps_javascript_html(
             var lat = window.inspectedLocation.lat;
             var lng = window.inspectedLocation.lng;
             var name = window.inspectedLocation.name || "Selected Destination";
+            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+            var nameWithCoords = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + ")";
             window.safeNavigateParent({{
                 "dest_lat": Number(lat).toFixed(6),
                 "dest_lon": Number(lng).toFixed(6),
-                "dest_name": name
+                "dest_name": nameWithCoords
             }});
         }};
 
         var pickedMapMarker = null;
         var pendingMapPickData = null;
 
-        window.handleMapPickingClick = function(lat, lng) {{
+        window.handleMapPickingClick = async function(lat, lng) {{
             var target = window.activeMapPickingTarget || 'orig';
             var isOrig = (target === 'orig');
             var card = document.getElementById('map-picking-card');
@@ -3412,8 +3622,8 @@ def build_google_maps_javascript_html(
             if (badgeEl) badgeEl.innerHTML = isOrig ? "🟢 CONFIRM STARTING POINT" : "🏁 CONFIRM DESTINATION";
             if (coordsEl) coordsEl.innerText = Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
             if (btnEl) btnEl.innerText = isOrig ? "✅ Confirm Starting Point" : "✅ Confirm Destination";
-            if (nameEl) nameEl.innerText = "Resolving Address...";
-            if (addrEl) addrEl.innerText = "Querying geographic database...";
+            if (nameEl) nameEl.innerText = "Detecting Location Details...";
+            if (addrEl) addrEl.innerText = "Querying multi-provider geographic database...";
             if (card) card.style.display = 'block';
 
             if (window.lMapInstance) {{
@@ -3451,26 +3661,18 @@ def build_google_maps_javascript_html(
                 address: "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5)
             }};
 
-            var revUrl = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1';
-            fetch(revUrl, {{ headers: {{ 'Accept-Language': 'en' }} }})
-                .then(function(res) {{ return res.json(); }})
-                .then(function(data) {{
-                    if (data && (data.display_name || data.name)) {{
-                        var resolvedName = data.name || (data.address ? (data.address.road || data.address.suburb || data.address.city || data.display_name.split(',')[0]) : "Map Location");
-                        var resolvedAddr = data.display_name || resolvedName;
-                        if (nameEl) nameEl.innerText = resolvedName;
-                        if (addrEl) addrEl.innerText = resolvedAddr;
-                        pendingMapPickData.name = resolvedName;
-                        pendingMapPickData.address = resolvedAddr;
-                    }} else {{
-                        if (nameEl) nameEl.innerText = (isOrig ? "Selected Start Point" : "Selected Destination");
-                        if (addrEl) addrEl.innerText = "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
-                    }}
-                }})
-                .catch(function() {{
-                    if (nameEl) nameEl.innerText = (isOrig ? "Selected Start Point" : "Selected Destination");
-                    if (addrEl) addrEl.innerText = "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
-                }});
+            try {{
+                var info = await window.reverseGeocodeMultiProvider(lat, lng);
+                if (info && info.name) {{
+                    if (nameEl) nameEl.innerText = info.name;
+                    if (addrEl) addrEl.innerText = info.address;
+                    pendingMapPickData.name = info.name;
+                    pendingMapPickData.address = info.address;
+                }}
+            }} catch(err) {{
+                if (nameEl) nameEl.innerText = (isOrig ? "Selected Start Point" : "Selected Destination");
+                if (addrEl) addrEl.innerText = "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
+            }}
         }};
 
         window.confirmPickedLocation = function() {{
@@ -3479,51 +3681,48 @@ def build_google_maps_javascript_html(
             var lat = pendingMapPickData.lat;
             var lon = pendingMapPickData.lon;
             var name = pendingMapPickData.name;
+            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+            var nameWithCoords = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
             window.safeNavigateParent({{
                 "picked_target": target,
                 "picked_lat": Number(lat).toFixed(6),
                 "picked_lon": Number(lon).toFixed(6),
-                "picked_name": name
+                "picked_name": nameWithCoords
             }});
         }};
 
-        window.handleMarkerDragEnd = function(target, lat, lng) {{
+        window.handleMarkerDragEnd = async function(target, lat, lng) {{
             var isOrig = (target === 'orig');
             var txtEl = document.getElementById(isOrig ? 'gmap-virtual-man-text' : 'gmap-dest-man-text');
             var prefix = isOrig ? "START" : "DEST";
             if (txtEl) txtEl.innerText = prefix + " • " + Number(lat).toFixed(2) + ", " + Number(lng).toFixed(2);
 
-            var revUrl = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1';
-            fetch(revUrl, {{ headers: {{ 'Accept-Language': 'en' }} }})
-                .then(function(res) {{ return res.json(); }})
-                .then(function(data) {{
-                    var resolvedName = "";
-                    if (data && (data.display_name || data.name)) {{
-                        resolvedName = data.name || (data.address ? (data.address.road || data.address.suburb || data.address.city || data.display_name.split(',')[0]) : "Map Location");
-                    }} else {{
-                        resolvedName = (isOrig ? "Selected Start" : "Selected Destination") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")";
-                    }}
-                    var shortLbl = (typeof getCompactPointerLabel === 'function')
-                        ? getCompactPointerLabel(resolvedName, prefix)
-                        : (prefix + " • " + resolvedName.substring(0, 13));
-                    if (txtEl) txtEl.innerText = shortLbl;
+            try {{
+                var info = await window.reverseGeocodeMultiProvider(lat, lng);
+                var resolvedName = (info && info.name) ? info.name : ((isOrig ? "Selected Start" : "Selected Destination") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")");
+                var cleanName = String(resolvedName || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+                var nameWithCoords = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + ")";
 
-                    window.safeNavigateParent({{
-                        "picked_target": target,
-                        "picked_lat": Number(lat).toFixed(6),
-                        "picked_lon": Number(lng).toFixed(6),
-                        "picked_name": resolvedName
-                    }});
-                }})
-                .catch(function() {{
-                    var fallbackName = (isOrig ? "Custom Start" : "Custom Dest") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")";
-                    window.safeNavigateParent({{
-                        "picked_target": target,
-                        "picked_lat": Number(lat).toFixed(6),
-                        "picked_lon": Number(lng).toFixed(6),
-                        "picked_name": fallbackName
-                    }});
+                var shortLbl = (typeof getCompactPointerLabel === 'function')
+                    ? getCompactPointerLabel(cleanName, prefix)
+                    : (prefix + " • " + cleanName.substring(0, 13));
+                if (txtEl) txtEl.innerText = shortLbl;
+
+                window.safeNavigateParent({{
+                    "picked_target": target,
+                    "picked_lat": Number(lat).toFixed(6),
+                    "picked_lon": Number(lng).toFixed(6),
+                    "picked_name": nameWithCoords
                 }});
+            }} catch(err) {{
+                var fallbackName = (isOrig ? "Custom Start" : "Custom Dest") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")";
+                window.safeNavigateParent({{
+                    "picked_target": target,
+                    "picked_lat": Number(lat).toFixed(6),
+                    "picked_lon": Number(lng).toFixed(6),
+                    "picked_name": fallbackName
+                }});
+            }}
         }};
 
         window.cancelMapPickingMode = function() {{
@@ -3724,10 +3923,12 @@ def build_google_maps_javascript_html(
                     iconSize: [34, 34],
                     iconAnchor: [17, 34]
                 }});
+                var cleanSearchName = String(name || 'Selected Location').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+                var nameWithCoords = cleanSearchName + " (" + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + ")";
                 window._lastSearchResult = {{
                     lat: Number(lat).toFixed(6),
                     lng: Number(lng).toFixed(6),
-                    name: String(name || 'Selected Location')
+                    name: nameWithCoords
                 }};
                 currentSearchMarker = L.marker([lat, lng], {{ icon: searchIcon }}).addTo(window.lMapInstance);
                 var popupContent = '<div class="iw-title">🔍 ' + name + '</div>' +
@@ -3746,10 +3947,12 @@ def build_google_maps_javascript_html(
                 if (currentSearchMarker) {{
                     try {{ currentSearchMarker.setMap(null); }} catch(e) {{}}
                 }}
+                var cleanSearchName = String(name || 'Selected Location').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+                var nameWithCoords = cleanSearchName + " (" + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + ")";
                 window._lastSearchResult = {{
                     lat: Number(lat).toFixed(6),
                     lng: Number(lng).toFixed(6),
-                    name: String(name || 'Selected Location')
+                    name: nameWithCoords
                 }};
                 var pos = new google.maps.LatLng(lat, lng);
                 currentSearchMarker = new google.maps.Marker({{
@@ -3827,6 +4030,36 @@ def build_google_maps_javascript_html(
             statusEl.innerHTML = "🔍 Locating " + q + " on NexRoute Map...";
             statusEl.style.display = 'block';
 
+            function queryPhoton(queryStr) {{
+                var centerLat = (data && data.center) ? data.center.lat : 16.2335;
+                var centerLng = (data && data.center) ? data.center.lng : 80.5505;
+                var pUrl = 'https://photon.komoot.io/api/?q=' + encodeURIComponent(queryStr) + '&limit=1&lat=' + centerLat + '&lon=' + centerLng;
+                fetch(pUrl)
+                    .then(function(r) {{ return r.json(); }})
+                    .then(function(pData) {{
+                        if (pData && pData.features && pData.features.length > 0) {{
+                            var feat = pData.features[0];
+                            var props = feat.properties || {{}};
+                            var coords = (feat.geometry && feat.geometry.coordinates) || [];
+                            if (coords.length >= 2) {{
+                                var pLng = parseFloat(coords[0]);
+                                var pLat = parseFloat(coords[1]);
+                                var pName = props.name || q;
+                                statusEl.innerHTML = "✅ Found: " + pName;
+                                setTimeout(function() {{ statusEl.style.display = 'none'; }}, 2500);
+                                window.highlightSearchedLocation(pLat, pLng, pName, (props.city || props.town || props.village || props.state || "Location"));
+                                return;
+                            }}
+                        }}
+                        statusEl.innerHTML = "⚠️ Location not found on map";
+                        setTimeout(function() {{ statusEl.style.display = 'none'; }}, 3000);
+                    }})
+                    .catch(function() {{
+                        statusEl.innerHTML = "⚠️ Geocoding service temporary timeout";
+                        setTimeout(function() {{ statusEl.style.display = 'none'; }}, 3000);
+                    }});
+            }}
+
             fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q))
                 .then(function(res) {{ return res.json(); }})
                 .then(function(results) {{
@@ -3839,13 +4072,11 @@ def build_google_maps_javascript_html(
                         setTimeout(function() {{ statusEl.style.display = 'none'; }}, 2500);
                         window.highlightSearchedLocation(sLat, sLon, shortName, first.display_name);
                     }} else {{
-                        statusEl.innerHTML = "⚠️ Location not found on map";
-                        setTimeout(function() {{ statusEl.style.display = 'none'; }}, 3000);
+                        queryPhoton(q);
                     }}
                 }})
                 .catch(function(err) {{
-                    statusEl.innerHTML = "⚠️ Geocoding service temporary timeout";
-                    setTimeout(function() {{ statusEl.style.display = 'none'; }}, 3000);
+                    queryPhoton(q);
                 }});
         }};
 
@@ -3866,10 +4097,22 @@ def build_google_maps_javascript_html(
             if (geoBtn) geoBtn.innerHTML = '⌛ Locating...';
             window.showMapToast("Requesting device GPS coordinates...", "🛰️");
 
-            geo.getCurrentPosition(function(pos) {{
+            geo.getCurrentPosition(async function(pos) {{
                 var uLat = pos.coords.latitude;
                 var uLng = pos.coords.longitude;
                 var acc = pos.coords.accuracy || 10.0;
+
+                var locName = "My Real-Time Location";
+                try {{
+                    if (window.reverseGeocodeMultiProvider) {{
+                        var rInfo = await window.reverseGeocodeMultiProvider(uLat, uLng);
+                        if (rInfo && rInfo.name) {{
+                            locName = rInfo.name;
+                        }}
+                    }}
+                }} catch(eR) {{}}
+                var cleanGpsName = String(locName || 'My Real-Time Location').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+                var gpsWithCoords = cleanGpsName + " (" + Number(uLat).toFixed(5) + ", " + Number(uLng).toFixed(5) + ")";
 
                 if (geoBtn) geoBtn.innerHTML = '📍 My Location';
                 window.showMapToast("Located: " + uLat.toFixed(4) + ", " + uLng.toFixed(4) + " (±" + Math.round(acc) + "m)", "🎯");
@@ -3897,10 +4140,10 @@ def build_google_maps_javascript_html(
                     window._lastGpsResult = {{
                         lat: Number(uLat).toFixed(6),
                         lng: Number(uLng).toFixed(6),
-                        name: 'My Real-Time Location'
+                        name: gpsWithCoords
                     }};
-                    var myPopup = '<div class="iw-title">📍 My Real-Time GPS Location</div>' +
-                                  '<div class="iw-meta">Lat: ' + uLat.toFixed(6) + '°, Lon: ' + uLng.toFixed(6) + '°<br>Accuracy: ±' + Math.round(acc) + ' meters</div>' +
+                    var myPopup = '<div class="iw-title">📍 ' + cleanGpsName + '</div>' +
+                                  '<div class="iw-meta">Lat: ' + uLat.toFixed(6) + '°, Lon: ' + uLng.toFixed(6) + '°<br>GPS Accuracy: ±' + Math.round(acc) + ' meters</div>' +
                                   '<div class="iw-actions" style="margin-top:6px;">' +
                                   '<button class="iw-btn" style="background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat: window._lastGpsResult.lat, orig_lon: window._lastGpsResult.lng, orig_name: window._lastGpsResult.name}})">🟢 Set as Starting Point</button>' +
                                   '</div>';
@@ -3910,7 +4153,7 @@ def build_google_maps_javascript_html(
                     window._lastGpsResult = {{
                         lat: Number(uLat).toFixed(6),
                         lng: Number(uLng).toFixed(6),
-                        name: 'My Real-Time Location'
+                        name: gpsWithCoords
                     }};
                     var posLatLng = new google.maps.LatLng(uLat, uLng);
                     window.gMap.panTo(posLatLng);

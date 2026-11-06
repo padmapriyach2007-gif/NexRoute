@@ -3821,11 +3821,15 @@ st.markdown("""
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
-    /* Immediately hide floating tour FAB & tooltip when Chat Popover is open so they never block or overlap the chat */
+    /* Immediately hide floating tour FAB & tooltip when Chat Popover is open or when single guide is on dashboard */
     body:has([data-testid="stPopoverBody"]) #pathfinder-tour-fab-trigger,
     body:has([data-testid="stPopoverBody"]) #floating-tour-welcome-tooltip,
     body:has([data-testid="stPopoverBody"]) .pathfinder-tour-fab-trigger,
-    body:has([data-testid="stPopoverBody"]) .floating-tour-welcome-tooltip {
+    body:has([data-testid="stPopoverBody"]) .floating-tour-welcome-tooltip,
+    body:has(#lang-box-walking-aura) #pathfinder-tour-fab-trigger,
+    body:has(#lang-box-walking-aura) #floating-tour-welcome-tooltip,
+    body:has(#lang-box-walking-aura) .pathfinder-tour-fab-trigger,
+    body:has(#lang-box-walking-aura) .floating-tour-welcome-tooltip {
         display: none !important;
         opacity: 0 !important;
         pointer-events: none !important;
@@ -5245,66 +5249,27 @@ def detect_user_network_location() -> dict:
 
 
     # 2. Try IPAPI fallback
-
-
-
     try:
-
-
-
         req = urllib.request.Request("https://ipapi.co/json/", headers={"User-Agent": "Pathfinder/2.0"})
-
-
-
         with urllib.request.urlopen(req, timeout=1.8) as resp:
-
-
-
             data = json.loads(resp.read().decode("utf-8"))
-
-
-
             if data and "latitude" in data and "longitude" in data:
-
-
-
                 c_lat = float(data["latitude"])
-
-
-
                 c_lon = float(data["longitude"])
-
-
-
                 c_city = data.get("city") or "Dynamic Area"
 
-
+                # Filter out Cloud / AWS / GCP North America server hosting locations (e.g. Oregon: 45.5999, -121.1871)
+                if (c_lat > 25.0 and c_lon < -50.0) or (abs(c_lat - 45.5999) < 2.0 and abs(c_lon - (-121.1871)) < 2.0):
+                    return None
 
                 return {
-
-
-
                     "lat": c_lat,
-
-
-
                     "lon": c_lon,
-
-
-
                     "city": c_city,
-
-
-
                     "label": f"🚶 Dynamic Live Location ({c_city})"
-
-
-
                 }
-
-
-
     except Exception:
+        pass
 
 
 
@@ -7571,7 +7536,13 @@ if "dest_lat" in st.query_params and "dest_lon" in st.query_params:
 
 
 
-            q_dest_name = st.query_params.get("dest_name", f"Destination ({q_dest_lat:.4f}, {q_dest_lon:.4f})")
+            raw_dest_name = st.query_params.get("dest_name", f"Destination ({q_dest_lat:.5f}, {q_dest_lon:.5f})")
+            coord_str_d = f"({q_dest_lat:.5f}, {q_dest_lon:.5f})"
+            if coord_str_d in raw_dest_name:
+                q_dest_name = raw_dest_name
+            else:
+                base_clean_d = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_dest_name).strip()
+                q_dest_name = f"{base_clean_d} {coord_str_d}" if base_clean_d else coord_str_d
 
 
 
@@ -7658,7 +7629,13 @@ if "orig_lat" in st.query_params and "orig_lon" in st.query_params:
 
 
 
-            q_orig_name = st.query_params.get("orig_name", f"Start Point ({q_orig_lat:.4f}, {q_orig_lon:.4f})")
+            raw_orig_name = st.query_params.get("orig_name", f"Start Point ({q_orig_lat:.5f}, {q_orig_lon:.5f})")
+            coord_str_o = f"({q_orig_lat:.5f}, {q_orig_lon:.5f})"
+            if coord_str_o in raw_orig_name:
+                q_orig_name = raw_orig_name
+            else:
+                base_clean_o = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_orig_name).strip()
+                q_orig_name = f"{base_clean_o} {coord_str_o}" if base_clean_o else coord_str_o
 
 
 
@@ -7890,7 +7867,13 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
 
 
 
-        p_name = st.query_params.get("picked_name", f"Location ({p_lat:.4f}, {p_lon:.4f})")
+        raw_p_name = st.query_params.get("picked_name", f"Location ({p_lat:.5f}, {p_lon:.5f})")
+        coord_str_p = f"({p_lat:.5f}, {p_lon:.5f})"
+        if coord_str_p in raw_p_name:
+            p_name = raw_p_name
+        else:
+            base_clean_p = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_p_name).strip()
+            p_name = f"{base_clean_p} {coord_str_p}" if base_clean_p else coord_str_p
 
 
 
@@ -9707,18 +9690,17 @@ if raw_o:
             c_lat = float(c_match.group(1))
             c_lon = float(c_match.group(2))
             if -90.0 <= c_lat <= 90.0 and -180.0 <= c_lon <= 180.0:
-                if coords_orig != (c_lat, c_lon):
-                    coords_orig = (c_lat, c_lon)
-                    st.session_state.user_live_coords = (c_lat, c_lon)
-                    place_lbl = raw_o[:c_match.start()].strip(" (,-") or f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
-                    st.session_state.user_live_label = place_lbl
-                    st.session_state.is_custom_start_place = True
-                    st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
-                    st.session_state.last_synced_orig = raw_o
-                    st.session_state._prev_route_sig = None
-                    st.session_state.cached_candidate_routes = None
-                    if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
-                        st.session_state.real_location_service.set_manual_location(c_lat, c_lon, place_lbl)
+                coords_orig = (c_lat, c_lon)
+                st.session_state.user_live_coords = coords_orig
+                place_lbl = raw_o[:c_match.start()].strip(" (,-") or f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
+                st.session_state.user_live_label = place_lbl
+                st.session_state.is_custom_start_place = True
+                st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
+                st.session_state.last_synced_orig = raw_o
+                st.session_state._prev_route_sig = None
+                st.session_state.cached_candidate_routes = None
+                if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
+                    st.session_state.real_location_service.set_manual_location(c_lat, c_lon, place_lbl)
         elif not coords_orig or raw_o != st.session_state.get("last_synced_orig", ""):
             st.session_state.is_custom_start_place = True
             try:
@@ -9728,7 +9710,7 @@ if raw_o:
                 if cands_auto_o:
                     b_auto_o = cands_auto_o[0]
                     coords_orig = (b_auto_o["lat"], b_auto_o["lon"])
-                    st.session_state.user_live_coords = (b_auto_o["lat"], b_auto_o["lon"])
+                    st.session_state.user_live_coords = coords_orig
                     st.session_state.user_live_label = b_auto_o.get("display_name", raw_o)
                     st.session_state.selected_orig_id = b_auto_o.get("provider_id", f"orig_{b_auto_o['lat']:.4f}_{b_auto_o['lon']:.4f}")
                     st.session_state.last_synced_orig = raw_o
@@ -9737,66 +9719,6 @@ if raw_o:
                     if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
                         st.session_state.real_location_service.set_manual_location(coords_orig[0], coords_orig[1], raw_o)
             except Exception:
-                pass
-
-
-
-                coords_orig = st.session_state.user_live_coords
-
-
-
-        else:
-
-
-
-            try:
-
-
-
-                cands_auto_o = st.session_state.real_map_service.get_disambiguation_candidates(raw_o, limit=3)
-
-
-
-                if not cands_auto_o:
-
-
-
-                    cands_auto_o = st.session_state.real_map_service.geocode_candidates(raw_o, limit=3)
-
-
-
-                if cands_auto_o:
-
-
-
-                    b_auto_o = cands_auto_o[0]
-
-
-
-                    st.session_state.user_live_coords = (b_auto_o["lat"], b_auto_o["lon"])
-
-
-
-                    st.session_state.user_live_label = b_auto_o.get("display_name", raw_o)
-
-
-
-                    st.session_state.selected_orig_id = b_auto_o.get("provider_id", f"orig_{b_auto_o['lat']:.4f}_{b_auto_o['lon']:.4f}")
-
-
-
-                    st.session_state.last_synced_orig = raw_o
-
-
-
-                    coords_orig = st.session_state.user_live_coords
-
-
-
-            except Exception:
-
-
-
                 pass
 
 

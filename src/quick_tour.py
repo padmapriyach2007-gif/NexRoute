@@ -777,11 +777,15 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
                 }}
             }}
 
-            /* Immediately hide tour FAB and tooltip when Chat Popover is open so they never block or overlap the chat */
+            /* Immediately hide tour FAB and tooltip when Chat Popover is open or when walking guide is on dashboard */
             body:has([data-testid="stPopoverBody"]) #pathfinder-tour-fab-trigger,
             body:has([data-testid="stPopoverBody"]) #floating-tour-welcome-tooltip,
             body:has([data-testid="stPopoverBody"]) .pathfinder-tour-fab-trigger,
-            body:has([data-testid="stPopoverBody"]) .floating-tour-welcome-tooltip {{
+            body:has([data-testid="stPopoverBody"]) .floating-tour-welcome-tooltip,
+            body:has(#lang-box-walking-aura) #pathfinder-tour-fab-trigger,
+            body:has(#lang-box-walking-aura) #floating-tour-welcome-tooltip,
+            body:has(#lang-box-walking-aura) .pathfinder-tour-fab-trigger,
+            body:has(#lang-box-walking-aura) .floating-tour-welcome-tooltip {{
                 display: none !important;
                 opacity: 0 !important;
                 pointer-events: none !important;
@@ -2124,14 +2128,17 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         pDoc.body.appendChild(tooltip);
         pDoc.body.appendChild(fab);
 
-        // Immediate and dynamic hiding when chat popover is open
+        // Immediate and dynamic hiding when chat popover is open or when main dashboard walking guide is visible
         function syncTourFabWithPopover() {{
             var fabEl = pDoc.getElementById('pathfinder-tour-fab-trigger');
             var tipEl = pDoc.getElementById('floating-tour-welcome-tooltip');
             if (!fabEl && !tipEl) return;
-            var popoverBody = pDoc.querySelector('[data-testid="stPopoverBody"]');
-            var isPopoverOpen = !!(popoverBody && popoverBody.offsetParent !== null);
-            if (isPopoverOpen) {{
+
+            var popoverBody = (pDoc || document).querySelector('[data-testid="stPopoverBody"], div[data-baseweb="popover"], [role="dialog"], .stPopoverBody');
+            var isPopoverOpen = !!(popoverBody && (popoverBody.offsetParent !== null || popoverBody.clientHeight > 0));
+            var hasMainWalker = !!((pDoc || document).getElementById('lang-box-walking-aura'));
+
+            if (hasMainWalker || isPopoverOpen) {{
                 if (fabEl) {{ fabEl.style.setProperty('display', 'none', 'important'); fabEl.style.setProperty('pointer-events', 'none', 'important'); }}
                 if (tipEl) {{ tipEl.style.setProperty('display', 'none', 'important'); tipEl.style.setProperty('pointer-events', 'none', 'important'); }}
             }} else if (!isTourActive) {{

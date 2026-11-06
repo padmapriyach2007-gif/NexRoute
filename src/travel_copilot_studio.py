@@ -890,24 +890,6 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
         transform: translateX(-50%) !important;
     }
 }
-    box-shadow: 0 0 24px rgba(0, 240, 255, 0.75), 0 8px 24px rgba(0, 0, 0, 0.8) !important;
-}
-.lang-bot-speech-bubble::after {
-    content: '' !important;
-    position: absolute !important;
-    bottom: -6px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 0 !important;
-    height: 0 !important;
-    border-left: 6px solid transparent !important;
-    border-right: 6px solid transparent !important;
-    border-top: 6px solid #00f0ff !important;
-}
-@keyframes langBubbleBob {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(-4px); }
-}
 
 .qr-hero-main-content {
     flex: 1 !important;
