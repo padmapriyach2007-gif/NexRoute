@@ -178,11 +178,14 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     """
     tour_data = TOUR_STEPS.get(lang, TOUR_STEPS["en"])
     tour_json = json.dumps(tour_data)
+    all_tours_json = json.dumps(TOUR_STEPS)
     logo_json = json.dumps(bot_logo_uri or "")
     ui_dict = TOUR_UI_STRINGS.get(lang, TOUR_UI_STRINGS.get("en", {}))
     ui_json = json.dumps(ui_dict)
+    all_ui_json = json.dumps(TOUR_UI_STRINGS)
     voice_code = VOICE_BCP47_CODES.get(lang, "en-IN")
     voice_code_json = json.dumps(voice_code)
+    all_voices_json = json.dumps(VOICE_BCP47_CODES)
 
     mascot_poses = {}
     try:
@@ -202,6 +205,11 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     var pWin = window.parent || window;
     var pDoc = (pWin && pWin.document) ? pWin.document : document;
 
+    var allTourCatalog = {all_tours_json};
+    var allUiCatalog = {all_ui_json};
+    var allVoiceCatalog = {all_voices_json};
+    var currentTourLang = "{lang}";
+
     var tourSteps = {tour_json};
     var botLogoUri = {logo_json};
     var mascotPoses = {mascot_json};
@@ -213,6 +221,19 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     var isSpeechSupported = ('speechSynthesis' in pWin);
     var activeUtterance = null;
     var typingTimer = null;
+
+    function switchTourLanguage(targetLang) {{
+        if (!targetLang || !allTourCatalog[targetLang]) return;
+        currentTourLang = targetLang;
+        tourSteps = allTourCatalog[targetLang] || allTourCatalog["en"];
+        uiStrings = allUiCatalog[targetLang] || allUiCatalog["en"];
+        currentVoiceLang = allVoiceCatalog[targetLang] || "en-IN";
+        if (isTourActive) {{
+            stopSpeaking();
+            renderTourStep(currentStepIndex);
+        }}
+    }}
+    pWin.switchPathfinderTourLanguage = switchTourLanguage;
 
     // Load Voice Preference
     try {{
@@ -518,6 +539,23 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
                 font-weight: 700 !important;
                 color: #94a3b8 !important;
                 font-family: 'JetBrains Mono', monospace !important;
+            }}
+            .tour-lang-selector {{
+                background: rgba(15, 23, 42, 0.95) !important;
+                border: 1px solid rgba(56, 189, 248, 0.55) !important;
+                color: #38bdf8 !important;
+                font-size: 0.68rem !important;
+                font-weight: 700 !important;
+                padding: 2px 8px !important;
+                border-radius: 8px !important;
+                cursor: pointer !important;
+                outline: none !important;
+                transition: all 0.2s ease !important;
+            }}
+            .tour-lang-selector:hover {{
+                border-color: #00f0ff !important;
+                box-shadow: 0 0 10px rgba(0, 240, 255, 0.45) !important;
+                color: #ffffff !important;
             }}
             .tour-close-btn {{
                 background: transparent !important;
@@ -1215,7 +1253,19 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         els.card.innerHTML = `
             <div class="tour-card-header">
                 <span class="tour-step-badge">${{stepData.badge}}</span>
-                <span class="tour-step-count">${{stepCountText}}</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <select class="tour-lang-selector" id="tour-lang-selector" title="Switch Tour Language / టూర్ భాషను ఎంచుకోండి">
+                        <option value="en" ${{currentTourLang === 'en' ? 'selected' : ''}}>🌐 English</option>
+                        <option value="te" ${{currentTourLang === 'te' ? 'selected' : ''}}>🇮🇳 తెలుగు</option>
+                        <option value="hi" ${{currentTourLang === 'hi' ? 'selected' : ''}}>🇮🇳 हिंदी</option>
+                        <option value="ta" ${{currentTourLang === 'ta' ? 'selected' : ''}}>🇮🇳 தமிழ்</option>
+                        <option value="kn" ${{currentTourLang === 'kn' ? 'selected' : ''}}>🇮🇳 ಕನ್ನಡ</option>
+                        <option value="ml" ${{currentTourLang === 'ml' ? 'selected' : ''}}>🇮🇳 മലയാളം</option>
+                        <option value="bn" ${{currentTourLang === 'bn' ? 'selected' : ''}}>🇮🇳 বাংলা</option>
+                        <option value="mr" ${{currentTourLang === 'mr' ? 'selected' : ''}}>🇮🇳 मराठी</option>
+                    </select>
+                    <span class="tour-step-count">${{stepCountText}}</span>
+                </div>
                 <button class="tour-close-btn" id="tour-btn-close-x" title="${{closeTourTitle}}">✕</button>
             </div>
             <div class="tour-progress-bar-wrap">
@@ -1396,6 +1446,15 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             }};
         }}
 
+        // Language Switcher Selector in Tour Header
+        var langSel = els.card.querySelector('#tour-lang-selector');
+        if (langSel) {{
+            langSel.onchange = function(e) {{
+                e.stopPropagation();
+                switchTourLanguage(this.value);
+            }};
+        }}
+
         // Copy Prompt Example
         var promptBtn = els.card.querySelector('#tour-prompt-example-btn');
         if (promptBtn) {{
@@ -1433,7 +1492,13 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     // =========================================================================
     // START / END TOUR CONTROLLER
     // =========================================================================
-    function startTour(fromIndex) {{
+    function startTour(fromIndex, optionalLang) {{
+        if (optionalLang && allTourCatalog[optionalLang]) {{
+            currentTourLang = optionalLang;
+            tourSteps = allTourCatalog[optionalLang];
+            uiStrings = allUiCatalog[optionalLang] || allUiCatalog["en"];
+            currentVoiceLang = allVoiceCatalog[optionalLang] || "en-IN";
+        }}
         isTourActive = true;
         if (pDoc && pDoc.body) {{
             pDoc.body.classList.add('pathfinder-tour-in-progress');
@@ -1547,8 +1612,8 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
     try {{ window.addEventListener('click', onDocClick, true); }} catch(e) {{}}
 
     // Global Methods for Parent Window
-    pWin.startPathfinderTour = window.startPathfinderTour = function(idx) {{
-        startTour(idx || 0);
+    pWin.startPathfinderTour = window.startPathfinderTour = function(idx, lang) {{
+        startTour(idx || 0, lang);
     }};
     pWin.closePathfinderTour = window.closePathfinderTour = function() {{
         endTour();
@@ -1559,7 +1624,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         try {{
             if (!ev || !ev.data) return;
             if (ev.data === 'START_PATHFINDER_TOUR' || ev.data.type === 'START_PATHFINDER_TOUR' || ev.data.action === 'START_PATHFINDER_TOUR') {{
-                startTour(ev.data.step || 0);
+                startTour(ev.data.step || 0, ev.data.lang);
             }}
         }} catch(e) {{}}
     }}

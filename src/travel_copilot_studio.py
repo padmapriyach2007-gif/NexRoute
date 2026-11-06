@@ -573,18 +573,20 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 }
 
 /* =========================================================================
-   SINGLE 3D AI ROBOT GUIDE ANIMATION (CURVED CYAN GLOWING FLIGHT PATH)
+   REALISTIC 3D AI ROBOT GUIDE ANIMATION (ORGANIC 3D FLIGHT & NATURAL PHYSICS)
    ========================================================================= */
 .aura-travel-stage,
 .lang-box-walking-stage {
     position: relative !important;
     width: 100% !important;
-    height: 104px !important;
-    margin-bottom: 4px !important;
+    height: 132px !important;
+    margin-bottom: 2px !important;
     overflow: visible !important;
+    perspective: 1200px !important;
+    perspective-origin: 50% 50% !important;
 }
 
-/* Curved Glowing Path SVG */
+/* Subtle Curved Glowing Flight Arc */
 .aura-flight-svg {
     position: absolute !important;
     top: 0 !important;
@@ -597,7 +599,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 }
 
 .aura-track-guide {
-    opacity: 0.65 !important;
+    opacity: 0.35 !important;
 }
 
 .aura-track-stream {
@@ -609,104 +611,72 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     to { stroke-dashoffset: 0; }
 }
 
-/* Destination Landmark Holographic Platform */
-.aura-destination-dock {
-    position: absolute !important;
-    bottom: 4px !important;
-    right: 28px !important;
-    width: 78px !important;
-    height: 22px !important;
-    border-radius: 50% !important;
-    pointer-events: none !important;
-    z-index: 3 !important;
-}
-
-.aura-dock-ring-pulse {
-    position: absolute !important;
-    inset: 0 !important;
-    border-radius: 50% !important;
-    border: 1.5px solid rgba(0, 240, 255, 0.85) !important;
-    box-shadow: 0 0 16px rgba(0, 240, 255, 0.75), inset 0 0 10px rgba(0, 240, 255, 0.45) !important;
-    animation: dockRingPulse 2s infinite ease-in-out !important;
-}
-
-@keyframes dockRingPulse {
-    0%, 100% { transform: scale(0.95); opacity: 0.6; }
-    50% { transform: scale(1.15); opacity: 1; }
-}
-
-.aura-dock-core {
-    position: absolute !important;
-    inset: 3px !important;
-    border-radius: 50% !important;
-    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.75) 0%, rgba(168, 85, 247, 0.4) 55%, transparent 80%) !important;
-}
-
 /* The SINGLE Moving 3D AI Robot Guide */
 .aura-single-traveler,
 .lang-box-walking-aura {
     position: absolute !important;
     bottom: 4px !important;
-    width: 86px !important;
-    height: 98px !important;
+    width: 115px !important;
+    height: 124px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-end !important;
     cursor: pointer !important;
-    z-index: 15 !important;
+    z-index: 20 !important;
     user-select: none !important;
     pointer-events: auto !important;
-    animation: auraSingleRobotJourney 4.0s cubic-bezier(0.25, 0.85, 0.35, 1) forwards !important;
-    transition: filter 0.25s ease, transform 0.25s ease !important;
+    transform-style: preserve-3d !important;
+    animation: auraSingleRobotJourney 4.2s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    transition: filter 0.3s ease !important;
 }
 
 .aura-single-traveler:hover,
 .lang-box-walking-aura:hover {
-    filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 32px rgba(168, 85, 247, 0.85)) !important;
+    filter: drop-shadow(0 0 24px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 36px rgba(168, 85, 247, 0.75)) !important;
 }
 
 .aura-single-traveler:active,
 .lang-box-walking-aura:active {
-    transform: scale(0.95) !important;
+    transform: scale(0.96) !important;
 }
 
-/* Keyframes: ONE Robot travels smoothly along curved path to destination, stops, greets, and settles */
+/* Real 3D Spatial Flight: Aerodynamic pitch, roll, yaw banking, smooth deceleration and natural greeting */
 @keyframes auraSingleRobotJourney {
     0% {
         left: 20px;
-        transform: translateY(12px) scale(0.92);
+        transform: translateY(14px) rotateY(22deg) rotateX(6deg) rotateZ(-3deg) scale(0.92);
         opacity: 0.2;
     }
     12% {
-        left: 60px;
-        transform: translateY(0px) rotate(-3deg) scale(1.0);
+        left: 70px;
+        transform: translateY(0px) rotateY(15deg) rotateX(4deg) rotateZ(-2deg) scale(0.98);
         opacity: 1;
     }
-    30% {
-        left: 28%;
-        transform: translateY(-22px) rotate(-4deg) scale(1.03);
+    32% {
+        left: 30%;
+        transform: translateY(-24px) rotateY(8deg) rotateX(8deg) rotateZ(5deg) scale(1.04);
     }
-    50% {
-        left: 52%;
-        transform: translateY(-4px) rotate(3deg) scale(0.99);
+    52% {
+        left: 54%;
+        transform: translateY(-6px) rotateY(-6deg) rotateX(3deg) rotateZ(-3deg) scale(1.0);
     }
-    70% {
-        left: 74%;
-        transform: translateY(-16px) rotate(-2deg) scale(1.02);
+    72% {
+        left: 76%;
+        transform: translateY(-16px) rotateY(4deg) rotateX(-4deg) rotateZ(3deg) scale(1.03);
     }
-    86% {
-        left: calc(100% - 110px);
-        transform: translateY(0px) rotate(0deg) scale(1.0);
+    88% {
+        left: calc(100% - 135px);
+        transform: translateY(0px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1.0);
     }
-    93% {
-        /* Friendly greeting nod / rise gesture */
-        left: calc(100% - 110px);
-        transform: translateY(-8px) rotate(4deg) scale(1.05);
+    94% {
+        /* Cheerful 3D greeting gesture: robot tilts body & head forward with thumbs-up nod */
+        left: calc(100% - 135px);
+        transform: translateY(-10px) rotateY(-10deg) rotateX(-6deg) rotateZ(-4deg) scale(1.08);
     }
     100% {
-        left: calc(100% - 110px);
-        transform: translateY(0px) rotate(0deg) scale(1.0);
+        left: calc(100% - 135px);
+        transform: translateY(0px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1.0);
     }
 }
 
@@ -717,84 +687,84 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
+    transform-style: preserve-3d !important;
+    animation: aura3DHover 2.4s infinite ease-in-out !important;
+    animation-delay: 4.2s !important;
 }
 
+@keyframes aura3DHover {
+    0%, 100% {
+        transform: translateY(0px) rotateY(0deg) rotateX(0deg);
+    }
+    50% {
+        transform: translateY(-7px) rotateY(2.5deg) rotateX(-2deg);
+    }
+}
+
+.aura-single-traveler:hover .aura-single-robot-avatar,
+.lang-box-walking-aura:hover .lang-bot-figure-wrap {
+    transform: translateY(-10px) rotateY(-8deg) rotateX(-4deg) scale(1.07) !important;
+}
+
+/* Crisp, full-resolution 3D robot mascot image */
 .aura-single-mascot-img,
 .lang-bot-walking-img {
-    width: 74px !important;
-    height: 80px !important;
+    width: 110px !important;
+    height: 118px !important;
     object-fit: contain !important;
-    filter: drop-shadow(0 8px 18px rgba(0, 240, 255, 0.75)) drop-shadow(0 0 12px rgba(168, 85, 247, 0.45)) !important;
+    filter: drop-shadow(0 14px 28px rgba(0, 240, 255, 0.50)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.70)) !important;
     display: block !important;
     margin: 0 auto !important;
-    animation: auraFloatIdle 2.2s infinite ease-in-out !important;
-    animation-delay: 4.0s !important;
-    transition: filter 0.25s ease, transform 0.25s ease !important;
+    user-select: none !important;
+    -webkit-user-drag: none !important;
+    transition: filter 0.3s ease, transform 0.3s ease !important;
 }
 
-@keyframes auraFloatIdle {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-6px) rotate(1.5deg); }
-}
-
-.aura-single-traveler:hover .aura-single-mascot-img,
-.lang-box-walking-aura:hover .lang-bot-walking-img {
-    transform: translateY(-8px) scale(1.06) !important;
-    filter: drop-shadow(0 12px 24px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 20px rgba(56, 189, 248, 0.75)) !important;
-}
-
-/* Holographic Footstep Disc */
-.aura-mascot-hologram-disc,
-.lang-bot-hologram-disc {
-    width: 64px !important;
-    height: 16px !important;
-    margin-top: -6px !important;
-    border-radius: 50% !important;
-    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.92) 0%, rgba(2, 132, 199, 0.55) 45%, transparent 75%) !important;
-    box-shadow: 0 0 16px rgba(0, 240, 255, 0.9), inset 0 0 8px rgba(0, 240, 255, 0.5) !important;
-    animation: discGlowPulse 2.2s infinite ease-in-out !important;
-    animation-delay: 4.0s !important;
-}
-
-@keyframes discGlowPulse {
-    0%, 100% { transform: scale(0.95); opacity: 0.8; }
-    50% { transform: scale(1.12); opacity: 1; }
-}
-
-.aura-travel-energy-glow {
+/* Soft Volumetric Ground Hologram Beam (Anchored directly under the robot's feet) */
+.aura-ground-projection-disc {
     position: absolute !important;
-    bottom: 0 !important;
-    width: 44px !important;
-    height: 12px !important;
+    bottom: -4px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 95px !important;
+    height: 18px !important;
     border-radius: 50% !important;
-    background: rgba(0, 240, 255, 0.45) !important;
-    filter: blur(6px) !important;
+    background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.70) 0%, rgba(2, 132, 199, 0.35) 50%, transparent 75%) !important;
+    filter: blur(4px) !important;
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.60) !important;
+    z-index: -1 !important;
+    animation: auraGroundPulse 2.4s infinite ease-in-out !important;
     pointer-events: none !important;
+}
+
+@keyframes auraGroundPulse {
+    0%, 100% { transform: translateX(-50%) scale(0.92); opacity: 0.65; }
+    50% { transform: translateX(-50%) scale(1.08); opacity: 0.95; }
 }
 
 /* Welcoming Speech Bubble Tooltip at Destination */
 .aura-travel-speech-bubble,
 .lang-bot-speech-bubble {
     position: absolute !important;
-    top: -34px !important;
+    top: -38px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.94) 100%) !important;
+    background: linear-gradient(135deg, rgba(8, 20, 44, 0.98) 0%, rgba(13, 33, 68, 0.95) 100%) !important;
     border: 1.5px solid #00f0ff !important;
     border-radius: 14px !important;
-    padding: 4px 12px !important;
-    font-size: 0.74rem !important;
+    padding: 5px 14px !important;
+    font-size: 0.78rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     white-space: nowrap !important;
-    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.65), 0 0 12px rgba(168, 85, 247, 0.4) !important;
+    box-shadow: 0 4px 22px rgba(0, 240, 255, 0.65), 0 0 14px rgba(168, 85, 247, 0.4) !important;
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
     pointer-events: none !important;
-    z-index: 25 !important;
+    z-index: 30 !important;
     letter-spacing: 0.02em !important;
-    animation: auraBubbleReveal 4.0s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    animation: auraBubbleReveal 4.2s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 
 .aura-travel-speech-bubble::after,
@@ -816,11 +786,11 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
         opacity: 0.3;
         transform: translateX(-50%) scale(0.85);
     }
-    86% {
+    88% {
         opacity: 0.85;
         transform: translateX(-50%) scale(0.96);
     }
-    93% {
+    94% {
         opacity: 1;
         transform: translateX(-50%) scale(1.08);
     }
@@ -836,7 +806,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     border: 1px solid rgba(0, 240, 255, 0.7) !important;
     border-radius: 9999px !important;
     padding: 1px 7px !important;
-    font-size: 0.62rem !important;
+    font-size: 0.64rem !important;
     font-weight: 800 !important;
     color: #38bdf8 !important;
     letter-spacing: 0.06em !important;
@@ -844,7 +814,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 
 .aura-speech-text,
 #lang-bot-speech-text {
-    font-size: 0.74rem !important;
+    font-size: 0.78rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     transition: opacity 0.25s ease !important;
@@ -863,41 +833,35 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 @media (max-width: 768px) {
     .aura-travel-stage,
     .lang-box-walking-stage {
-        height: 84px !important;
+        height: 105px !important;
     }
     .aura-single-mascot-img,
     .lang-bot-walking-img {
-        width: 58px !important;
-        height: 64px !important;
+        width: 82px !important;
+        height: 88px !important;
     }
     .aura-single-traveler,
     .lang-box-walking-aura {
-        width: 66px !important;
-        height: 82px !important;
+        width: 86px !important;
+        height: 98px !important;
     }
-    .aura-mascot-hologram-disc,
-    .lang-bot-hologram-disc {
-        width: 50px !important;
-        height: 13px !important;
-    }
-    .aura-destination-dock {
-        right: 12px !important;
-        width: 60px !important;
-        height: 18px !important;
+    .aura-ground-projection-disc {
+        width: 70px !important;
+        height: 14px !important;
     }
     @keyframes auraSingleRobotJourney {
-        0% { left: 8px; transform: translateY(6px) scale(0.9); opacity: 0.2; }
-        12% { left: 24px; transform: translateY(0px) scale(1); opacity: 1; }
-        50% { left: 45%; transform: translateY(-10px) scale(0.98); }
-        86% { left: calc(100% - 82px); transform: translateY(0) scale(1); }
-        93% { left: calc(100% - 82px); transform: translateY(-5px) scale(1.04); }
-        100% { left: calc(100% - 82px); transform: translateY(0) scale(1); }
+        0% { left: 8px; transform: translateY(8px) scale(0.9); opacity: 0.2; }
+        12% { left: 30px; transform: translateY(0px) scale(1); opacity: 1; }
+        50% { left: 45%; transform: translateY(-12px) scale(0.98); }
+        88% { left: calc(100% - 95px); transform: translateY(0) scale(1); }
+        94% { left: calc(100% - 95px); transform: translateY(-6px) scale(1.05); }
+        100% { left: calc(100% - 95px); transform: translateY(0) scale(1); }
     }
     .aura-travel-speech-bubble,
     .lang-bot-speech-bubble {
-        font-size: 0.66rem !important;
-        padding: 3px 8px !important;
-        top: -30px !important;
+        font-size: 0.68rem !important;
+        padding: 3px 9px !important;
+        top: -32px !important;
     }
 }
 
@@ -905,11 +869,12 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     .aura-single-traveler,
     .lang-box-walking-aura {
         animation: none !important;
-        left: calc(100% - 110px) !important;
+        left: calc(100% - 135px) !important;
         transform: none !important;
     }
     .aura-single-mascot-img,
-    .lang-bot-walking-img {
+    .lang-bot-walking-img,
+    .aura-single-robot-avatar {
         animation: none !important;
     }
     .aura-track-stream {
@@ -1513,25 +1478,18 @@ def render_main_language_bar():
         <path class="aura-track-stream" d="M 30,58 C 240,12 480,72 760,34 C 830,26 890,32 940,38" fill="none" stroke="url(#auraGlowGrad)" stroke-width="3" filter="url(#auraNeonGlow)" stroke-dasharray="10 8"/>
     </svg>
 
-    <!-- Destination Landmark Holographic Platform Pad -->
-    <div class="aura-destination-dock" id="aura-destination-dock" title="AI Guide Destination Beacon">
-        <div class="aura-dock-ring-pulse"></div>
-        <div class="aura-dock-core"></div>
-    </div>
-
-    <!-- The ONE Single Moving 3D AI Robot -->
-    <div class="aura-single-traveler quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch();}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch();}}else if(window.startPathfinderTour){{window.startPathfinderTour(0);}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0);}}else if(window.top&&window.top.startPathfinderTour){{window.top.startPathfinderTour(0);}}else{{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}}">
+    <!-- The ONE Single Realistic 3D AI Robot -->
+    <div class="aura-single-traveler quick-tour-trigger-btn" id="lang-box-walking-aura" data-tour-trigger="true" role="button" tabindex="0" title="✨ Click AURA to start the Interactive Guided Tour in {cur_lang.upper()}! 🚀" onclick="if(window.triggerAuraTourLaunch){{window.triggerAuraTourLaunch('{cur_lang}');}}else if(window.parent&&window.parent.triggerAuraTourLaunch){{window.parent.triggerAuraTourLaunch('{cur_lang}');}}else if(window.startPathfinderTour){{window.startPathfinderTour(0,'{cur_lang}');}}else if(window.parent&&window.parent.startPathfinderTour){{window.parent.startPathfinderTour(0,'{cur_lang}');}}else if(window.top&&window.top.startPathfinderTour){{window.top.startPathfinderTour(0,'{cur_lang}');}}else{{var b=document.getElementById('btn-hero-quick-tour')||(window.parent&&window.parent.document.getElementById('btn-hero-quick-tour'));if(b)b.click();}}">
         <!-- Welcoming Speech Bubble Tooltip at Destination -->
         <div class="aura-travel-speech-bubble" id="lang-bot-speech-bubble">
             <span class="aura-speech-tag">✦ AI Guide</span>
             <span class="aura-speech-text" id="lang-bot-speech-text">Click me for a tour! ✨</span>
         </div>
 
-        <!-- Single Robot Character Figure (NO DUPLICATE CANVAS, NO DUPLICATE IMAGE!) -->
+        <!-- Realistic 3D Robot Figure with Natural Anti-Gravity Floor Aura -->
         <div class="aura-single-robot-avatar" id="lang-bot-figure-wrap">
             <img src="data:image/png;base64,{mascot_b64}" class="aura-single-mascot-img" alt="3D AI Robot Mascot" />
-            <div class="aura-mascot-hologram-disc"></div>
-            <div class="aura-travel-energy-glow"></div>
+            <div class="aura-ground-projection-disc"></div>
         </div>
     </div>
 </div>"""
@@ -1563,97 +1521,119 @@ def render_main_language_bar():
 
     try:
         import streamlit.components.v1 as components
-        aura_walker_script = """
+        aura_walker_script = f"""
         <script>
-        (function() {
+        (function() {{
             var pWin = (window.parent && window.parent.window) || window;
             var pDoc = (window.parent && window.parent.document) || document;
+            var currentLang = "{cur_lang}";
 
-            // Speech rotation after arrival at destination
-            var speechPhrases = [
-                "Click me for a tour! ✨",
-                "🚀 Tap me to start guided tour! ✨",
-                "👋 Hi! I am AURA! Click me! 🧭",
-                "🌸 నమస్కారం! టూర్ కోసం నన్ను క్లిక్ చేయండి ✨",
-                "🌟 नमस्ते! टूर के लिए मुझे क्लिक करें 🗺️",
-                "💫 Click me anytime for guided tour! 🚀"
-            ];
+            // Localized speech rotation phrases
+            var langPhraseMap = {{
+                "en": ["Click me for a tour! ✨", "🚀 Start guided tour! ✨", "👋 Hi! I am AURA! Click me! 🧭", "💫 Explore Pathfinder in 8 languages! 🗺️"],
+                "te": ["నమస్కారం! టూర్ కోసం క్లిక్ చేయండి ✨", "🚀 ఇంటరాక్టివ్ టూర్ ప్రారంభించండి! ✨", "🧭 నేను AURA, మీ AI గైడ్!", "🌐 మీ భాషలో టూర్ ఆస్వాదించండి 🗺️"],
+                "hi": ["नमस्ते! टूर के लिए मुझे क्लिक करें ✨", "🚀 इंटरैक्टिव टूर शुरू करें! ✨", "🧭 मैं AURA, आपका AI गाइड!", "🌐 अपनी भाषा में टूर देखें 🗺️"],
+                "ta": ["வணக்கம்! வழிகாட்டலுக்கு கிளிக் செய்க ✨", "🚀 ஊடாடும் வழிகாட்டல் தொடங்குங்கள்! ✨", "🧭 நான் AURA, உங்கள் AI வழிகாட்டி!"],
+                "kn": ["ನಮಸ್ಕಾರ! ಟೂರ್‌ಗಾಗಿ ಕ್ಲಿಕ್ ಮಾಡಿ ✨", "🚀 ಇಂಟರಾಕ್ಟಿವ್ ಟೂರ್ ಪ್ರಾರಂಭಿಸಿ! ✨", "🧭 ನಾನು AURA, ನಿಮ್ಮ AI ಮಾರ್ಗದರ್ಶಿ!"],
+                "ml": ["നമസ്കാരം! ടൂറിനായി ക്ലിക്ക് ചെയ്യുക ✨", "🚀 ഗൈഡഡ് ടൂർ ആരംഭിക്കുക! ✨", "🧭 ഞാൻ AURA, നിങ്ങളുടെ AI ഗൈഡ്!"],
+                "bn": ["নমস্কার! ট্যুরের জন্য ক্লিক করুন ✨", "🚀 ইন্টারেক্টিভ ট্যুর শুরু করুন! ✨", "🧭 আমি AURA, আপনার AI গাইড!"],
+                "mr": ["नमस्कार! टूरसाठी क्लिक करा ✨", "🚀 मार्गदर्शित टूर सुरू करा! ✨", "🧭 मी AURA, तुमचा AI गाईड!"]
+            }};
+            var speechPhrases = langPhraseMap[currentLang] || langPhraseMap["en"];
             var sIdx = 0;
 
-            // Dedicated tour launcher function registered on both frames
-            pWin.triggerAuraTourLaunch = window.triggerAuraTourLaunch = function() {
+            // Dedicated tour launcher function registered on all frames - supports ANY language!
+            pWin.triggerAuraTourLaunch = window.triggerAuraTourLaunch = function(targetLang) {{
+                var lang = targetLang || currentLang || "en";
                 var el = pDoc.getElementById("lang-bot-speech-text") || document.getElementById("lang-bot-speech-text");
-                if (el) {
+                if (el) {{
                     el.innerHTML = "🚀 Starting Guided Tour... ✨";
                     el.style.opacity = "1";
-                }
-                if (typeof window.startPathfinderTour === "function") {
-                    window.startPathfinderTour(0);
-                } else if (typeof pWin.startPathfinderTour === "function") {
-                    pWin.startPathfinderTour(0);
-                } else if (pWin.top && typeof pWin.top.startPathfinderTour === "function") {
-                    pWin.top.startPathfinderTour(0);
-                } else {
+                }}
+                if (typeof window.startPathfinderTour === "function") {{
+                    window.startPathfinderTour(0, lang);
+                }} else if (typeof pWin.startPathfinderTour === "function") {{
+                    pWin.startPathfinderTour(0, lang);
+                }} else if (pWin.top && typeof pWin.top.startPathfinderTour === "function") {{
+                    pWin.top.startPathfinderTour(0, lang);
+                }} else {{
                     var btn = pDoc.getElementById("btn-hero-quick-tour") || document.getElementById("btn-hero-quick-tour");
                     if (btn) btn.click();
-                    try { pWin.postMessage("START_PATHFINDER_TOUR", "*"); } catch(e) {}
-                    try { window.postMessage("START_PATHFINDER_TOUR", "*"); } catch(e) {}
-                }
-            };
+                    try {{ pWin.postMessage({{ type: "START_PATHFINDER_TOUR", step: 0, lang: lang }}, "*"); }} catch(e) {{}}
+                    try {{ window.postMessage({{ type: "START_PATHFINDER_TOUR", step: 0, lang: lang }}, "*"); }} catch(e) {{}}
+                }}
+            }};
 
-            function bindAuraClickListener() {
+            function bindAuraClickListener() {{
                 var targets = [
                     pDoc.getElementById("lang-box-walking-aura"),
                     document.getElementById("lang-box-walking-aura"),
                     pDoc.getElementById("lang-bot-speech-bubble"),
-                    document.getElementById("lang-bot-speech-bubble")
+                    document.getElementById("lang-bot-speech-bubble"),
+                    pDoc.getElementById("lang-bot-figure-wrap"),
+                    document.getElementById("lang-bot-figure-wrap")
                 ];
-                targets.forEach(function(walker) {
-                    if (walker && !walker._tourClickBound) {
+                targets.forEach(function(walker) {{
+                    if (walker && !walker._tourClickBound) {{
                         walker._tourClickBound = true;
                         walker.style.cursor = "pointer";
-                        walker.addEventListener("click", function(e) {
+                        walker.addEventListener("click", function(e) {{
                             e.preventDefault();
                             e.stopPropagation();
-                            if (window.triggerAuraTourLaunch) window.triggerAuraTourLaunch();
-                            else if (pWin.triggerAuraTourLaunch) pWin.triggerAuraTourLaunch();
-                            else if (pWin.startPathfinderTour) pWin.startPathfinderTour(0);
-                            else if (window.startPathfinderTour) window.startPathfinderTour(0);
-                        }, true);
-                        walker.addEventListener("keydown", function(e) {
-                            if (e.key === "Enter" || e.key === " ") {
+                            window.triggerAuraTourLaunch(currentLang);
+                        }}, true);
+                        walker.addEventListener("keydown", function(e) {{
+                            if (e.key === "Enter" || e.key === " ") {{
                                 e.preventDefault();
-                                if (window.triggerAuraTourLaunch) window.triggerAuraTourLaunch();
-                            }
-                        });
-                    }
-                });
-            }
+                                window.triggerAuraTourLaunch(currentLang);
+                            }}
+                        }});
+                    }}
+                }});
+
+                // Interactive 3D Cursor Parallax (Natural 3D perspective tracking)
+                var stage = pDoc.getElementById("lang-box-walking-stage") || document.getElementById("lang-box-walking-stage");
+                var robotAvatar = pDoc.getElementById("lang-bot-figure-wrap") || document.getElementById("lang-bot-figure-wrap");
+                if (stage && robotAvatar && !stage._hasParallax) {{
+                    stage._hasParallax = true;
+                    stage.addEventListener("mousemove", function(e) {{
+                        var rect = stage.getBoundingClientRect();
+                        var nx = (e.clientX - rect.left) / rect.width - 0.5;
+                        var ny = (e.clientY - rect.top) / rect.height - 0.5;
+                        var ry = nx * 18;
+                        var rx = -ny * 12;
+                        robotAvatar.style.transform = "translateY(-6px) rotateY(" + ry.toFixed(1) + "deg) rotateX(" + rx.toFixed(1) + "deg)";
+                    }});
+                    stage.addEventListener("mouseleave", function() {{
+                        robotAvatar.style.transform = "";
+                    }});
+                }}
+            }}
             bindAuraClickListener();
             setTimeout(bindAuraClickListener, 300);
             setTimeout(bindAuraClickListener, 1000);
             setTimeout(bindAuraClickListener, 2500);
             setInterval(bindAuraClickListener, 2000);
 
-            // Speech Rotation Timer (Starts after initial 4s flight journey)
-            setTimeout(function() {
-                if (!window.parent._langBotWalkInterval) {
-                    window.parent._langBotWalkInterval = setInterval(function() {
+            // Speech Rotation Timer (Starts after initial 4.2s flight arrival)
+            setTimeout(function() {{
+                if (!window.parent._langBotWalkInterval) {{
+                    window.parent._langBotWalkInterval = setInterval(function() {{
                         sIdx = (sIdx + 1) % speechPhrases.length;
                         var el = pDoc.getElementById("lang-bot-speech-text") || document.getElementById("lang-bot-speech-text");
-                        if (el) {
+                        if (el) {{
                             el.style.opacity = "0";
-                            setTimeout(function() {
-                                if (el) {
+                            setTimeout(function() {{
+                                if (el) {{
                                     el.innerHTML = speechPhrases[sIdx];
                                     el.style.opacity = "1";
-                                }
-                            }, 250);
-                        }
-                    }, 4500);
-                }
-            }, 4200);
-        })();
+                                }}
+                            }}, 250);
+                        }}
+                    }}, 4200);
+                }}
+            }}, 4300);
+        }})();
         </script>
         """
         components.html(aura_walker_script, height=0, width=0)
