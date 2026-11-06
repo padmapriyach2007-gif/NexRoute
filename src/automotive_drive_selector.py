@@ -962,6 +962,130 @@ def render_driving_mode_cockpit_card_html(
     return "\n".join(line.strip() for line in html.splitlines() if line.strip())
 
 
+def _render_creative_cockpit_vehicle_radar_svg(
+    mode_id: str,
+    distance_km: float,
+    rec_speed: float,
+    accent: str = "#10b981",
+    hazard_count: int = 0
+) -> str:
+    """
+    Renders a futuristic, high-tech automotive visual radar & vehicle telemetry HUD diagram.
+    Replaces heavy text with visual vehicle optics, forward safety radar beams,
+    and graphic status badges.
+    """
+    if mode_id == "DRIVE_ECO":
+        mode_pill = "🌿 ECO EFFICIENCY RADAR"
+        radar_label = "LAMINAR CRUISE HORIZON"
+        left_label = "💧 0.0 L COASTING"
+        right_label = "📉 -42% AERO DRAG"
+        speed_tag = f"ECO {rec_speed:g} KM/H"
+    elif mode_id == "DRIVE_FASTEST":
+        mode_pill = "🏎️ EXPRESS VELOCITY SPRINT"
+        radar_label = "EXPRESSWAY RADAR CLEARANCE"
+        left_label = "⏱️ 96% CONFIDENCE"
+        right_label = "🏁 MINIMUM ETA"
+        speed_tag = f"CRUISE {rec_speed:g} KM/H"
+    elif mode_id == "DRIVE_TOLL_FREE":
+        mode_pill = "🪙 ARTERIAL BYPASS LINK"
+        radar_label = "PUBLIC HIGHWAY CORRIDOR"
+        left_label = "💵 ₹0 FASTAG"
+        right_label = "🛑 TOLLS AVOIDED"
+        speed_tag = f"BYPASS {rec_speed:g} KM/H"
+    elif mode_id == "DRIVE_EV":
+        mode_pill = "⚡ REGEN ENERGY CAPTURE"
+        radar_label = "KINETIC HARVEST HORIZON"
+        left_label = "🔋 +0.45 kWh REGEN"
+        right_label = "🌱 0 g/km CO₂"
+        speed_tag = f"CADENCE {rec_speed:g} KM/H"
+    else:  # DRIVE_SAFEST
+        mode_pill = "🛡️ 360° HAZARD SHIELD RADAR"
+        radar_label = "48m BRAKING BUFFER SHIELD"
+        left_label = f"🛰️ {hazard_count} HAZARDS (CLEAN)"
+        right_label = f"🛣️ {distance_km} KM DIVIDED ROAD"
+        speed_tag = f"DEFENSIVE {rec_speed:g} KM/H"
+
+    return f"""
+    <div style='background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.98) 0%, rgba(8, 14, 28, 0.98) 100%); border: 1.5px solid {accent}44; border-radius: 12px; padding: 12px 14px; margin: 10px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.5);'>
+        <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;'>
+            <div style='display: flex; align-items: center; gap: 8px;'>
+                <span style='display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {accent}; box-shadow: 0 0 10px {accent};'></span>
+                <span style='font-size: 0.75rem; font-weight: 900; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.04em;'>
+                    {mode_pill}
+                </span>
+            </div>
+            <div style='display: flex; align-items: center; gap: 6px;'>
+                <span style='background: {accent}22; color: {accent}; border: 1px solid {accent}55; font-size: 0.62rem; font-weight: 800; padding: 2px 8px; border-radius: 9999px;'>
+                    ● ACTIVE VISUAL RADAR
+                </span>
+            </div>
+        </div>
+        <div style='width: 100%; overflow-x: auto;'>
+            <svg viewBox="0 0 680 110" width="100%" height="110" style="display: block; min-width: 520px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <defs>
+                    <linearGradient id="carGrad_{mode_id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#1e293b"/>
+                        <stop offset="50%" stop-color="#334155"/>
+                        <stop offset="100%" stop-color="#0f172a"/>
+                    </linearGradient>
+                    <linearGradient id="beamGrad_{mode_id}" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="{accent}" stop-opacity="0.45"/>
+                        <stop offset="60%" stop-color="{accent}" stop-opacity="0.15"/>
+                        <stop offset="100%" stop-color="{accent}" stop-opacity="0.0"/>
+                    </linearGradient>
+                </defs>
+                <!-- Highway Road Surface -->
+                <rect x="10" y="15" width="660" height="80" rx="8" fill="rgba(0, 0, 0, 0.45)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
+                <line x1="20" y1="20" x2="660" y2="20" stroke="{accent}" stroke-opacity="0.35" stroke-width="1.5"/>
+                <line x1="20" y1="90" x2="660" y2="90" stroke="{accent}" stroke-opacity="0.35" stroke-width="1.5"/>
+                <line x1="25" y1="55" x2="655" y2="55" stroke="rgba(255, 255, 255, 0.2)" stroke-dasharray="14,14" stroke-width="2"/>
+
+                <!-- Left Visual Node: Horizon / Origin -->
+                <g transform="translate(25, 43)">
+                    <rect x="0" y="0" width="135" height="24" rx="12" fill="rgba(15, 23, 42, 0.92)" stroke="{accent}" stroke-width="1.2"/>
+                    <text x="67" y="16" fill="{accent}" font-size="9" font-weight="800" text-anchor="middle">{left_label}</text>
+                </g>
+
+                <!-- Vehicle Graphic -->
+                <g transform="translate(190, 42)">
+                    <ellipse cx="32" cy="13" rx="36" ry="14" fill="rgba(0,0,0,0.7)"/>
+                    <polygon points="62,7 230,-10 230,36 62,19" fill="url(#beamGrad_{mode_id})"/>
+                    <path d="M 4 13 C 6 6, 16 3, 28 3 L 42 3 C 54 3, 60 7, 62 13 C 60 19, 54 23, 42 23 L 28 23 C 16 23, 6 20, 4 13 Z" fill="url(#carGrad_{mode_id})" stroke="{accent}" stroke-width="1.6"/>
+                    <path d="M 18 13 C 21 8, 28 7, 38 7 C 46 7, 50 9, 52 13 C 50 17, 46 19, 38 19 C 28 19, 21 18, 18 13 Z" fill="#0f172a" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
+                    <circle cx="60" cy="7" r="2.2" fill="#38bdf8"/>
+                    <circle cx="60" cy="19" r="2.2" fill="#38bdf8"/>
+                    <circle cx="5" cy="7" r="1.8" fill="#ef4444"/>
+                    <circle cx="5" cy="19" r="1.8" fill="#ef4444"/>
+                </g>
+
+                <!-- Forward Radar Arcs -->
+                <path d="M 270 33 A 26 26 0 0 1 270 77" fill="none" stroke="{accent}" stroke-width="2.6" opacity="0.95"/>
+                <path d="M 315 25 A 42 42 0 0 1 315 85" fill="none" stroke="{accent}" stroke-width="2" stroke-dasharray="4,4" opacity="0.75"/>
+                <path d="M 365 18 A 60 60 0 0 1 365 92" fill="none" stroke="#38bdf8" stroke-width="1.8" opacity="0.55"/>
+
+                <!-- Radar Label Capsule -->
+                <g transform="translate(265, 8)">
+                    <rect x="0" y="0" width="165" height="20" rx="10" fill="rgba(15, 23, 42, 0.95)" stroke="{accent}" stroke-width="1.2"/>
+                    <text x="82" y="14" fill="#f8fafc" font-size="8.5" font-weight="900" text-anchor="middle">🛡️ {radar_label}</text>
+                </g>
+
+                <!-- Calibrated Speed Badge -->
+                <g transform="translate(170, 77)">
+                    <rect x="0" y="0" width="125" height="20" rx="10" fill="rgba(15, 23, 42, 0.95)" stroke="#38bdf8" stroke-width="1"/>
+                    <text x="62" y="14" fill="#38bdf8" font-size="8.5" font-weight="900" text-anchor="middle">⚡ {speed_tag}</text>
+                </g>
+
+                <!-- Right Visual Node: Corridor Target -->
+                <g transform="translate(470, 43)">
+                    <rect x="0" y="0" width="185" height="24" rx="12" fill="rgba(15, 23, 42, 0.92)" stroke="{accent}" stroke-width="1.2"/>
+                    <text x="92" y="16" fill="#f8fafc" font-size="9" font-weight="800" text-anchor="middle">{right_label}</text>
+                </g>
+            </svg>
+        </div>
+    </div>
+    """
+
+
 def _render_dynamic_mode_telemetry_hud(
     mode_id: str,
     mode_info: Dict[str, Any],
@@ -985,8 +1109,8 @@ def _render_dynamic_mode_telemetry_hud(
         def t(k, *args, **kw): return kw.get("default", k)
     """
     Renders dynamic real-time powertrain telemetry:
-    1. 4 Real-time engineering gauges (RPM & Load, Flow & Efficiency, Aerodynamic Drag, Ledger)
-    2. 4 Active corridor strategy directives for the engaged drive mode.
+    1. 4 Real-time visual engineering gauges (RPM & Load, Flow & Efficiency, Aerodynamic Drag, Ledger)
+    2. 4 Active corridor strategy directives with creative visual mission chips.
     """
     telemetry = mode_info.get("telemetry") or {}
 
@@ -997,30 +1121,42 @@ def _render_dynamic_mode_telemetry_hud(
         g1_badge = t("telemetry.eco.rpm_badge", default="BSFC PEAK (λ=1.0)", lang=curr_lang)
         g1_sub = t("telemetry.eco.rpm_sub", default="Optimal thermal efficiency band (1,600–1,950 RPM). Cuts pumping losses by 28%.", lang=curr_lang)
         g1_pct = 38
+        g1_tags = ["🌿 Peak BSFC Band", "⚙️ Low Friction", "📉 -28% Pumping Loss"]
 
         g2_title = "💧 " + t("telemetry.eco.flow_title", default="DYNAMIC FUEL FLOW", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(fuel_l / max(0.1, distance_km) * 100, 1)} L/100km")
         g2_badge = t("telemetry.eco.flow_badge", default="DFCO COASTING ACTIVE", lang=curr_lang)
         g2_sub = t("telemetry.eco.flow_sub", default=f"Overrun fuel cut-off active during coasting. Saves {fuel_saved:.2f} L fuel vs highway pace.", lang=curr_lang, saved=f"{fuel_saved:.2f}")
         g2_pct = 85
+        g2_tags = ["💧 DFCO Coasting", "⛽ Saves Fuel", "🍃 Clean Burn"]
 
         g3_title = "💨 " + t("telemetry.eco.drag_title", default="AERODYNAMIC DRAG FORCE", lang=curr_lang)
         g3_val = telemetry.get("aero_drag_force", "178 N")
         g3_badge = t("telemetry.eco.drag_badge", default="LAMINAR FLOW (0.31 Cd·A)", lang=curr_lang)
         g3_sub = t("telemetry.eco.drag_sub", default="Governing at ~60 km/h cuts quadratic aero drag (F ∝ v²) by 42% vs 90 km/h.", lang=curr_lang)
         g3_pct = 32
+        g3_tags = ["💨 0.31 Cd·A Aero", "📉 -42% Drag Force", "🌊 Laminar Wake"]
 
         g4_title = "💰 " + t("telemetry.eco.ledger_title", default="TRIP FINANCIAL LEDGER", lang=curr_lang)
         g4_val = f"₹{round(fuel_l * 102)}"
         g4_badge = t("telemetry.eco.ledger_badge", default=f"SAVES ₹{round(fuel_saved * 102)}", lang=curr_lang, amount=round(fuel_saved * 102))
         g4_sub = t("telemetry.eco.ledger_sub", default=f"Direct fuel savings. Total trip CO₂: {round(fuel_l * 2.31, 2)} kg (Offset: 1.8 mature trees).", lang=curr_lang, co2=round(fuel_l * 2.31, 2))
         g4_pct = 92
+        g4_tags = ["💰 Max Cash Saved", "🌱 -CO₂ Offset", "🌳 1.8 Trees Offset"]
 
         strategy_items = [
-            (t("strategy.eco.throttle_title", default="🌿 Linear Throttle Dampening", lang=curr_lang), t("strategy.eco.throttle_desc", default="Progressive accelerator mapping filters out sudden pedal twitching, preventing excess fuel dumping and unburnt hydrocarbons.", lang=curr_lang)),
-            (t("strategy.eco.overdrive_title", default="⚙️ Overdrive Transmission Lockup", lang=curr_lang), t("strategy.eco.overdrive_desc", default="Locks in 5th/6th overdrive gear between 52–62 km/h, reducing crankshaft mechanical drag and engine friction.", lang=curr_lang)),
-            (t("strategy.eco.hvac_title", default="❄️ Thermal HVAC Optimization", lang=curr_lang), t("strategy.eco.hvac_desc", default="Intelligently duty-cycles the AC compressor clutch, reducing engine parasitic accessory draw by 0.25 L/100km.", lang=curr_lang)),
-            (t("strategy.eco.coasting_title", default="🛑 Anticipatory Coasting Horizon", lang=curr_lang), t("strategy.eco.coasting_desc", default="Anticipates deceleration points 200m ahead, maximizing coasting with 0.0 L/h instantaneous fuel flow.", lang=curr_lang))
+            (t("strategy.eco.throttle_title", default="🌿 Linear Throttle Dampening", lang=curr_lang),
+             t("strategy.eco.throttle_desc", default="Progressive accelerator mapping filters out sudden pedal twitching, preventing excess fuel dumping.", lang=curr_lang),
+             ["🌿 Smooth Throttle", "⛽ Zero Fuel Dump", "📈 Steady RPM"], "● LIVE ACTIVE"),
+            (t("strategy.eco.overdrive_title", default="⚙️ Overdrive Transmission Lockup", lang=curr_lang),
+             t("strategy.eco.overdrive_desc", default="Locks in 5th/6th overdrive gear between 52–62 km/h, reducing crankshaft mechanical drag.", lang=curr_lang),
+             ["⚙️ 5th/6th Lock", "📉 -28% Friction", "🔇 Quiet Cabin"], "● OPTIMAL"),
+            (t("strategy.eco.hvac_title", default="❄️ Thermal HVAC Optimization", lang=curr_lang),
+             t("strategy.eco.hvac_desc", default="Intelligently duty-cycles the AC compressor clutch, reducing engine parasitic accessory draw.", lang=curr_lang),
+             ["❄️ Smart Duty Cycle", "⚡ -0.25 L/100km", "🌬️ Cabin Comfort"], "● ACTIVE"),
+            (t("strategy.eco.coasting_title", default="🛑 Anticipatory Coasting Horizon", lang=curr_lang),
+             t("strategy.eco.coasting_desc", default="Anticipates deceleration points 200m ahead, maximizing coasting with 0.0 L/h instantaneous fuel flow.", lang=curr_lang),
+             ["🛑 200m Horizon Scan", "💧 0.0 L/h Glide", "🔄 Inertia Capture"], "● READY")
         ]
 
     elif mode_id == "DRIVE_FASTEST":
@@ -1029,30 +1165,42 @@ def _render_dynamic_mode_telemetry_hud(
         g1_badge = t("telemetry.high_torque", default="HIGH-TORQUE BAND", lang=curr_lang)
         g1_sub = t("telemetry.power_sub", default="Cam phase advance active for immediate power response during expressway merges.", lang=curr_lang)
         g1_pct = 72
+        g1_tags = ["⚡ Power Band Peak", "🏎️ Instant Torque", "🛣️ Rapid Merge"]
 
         g2_title = "🏎️ " + t("telemetry.flow_rate", default="EXPRESS FLOW RATE", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(fuel_l / max(0.1, distance_km) * 100, 1)} L/100km")
         g2_badge = t("telemetry.time_opt_flow", default="TIME-OPTIMIZED FLOW", lang=curr_lang)
         g2_sub = t("telemetry.flow_sub", default=f"Calibrated for earliest arrival ETA ({mode_info.get('duration_minutes', 0)} mins) across verified thoroughfares.", lang=curr_lang, eta=mode_info.get('duration_minutes', 0))
         g2_pct = 92
+        g2_tags = ["⏱️ Min ETA Priority", "🚦 High Velocity", "🏁 Non-Stop Flow"]
 
         g3_title = "💨 " + t("telemetry.drag_force", default="AERODYNAMIC DRAG FORCE", lang=curr_lang)
         g3_val = telemetry.get("aero_drag_force", "325 N")
         g3_badge = t("telemetry.expressway_lane", default="EXPRESSWAY CARRIAGEWAY", lang=curr_lang)
         g3_sub = t("telemetry.drag_sub", default="Divided highway corridor minimizes crosswind turbulence and lateral steering correction.", lang=curr_lang)
         g3_pct = 75
+        g3_tags = ["🛣️ Divided Multi-Lane", "💨 Low Crosswind", "🏎️ Wide Clearance"]
 
         g4_title = "⏱️ " + t("telemetry.productivity", default="TRANSIT PRODUCTIVITY", lang=curr_lang)
         g4_val = f"{speed_avg:g} km/h"
         g4_badge = t("telemetry.earliest_arrival", default="EARLIEST ARRIVAL", lang=curr_lang)
         g4_sub = t("telemetry.prod_sub", default=f"Trip Fuel ₹{round(fuel_l * 102)}. Prioritizes minimum travel duration across viable corridors.", lang=curr_lang, cost=round(fuel_l * 102))
         g4_pct = 95
+        g4_tags = ["⚡ Earliest Arrival", "📈 High Speed Flow", "⏱️ 96% Punctual"]
 
         strategy_items = [
-            (t("strategy.express_corridor", default="🏎️ Express Corridor Prioritization", lang=curr_lang), t("strategy.express_corridor_desc", default="Routes through divided multi-lane expressways with grade-separated interchanges for continuous speed flow.", lang=curr_lang)),
-            (t("strategy.eta_confidence", default="⏱️ ETA Confidence Interval", lang=curr_lang), t("strategy.eta_confidence_desc", default="Maintains 96% punctuality window by avoiding localized bottlenecks and signalized intersections.", lang=curr_lang)),
-            (t("strategy.overtake_clearance", default="🛣️ Highway Overtake Clearance", lang=curr_lang), t("strategy.overtake_clearance_desc", default="Corridor survey verifies wide multi-lane infrastructure for safe cruising and lane flexibility.", lang=curr_lang)),
-            (t("strategy.throughput_pacing", default="🚦 Active Throughput Pacing", lang=curr_lang), t("strategy.throughput_pacing_desc", default="Maintains consistent momentum to minimize unnecessary deceleration cycles on open bypasses.", lang=curr_lang))
+            (t("strategy.express_corridor", default="🏎️ Express Corridor Prioritization", lang=curr_lang),
+             t("strategy.express_corridor_desc", default="Routes through divided multi-lane expressways with grade-separated interchanges for continuous speed flow.", lang=curr_lang),
+             ["🏎️ Grade-Separated", "🛣️ Express Highway", "🚦 Zero Stoplights"], "● ACTIVE"),
+            (t("strategy.eta_confidence", default="⏱️ ETA Confidence Interval", lang=curr_lang),
+             t("strategy.eta_confidence_desc", default="Maintains 96% punctuality window by avoiding localized bottlenecks and signalized intersections.", lang=curr_lang),
+             ["⏱️ 96% Punctual", "📉 Bottleneck Bypass", "⚡ Rapid Arrival"], "● OPTIMAL"),
+            (t("strategy.overtake_clearance", default="🛣️ Highway Overtake Clearance", lang=curr_lang),
+             t("strategy.overtake_clearance_desc", default="Corridor survey verifies wide multi-lane infrastructure for safe cruising and lane flexibility.", lang=curr_lang),
+             ["🛣️ Wide Multi-Lane", "🚸 Lane Flexibility", "🏎️ Safe Passing"], "● VERIFIED"),
+            (t("strategy.throughput_pacing", default="🚦 Active Throughput Pacing", lang=curr_lang),
+             t("strategy.throughput_pacing_desc", default="Maintains consistent momentum to minimize unnecessary deceleration cycles on open bypasses.", lang=curr_lang),
+             ["🚦 Momentum Cruise", "📉 Zero Stutter", "💨 Open Byway"], "● ACTIVE")
         ]
 
     elif mode_id == "DRIVE_SAFEST":
@@ -1061,30 +1209,42 @@ def _render_dynamic_mode_telemetry_hud(
         g1_badge = t("telemetry.safest.rpm_badge", default="LOW TORQUE RIPPLE", lang=curr_lang)
         g1_sub = t("telemetry.safest.rpm_sub", default="Smooth harmonic balance reduces driver physical fatigue and preserves total vehicle stability.", lang=curr_lang)
         g1_pct = 42
+        g1_tags = ["🎯 Harmonic Sweet Spot", "🔇 Low Vibration", "⚡ Stable Torque"]
 
         g2_title = "🛑 " + t("telemetry.safest.flow_title", default="PROGRESSIVE DECELERATION", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(fuel_l / max(0.1, distance_km) * 100, 1)} L/100km")
         g2_badge = t("telemetry.safest.flow_badge", default="GENTLE BRAKING CURVE", lang=curr_lang)
         g2_sub = t("telemetry.safest.flow_sub", default="Predictive pacing eliminates sudden friction braking, avoiding tire skids and ABS interventions.", lang=curr_lang)
         g2_pct = 60
+        g2_tags = ["🛞 Anti-Skid Pacing", "🛑 Gentle Stop Curve", "🛡️ Anti-Lock Safety"]
 
         g3_title = "🛡️ " + t("telemetry.safest.drag_title", default="BRAKING SAFETY ENVELOPE", lang=curr_lang)
         g3_val = t("telemetry.safest.drag_val", default="48m Buffer", lang=curr_lang)
         g3_badge = t("telemetry.safest.drag_badge", default="3.2s HEADWAY SHIELD", lang=curr_lang)
         g3_sub = t("telemetry.safest.drag_sub", default="Provides 2.8s emergency reaction margin with 0 reported surface hazards on surveyed pavement.", lang=curr_lang)
         g3_pct = 98
+        g3_tags = ["📏 48m Safety Bubble", "⏱️ 2.8s Headway", "🛣️ Clear Pavement"]
 
         g4_title = "🚨 " + t("telemetry.safest.index_title", default="ACTIVE SAFETY INDEX", lang=curr_lang)
         g4_val = "100 / 100"
         g4_badge = t("telemetry.safest.index_badge", default="0 THREAT CORRIDOR", lang=curr_lang)
         g4_sub = t("telemetry.safest.index_sub", default="Zero active incidents or construction barriers in 40m perpendicular polyline buffer.", lang=curr_lang)
         g4_pct = 100
+        g4_tags = ["🛰️ Sat Audited", "🛡️ 0 Active Obstacles", "⚡ Max Shielding"]
 
         strategy_items = [
-            (t("strategy.safest.screening_title", default="🛡️ 360° Corridor Hazard Screening", lang=curr_lang), t("strategy.safest.screening_desc", default="Continuous spatial intersection analysis against active incident databases, potholes, and construction work.", lang=curr_lang)),
-            (t("strategy.safest.sos_title", default="🚨 Emergency SOS Armed", lang=curr_lang), t("strategy.safest.sos_desc", default="Pre-calibrated links to emergency national helpline 112 and nearest trauma care facilities within corridor reach.", lang=curr_lang)),
-            (t("strategy.safest.traction_title", default="🛣️ High Pavement Traction", lang=curr_lang), t("strategy.safest.traction_desc", default="Prioritizes asphalt-paved dual-carriageway corridors with verified lane markings and physical median barriers.", lang=curr_lang)),
-            (t("strategy.safest.fatigue_title", default="🧠 Low Cognitive Fatigue Pacing", lang=curr_lang), t("strategy.safest.fatigue_desc", default="Governs cruising velocity to reduce driver eye strain, micro-sleep risk, and stress spikes.", lang=curr_lang))
+            (t("strategy.safest.screening_title", default="🛡️ 360° Corridor Hazard Screening", lang=curr_lang),
+             t("strategy.safest.screening_desc", default="Continuous spatial intersection analysis against active incident databases, potholes, and construction work.", lang=curr_lang),
+             ["🛰️ Sat Audited", "🕳️ 0 Potholes", "🚧 0 Roadblocks"], "● LIVE SCAN"),
+            (t("strategy.safest.sos_title", default="🚨 Emergency SOS Armed", lang=curr_lang),
+             t("strategy.safest.sos_desc", default="Pre-calibrated links to emergency national helpline 112 and nearest trauma care facilities within corridor reach.", lang=curr_lang),
+             ["📞 112 Helpline", "🏥 Trauma Ready", "⚡ Instant Dispatch"], "● ARMED 112"),
+            (t("strategy.safest.traction_title", default="🛣️ High Pavement Traction", lang=curr_lang),
+             t("strategy.safest.traction_desc", default="Prioritizes asphalt-paved dual-carriageway corridors with verified lane markings and physical median barriers.", lang=curr_lang),
+             ["🛣️ Dual Carriageway", "🚸 Median Barrier", "🌧️ High Grip"], "● VERIFIED"),
+            (t("strategy.safest.fatigue_title", default="🧠 Low Cognitive Fatigue Pacing", lang=curr_lang),
+             t("strategy.safest.fatigue_desc", default="Governs cruising velocity to reduce driver eye strain, micro-sleep risk, and stress spikes.", lang=curr_lang),
+             ["🧠 Zero Eye Strain", "🧘 Calm Heart Rate", "⏱️ 2.6s Buffer"], "● OPTIMAL FOCUS")
         ]
 
     elif mode_id == "DRIVE_TOLL_FREE":
@@ -1093,30 +1253,42 @@ def _render_dynamic_mode_telemetry_hud(
         g1_badge = t("telemetry.toll.rpm_badge", default="STEADY BYPASS CRUISE", lang=curr_lang)
         g1_sub = t("telemetry.toll.rpm_sub", default="Navigates public highways at steady cruising speeds without toll plaza thermal fatigue.", lang=curr_lang)
         g1_pct = 45
+        g1_tags = ["🪙 Bypass Cruise", "🛣️ Steady Arterial", "⚙️ Smooth Cadence"]
 
         g2_title = "💵 " + t("telemetry.toll.flow_title", default="NET TOLL EXPENSE", lang=curr_lang)
         g2_val = "₹0 FASTag"
         g2_badge = t("telemetry.toll.flow_badge", default="100% TOLLS AVOIDED", lang=curr_lang)
         g2_sub = t("telemetry.toll.flow_sub", default="Avoids commercial toll plazas, preserving ₹85 - ₹160 in FASTag fees per one-way transit.", lang=curr_lang)
         g2_pct = 100
+        g2_tags = ["💵 ₹0 FASTag", "🪙 100% Free Roads", "💰 Zero Toll Fees"]
 
         g3_title = "🛑 " + t("telemetry.toll.idling_title", default="ZERO IDLING LOSS", lang=curr_lang)
         g3_val = "0.00 L"
         g3_badge = t("telemetry.toll.idling_badge", default="BYPASSES TOLL QUEUES", lang=curr_lang)
         g3_sub = t("telemetry.toll.idling_sub", default="Eliminates stop-start crawling and overheating at highway toll barrier choke points.", lang=curr_lang)
         g3_pct = 90
+        g3_tags = ["🛑 Skip Toll Queues", "⚡ No Barrier Waits", "💧 0.00 L Wasted"]
 
         g4_title = "💰 " + t("telemetry.toll.budget_title", default="TOTAL TRIP BUDGET", lang=curr_lang)
         g4_val = f"₹{round(fuel_l * 102)}"
         g4_badge = t("telemetry.toll.budget_badge", default="BUDGET OPTIMIZED", lang=curr_lang)
         g4_sub = t("telemetry.toll.budget_sub", default="Pure fuel expense with zero surcharge. Saves 100% on toll barrier tariffs.", lang=curr_lang)
         g4_pct = 94
+        g4_tags = ["💰 100% Budget Safe", "⛽ Fuel Only", "📈 Max Cash Kept"]
 
         strategy_items = [
-            (t("strategy.toll.exemption_title", default="🪙 Complete FASTag Exemption", lang=curr_lang), t("strategy.toll.exemption_desc", default="Corridor strictly utilizes public non-tolled bypasses and state arterial corridors without automated toll collection.", lang=curr_lang)),
-            (t("strategy.toll.arterial_title", default="🛣️ Arterial Service Verification", lang=curr_lang), t("strategy.toll.arterial_desc", default="Verified pavement quality across public state corridors avoiding rugged unpaved surfaces.", lang=curr_lang)),
-            (t("strategy.toll.flow_title", default="⏱️ Predictable Transit Flow", lang=curr_lang), t("strategy.toll.flow_desc", default="Bypasses unpredictable peak-hour toll plaza bottleneck queues and electronic scanner delays.", lang=curr_lang)),
-            (t("strategy.toll.conservation_title", default="💵 Budget Conservation", lang=curr_lang), t("strategy.toll.conservation_desc", default="Maximum financial savings per kilometer, ideal for daily commuter routes and commercial delivery trips.", lang=curr_lang))
+            (t("strategy.toll.exemption_title", default="🪙 Complete FASTag Exemption", lang=curr_lang),
+             t("strategy.toll.exemption_desc", default="Corridor strictly utilizes public non-tolled bypasses and state arterial corridors without toll collection.", lang=curr_lang),
+             ["🪙 100% Free Roads", "🚫 No FASTag Gates", "💵 ₹0 Toll Fees"], "● ACTIVE"),
+            (t("strategy.toll.arterial_title", default="🛣️ Arterial Service Verification", lang=curr_lang),
+             t("strategy.toll.arterial_desc", default="Verified pavement quality across public state corridors avoiding rugged unpaved surfaces.", lang=curr_lang),
+             ["🛣️ State Arterial", "🛞 Smooth Pavement", "🗺️ Verified Link"], "● VERIFIED"),
+            (t("strategy.toll.flow_title", default="⏱️ Predictable Transit Flow", lang=curr_lang),
+             t("strategy.toll.flow_desc", default="Bypasses unpredictable peak-hour toll plaza bottleneck queues and electronic scanner delays.", lang=curr_lang),
+             ["⏱️ Skip Barrier Queues", "🏎️ Continuous Roll", "📉 Zero Jam Delay"], "● OPTIMAL"),
+            (t("strategy.toll.conservation_title", default="💵 Budget Conservation", lang=curr_lang),
+             t("strategy.toll.conservation_desc", default="Maximum financial savings per kilometer, ideal for daily commuter routes and commercial delivery trips.", lang=curr_lang),
+             ["💵 Daily Commuter", "💰 Lowest Cost", "🛒 Pure Savings"], "● ACTIVE")
         ]
 
     else:  # DRIVE_EV
@@ -1125,31 +1297,67 @@ def _render_dynamic_mode_telemetry_hud(
         g1_badge = t("telemetry.ev.rpm_badge", default="94.2% INVERTER EFF", lang=curr_lang)
         g1_sub = t("telemetry.ev.rpm_sub", default="Field-oriented permanent magnet motor control with ultra-low thermal dissipation.", lang=curr_lang)
         g1_pct = 48
+        g1_tags = ["⚡ 94.2% Inverter Eff", "🧲 Permanent Magnet", "❄️ Ultra-Cool Run"]
 
         g2_title = "🔋 " + t("telemetry.ev.flow_title", default="SPECIFIC ENERGY DRAW", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(energy_kwh / max(0.1, distance_km) * 100, 1)} kWh/100km")
         g2_badge = t("telemetry.ev.flow_badge", default="+0.45 kWh REGEN", lang=curr_lang)
         g2_sub = t("telemetry.ev.flow_sub", default="One-pedal regenerative braking captures kinetic deceleration back into the battery pack.", lang=curr_lang)
         g2_pct = 88
+        g2_tags = ["🔋 +0.45 kWh Regen", "🔄 One-Pedal Drive", "⚡ Kinetic Capture"]
 
         g3_title = "💨 " + t("telemetry.ev.drag_title", default="ROLLING & AERO DRAG", lang=curr_lang)
         g3_val = telemetry.get("aero_drag_force", "110 N")
         g3_badge = t("telemetry.ev.drag_badge", default="AERO DISC WHEELS", lang=curr_lang)
         g3_sub = t("telemetry.ev.drag_sub", default="Flush wheel covers and closed front grille minimize boundary wake drag.", lang=curr_lang)
         g3_pct = 28
+        g3_tags = ["💨 Aero Disc Wheels", "🌊 Low Wake", "📉 Minimal Drag"]
 
         g4_title = "⚡ " + t("telemetry.ev.soc_title", default="BATTERY ARRIVAL SOC", lang=curr_lang)
         g4_val = f"{mode_info.get('arrival_soc_pct', 74.7)}%"
         g4_badge = t("telemetry.ev.soc_badge", default=f"{mode_info.get('battery_used_pct', 15.3)}% USED", lang=curr_lang, used=mode_info.get('battery_used_pct', 15.3))
         g4_sub = t("telemetry.ev.soc_sub", default=f"Net grid cost: ~₹{round(energy_kwh * 15)} (70% savings vs ₹{round(fuel_l * 102)} petrol). 0 g/km CO₂.", lang=curr_lang, cost=round(energy_kwh * 15), petrol=round(fuel_l * 102))
         g4_pct = int(mode_info.get('arrival_soc_pct', 75))
+        g4_tags = ["⚡ 70% Cheaper vs Fuel", "🌱 0 g/km CO₂", "🔋 Safe Range Reserve"]
 
         strategy_items = [
-            (t("strategy.ev.regen_title", default="🔋 Intelligent Regenerative Pacing", lang=curr_lang), t("strategy.ev.regen_desc", default="Maximizes energy capture on downhills and coasting horizons, extending effective battery range by 4-6%.", lang=curr_lang)),
-            (t("strategy.ev.thermal_title", default="❄️ Thermal Battery Pack Conditioning", lang=curr_lang), t("strategy.ev.thermal_desc", default="Maintains lithium-ion pack cells within 24°C–32°C optimal chemical temperature window.", lang=curr_lang)),
-            (t("strategy.ev.charger_title", default="🔌 En-Route Fast Charger Registry", lang=curr_lang), t("strategy.ev.charger_desc", default="Monitors active CCS2 / Type-2 EV DC Fast Chargers within 5 km corridor radius for emergency top-up.", lang=curr_lang)),
-            (t("strategy.ev.zero_emission_title", default="🌱 Zero Tailpipe Emissions", lang=curr_lang), t("strategy.ev.zero_emission_desc", default="True zero emission transit with pure quiet electric torque and zero acoustic passenger fatigue.", lang=curr_lang))
+            (t("strategy.ev.regen_title", default="🔋 Intelligent Regenerative Pacing", lang=curr_lang),
+             t("strategy.ev.regen_desc", default="Maximizes energy capture on downhills and coasting horizons, extending effective battery range by 4-6%.", lang=curr_lang),
+             ["🔋 Energy Recovery", "🔄 +4-6% Extra Range", "🛑 One-Pedal Coast"], "● ACTIVE"),
+            (t("strategy.ev.thermal_title", default="❄️ Thermal Battery Pack Conditioning", lang=curr_lang),
+             t("strategy.ev.thermal_desc", default="Maintains lithium-ion pack cells within 24°C–32°C optimal chemical temperature window.", lang=curr_lang),
+             ["❄️ 24°C–32°C Sweet Spot", "⚡ Battery Health", "🌡️ Cell Shield"], "● OPTIMAL"),
+            (t("strategy.ev.charger_title", default="🔌 En-Route Fast Charger Registry", lang=curr_lang),
+             t("strategy.ev.charger_desc", default="Monitors active CCS2 / Type-2 EV DC Fast Chargers within 5 km corridor radius for emergency top-up.", lang=curr_lang),
+             ["🔌 CCS2 / Type-2 Ready", "⚡ 5 km Radial Scan", "🗺️ Emergency Top-Up"], "● READY"),
+            (t("strategy.ev.zero_emission_title", default="🌱 Zero Tailpipe Emissions", lang=curr_lang),
+             t("strategy.ev.zero_emission_desc", default="True zero emission transit with pure quiet electric torque and zero acoustic passenger fatigue.", lang=curr_lang),
+             ["🌱 100% Clean Air", "🔇 Whisper Quiet", "🧘 Vestibular Comfort"], "● ZERO CO₂")
         ]
+
+    def _render_gauge_box(title, val, badge, pct, col, tags, sub):
+        tags_html = "".join([f"<span style='background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; font-size: 0.58rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>{t_item}</span>" for t_item in tags])
+        return f"""
+        <div style='background: rgba(0, 0, 0, 0.40); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;'>
+            <div>
+                <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: #94a3b8; font-weight: 700;'>
+                    <span>{title}</span>
+                    <span style='color: {col}; font-weight: 800; font-size: 0.60rem;'>{badge}</span>
+                </div>
+                <div style='font-size: 1.25rem; font-weight: 900; color: #f8fafc; margin-top: 4px; line-height: 1.1;'>{val}</div>
+                <div style='height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 6px;'>
+                    <div style='width: {pct}%; height: 100%; background: {col}; border-radius: 2px; box-shadow: 0 0 8px {col};'></div>
+                </div>
+                <div style='display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;'>
+                    {tags_html}
+                </div>
+            </div>
+            <details style='margin-top: 6px; cursor: pointer;'>
+                <summary style='font-size: 0.58rem; color: #94a3b8;'>ℹ️ Engineering Note</summary>
+                <div style='font-size: 0.62rem; color: #cbd5e1; margin-top: 3px; line-height: 1.3;'>{sub}</div>
+            </details>
+        </div>
+        """
 
     gauges_html = f"""
     <div style='background: rgba(15, 23, 42, 0.90); border: 1.5px solid {accent}55; border-radius: 12px; padding: 14px 16px; margin-top: 10px; margin-bottom: 10px;'>
@@ -1165,64 +1373,31 @@ def _render_dynamic_mode_telemetry_hud(
             </span>
         </div>
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;'>
-            <!-- Gauge 1 -->
-            <div style='background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 12px;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: #94a3b8; font-weight: 700;'>
-                    <span>{g1_title}</span>
-                    <span style='color: {accent}; font-weight: 800; font-size: 0.60rem;'>{g1_badge}</span>
-                </div>
-                <div style='font-size: 1.25rem; font-weight: 900; color: #f8fafc; margin-top: 4px; line-height: 1.1;'>{g1_val}</div>
-                <div style='height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 6px;'>
-                    <div style='width: {g1_pct}%; height: 100%; background: {accent}; border-radius: 2px;'></div>
-                </div>
-                <div style='font-size: 0.64rem; color: #cbd5e1; margin-top: 5px; line-height: 1.35;'>{g1_sub}</div>
-            </div>
-            <!-- Gauge 2 -->
-            <div style='background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 12px;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: #94a3b8; font-weight: 700;'>
-                    <span>{g2_title}</span>
-                    <span style='color: #34d399; font-weight: 800; font-size: 0.60rem;'>{g2_badge}</span>
-                </div>
-                <div style='font-size: 1.25rem; font-weight: 900; color: #f8fafc; margin-top: 4px; line-height: 1.1;'>{g2_val}</div>
-                <div style='height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 6px;'>
-                    <div style='width: {g2_pct}%; height: 100%; background: #34d399; border-radius: 2px;'></div>
-                </div>
-                <div style='font-size: 0.64rem; color: #cbd5e1; margin-top: 5px; line-height: 1.35;'>{g2_sub}</div>
-            </div>
-            <!-- Gauge 3 -->
-            <div style='background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 12px;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: #94a3b8; font-weight: 700;'>
-                    <span>{g3_title}</span>
-                    <span style='color: #38bdf8; font-weight: 800; font-size: 0.60rem;'>{g3_badge}</span>
-                </div>
-                <div style='font-size: 1.25rem; font-weight: 900; color: #f8fafc; margin-top: 4px; line-height: 1.1;'>{g3_val}</div>
-                <div style='height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 6px;'>
-                    <div style='width: {g3_pct}%; height: 100%; background: #38bdf8; border-radius: 2px;'></div>
-                </div>
-                <div style='font-size: 0.64rem; color: #cbd5e1; margin-top: 5px; line-height: 1.35;'>{g3_sub}</div>
-            </div>
-            <!-- Gauge 4 -->
-            <div style='background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 12px;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: #94a3b8; font-weight: 700;'>
-                    <span>{g4_title}</span>
-                    <span style='color: #fbbf24; font-weight: 800; font-size: 0.60rem;'>{g4_badge}</span>
-                </div>
-                <div style='font-size: 1.25rem; font-weight: 900; color: #f8fafc; margin-top: 4px; line-height: 1.1;'>{g4_val}</div>
-                <div style='height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 6px;'>
-                    <div style='width: {g4_pct}%; height: 100%; background: #fbbf24; border-radius: 2px;'></div>
-                </div>
-                <div style='font-size: 0.64rem; color: #cbd5e1; margin-top: 5px; line-height: 1.35;'>{g4_sub}</div>
-            </div>
+            {_render_gauge_box(g1_title, g1_val, g1_badge, g1_pct, accent, g1_tags, g1_sub)}
+            {_render_gauge_box(g2_title, g2_val, g2_badge, g2_pct, "#34d399", g2_tags, g2_sub)}
+            {_render_gauge_box(g3_title, g3_val, g3_badge, g3_pct, "#38bdf8", g3_tags, g3_sub)}
+            {_render_gauge_box(g4_title, g4_val, g4_badge, g4_pct, "#fbbf24", g4_tags, g4_sub)}
         </div>
     </div>
     """
 
     strat_cards = "".join([
-        f"""<div style='background: rgba(0, 0, 0, 0.30); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px;'>
-            <div style='font-size: 0.74rem; font-weight: 800; color: {accent}; margin-bottom: 2px;'>{title}</div>
-            <div style='font-size: 0.68rem; color: #cbd5e1; line-height: 1.35;'>{desc}</div>
+        f"""<div style='background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;'>
+            <div>
+                <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;'>
+                    <span style='font-size: 0.74rem; font-weight: 800; color: {accent};'>{title}</span>
+                    <span style='background: {accent}22; color: {accent}; border: 1px solid {accent}55; font-size: 0.58rem; font-weight: 800; padding: 1px 6px; border-radius: 4px;'>{badge}</span>
+                </div>
+                <div style='display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;'>
+                    {"".join([f"<span style='background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9; font-size: 0.58rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;'>{tag}</span>" for tag in tags])}
+                </div>
+            </div>
+            <details style='margin-top: 4px; cursor: pointer;'>
+                <summary style='font-size: 0.60rem; color: #94a3b8; font-weight: 700;'>ℹ️ Operational Protocol</summary>
+                <div style='font-size: 0.64rem; color: #cbd5e1; line-height: 1.35; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 4px;'>{desc}</div>
+            </details>
         </div>"""
-        for title, desc in strategy_items
+        for title, desc, tags, badge in strategy_items
     ])
 
     directives_html = f"""
@@ -1470,6 +1645,61 @@ def render_cockpit_mode_functionality_hud(
     lbl_cog_load = t("strategy.cognitive_load", default="Cognitive Load", lang=curr_lang)
     lbl_analysis = t("strategy.analysis", default="Analysis", lang=curr_lang)
 
+    radar_diagram_svg = _render_creative_cockpit_vehicle_radar_svg(
+        mode_id=mode_id,
+        distance_km=distance_km,
+        rec_speed=rec_speed,
+        accent=accent,
+        hazard_count=mode_info.get("hazard_count", 0)
+    )
+
+    if mode_id == "DRIVE_ECO":
+        n1_icon, n1_title, n1_val, n1_sub = "🌿", "Eco Efficiency", "98 / 100", f"Saves {fuel_saved:.2f}L Fuel"
+        n2_icon, n2_title, n2_val, n2_sub = "💨", "Aero Laminar", "0.31 Cd·A", "-42% Drag Force"
+        n3_icon, n3_title, n3_val, n3_sub = "🧠", "Mind Wellness", "Zero Stress", "No Idling Spikes"
+        n4_icon, n4_title, n4_val, n4_sub = "🛑", "Coasting Arc", "200m Horizon", "0.0 L/h Decel"
+    elif mode_id == "DRIVE_FASTEST":
+        n1_icon, n1_title, n1_val, n1_sub = "🏎️", "Express Corridor", "High Flow", "Grade-Separated"
+        n2_icon, n2_title, n2_val, n2_sub = "⏱️", "Punctuality", "96% Confidence", "Bottleneck Bypass"
+        n3_icon, n3_title, n3_val, n3_sub = "🛣️", "Multi-Lane", "Full Clearance", "Passing Lanes"
+        n4_icon, n4_title, n4_val, n4_sub = "🚦", "Throughput", f"{speed_avg:g} km/h Cruise", "Non-Stop Pacing"
+    elif mode_id == "DRIVE_TOLL_FREE":
+        n1_icon, n1_title, n1_val, n1_sub = "🪙", "FASTag Exemption", "₹0 Tolls", "100% Free Byways"
+        n2_icon, n2_title, n2_val, n2_sub = "🛣️", "State Arterial", "Smooth Tarmac", f"{distance_km} km Link"
+        n3_icon, n3_title, n3_val, n3_sub = "⏱️", "Queue Skip", "Zero Wait", "No Plaza Delays"
+        n4_icon, n4_title, n4_val, n4_sub = "💰", "Budget Ledger", "Fuel Only", "Commuter Safe"
+    elif mode_id == "DRIVE_EV":
+        n1_icon, n1_title, n1_val, n1_sub = "🔋", "Regen Pacing", "+4-6% Extra", "Kinetic Harvest"
+        n2_icon, n2_title, n2_val, n2_sub = "❄️", "Thermal Shield", "24°C–32°C", "Battery Health"
+        n3_icon, n3_title, n3_val, n3_sub = "🔌", "Charger Scan", "CCS2 / Type-2", "5 km Hub Radius"
+        n4_icon, n4_title, n4_val, n4_sub = "🌱", "Zero Tailpipe", "0 g/km CO₂", "Whisper Quiet"
+    else:  # DRIVE_SAFEST
+        n1_icon, n1_title, n1_val, n1_sub = "🛰️", "Satellite Shield", f"{mode_info.get('hazard_count', 0)} Hazards", "Clean Registry"
+        n2_icon, n2_title, n2_val, n2_sub = "🛣️", "Road Class", "Divided Road", f"{distance_km} km Corridor"
+        n3_icon, n3_title, n3_val, n3_sub = "🧠", "Cognitive State", "Low Fatigue", "Alert Focus"
+        n4_icon, n4_title, n4_val, n4_sub = "🛑", "Stop Envelope", "2.6s Buffer", "48m Safe Margin"
+
+    def _render_flow_capsule(icon, title, val, sub, col):
+        return f"""
+        <div style='background: rgba(0, 0, 0, 0.40); border: 1px solid {col}44; border-radius: 10px; padding: 10px 8px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;'>
+            <div>
+                <div style='font-size: 1.25rem; line-height: 1; margin-bottom: 4px;'>{icon}</div>
+                <div style='font-size: 0.68rem; font-weight: 800; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.02em;'>{title}</div>
+                <div style='font-size: 0.72rem; color: {col}; font-weight: 900; margin-top: 3px;'>{val}</div>
+            </div>
+            <div style='background: rgba(255,255,255,0.05); border-radius: 4px; padding: 2px 4px; font-size: 0.58rem; color: #94a3b8; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{sub}</div>
+        </div>
+        """
+
+    flow_capsules_html = f"""
+    <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(min(125px, 100%), 1fr)); gap: 8px; margin-top: 10px; margin-bottom: 10px;'>
+        {_render_flow_capsule(n1_icon, n1_title, n1_val, n1_sub, accent)}
+        {_render_flow_capsule(n2_icon, n2_title, n2_val, n2_sub, "#38bdf8")}
+        {_render_flow_capsule(n3_icon, n3_title, n3_val, n3_sub, "#10b981")}
+        {_render_flow_capsule(n4_icon, n4_title, n4_val, n4_sub, "#fbbf24")}
+    </div>
+    """
+
     speed_health_hud = f"""
     <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid {accent}66; border-radius: 12px; padding: 12px 16px; margin: 10px 0; box-shadow: 0 4px 16px rgba(0,0,0,0.3);'>
         <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;'>
@@ -1483,24 +1713,11 @@ def render_cockpit_mode_functionality_hud(
                 {speed_eval}
             </span>
         </div>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px;'>
-            <div style='background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px;'>
-                <div style='font-size: 0.70rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 2px;'>
-                    🛣️ {lbl_reason_title}
-                </div>
-                <div style='font-size: 0.72rem; color: #cbd5e1; line-height: 1.4;'>
-                    {dynamic_reason}
-                </div>
-            </div>
-            <div style='background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px;'>
-                <div style='font-size: 0.70rem; font-weight: 800; color: #10b981; text-transform: uppercase; margin-bottom: 2px;'>
-                    🛡️ {lbl_impact_title}
-                </div>
-                <div style='font-size: 0.72rem; color: #cbd5e1; line-height: 1.4;'>
-                    {health_benefit}
-                </div>
-            </div>
-        </div>
+
+        {radar_diagram_svg}
+
+        {flow_capsules_html}
+
         <div style='margin-top: 8px; font-size: 0.68rem; color: #94a3b8; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
             <span>⏱️ {lbl_rxn_buf}: <b style="color: #38bdf8;">{t('strategy.headway_val', default='2.6s headway', lang=curr_lang)}</b></span>
             <span>•</span>
@@ -1508,6 +1725,17 @@ def render_cockpit_mode_functionality_hud(
             <span>•</span>
             <span>💡 {lbl_analysis}: <span style='color: #e2e8f0;'>{speed_health}</span></span>
         </div>
+
+        <details style='background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 6px 12px; margin-top: 8px; cursor: pointer;'>
+            <summary style='font-size: 0.64rem; color: #38bdf8; font-weight: 700; outline: none;'>
+                🔬 View Detailed Engineering Analysis & Strategy Log
+            </summary>
+            <div style='font-size: 0.68rem; color: #cbd5e1; line-height: 1.45; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;'>
+                <div style='margin-bottom: 4px;'><b>🛣️ {lbl_reason_title}:</b> {dynamic_reason}</div>
+                <div style='margin-bottom: 4px;'><b>🛡️ {lbl_impact_title}:</b> {health_benefit}</div>
+                <div><b>💡 {lbl_analysis}:</b> {speed_health}</div>
+            </div>
+        </details>
     </div>
     """
 
