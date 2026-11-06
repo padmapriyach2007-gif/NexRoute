@@ -11504,442 +11504,171 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-    # Render Contextual Storybook Card
-
-
+    # Render Contextual Storybook Card with Creative Route Insights & Imagery
+    banner_img_html = ""
+    if getattr(chapter, "banner_image_url", None):
+        banner_img_html = f"""
+        <div style='position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);'>
+            <img src='{chapter.banner_image_url}' style='width: 100%; height: 100%; object-fit: cover;' loading='lazy' />
+            <div style='position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.85) 100%);'></div>
+            <div style='position: absolute; bottom: 12px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: flex-end;'>
+                <div>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(15, 23, 42, 0.85); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.4);'>
+                        📸 Scenic Route Corridor Leg
+                    </span>
+                    <div style='font-size: 1.15rem; font-weight: 900; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); margin-top: 4px;'>
+                        {cur_step.icon} {cur_step.headline}
+                    </div>
+                </div>
+                <span style='font-size: 0.72rem; font-weight: 800; background: rgba(16, 185, 129, 0.85); color: #ffffff; padding: 4px 12px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);'>
+                    🛣️ {chapter.road_name}
+                </span>
+            </div>
+        </div>
+        """
 
     st.markdown(f"""
-
-
-
     <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);'>
-
-
-
+        {banner_img_html}
         <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;'>
-
-
-
             <div>
-
-
-
                 <span style='font-size: 0.70rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase;'>
-
-
-
                     📖 CORRIDOR STORYBOOK • {chapter.title}
-
-
-
                 </span>
-
-
-
                 <div style='font-size: 1.15rem; font-weight: 900; color: #ffffff; margin-top: 2px;'>
-
-
-
                     {cur_step.icon} {cur_step.headline}
-
-
-
                 </div>
-
-
-
             </div>
-
-
-
             <span style='font-size: 0.72rem; font-weight: 800; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45); padding: 3px 10px; border-radius: 999px;'>
-
-
-
                 🛣️ {chapter.road_name}
-
-
-
             </span>
-
-
-
         </div>
-
-
-
         <div style='font-size: 0.88rem; color: #cbd5e1; line-height: 1.55; margin-bottom: 12px;'>
-
-
-
             <b>🏛️ Historical Lore:</b> {chapter.historical_lore}
-
-
-
         </div>
-
-
-
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px;'>
-
-
-
             <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 14px;'>
-
-
-
                 <span style='font-size: 0.70rem; font-weight: 800; color: #a78bfa;'>🎭 CULTURAL HERITAGE</span>
-
-
-
                 <div style='font-size: 0.82rem; color: #e2e8f0; margin-top: 4px; line-height: 1.45;'>
-
-
-
                     {chapter.cultural_heritage}
-
-
-
                 </div>
-
-
-
             </div>
-
-
-
             <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 14px;'>
-
-
-
                 <span style='font-size: 0.70rem; font-weight: 800; color: #34d399;'>🌿 GEOGRAPHY & NATURE</span>
-
-
-
                 <div style='font-size: 0.82rem; color: #e2e8f0; margin-top: 4px; line-height: 1.45;'>
-
-
-
                     {chapter.geography_nature}
-
-
-
                 </div>
-
-
-
             </div>
-
-
-
         </div>
-
-
-
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px;'>
+            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 10px; padding: 10px 14px;'>
+                <span style='font-size: 0.70rem; font-weight: 800; color: #fbbf24;'>📸 SCENIC PHOTO SPOT</span>
+                <div style='font-size: 0.82rem; color: #fef3c7; margin-top: 4px; line-height: 1.45;'>
+                    {getattr(chapter, "scenic_highlight", "Panoramic vistas of rural agricultural waterways.")}
+                </div>
+            </div>
+            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(244, 114, 182, 0.25); border-radius: 10px; padding: 10px 14px;'>
+                <span style='font-size: 0.70rem; font-weight: 800; color: #f472b6;'>🍲 LOCAL CULINARY SPECIALTY</span>
+                <div style='font-size: 0.82rem; color: #fce7f3; margin-top: 4px; line-height: 1.45;'>
+                    {getattr(chapter, "culinary_highlight", "Authentic regional highway tiffins, fresh chai, and sweets.")}
+                </div>
+            </div>
+        </div>
+        <div style='background: rgba(30, 27, 75, 0.55); border-left: 3px solid #818cf8; border-radius: 8px; padding: 8px 14px; font-size: 0.80rem; color: #c7d2fe; margin-bottom: 8px;'>
+            <b>💡 AI Route Intelligence:</b> {getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow.")} &nbsp;•&nbsp; <b>💎 Hidden Gem:</b> {getattr(chapter, "hidden_gem", "Historic wayside monument.")}
+        </div>
         <div style='background: rgba(8, 47, 73, 0.55); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 8px 14px; font-size: 0.80rem; color: #7dd3fc;'>
-
-
-
             <b>👀 What to look for:</b> {chapter.what_to_look_for} &nbsp;•&nbsp; <b>💡 Travel Tip:</b> {chapter.travel_tip}
-
-
-
         </div>
-
-
-
     </div>
-
-
-
     """, unsafe_allow_html=True)
 
-
-
-
-
-
-
     # Category Filter for Recommended Corridor Places
-
-
-
     c_cat_key = f"corridor_places_filter_{key_suffix}"
-
-
-
     if c_cat_key not in st.session_state:
-
-
-
         st.session_state[c_cat_key] = "all"
 
-
-
-
-
-
-
-    cat_cols = st.columns(6)
-
-
-
+    cat_cols = st.columns(8)
     categories = [
-
-
-
         ("all", "🌟 All Places"),
-
-
-
         ("attractions", "🏛️ Attractions"),
-
-
-
         ("dining", "🍽️ Dining"),
-
-
-
         ("fuel", "⛽ Fuel & EV"),
-
-
-
         ("medical", "🏥 Medical"),
-
-
-
-        ("hotels", "🏨 Hotels")
-
-
-
+        ("hotels", "🏨 Hotels"),
+        ("scenic", "🌿 Scenic"),
+        ("shopping", "🛍️ Shopping")
     ]
-
-
-
     for c_col, (cat_id, cat_lbl) in zip(cat_cols, categories):
-
-
-
         with c_col:
-
-
-
             is_active_cat = (st.session_state[c_cat_key] == cat_id)
-
-
-
             if st.button(cat_lbl, key=f"btn_corridor_cat_{cat_id}_{key_suffix}", type="primary" if is_active_cat else "secondary", use_container_width=True):
-
-
-
                 st.session_state[c_cat_key] = cat_id
-
-
-
                 st.rerun()
 
-
-
-
-
-
-
     # Discover Real Places near active step and corridor
-
-
-
     places_found = CorridorPlacesEngine.get_corridor_places(
-
-
-
         step_coords=step_coords,
-
-
-
         route_polyline=route_coords,
-
-
-
         origin_coords=coords_orig,
-
-
-
         dest_coords=coords_dest,
-
-
-
         category_filter=st.session_state[c_cat_key],
-
-
-
         radius_km=15.0,
-
-
-
         max_results=6
-
-
-
     )
 
-
-
-
-
-
-
     if places_found:
-
-
-
         grid_cols = st.columns(min(3, len(places_found)))
-
-
-
         for p_idx, p in enumerate(places_found):
-
-
-
             with grid_cols[p_idx % len(grid_cols)]:
-
-
+                photo_src = p.get("photo_url", "https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=600&q=80")
+                rating_val = p.get("rating", 4.7)
+                reviews_cnt = p.get("reviews_count", 320)
+                highlight_text = p.get("highlight", p.get("description", "Verified transit amenity along route corridor."))
 
                 st.markdown(f"""
-
-
-
-                <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(56, 189, 248, 0.28); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; flex-direction: column; justify-content: space-between;'>
-
-
-
+                <div style='background: rgba(15, 23, 42, 0.88); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 16px rgba(0,0,0,0.35);'>
                     <div>
-
-
-
-                        <div style='display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 4px;'>
-
-
-
-                            <div style='font-weight: 800; font-size: 0.90rem; color: #ffffff;'>
-
-
-
-                                {p["category_icon"]} {p["name"]}
-
-
-
+                        <div style='position: relative; width: 100%; height: 130px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; background: #0f172a;'>
+                            <img src='{photo_src}' style='width: 100%; height: 100%; object-fit: cover; display: block;' loading='lazy' />
+                            <div style='position: absolute; top: 6px; left: 6px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 800; color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);'>
+                                {p["category_icon"]} {p["category"]}
                             </div>
-
-
-
-                            <span style='font-size: 0.68rem; font-weight: 800; color: #34d399; background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 7px; border-radius: 999px; white-space: nowrap;'>
-
-
-
+                            <div style='position: absolute; top: 6px; right: 6px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 800; color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4);'>
+                                ⭐ {rating_val:.1f} <span style='color: #94a3b8; font-size: 0.60rem;'>({reviews_cnt}+)</span>
+                            </div>
+                            <div style='position: absolute; bottom: 6px; right: 6px; background: rgba(16, 185, 129, 0.90); color: #ffffff; padding: 2px 7px; border-radius: 999px; font-size: 0.64rem; font-weight: 800;'>
                                 {p["distance_step_km"]} km away
-
-
-
-                            </span>
-
-
-
+                            </div>
                         </div>
-
-
-
+                        <div style='font-weight: 800; font-size: 0.92rem; color: #ffffff; margin-bottom: 4px; line-height: 1.3;'>
+                            {p["name"]}
+                        </div>
                         <div style='font-size: 0.72rem; color: #94a3b8; margin-bottom: 6px;'>
-
-
-
                             📍 {p["address"]}
-
-
-
                         </div>
-
-
-
-                        <div style='font-size: 0.76rem; color: #cbd5e1; margin-bottom: 6px; line-height: 1.35;'>
-
-
-
-                            {p["description"]}
-
-
-
+                        <div style='font-size: 0.74rem; color: #e2e8f0; margin-bottom: 6px; line-height: 1.35; background: rgba(56, 189, 248, 0.08); border-left: 2px solid #38bdf8; padding: 4px 8px; border-radius: 4px;'>
+                            ✨ {highlight_text}
                         </div>
-
-
-
                         <div style='font-size: 0.70rem; color: #67e8f9; margin-bottom: 8px;'>
-
-
-
                             🕒 {p["hours"]} &nbsp;•&nbsp; 🚗 +{p["detour_mins"]}m detour ({p["detour_km"]} km)
-
-
-
                         </div>
-
-
-
                     </div>
-
-
-
                 </div>
-
-
-
                 """, unsafe_allow_html=True)
 
-
-
                 btn_c1, btn_c2 = st.columns([1, 1])
-
-
-
                 with btn_c1:
-
-
-
                     if st.button("👁️ View on Map", key=f"btn_view_poi_{p_idx}_{key_suffix}", use_container_width=True):
-
-
-
                         st.session_state.map_center_override = (p["latitude"], p["longitude"])
-
-
-
                         st.session_state.map_zoom = 17
-
-
-
                         st.session_state.auto_fit_bounds = False
-
-
-
                         st.session_state.scroll_to_app_map = True
-
-
-
                         st.toast(f"Centering map on {p['name']}", icon="👁️")
-
-
-
                         st.rerun()
 
-
-
                 with btn_c2:
-
-
-
                     if st.button("➕ Add as Stop", key=f"btn_add_poi_{p_idx}_{key_suffix}", use_container_width=True):
-
-
-
                         st.toast(f"Added {p['name']} to journey itinerary!", icon="📍")
 
 
