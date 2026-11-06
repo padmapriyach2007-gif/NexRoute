@@ -204,3 +204,78 @@ def test_both_pointer_location_detection_and_synchronization():
     assert "st.session_state.user_live_coords = (c_lat, c_lon)" in code
 
 
+def test_creative_storybook_hologram_deck_and_expandable_lore():
+    """Verify that Corridor Storybook is rendered creatively with visual Bento cards, progressive lore disclosure, and tactical directives."""
+    with open("app.py", "r", encoding="utf-8") as f:
+        code = f.read()
+
+    # Creative visual Bento cards
+    assert "🎭 CULTURAL HERITAGE" in code
+    assert "🌿 GEOGRAPHY & NATURE" in code
+    assert "📸 SCENIC PHOTO SPOT" in code
+    assert "🍲 LOCAL CULINARY SPECIALTY" in code
+
+    # Progressive disclosure accordion for historical lore
+    assert "🏛️ Historical Lore & Chronicle" in code
+    assert "📜 Tap to read full historical lore & dynasty archives..." in code
+    assert "<details" in code
+    assert "<summary" in code
+
+    # Tactical directive sensory HUD bar
+    assert "💡 AI Route Intelligence" in code
+    assert "💎 Hidden Gem" in code
+    assert "👀 What to look for" in code
+    assert "🧭 Travel Tip" in code
+
+
+def test_add_as_stop_validation_redirection_and_routing():
+    """Verify that Add as Stop validates endpoints and mode, adds intermediate stop, and redirects to Navigation tab."""
+    with open("app.py", "r", encoding="utf-8") as f:
+        code = f.read()
+
+    # Button presence
+    assert '"➕ Add as Stop"' in code
+
+    # Validation: missing start or destination
+    assert "Starting Point & Destination Required" in code or "Starting Point and Destination in Navigation first" in code
+
+    # Validation: mode limitation
+    assert "Travel Mode Limitation" in code or "FLIGHT" in code
+
+    # Validation: duplicate stop check
+    assert "is_already_stop" in code or "Already Added" in code
+
+    # Validation: stop limit (4 stops)
+    assert "len(st.session_state.intermediate_stops) >= 4" in code
+
+    # Redirection to Navigation
+    assert 'st.session_state.current_view = "map_nav"' in code
+    assert "st.session_state.intermediate_stops.append(new_stop_item)" in code
+
+    # Navigation tab Stop Deck & delete controls
+    assert "📍 Active Stops" in code
+    assert 'key=f"btn_remove_stop_{s_i}"' in code
+
+
+def test_route_engine_multi_stop_waypoint_calculation():
+    """Verify that route engine and OSRM provider accept and route through intermediate waypoints."""
+    from src.route_engine import OSRMGlobalRoutingProvider, TravelMode
+
+    provider = OSRMGlobalRoutingProvider()
+    origin = (16.2430, 80.6400)      # Tenali
+    dest = (16.3067, 80.4365)        # Guntur
+    waypoint = (16.2406, 80.6323)    # Sangam / LifeLine Waypoint
+
+    routes = provider.calculate_routes(
+        origin_lat=origin[0], origin_lon=origin[1],
+        dest_lat=dest[0], dest_lon=dest[1],
+        mode=TravelMode.DRIVING,
+        waypoints=[waypoint]
+    )
+
+    assert len(routes) >= 1
+    assert routes[0].distance_km > 0
+    assert len(routes[0].polyline) >= 2
+
+
+

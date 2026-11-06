@@ -1588,7 +1588,9 @@ class BaseRoutingProvider:
 
         speed_mode: str = "normal",
 
-        custom_speed_kmh: Optional[float] = None
+        custom_speed_kmh: Optional[float] = None,
+
+        waypoints: Optional[List[Tuple[float, float]]] = None
 
     ) -> List[RouteOption]:
 
@@ -1636,7 +1638,9 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
         speed_mode: str = "normal",
 
-        custom_speed_kmh: Optional[float] = None
+        custom_speed_kmh: Optional[float] = None,
+
+        waypoints: Optional[List[Tuple[float, float]]] = None
 
     ) -> List[RouteOption]:
 
@@ -1650,7 +1654,8 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
             self.last_error_message = "Waterway (Ship) travel requires verified maritime sea-lanes and navigable nautical water charts. OSRM road-network engine cannot route across land-locked or non-navigable channels."
             return []
 
-        cache_key = f"{round(origin_lat, 4)}_{round(origin_lon, 4)}_{round(dest_lat, 4)}_{round(dest_lon, 4)}_{mode.value}_{require_accessible}_{speed_mode}_{custom_speed_kmh}"
+        wp_str = "_".join(f"{round(float(w[0]), 4)}_{round(float(w[1]), 4)}" for w in (waypoints or []))
+        cache_key = f"{round(origin_lat, 4)}_{round(origin_lon, 4)}_{round(dest_lat, 4)}_{round(dest_lon, 4)}_{mode.value}_{require_accessible}_{speed_mode}_{custom_speed_kmh}_{wp_str}"
 
         if cache_key in self._CACHE and self._CACHE[cache_key]:
             return self._CACHE[cache_key]
@@ -1662,7 +1667,15 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
         else:
             profile = "car" 
 
-        coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
+        if waypoints:
+            valid_wps = [(float(w[0]), float(w[1])) for w in waypoints if w and len(w) == 2]
+            if valid_wps:
+                all_pts = [(origin_lat, origin_lon)] + valid_wps + [(dest_lat, dest_lon)]
+                coords = ";".join(f"{lon:.6f},{lat:.6f}" for lat, lon in all_pts)
+            else:
+                coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
+        else:
+            coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
 
         url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=true&steps=true"
 
@@ -1729,7 +1742,7 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
             )
 
             # If only 1 route returned by standard OSRM endpoint for driving/cycling, query alternative via-corridor
-            if len(distinct_routes) < 2 and mode in [TravelMode.DRIVING, TravelMode.BICYCLING]:
+            if len(distinct_routes) < 2 and mode in [TravelMode.DRIVING, TravelMode.BICYCLING] and not waypoints:
                 try:
                     import math
                     mid_lat = (origin_lat + dest_lat) / 2.0
@@ -1799,7 +1812,9 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
         speed_mode: str = "normal",
 
-        custom_speed_kmh: Optional[float] = None
+        custom_speed_kmh: Optional[float] = None,
+
+        waypoints: Optional[List[Tuple[float, float]]] = None
 
     ) -> List[RouteOption]:
 
@@ -2143,7 +2158,9 @@ class RealWorldRouteEngine:
 
         speed_mode: str = "normal",
 
-        custom_speed_kmh: Optional[float] = None
+        custom_speed_kmh: Optional[float] = None,
+
+        waypoints: Optional[List[Tuple[float, float]]] = None
 
     ) -> List[RouteOption]:
 
@@ -2161,6 +2178,7 @@ class RealWorldRouteEngine:
 
         self.last_failure_reason = None
 
+        wp_key = tuple((round(float(w[0]), 4), round(float(w[1]), 4)) for w in (waypoints or []))
         cache_key = (
 
             round(origin_lat, 4), round(origin_lon, 4),
@@ -2175,7 +2193,9 @@ class RealWorldRouteEngine:
 
             speed_mode,
 
-            custom_speed_kmh
+            custom_speed_kmh,
+
+            wp_key
 
         )
 
@@ -2258,6 +2278,10 @@ class RealWorldRouteEngine:
             if has_var_kw or "custom_speed_kmh" in param_names:
 
                 p_kwargs["custom_speed_kmh"] = custom_speed_kmh
+
+            if has_var_kw or "waypoints" in param_names:
+
+                p_kwargs["waypoints"] = waypoints
 
 
 
@@ -2488,7 +2512,9 @@ class RealWorldRouteEngine:
 
         speed_mode: str = "normal",
 
-        custom_speed_kmh: Optional[float] = None
+        custom_speed_kmh: Optional[float] = None,
+
+        waypoints: Optional[List[Tuple[float, float]]] = None
 
     ) -> List[RouteOption]:
 
@@ -2878,7 +2904,9 @@ class RealWorldRouteEngine:
 
         speed_mode: str = "normal",
 
-        custom_speed_kmh: Optional[float] = None
+        custom_speed_kmh: Optional[float] = None,
+
+        waypoints: Optional[List[Tuple[float, float]]] = None
 
     ) -> List[RouteOption]:
 

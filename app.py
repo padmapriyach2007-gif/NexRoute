@@ -9690,8 +9690,9 @@ if raw_o:
             c_lat = float(c_match.group(1))
             c_lon = float(c_match.group(2))
             if -90.0 <= c_lat <= 90.0 and -180.0 <= c_lon <= 180.0:
-                coords_orig = (c_lat, c_lon)
-                st.session_state.user_live_coords = coords_orig
+                if coords_orig != (c_lat, c_lon):
+                    coords_orig = (c_lat, c_lon)
+                    st.session_state.user_live_coords = coords_orig
                 place_lbl = raw_o[:c_match.start()].strip(" (,-") or f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
                 st.session_state.user_live_label = place_lbl
                 st.session_state.is_custom_start_place = True
@@ -9975,7 +9976,9 @@ def resolve_virtual_guide_active_route(provided_item=None):
 
 
 
-                avoid_ferries=st.session_state.get("avoid_ferries", False)
+                avoid_ferries=st.session_state.get("avoid_ferries", False),
+
+                waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
 
 
 
@@ -11209,61 +11212,132 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
         </div>
         """
 
+    # Creative Visual Storybook Hologram Deck (Replaces heavy text with high-tech interactive visual cards)
+    lore_snippet = (chapter.historical_lore[:140] + '...') if len(chapter.historical_lore) > 140 else chapter.historical_lore
     st.markdown(f"""
-    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);'>
+    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%); border: 1.5px solid rgba(56, 189, 248, 0.50); border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);'>
         {banner_img_html}
-        <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;'>
+        <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;'>
             <div>
-                <span style='font-size: 0.70rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase;'>
-                    📖 CORRIDOR STORYBOOK • {chapter.title}
-                </span>
-                <div style='font-size: 1.15rem; font-weight: 900; color: #ffffff; margin-top: 2px;'>
+                <div style='display: flex; align-items: center; gap: 8px;'>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase;'>
+                        📖 CORRIDOR STORYBOOK • {chapter.title}
+                    </span>
+                    <span style='font-size: 0.65rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.35); padding: 2px 7px; border-radius: 999px;'>
+                        Leg {chapter.chapter_num} of {chapter.total_chapters}
+                    </span>
+                </div>
+                <div style='font-size: 1.18rem; font-weight: 900; color: #ffffff; margin-top: 3px;'>
                     {cur_step.icon} {cur_step.headline}
                 </div>
             </div>
-            <span style='font-size: 0.72rem; font-weight: 800; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45); padding: 3px 10px; border-radius: 999px;'>
+            <span style='font-size: 0.72rem; font-weight: 800; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45); padding: 4px 12px; border-radius: 999px;'>
                 🛣️ {chapter.road_name}
             </span>
         </div>
-        <div style='font-size: 0.88rem; color: #cbd5e1; line-height: 1.55; margin-bottom: 12px;'>
-            <b>🏛️ Historical Lore:</b> {chapter.historical_lore}
-        </div>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px;'>
-            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 14px;'>
-                <span style='font-size: 0.70rem; font-weight: 800; color: #a78bfa;'>🎭 CULTURAL HERITAGE</span>
-                <div style='font-size: 0.82rem; color: #e2e8f0; margin-top: 4px; line-height: 1.45;'>
+
+        <!-- 4 Visual Bento Story Cards -->
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 12px;'>
+            <!-- Cultural Heritage -->
+            <div style='background: linear-gradient(135deg, rgba(30, 27, 75, 0.50) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 12px; padding: 12px 14px;'>
+                <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #c4b5fd;'>🎭 CULTURAL HERITAGE</span>
+                    <span style='font-size: 0.62rem; background: rgba(167, 139, 250, 0.2); color: #a78bfa; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Living Arts</span>
+                </div>
+                <div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.42;'>
                     {chapter.cultural_heritage}
                 </div>
             </div>
-            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 14px;'>
-                <span style='font-size: 0.70rem; font-weight: 800; color: #34d399;'>🌿 GEOGRAPHY & NATURE</span>
-                <div style='font-size: 0.82rem; color: #e2e8f0; margin-top: 4px; line-height: 1.45;'>
+
+            <!-- Geography & Nature -->
+            <div style='background: linear-gradient(135deg, rgba(6, 78, 59, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 12px; padding: 12px 14px;'>
+                <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #6ee7b7;'>🌿 GEOGRAPHY & NATURE</span>
+                    <span style='font-size: 0.62rem; background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Landscape</span>
+                </div>
+                <div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.42;'>
                     {chapter.geography_nature}
                 </div>
             </div>
-        </div>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px;'>
-            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 10px; padding: 10px 14px;'>
-                <span style='font-size: 0.70rem; font-weight: 800; color: #fbbf24;'>📸 SCENIC PHOTO SPOT</span>
-                <div style='font-size: 0.82rem; color: #fef3c7; margin-top: 4px; line-height: 1.45;'>
+
+            <!-- Scenic Photo Spot -->
+            <div style='background: linear-gradient(135deg, rgba(120, 53, 15, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(251, 191, 36, 0.35); border-radius: 12px; padding: 12px 14px;'>
+                <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #fde68a;'>📸 SCENIC PHOTO SPOT</span>
+                    <span style='font-size: 0.62rem; background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Visual Spot</span>
+                </div>
+                <div style='font-size: 0.81rem; color: #fef3c7; line-height: 1.42;'>
                     {getattr(chapter, "scenic_highlight", "Panoramic vistas of rural agricultural waterways.")}
                 </div>
             </div>
-            <div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(244, 114, 182, 0.25); border-radius: 10px; padding: 10px 14px;'>
-                <span style='font-size: 0.70rem; font-weight: 800; color: #f472b6;'>🍲 LOCAL CULINARY SPECIALTY</span>
-                <div style='font-size: 0.82rem; color: #fce7f3; margin-top: 4px; line-height: 1.45;'>
+
+            <!-- Local Culinary Specialty -->
+            <div style='background: linear-gradient(135deg, rgba(131, 24, 67, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(244, 114, 182, 0.35); border-radius: 12px; padding: 12px 14px;'>
+                <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #fbcfe8;'>🍲 LOCAL CULINARY SPECIALTY</span>
+                    <span style='font-size: 0.62rem; background: rgba(244, 114, 182, 0.2); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Regional Food</span>
+                </div>
+                <div style='font-size: 0.81rem; color: #fce7f3; line-height: 1.42;'>
                     {getattr(chapter, "culinary_highlight", "Authentic regional highway tiffins, fresh chai, and sweets.")}
                 </div>
             </div>
         </div>
-        <div style='background: rgba(30, 27, 75, 0.55); border-left: 3px solid #818cf8; border-radius: 8px; padding: 8px 14px; font-size: 0.80rem; color: #c7d2fe; margin-bottom: 8px;'>
-            <b>💡 AI Route Intelligence:</b> {getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow.")} &nbsp;•&nbsp; <b>💎 Hidden Gem:</b> {getattr(chapter, "hidden_gem", "Historic wayside monument.")}
+
+        <!-- 🏛️ Historical Lore Interactive Capsule (Progressive Disclosure) -->
+        <div style='background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.30); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;'>
+            <div style='display: flex; align-items: center; justify-content: space-between;'>
+                <span style='font-size: 0.75rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 6px;'>
+                    🏛️ Historical Lore & Chronicle
+                </span>
+                <span style='font-size: 0.62rem; color: #94a3b8; font-weight: 700;'>Heritage Records</span>
+            </div>
+            <div style='font-size: 0.82rem; color: #cbd5e1; margin-top: 4px; line-height: 1.45;'>
+                {lore_snippet}
+            </div>
+            <details style='margin-top: 6px; cursor: pointer;'>
+                <summary style='font-size: 0.74rem; font-weight: 700; color: #38bdf8; outline: none; user-select: none;'>
+                    📜 Tap to read full historical lore & dynasty archives...
+                </summary>
+                <div style='margin-top: 8px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.55; padding: 10px 12px; background: rgba(10, 15, 28, 0.85); border-radius: 8px; border-left: 3px solid #38bdf8;'>
+                    {chapter.historical_lore}
+                </div>
+            </details>
         </div>
-        <div style='background: rgba(8, 47, 73, 0.55); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 8px 14px; font-size: 0.80rem; color: #7dd3fc;'>
-            <b>👀 What to look for:</b> {chapter.what_to_look_for} &nbsp;•&nbsp; <b>💡 Travel Tip:</b> {chapter.travel_tip}
+
+        <!-- 💡 Tactical Travel Directive & Sensory Bar -->
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px;'>
+            <div style='background: rgba(30, 27, 75, 0.55); border-left: 3px solid #818cf8; border-radius: 8px; padding: 7px 12px;'>
+                <span style='font-size: 0.68rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;'>💡 AI Route Intelligence</span>
+                <div style='font-size: 0.78rem; color: #e0e7ff; margin-top: 2px;'>{getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow.")}</div>
+            </div>
+            <div style='background: rgba(49, 10, 100, 0.45); border-left: 3px solid #c084fc; border-radius: 8px; padding: 7px 12px;'>
+                <span style='font-size: 0.68rem; font-weight: 800; color: #e9d5ff; text-transform: uppercase;'>💎 Hidden Gem</span>
+                <div style='font-size: 0.78rem; color: #f3e8ff; margin-top: 2px;'>{getattr(chapter, "hidden_gem", "Historic wayside monument.")}</div>
+            </div>
+            <div style='background: rgba(8, 47, 73, 0.55); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 7px 12px;'>
+                <span style='font-size: 0.68rem; font-weight: 800; color: #7dd3fc; text-transform: uppercase;'>👀 What to look for</span>
+                <div style='font-size: 0.78rem; color: #e0f2fe; margin-top: 2px;'>{chapter.what_to_look_for}</div>
+            </div>
+            <div style='background: rgba(6, 78, 59, 0.45); border-left: 3px solid #34d399; border-radius: 8px; padding: 7px 12px;'>
+                <span style='font-size: 0.68rem; font-weight: 800; color: #6ee7b7; text-transform: uppercase;'>🧭 Travel Tip</span>
+                <div style='font-size: 0.78rem; color: #ecfdf5; margin-top: 2px;'>{chapter.travel_tip}</div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # Notification banner for stop actions (add stop, validation errors, limits)
+    if "stop_action_msg" in st.session_state and st.session_state["stop_action_msg"]:
+        _act_m = st.session_state["stop_action_msg"]
+        _m_t = _act_m.get("type", "info")
+        _b_c = "#10b981" if _m_t == "success" else "#ef4444" if _m_t == "error" else "#f59e0b" if _m_t == "warning" else "#38bdf8"
+        _bg_c = "rgba(16, 185, 129, 0.15)" if _m_t == "success" else "rgba(239, 68, 68, 0.15)" if _m_t == "error" else "rgba(245, 158, 11, 0.15)" if _m_t == "warning" else "rgba(56, 189, 248, 0.15)"
+        st.markdown(f"""
+        <div style='background: {_bg_c}; border: 1.5px solid {_b_c}; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;'>
+            <div style='color: {_b_c}; font-weight: 800; font-size: 0.88rem;'>{_act_m.get("title", "Route Notice")}</div>
+            <div style='color: #f1f5f9; font-size: 0.80rem; margin-top: 2px;'>{_act_m.get("text", "")}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Category Filter for Recommended Corridor Places
     c_cat_key = f"corridor_places_filter_{key_suffix}"
@@ -11351,7 +11425,88 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
                 with btn_c2:
                     if st.button("➕ Add as Stop", key=f"btn_add_poi_{p_idx}_{key_suffix}", use_container_width=True):
-                        st.toast(f"Added {p['name']} to journey itinerary!", icon="📍")
+                        # 1. Validation: Starting point & destination must both exist
+                        c_o = coords_orig
+                        c_d = coords_dest
+                        if not c_o or not c_d:
+                            st.session_state["stop_action_msg"] = {
+                                "type": "warning",
+                                "title": "⚠️ Starting Point & Destination Required",
+                                "text": f"Cannot add '{p['name']}' as an intermediate stop. Please select both a Starting Point and Destination in Navigation first."
+                            }
+                            st.toast("⚠️ Starting Point & Destination required first!", icon="⚠️")
+                            st.rerun()
+
+                        # 2. Validation: Travel mode compatibility
+                        cur_mode = str(st.session_state.get("selected_travel_mode", "CAR")).upper().strip()
+                        if cur_mode in ["FLIGHT", "WATERWAY"]:
+                            st.session_state["stop_action_msg"] = {
+                                "type": "warning",
+                                "title": "⚠️ Travel Mode Limitation",
+                                "text": f"Intermediate road stops along the corridor are not supported for {cur_mode} mode. Please switch to Driving, Cycling, or Walking."
+                            }
+                            st.toast(f"⚠️ Multi-stop routing not supported in {cur_mode}.", icon="⚠️")
+                            st.rerun()
+
+                        if "intermediate_stops" not in st.session_state or not isinstance(st.session_state.intermediate_stops, list):
+                            st.session_state.intermediate_stops = []
+
+                        # 3. Validation: Duplicate check
+                        is_already_stop = any(
+                            st_item.get("name") == p["name"] or
+                            (abs(float(st_item.get("lat", 0)) - float(p["latitude"])) < 0.0005 and abs(float(st_item.get("lon", 0)) - float(p["longitude"])) < 0.0005)
+                            for st_item in st.session_state.intermediate_stops
+                        )
+                        if is_already_stop:
+                            st.session_state["stop_action_msg"] = {
+                                "type": "info",
+                                "title": "ℹ️ Already Added to Itinerary",
+                                "text": f"'{p['name']}' is already on your route as an intermediate stop."
+                            }
+                            st.toast(f"'{p['name']}' is already a stop!", icon="ℹ️")
+                            st.rerun()
+
+                        # 4. Validation: Stop limit (4 stops)
+                        if len(st.session_state.intermediate_stops) >= 4:
+                            st.session_state["stop_action_msg"] = {
+                                "type": "warning",
+                                "title": "⚠️ Route Stop Limit Reached",
+                                "text": "A maximum of 4 intermediate corridor stops can be active simultaneously. Please remove an existing stop in Navigation before adding more."
+                            }
+                            st.toast("⚠️ Maximum 4 stops reached!", icon="⚠️")
+                            st.rerun()
+
+                        # 5. Success: Add stop, invalidate route cache, redirect to Navigation tab
+                        new_stop_item = {
+                            "name": p["name"],
+                            "lat": float(p["latitude"]),
+                            "lon": float(p["longitude"]),
+                            "address": p.get("address", ""),
+                            "category": p.get("category", "Transit Stop"),
+                            "category_icon": p.get("category_icon", "📍"),
+                            "detour_mins": p.get("detour_mins", 0),
+                            "detour_km": p.get("detour_km", 0.0)
+                        }
+                        st.session_state.intermediate_stops.append(new_stop_item)
+
+                        # Invalidate routing cache to trigger immediate multi-stop recalculation
+                        st.session_state._prev_route_sig = None
+                        st.session_state._prev_endpoint_sig = None
+                        st.session_state.cached_candidate_routes = []
+                        st.session_state.selected_route_id = None
+                        st.session_state.auto_fit_bounds = True
+
+                        st.session_state["stop_action_msg"] = {
+                            "type": "success",
+                            "title": "✅ Stop Added Successfully",
+                            "text": f"Added '{p['name']}' as Stop #{len(st.session_state.intermediate_stops)}! Route is now dynamically re-routing through this waypoint in Navigation."
+                        }
+
+                        # Redirect into Navigation tab
+                        st.session_state.current_view = "map_nav"
+                        st.session_state.scroll_to_app_map = True
+                        st.toast(f"📍 Added '{p['name']}' as Stop #{len(st.session_state.intermediate_stops)}! Opening Navigation...", icon="✅")
+                        st.rerun()
 
 
 
@@ -18362,7 +18517,11 @@ body {{
 
 
 
-                st.session_state.get("avoid_ferries", False)
+                st.session_state.get("avoid_ferries", False),
+
+
+
+                tuple((round(float(s["lat"]), 4), round(float(s["lon"]), 4)) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s)
 
 
 
@@ -18398,6 +18557,7 @@ body {{
 
 
 
+                    cur_waypoints = [(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s]
                     candidate_routes = st.session_state.real_route_engine.calculate_routes(
 
 
@@ -18442,7 +18602,11 @@ body {{
 
 
 
-                        custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None
+                        custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None,
+
+
+
+                        waypoints=cur_waypoints if cur_waypoints else None
 
 
 
@@ -19634,7 +19798,9 @@ body {{
 
 
 
-                avoid_ferries=st.session_state.get("avoid_ferries", False)
+                avoid_ferries=st.session_state.get("avoid_ferries", False),
+
+                waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
 
 
 
@@ -21070,11 +21236,38 @@ body {{
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-
-
-
-
-
+            # 📍 Intermediate Route Stops Deck (Corridor Waypoints)
+            act_stops = st.session_state.get("intermediate_stops", [])
+            if act_stops:
+                st.markdown(f"""
+                <div style='background: rgba(14, 165, 233, 0.10); border: 1px dashed rgba(56, 189, 248, 0.45); border-radius: 10px; padding: 8px 12px; margin: 8px 0;'>
+                    <div style='font-size: 0.72rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;'>
+                        <span>📍 Active Stops ({len(act_stops)} of 4)</span>
+                        <span style='color: #94a3b8; font-size: 0.65rem;'>Via Corridors</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                for s_i, st_pt in enumerate(act_stops):
+                    c_st1, c_st2 = st.columns([5, 1])
+                    with c_st1:
+                        st.markdown(f"""
+                        <div style='background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; padding: 7px 10px; margin-bottom: 4px;'>
+                            <div style='font-size: 0.78rem; font-weight: 800; color: #38bdf8;'>
+                                {st_pt.get("category_icon", "📍")} Stop #{s_i + 1}: {st_pt['name']}
+                            </div>
+                            <div style='font-size: 0.66rem; color: #94a3b8; margin-top: 1px;'>
+                                {st_pt.get("address") or f"({st_pt['lat']:.4f}, {st_pt['lon']:.4f})"}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with c_st2:
+                        if st.button("✕", key=f"btn_remove_stop_{s_i}", help=f"Remove stop {st_pt['name']}", use_container_width=True):
+                            st.session_state.intermediate_stops.pop(s_i)
+                            st.session_state._prev_route_sig = None
+                            st.session_state._prev_endpoint_sig = None
+                            st.session_state.cached_candidate_routes = []
+                            st.toast(f"Removed stop {st_pt['name']}", icon="🗑️")
+                            st.rerun()
 
             # 🏁 Destination Card
 
