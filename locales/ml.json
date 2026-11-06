@@ -482,7 +482,7 @@
   "speed.throttle_demand": "ത്രോട്ടിൽ ആവശ്യം",
   "speed.velocity_desc": "സാധാരണ ഹൈവേ ക്രൂയിസ് വേഗത",
   "speed.driver_analysis": "ഡ്രൈവർ വേഗത & ആരോഗ്യ വിശകലനം",
-  "speed.driver_analysis_text": "നിങ്ങൾ സന്തുലിതമായ ക്രൂയിസ് വേഗതയിലാണ് ({speed} KM) ഡ്രൈവ് ചെയ്യുന്നത്. സുരക്ഷിതമായ 2.6 സെക്കൻഡ് അകലം പാലിക്കുന്നു.",
+  "speed.driver_analysis_text": "നിങ്ങൾ സന്തുലിതമായ ക്രൂയിസ് വേഗതയിലാണ് ({speed} KM/H) ഡ്രൈവ് ചെയ്യുന്നത്. സുരക്ഷിതമായ 2.6 സെക്കൻഡ് അകലം പാലിക്കുന്നു.",
   "speed.healthy_badge": "സന്തുലിതവും ആരോഗ്യകരവുമായ വേഗത",
   "speed.presets_label": "വേഗത്തിലുള്ള പ്രീസെറ്റുകളും നിയന്ത്രണങ്ങളും",
   "speed.preset_city": "നഗരം 40",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "വേഗമേറിയ റൂട്ടും ട്രാഫിക്കും",
   "aura.suggest_cost": "ഇന്ധനച്ചെലവും സ്റ്റോപ്പുകളും",
   "aura.suggest_places": "സമീപത്തെ പ്രധാന കാഴ്ചകൾ",
-  "aura.clear_chat": "ചാറ്റ് മായ്ക്കുക"
+  "aura.clear_chat": "ചാറ്റ് മായ്ക്കുക",
+  "speed.preset_city_base": "നഗരം",
+  "speed.preset_eco_base": "ഇക്കോ",
+  "speed.preset_cruise_base": "ക്രൂയിസ്",
+  "speed.preset_high_base": "ഹൈ",
+  "speed.preset_max_base": "മാക്സ്"
 }

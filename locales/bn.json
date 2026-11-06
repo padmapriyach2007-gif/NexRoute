@@ -482,7 +482,7 @@
   "speed.throttle_demand": "থ্রোটল চাহিদা",
   "speed.velocity_desc": "স্ট্যান্ডার্ড হাইওয়ে ক্রুজ গতি",
   "speed.driver_analysis": "চালক গতি এবং স্বাস্থ্য বিশ্লেষণ",
-  "speed.driver_analysis_text": "আপনি একটি ভারসাম্যপূর্ণ ক্রুজ গতিতে ({speed} KM) গাড়ি চালাচ্ছেন। নিরাপদ ২.৬ সেকেন্ড হেডওয়ে বজায় রয়েছে।",
+  "speed.driver_analysis_text": "আপনি একটি ভারসাম্যপূর্ণ ক্রুজ গতিতে ({speed} KM/H) গাড়ি চালাচ্ছেন। নিরাপদ ২.৬ সেকেন্ড হেডওয়ে বজায় রয়েছে।",
   "speed.healthy_badge": "ভারসাম্যপূর্ণ ও স্বাস্থ্যকর গতি",
   "speed.presets_label": "দ্রুত গতির প্রিসেট ও নিয়ন্ত্রণ",
   "speed.preset_city": "শহর ৪০",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "দ্রুততম রুট ও ট্রাফিক",
   "aura.suggest_cost": "জ্বালানি খরচ ও বিরতির স্থান",
   "aura.suggest_places": "কাছাকাছি দর্শনীয় স্থান",
-  "aura.clear_chat": "চ্যাট মুছুন"
+  "aura.clear_chat": "চ্যাট মুছুন",
+  "speed.preset_city_base": "শহর",
+  "speed.preset_eco_base": "ইকো",
+  "speed.preset_cruise_base": "ক্রুজ",
+  "speed.preset_high_base": "উচ্চ",
+  "speed.preset_max_base": "সর্বোচ্চ"
 }

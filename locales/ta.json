@@ -482,7 +482,7 @@
   "speed.throttle_demand": "த்ரோட்டில் தேவை",
   "speed.velocity_desc": "நிலையான நெடுஞ்சாலை மற்றும் வழித்தட பயண வேகம்",
   "speed.driver_analysis": "ஓட்டுநர் வேகம் & சுகாதார பகுப்பாய்வு",
-  "speed.driver_analysis_text": "நீங்கள் சமநிலையான பயண வேகத்தில் ({speed} KM) ஓட்டுகிறீர்கள். பாதுகாப்பான 2.6 வினாடி இடைவெளி பராமரிக்கப்படுகிறது.",
+  "speed.driver_analysis_text": "நீங்கள் சமநிலையான பயண வேகத்தில் ({speed} KM/H) ஓட்டுகிறீர்கள். பாதுகாப்பான 2.6 வினாடி இடைவெளி பராமரிக்கப்படுகிறது.",
   "speed.healthy_badge": "சீரான & ஆரோக்கியமான வேகம்",
   "speed.presets_label": "விரைவு வேக அமைப்புகள் & கட்டுப்பாடுகள்",
   "speed.preset_city": "நகரம் 40",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "விரைவான பாதை மற்றும் போக்குவரத்து",
   "aura.suggest_cost": "எரிபொருள் செலவு & ஓய்வு இடங்கள்",
   "aura.suggest_places": "அருகிலுள்ள முக்கிய இடங்கள்",
-  "aura.clear_chat": "அரட்டையை அழிக்கவும்"
+  "aura.clear_chat": "அரட்டையை அழிக்கவும்",
+  "speed.preset_city_base": "நகரம்",
+  "speed.preset_eco_base": "எக்கோ",
+  "speed.preset_cruise_base": "பயணம்",
+  "speed.preset_high_base": "உயர்",
+  "speed.preset_max_base": "அதிகபட்சம்"
 }

@@ -17355,57 +17355,29 @@ body {{
 
 
         cur_spd = float(display_speed)
-
-
+        speed_unit_clean = unit_str.replace(" ", "")
 
         if cur_spd <= vehicle_limits["eco"] + 2:
             spd_verdict = t("speed.optimal_safe_speed", default="🟢 OPTIMAL (SAFE & HEALTHY SPEED)", lang=curr_l)
             spd_verdict_col = "#10b981"
-            spd_health_msg = t("speed.optimal_health_msg", default=f"You are driving at an optimal eco cruising velocity ({cur_spd:g} {unit_str.split()[0]}). Stopping buffer is >2.8s, eliminating driver fatigue and minimizing brake emissions.", lang=curr_l, speed=f"{cur_spd:g}")
+            spd_health_msg = t("speed.optimal_health_msg", default=f"You are driving at an optimal eco cruising velocity ({cur_spd:g} {speed_unit_clean}). Stopping buffer is >2.8s, eliminating driver fatigue and minimizing brake emissions.", lang=curr_l, speed=f"{cur_spd:g}")
         elif cur_spd <= vehicle_limits["normal"] + 2:
             spd_verdict = t("speed.balanced_healthy_speed", default="🟢 BALANCED & HEALTHY SPEED", lang=curr_l)
             spd_verdict_col = "#00F0B5"
-            spd_health_msg = t("speed.balanced_health_msg", default=f"You are driving at a balanced cruise speed ({cur_spd:g} {unit_str.split()[0]}). Safe 2.6s headway buffer is maintained. Driver cognitive load is well within relaxed limits.", lang=curr_l, speed=f"{cur_spd:g}")
+            spd_health_msg = t("speed.balanced_health_msg", default=f"You are driving at a balanced cruise speed ({cur_spd:g} {speed_unit_clean}). Safe 2.6s headway buffer is maintained. Driver cognitive load is well within relaxed limits.", lang=curr_l, speed=f"{cur_spd:g}")
         else:
             spd_verdict = t("speed.elevated_speed", default="⚠️ ELEVATED SPEED (MAINTAIN HEADWAY)", lang=curr_l)
             spd_verdict_col = "#f59e0b"
-            spd_health_msg = t("speed.elevated_health_msg", default=f"High velocity cruise ({cur_spd:g} {unit_str.split()[0]}). Reaction stopping distance increases to ~48m. Stay alert, avoid sudden steering maneuvers, and take regular rest breaks.", lang=curr_l, speed=f"{cur_spd:g}")
-
-
-
-
-
-
+            spd_health_msg = t("speed.elevated_health_msg", default=f"High velocity cruise ({cur_spd:g} {speed_unit_clean}). Reaction stopping distance increases to ~48m. Stay alert, avoid sudden steering maneuvers, and take regular rest breaks.", lang=curr_l, speed=f"{cur_spd:g}")
 
         st.markdown(f"""
-
-
-
         <div style='background: rgba(15, 23, 42, 0.7); border: 1px solid {spd_verdict_col}44; border-radius: 10px; padding: 8px 14px; margin-top: 6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
-
-
-
             <div style='display: flex; align-items: center; gap: 8px;'>
-
-
-
                 <span style='font-size: 1.0rem;'>🧠</span>
-
-
-
                 <div>
-
-
-
                     <span style='font-size: 0.72rem; font-weight: 800; color: {spd_verdict_col}; text-transform: uppercase;'>{t('speed.driver_analysis', default='DRIVER SPEED & HEALTH ANALYSIS', lang=curr_l)}:</span>
-                    <span style='font-size: 0.72rem; color: #cbd5e1; margin-left: 4px;'>{t('speed.driver_analysis_text', default=spd_health_msg, lang=curr_l, speed=int(round(cur_spd)))}</span>
-
-
-
+                    <span style='font-size: 0.72rem; color: #cbd5e1; margin-left: 4px;'>{spd_health_msg}</span>
                 </div>
-
-
-
             </div>
 
 
@@ -17441,39 +17413,24 @@ body {{
 
         preset_chips = vehicle_limits["presets"]
 
-
-
-        preset_labels = [
-            f"🏙️ {t('speed.city_40', default='City', lang=curr_l)}",
-            f"🚗 {t('speed.eco_65', default='Eco', lang=curr_l)}",
-            f"🛣️ {t('speed.cruise_90', default='Cruise', lang=curr_l)}",
-            f"⚡ {t('speed.high_115', default='High', lang=curr_l)}",
-            f"🚀 {t('speed.max_140', default='Max', lang=curr_l)}"
+        preset_icons = ["🏙️", "🚗", "🛣️", "⚡", "🚀"]
+        preset_base_names = [
+            t("speed.preset_city_base", default="City", lang=curr_l),
+            t("speed.preset_eco_base", default="Eco", lang=curr_l),
+            t("speed.preset_cruise_base", default="Cruise", lang=curr_l),
+            t("speed.preset_high_base", default="High", lang=curr_l),
+            t("speed.preset_max_base", default="Max", lang=curr_l)
         ]
 
-
-
         if sel_vehicle_key == "WALK":
-
-
-
-            preset_labels = ["🚶 Leisure", "🚶 Commute", "🚶 Brisk", "🏃 Fast", "🏃 Sprint"]
-
-
-
+            preset_icons = ["🚶", "🚶", "🚶", "🏃", "🏃"]
+            preset_base_names = ["Leisure", "Commute", "Brisk", "Fast", "Sprint"]
         elif sel_vehicle_key == "FLIGHT":
-
-
-
-            preset_labels = ["🛫 Climb", "✈️ Eco", "✈️ Cruise", "🚀 Mach", "🚀 Max"]
-
-
-
+            preset_icons = ["🛫", "✈️", "✈️", "🚀", "🚀"]
+            preset_base_names = ["Climb", "Eco", "Cruise", "Mach", "Max"]
         elif sel_vehicle_key == "WATERWAY":
-
-
-
-            preset_labels = ["⚓ Harbor", "🚢 Coastal", "🚢 Cruise", "⚡ Sprint", "🚀 Express"]
+            preset_icons = ["⚓", "🚢", "🚢", "⚡", "🚀"]
+            preset_base_names = ["Harbor", "Coastal", "Cruise", "Sprint", "Express"]
 
 
 
@@ -17497,23 +17454,14 @@ body {{
 
 
 
-                p_btn_label = f"{preset_labels[p_idx]}\n\n**{p_text}**"
-
-
+                icon = preset_icons[p_idx] if p_idx < len(preset_icons) else "⚡"
+                base_name = preset_base_names[p_idx] if p_idx < len(preset_base_names) else "Preset"
+                p_btn_label = f"{icon} {base_name} {p_text}"
 
                 if st.button(p_btn_label, key=f"btn_quick_spd_{p_idx}_{p_val}", use_container_width=True, type="primary" if is_p_active else "secondary"):
-
-
-
                     st.session_state.selected_speed_mode = "CUSTOM"
-
-
-
                     st.session_state.custom_speed_kmh = p_val
-
-
-
-                    st.session_state.last_speed_mode_trigger = f"{preset_labels[p_idx]} Target ({p_text} {unit_str.split()[0]})"
+                    st.session_state.last_speed_mode_trigger = f"{icon} {base_name} Target ({p_text} {speed_unit_clean})"
 
 
 

@@ -482,7 +482,7 @@
   "speed.throttle_demand": "थ्रॉटल मांग",
   "speed.velocity_desc": "मानक राजमार्ग और कॉरिडोर क्रूज़ गति",
   "speed.driver_analysis": "चालक गति और स्वास्थ्य विश्लेषण",
-  "speed.driver_analysis_text": "आप एक संतुलित क्रूज़ गति ({speed} KM) पर गाड़ी चला रहे हैं। सुरक्षित 2.6 सेकंड का हेडवे बफ़र बना हुआ है।",
+  "speed.driver_analysis_text": "आप एक संतुलित क्रूज़ गति ({speed} KM/H) पर गाड़ी चला रहे हैं। सुरक्षित 2.6 सेकंड का हेडवे बफ़र बना हुआ है।",
   "speed.healthy_badge": "संतुलित और स्वस्थ गति",
   "speed.presets_label": "त्वरित गति प्रीसेट और नियंत्रण",
   "speed.preset_city": "शहर 40",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "सबसे तेज़ मार्ग और ट्रैफ़िक",
   "aura.suggest_cost": "ईंधन लागत और पड़ाव",
   "aura.suggest_places": "आस-पास के प्रमुख स्थल",
-  "aura.clear_chat": "चैट साफ़ करें"
+  "aura.clear_chat": "चैट साफ़ करें",
+  "speed.preset_city_base": "शहर",
+  "speed.preset_eco_base": "इको",
+  "speed.preset_cruise_base": "क्रूज़",
+  "speed.preset_high_base": "उच्च",
+  "speed.preset_max_base": "अधिकतम"
 }

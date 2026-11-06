@@ -482,7 +482,7 @@
   "speed.throttle_demand": "ಥ್ರೊಟಲ್ ಬೇಡಿಕೆ",
   "speed.velocity_desc": "ಪ್ರಮಾಣಿತ ಹೆದ್ದಾರಿ ಮತ್ತು ಕಾರಿಡಾರ್ ಕ್ರೂಸ್ ವೇಗ",
   "speed.driver_analysis": "ಚಾಲಕ ವೇಗ ಮತ್ತು ಆರೋಗ್ಯ ವಿಶ್ಲೇಷಣೆ",
-  "speed.driver_analysis_text": "ನೀವು ಸಮತೋಲಿತ ಕ್ರೂಸ್ ವೇಗದಲ್ಲಿ ({speed} KM) ಚಾಲನೆ ಮಾಡುತ್ತಿದ್ದೀರಿ. ಸುರಕ್ಷಿತ 2.6 ಸೆಕೆಂಡುಗಳ ಅಂತರ ಕಾಪಾಡಲಾಗಿದೆ.",
+  "speed.driver_analysis_text": "ನೀವು ಸಮತೋಲಿತ ಕ್ರೂಸ್ ವೇಗದಲ್ಲಿ ({speed} KM/H) ಚಾಲನೆ ಮಾಡುತ್ತಿದ್ದೀರಿ. ಸುರಕ್ಷಿತ 2.6 ಸೆಕೆಂಡುಗಳ ಅಂತರ ಕಾಪಾಡಲಾಗಿದೆ.",
   "speed.healthy_badge": "ಸಮತೋಲಿತ ಮತ್ತು ಆರೋಗ್ಯಕರ ವೇಗ",
   "speed.presets_label": "ತ್ವರಿತ ವೇಗ ಪ್ರಿಸೆಟ್‌ಗಳು ಮತ್ತು ನಿಯಂತ್ರಣಗಳು",
   "speed.preset_city": "ನಗರ 40",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "ವೇಗದ ಮಾರ್ಗ ಮತ್ತು ಸಂಚಾರ",
   "aura.suggest_cost": "ಇಂಧನ ವೆಚ್ಚ ಮತ್ತು ನಿಲುಗಡೆಗಳು",
   "aura.suggest_places": "ಹತ್ತಿರದ ಪ್ರಮುಖ ತಾಣಗಳು",
-  "aura.clear_chat": "ಚಾಟ್ ತೆರವುಗೊಳಿಸಿ"
+  "aura.clear_chat": "ಚಾಟ್ ತೆರವುಗೊಳಿಸಿ",
+  "speed.preset_city_base": "ನಗರ",
+  "speed.preset_eco_base": "ಇಕೋ",
+  "speed.preset_cruise_base": "ಕ್ರೂಸ್",
+  "speed.preset_high_base": "ಹೆಚ್ಚು",
+  "speed.preset_max_base": "ಗರಿಷ್ಠ"
 }

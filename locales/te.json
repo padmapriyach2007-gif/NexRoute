@@ -482,7 +482,7 @@
   "speed.throttle_demand": "థ్రోటిల్ డిమాండ్",
   "speed.velocity_desc": "ప్రామాణిక హైవే మరియు కారిడార్ క్రూయిజ్ వేగం",
   "speed.driver_analysis": "డ్రైవర్ వేగం & ఆరోగ్య విశ్లేషణ",
-  "speed.driver_analysis_text": "మీరు సమతుల్య క్రూయిజ్ వేగంతో ({speed} KM) నడుపుతున్నారు. సురక్షితమైన 2.6 సెకన్ల దూరం నిర్వహించబడింది. డ్రైవర్ దృష్టి సురక్షిత పరిమితుల్లో ఉంది.",
+  "speed.driver_analysis_text": "మీరు సమతుల్య క్రూయిజ్ వేగంతో ({speed} KM/H) నడుపుతున్నారు. సురక్షితమైన 2.6 సెకన్ల దూరం నిర్వహించబడింది. డ్రైవర్ దృష్టి సురక్షిత పరిమితుల్లో ఉంది.",
   "speed.healthy_badge": "సమతుల్య & ఆరోగ్యకరమైన వేగం",
   "speed.presets_label": "త్వరిత వేగ ప్రిసెట్‌లు & నియంత్రణలు",
   "speed.preset_city": "నగరం 40",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "వేగవంతమైన మార్గం & ట్రాఫిక్",
   "aura.suggest_cost": "ఇంధన ఖర్చు & స్టాప్‌లు",
   "aura.suggest_places": "సమీపంలోని ముఖ్య ప్రదేశాలు",
-  "aura.clear_chat": "చాట్ క్లియర్ చేయండి"
+  "aura.clear_chat": "చాట్ క్లియర్ చేయండి",
+  "speed.preset_city_base": "నగరం",
+  "speed.preset_eco_base": "ఎకో",
+  "speed.preset_cruise_base": "క్రూయిజ్",
+  "speed.preset_high_base": "హై",
+  "speed.preset_max_base": "గరిష్ట"
 }

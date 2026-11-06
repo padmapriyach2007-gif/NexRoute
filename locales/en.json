@@ -482,7 +482,7 @@
   "speed.throttle_demand": "THROTTLE DEMAND",
   "speed.velocity_desc": "Standard highway & arterial corridor cruise velocity",
   "speed.driver_analysis": "DRIVER SPEED & HEALTH ANALYSIS",
-  "speed.driver_analysis_text": "You are driving at a balanced cruise speed ({speed} KM). Safe 2.6s headway buffer is maintained. Driver cognitive load is well within relaxed limits.",
+  "speed.driver_analysis_text": "You are driving at a balanced cruise speed ({speed} KM/H). Safe 2.6s headway buffer is maintained. Driver cognitive load is well within relaxed limits.",
   "speed.healthy_badge": "BALANCED & HEALTHY SPEED",
   "speed.presets_label": "QUICK SPEED PRESETS & TACTILE CONTROLS",
   "speed.preset_city": "City 40",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "Fastest route & traffic",
   "aura.suggest_cost": "Estimate fuel cost & stops",
   "aura.suggest_places": "Discover top sights nearby",
-  "aura.clear_chat": "Clear Chat"
+  "aura.clear_chat": "Clear Chat",
+  "speed.preset_city_base": "City",
+  "speed.preset_eco_base": "Eco",
+  "speed.preset_cruise_base": "Cruise",
+  "speed.preset_high_base": "High",
+  "speed.preset_max_base": "Max"
 }

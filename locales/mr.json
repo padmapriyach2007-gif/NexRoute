@@ -482,7 +482,7 @@
   "speed.throttle_demand": "थ्रॉटल मागणी",
   "speed.velocity_desc": "मानक महामार्ग आणि कॉरिडोअर क्रूझ गती",
   "speed.driver_analysis": "चालक गती आणि आरोग्य विश्लेषण",
-  "speed.driver_analysis_text": "तुम्ही संतुलित क्रूझ गतीने ({speed} KM) गाडी चालवत आहात. सुरक्षित २.६ सेकंदांचे अंतर राखले आहे.",
+  "speed.driver_analysis_text": "तुम्ही संतुलित क्रूझ गतीने ({speed} KM/H) गाडी चालवत आहात. सुरक्षित २.६ सेकंदांचे अंतर राखले आहे.",
   "speed.healthy_badge": "संतुलित आणि निरोगी गती",
   "speed.presets_label": "त्वरित गती प्रीसेट्स आणि नियंत्रणे",
   "speed.preset_city": "शहर ४०",
@@ -682,5 +682,10 @@
   "aura.suggest_route": "सर्वात जलद मार्ग आणि ट्रॅफिक",
   "aura.suggest_cost": "इंधन खर्च आणि थांबे अंदाज",
   "aura.suggest_places": "जवळपासची मुख्य ठिकाणे",
-  "aura.clear_chat": "चॅट साफ करा"
+  "aura.clear_chat": "चॅट साफ करा",
+  "speed.preset_city_base": "शहर",
+  "speed.preset_eco_base": "इको",
+  "speed.preset_cruise_base": "क्रूझ",
+  "speed.preset_high_base": "उच्च",
+  "speed.preset_max_base": "कमाल"
 }
