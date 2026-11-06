@@ -1642,22 +1642,20 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
         self.last_error_message = None
 
-        cache_key = f"{round(origin_lat, 4)}_{round(origin_lon, 4)}_{round(dest_lat, 4)}_{round(dest_lon, 4)}_{mode.value}_{require_accessible}_{speed_mode}_{custom_speed_kmh}"
-
-        if cache_key in self._CACHE and self._CACHE[cache_key]:
-
-            return self._CACHE[cache_key]
-
-        # Profile mapping for OSRM standard endpoints
-
-                # Authentic profile mapping: do not silently substitute car for aviation or maritime
+        # Authentic profile mapping: do not silently substitute car for aviation or maritime
         if mode == TravelMode.FLIGHT:
             self.last_error_message = "Airway (Flight) travel requires certified aeronautical navigational airway corridors between verified airports. OSRM road-network engine cannot generate road routes for aircraft."
             return []
         elif mode == TravelMode.WATERWAY:
             self.last_error_message = "Waterway (Ship) travel requires verified maritime sea-lanes and navigable nautical water charts. OSRM road-network engine cannot route across land-locked or non-navigable channels."
             return []
-        elif mode == TravelMode.WALKING:
+
+        cache_key = f"{round(origin_lat, 4)}_{round(origin_lon, 4)}_{round(dest_lat, 4)}_{round(dest_lon, 4)}_{mode.value}_{require_accessible}_{speed_mode}_{custom_speed_kmh}"
+
+        if cache_key in self._CACHE and self._CACHE[cache_key]:
+            return self._CACHE[cache_key]
+
+        if mode == TravelMode.WALKING:
             profile = "foot"
         elif mode == TravelMode.BICYCLING:
             profile = "bike"

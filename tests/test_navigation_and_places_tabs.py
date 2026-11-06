@@ -101,6 +101,16 @@ def test_places_card_actions():
     assert "btn_info_sug_" in content
     assert "btn_save_sug_" in content
 
+def test_saved_places_tab_and_storage_functionality():
+    """Verify Saved Places tab is present and enables storing and managing places."""
+    content = APP_PATH.read_text(encoding="utf-8")
+    assert "tab_explore_places, tab_saved_places = st.tabs" in content
+    assert "with tab_saved_places:" in content
+    assert "btn_clear_all_saved_places_act" in content
+    assert "btn_view_saved_" in content
+    assert "btn_dir_saved_" in content
+    assert "btn_del_saved_" in content
+
 def test_flight_and_waterway_limitation_handling():
     """Verify OSRM provider does not silently substitute car for flight or waterway."""
     provider = OSRMGlobalRoutingProvider()

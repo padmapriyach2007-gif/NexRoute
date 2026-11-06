@@ -29001,605 +29001,608 @@ if st.session_state.get("current_view") == "places":
     places_title = t("tab.places", default="Places & Sights", lang=cur_l)
     places_sub = t("places.header_sub", default="Discover useful places near your location or along your selected route.", lang=cur_l)
     render_view_navigation_header(f"🌟 {places_title}", str(places_sub), "places")
+    # Initialize and collect all saved places
+    if "saved_locations" not in st.session_state:
+        st.session_state.saved_locations = []
+    if "custom_saved_places" not in st.session_state:
+        st.session_state.custom_saved_places = load_user_custom_saved_places()
 
+    saved_pool = []
+    seen_saved = set()
+    for s_item in list(st.session_state.saved_locations) + list(st.session_state.get("custom_saved_places", [])):
+        s_name = s_item.get("name")
+        if s_name and s_name not in seen_saved:
+            seen_saved.add(s_name)
+            saved_pool.append(s_item)
 
+    tab_lbl_explore = f"🌟 {t('places.tab_explore', default='Explore Places', lang=cur_l)}"
+    tab_lbl_saved = f"⭐ {t('places.tab_saved', default='Saved Places', lang=cur_l)} ({len(saved_pool)})"
+    tab_explore_places, tab_saved_places = st.tabs([tab_lbl_explore, tab_lbl_saved])
 
-    # =========================================================================
+    with tab_explore_places:
+        # =========================================================================
 
 
 
-    # SUGGESTED PLACES & HIGHLIGHTS AT LOCATION (DYNAMIC LIVE POIS)
+        # SUGGESTED PLACES & HIGHLIGHTS AT LOCATION (DYNAMIC LIVE POIS)
 
 
 
-    # =========================================================================
+        # =========================================================================
 
 
 
-    st.markdown("---")
+        st.markdown("---")
 
 
 
-    
 
 
 
-    # Priority: Destination if selected, otherwise Origin / Current Location
 
+        # Priority: Destination if selected, otherwise Origin / Current Location
 
 
-    dest_str_label = t("nav.destination")
 
+        dest_str_label = t("nav.destination")
 
 
-    orig_str_label = t("nav.starting_point")
 
+        orig_str_label = t("nav.starting_point")
 
 
-    focus_target = dest_str_label if coords_dest else orig_str_label
 
+        focus_target = dest_str_label if coords_dest else orig_str_label
 
 
-    if coords_dest and coords_orig:
 
+        if coords_dest and coords_orig:
 
 
-        st.markdown("""
 
+            st.markdown("""
 
 
-        <style>
 
+            <style>
 
 
-        /* Sleek Segmented Pill Deck for Explore POIs Around */
 
+            /* Sleek Segmented Pill Deck for Explore POIs Around */
 
 
-        div.st-key-places_explore_anchor {
 
+            div.st-key-places_explore_anchor {
 
 
-            background: linear-gradient(135deg, #0B1B2D 0%, #06111F 100%) !important;
 
+                background: linear-gradient(135deg, #0B1B2D 0%, #06111F 100%) !important;
 
 
-            border: 1.5px solid rgba(0, 217, 255, 0.40) !important;
 
+                border: 1.5px solid rgba(0, 217, 255, 0.40) !important;
 
 
-            border-radius: 12px !important;
 
+                border-radius: 12px !important;
 
 
-            padding: 10px 16px !important;
 
+                padding: 10px 16px !important;
 
 
-            margin-bottom: 12px !important;
 
+                margin-bottom: 12px !important;
 
 
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
 
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
 
 
-            width: fit-content !important;
 
+                width: fit-content !important;
 
 
-            max-width: 100% !important;
 
+                max-width: 100% !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] {
 
 
-            margin: 0 !important;
 
+                margin: 0 !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] > label {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] > label {
 
 
-            font-size: 0.76rem !important;
 
+                font-size: 0.76rem !important;
 
 
-            font-weight: 800 !important;
 
+                font-weight: 800 !important;
 
 
-            color: #00D9FF !important;
 
+                color: #00D9FF !important;
 
 
-            letter-spacing: 0.08em !important;
 
+                letter-spacing: 0.08em !important;
 
 
-            text-transform: uppercase !important;
 
+                text-transform: uppercase !important;
 
 
-            margin-bottom: 8px !important;
 
+                margin-bottom: 8px !important;
 
 
-            display: flex !important;
 
+                display: flex !important;
 
 
-            align-items: center !important;
 
+                align-items: center !important;
 
 
-            gap: 6px !important;
 
+                gap: 6px !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] div[role="radiogroup"] {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] div[role="radiogroup"] {
 
 
-            display: flex !important;
 
+                display: flex !important;
 
 
-            flex-direction: row !important;
 
+                flex-direction: row !important;
 
 
-            align-items: center !important;
 
+                align-items: center !important;
 
 
-            flex-wrap: wrap !important;
 
+                flex-wrap: wrap !important;
 
 
-            gap: 10px !important;
 
+                gap: 10px !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"] {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"] {
 
 
-            background: #0B1B2D !important;
 
+                background: #0B1B2D !important;
 
 
-            border: 1.5px solid rgba(0, 217, 255, 0.35) !important;
 
+                border: 1.5px solid rgba(0, 217, 255, 0.35) !important;
 
 
-            border-left: 3px solid rgba(0, 217, 255, 0.5) !important;
 
+                border-left: 3px solid rgba(0, 217, 255, 0.5) !important;
 
 
-            border-radius: 8px !important;
 
+                border-radius: 8px !important;
 
 
-            padding: 6px 14px !important;
 
+                padding: 6px 14px !important;
 
 
-            margin: 0 !important;
 
+                margin: 0 !important;
 
 
-            width: auto !important;
 
+                width: auto !important;
 
 
-            display: inline-flex !important;
 
+                display: inline-flex !important;
 
 
-            align-items: center !important;
 
+                align-items: center !important;
 
 
-            cursor: pointer !important;
 
+                cursor: pointer !important;
 
 
-            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
+                transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
 
 
-            transform: none !important;
 
+                transform: none !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
 
 
-            border-color: #00D9FF !important;
 
+                border-color: #00D9FF !important;
 
 
-            background: linear-gradient(135deg, #10263E 0%, #0B1B2D 100%) !important;
 
+                background: linear-gradient(135deg, #10263E 0%, #0B1B2D 100%) !important;
 
 
-            transform: translateY(-2px) !important;
 
+                transform: translateY(-2px) !important;
 
 
-            box-shadow: 0 4px 14px rgba(0, 240, 181, 0.35) !important;
 
+                box-shadow: 0 4px 14px rgba(0, 240, 181, 0.35) !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
 
 
-            background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%) !important;
 
+                background: linear-gradient(135deg, rgba(0, 217, 255, 0.35) 0%, rgba(0, 240, 181, 0.40) 100%) !important;
 
 
-            border: 1.5px solid #00F0B5 !important;
 
+                border: 1.5px solid #00F0B5 !important;
 
 
-            border-left: 4px solid #00D9FF !important;
 
+                border-left: 4px solid #00D9FF !important;
 
 
-            box-shadow: 0 0 18px rgba(0, 217, 255, 0.50), 0 0 10px rgba(0, 240, 181, 0.40) !important;
 
+                box-shadow: 0 0 18px rgba(0, 217, 255, 0.50), 0 0 10px rgba(0, 240, 181, 0.40) !important;
 
 
-            transform: none !important;
 
+                transform: none !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"] div {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"] div {
 
 
-            background: transparent !important;
 
+                background: transparent !important;
 
 
-            background-color: transparent !important;
 
+                background-color: transparent !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"] p {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"] p {
 
 
-            color: #EAF7FF !important;
 
+                color: #EAF7FF !important;
 
 
-            font-size: 0.84rem !important;
 
+                font-size: 0.84rem !important;
 
 
-            font-weight: 700 !important;
 
+                font-weight: 700 !important;
 
 
-            margin: 0 !important;
 
+                margin: 0 !important;
 
 
-            padding: 0 !important;
 
+                padding: 0 !important;
 
 
-            background: transparent !important;
 
+                background: transparent !important;
 
 
-            background-color: transparent !important;
 
+                background-color: transparent !important;
 
 
-        }
 
+            }
 
 
-        div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p {
 
+            div.st-key-places_explore_anchor div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p {
 
 
-            color: #ffffff !important;
 
+                color: #ffffff !important;
 
 
-            font-weight: 800 !important;
 
+                font-weight: 800 !important;
 
 
-            text-shadow: 0 0 10px rgba(0, 217, 255, 0.7) !important;
 
+                text-shadow: 0 0 10px rgba(0, 217, 255, 0.7) !important;
 
 
-            background: transparent !important;
 
+                background: transparent !important;
 
 
-            background-color: transparent !important;
 
+                background-color: transparent !important;
 
 
-        }
 
+            }
 
 
-        </style>
 
+            </style>
 
 
-        """, unsafe_allow_html=True)
 
+            """, unsafe_allow_html=True)
 
 
-        col_focus1, col_focus2 = st.columns([2.5, 2.0])
 
+            col_focus1, col_focus2 = st.columns([2.5, 2.0])
 
 
-        with col_focus1:
 
+            with col_focus1:
 
 
-            focus_target = st.radio(f"🧭 {t('fac.explore_anchor')}", [dest_str_label, orig_str_label], horizontal=True, key="places_explore_anchor")
 
+                focus_target = st.radio(f"🧭 {t('fac.explore_anchor')}", [dest_str_label, orig_str_label], horizontal=True, key="places_explore_anchor")
 
 
-    
 
 
 
-    if (focus_target == dest_str_label or focus_target == "Destination") and coords_dest:
 
 
+        if (focus_target == dest_str_label or focus_target == "Destination") and coords_dest:
 
-        ref_lat = coords_dest[0]
 
 
+            ref_lat = coords_dest[0]
 
-        ref_lon = coords_dest[1]
 
 
+            ref_lon = coords_dest[1]
 
-        raw_dest_name = st.session_state.get("selected_dest_label") or st.session_state.get("txt_dest") or t("nav.destination")
 
 
+            raw_dest_name = st.session_state.get("selected_dest_label") or st.session_state.get("txt_dest") or t("nav.destination")
 
-        ref_label = raw_dest_name.replace("📍", "").strip()
 
 
+            ref_label = raw_dest_name.replace("📍", "").strip()
 
-    elif coords_orig:
 
 
+        elif coords_orig:
 
-        ref_lat = coords_orig[0]
 
 
+            ref_lat = coords_orig[0]
 
-        ref_lon = coords_orig[1]
 
 
+            ref_lon = coords_orig[1]
 
-        raw_orig_name = st.session_state.get("selected_orig_label") or st.session_state.get("txt_orig") or st.session_state.get("user_live_label", t("nav.starting_point"))
 
 
+            raw_orig_name = st.session_state.get("selected_orig_label") or st.session_state.get("txt_orig") or st.session_state.get("user_live_label", t("nav.starting_point"))
 
-        ref_label = raw_orig_name.replace("📍", "").strip()
 
 
+            ref_label = raw_orig_name.replace("📍", "").strip()
 
-    else:
 
 
+        else:
 
-        ref_lat = detected_coords[0]
 
 
+            ref_lat = detected_coords[0]
 
-        ref_lon = detected_coords[1]
 
 
+            ref_lon = detected_coords[1]
 
-        ref_label = st.session_state.get("user_live_label", t("nav.my_location")).replace("📍", "").strip()
 
 
+            ref_label = st.session_state.get("user_live_label", t("nav.my_location")).replace("📍", "").strip()
 
 
 
 
 
-    suggested_places = generate_suggested_places_at_location(
 
 
+        suggested_places = generate_suggested_places_at_location(
 
-        lat=ref_lat,
 
 
+            lat=ref_lat,
 
-        lon=ref_lon,
 
 
+            lon=ref_lon,
 
-        location_name=ref_label
 
 
+            location_name=ref_label
 
-    )
 
 
+        )
 
 
 
 
 
-    cur_l = st.session_state.get("app_language", "en")
-    hdr_places_nearby = t("places.nearby_facilities_header", default="PLACES & NEARBY FACILITIES", lang=cur_l)
-    hdr_places_sub = t("places.header_sub", default="Discover useful places near your location or along your selected route.", lang=cur_l)
-    lbl_verified_pois = t("places.verified_pois", default="VERIFIED POIS", lang=cur_l)
-    search_placeholder = t("places.search_placeholder", default="Search places, landmarks, or addresses...", lang=cur_l)
-    lbl_categories = t("places.categories_label", default="Categories", lang=cur_l)
 
-    st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;'>
-<div style='display: flex; align-items: center; gap: 10px;'>
-<span style='font-size: 1.4rem;'>📍</span>
-<div>
-<div style='font-size: 1.05rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.02em;'>
-📍 {hdr_places_nearby} • {ref_label.upper()}
-</div>
-<div style='font-size: 0.74rem; color: #94a3b8;'>
-{hdr_places_sub}
-</div>
-</div>
-</div>
-<span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;'>
-● {lbl_verified_pois}
-</span>
-</div>""", unsafe_allow_html=True)
 
-    # Search & Category Filters
-    places_search_query = st.text_input(
-        "Search places",
-        placeholder=search_placeholder,
-        key="txt_places_main_search_box",
-        label_visibility="collapsed"
-    )
+        cur_l = st.session_state.get("app_language", "en")
+        hdr_places_nearby = t("places.nearby_facilities_header", default="PLACES & NEARBY FACILITIES", lang=cur_l)
+        hdr_places_sub = t("places.header_sub", default="Discover useful places near your location or along your selected route.", lang=cur_l)
+        lbl_verified_pois = t("places.verified_pois", default="VERIFIED POIS", lang=cur_l)
+        search_placeholder = t("places.search_placeholder", default="Search places, landmarks, or addresses...", lang=cur_l)
+        lbl_categories = t("places.categories_label", default="Categories", lang=cur_l)
 
-    cat_defs = [
-        ("all", "🌐", t("places.cat_all", default="All Categories", lang=cur_l)),
-        ("hospital", "🏥", t("places.cat_hospitals", default="Hospitals & Clinics", lang=cur_l)),
-        ("supermarket", "🛒", t("places.cat_supermarkets", default="Supermarkets", lang=cur_l)),
-        ("fuel", "⛽", t("places.cat_fuel", default="Fuel Stations", lang=cur_l)),
-        ("ev", "⚡", t("places.cat_ev", default="EV Charging", lang=cur_l)),
-        ("restaurant", "🍽️", t("places.cat_restaurants", default="Restaurants", lang=cur_l)),
-        ("bank", "🏧", t("places.cat_atms", default="ATMs & Banking", lang=cur_l)),
-        ("police", "🚓", t("places.cat_police", default="Police & Emergency Services", lang=cur_l)),
-        ("hotel", "🏨", t("places.cat_hotels", default="Hotels", lang=cur_l)),
-        ("tourist", "🏛️", t("places.cat_tourist", default="Tourist Attractions", lang=cur_l)),
-        ("mall", "🛍️", t("places.cat_malls", default="Shopping Malls", lang=cur_l)),
-        ("park", "🌳", t("places.cat_parks", default="Parks", lang=cur_l)),
-        ("rest", "🛣️", t("places.cat_rest_stops", default="Rest Stops", lang=cur_l)),
-    ]
-    places_categories = [f"{icon} {label}" for _, icon, label in cat_defs]
-    selected_p_cat = st.pills(lbl_categories, options=places_categories, default=places_categories[0], key="pills_places_main_cat")
+        st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;'>
+    <div style='display: flex; align-items: center; gap: 10px;'>
+    <span style='font-size: 1.4rem;'>📍</span>
+    <div>
+    <div style='font-size: 1.05rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.02em;'>
+    📍 {hdr_places_nearby} • {ref_label.upper()}
+    </div>
+    <div style='font-size: 0.74rem; color: #94a3b8;'>
+    {hdr_places_sub}
+    </div>
+    </div>
+    </div>
+    <span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;'>
+    ● {lbl_verified_pois}
+    </span>
+    </div>""", unsafe_allow_html=True)
 
+        # Search & Category Filters
+        places_search_query = st.text_input(
+            "Search places",
+            placeholder=search_placeholder,
+            key="txt_places_main_search_box",
+            label_visibility="collapsed"
+        )
 
-
-
-
-
-
-
-    
-    # Filter suggested places by search and category
-    if places_search_query.strip():
-        q_clean = places_search_query.strip().lower()
-        suggested_places = [
-            p for p in suggested_places
-            if q_clean in p.get("name", "").lower()
-            or q_clean in p.get("address", "").lower()
-            or q_clean in p.get("category", "").lower()
+        cat_defs = [
+            ("all", "🌐", t("places.cat_all", default="All Categories", lang=cur_l)),
+            ("saved", "⭐", f"{t('places.cat_saved', default='Saved Places', lang=cur_l)} ({len(saved_pool)})"),
+            ("hospital", "🏥", t("places.cat_hospitals", default="Hospitals & Clinics", lang=cur_l)),
+            ("supermarket", "🛒", t("places.cat_supermarkets", default="Supermarkets", lang=cur_l)),
+            ("fuel", "⛽", t("places.cat_fuel", default="Fuel Stations", lang=cur_l)),
+            ("ev", "⚡", t("places.cat_ev", default="EV Charging", lang=cur_l)),
+            ("restaurant", "🍽️", t("places.cat_restaurants", default="Restaurants", lang=cur_l)),
+            ("bank", "🏧", t("places.cat_atms", default="ATMs & Banking", lang=cur_l)),
+            ("police", "🚓", t("places.cat_police", default="Police & Emergency Services", lang=cur_l)),
+            ("hotel", "🏨", t("places.cat_hotels", default="Hotels", lang=cur_l)),
+            ("tourist", "🏛️", t("places.cat_tourist", default="Tourist Attractions", lang=cur_l)),
+            ("mall", "🛍️", t("places.cat_malls", default="Shopping Malls", lang=cur_l)),
+            ("park", "🌳", t("places.cat_parks", default="Parks", lang=cur_l)),
+            ("rest", "🛣️", t("places.cat_rest_stops", default="Rest Stops", lang=cur_l)),
         ]
-    if selected_p_cat and selected_p_cat != places_categories[0]:
-        cat_match = next((cid for cid, icon, label in cat_defs if f"{icon} {label}" == selected_p_cat), "")
-        if cat_match and cat_match != "all":
+        places_categories = [f"{icon} {label}" for _, icon, label in cat_defs]
+        selected_p_cat = st.pills(lbl_categories, options=places_categories, default=places_categories[0], key="pills_places_main_cat")
+
+
+
+
+
+
+
+
+
+        # Filter suggested places by search and category
+        if selected_p_cat and "Saved Places" in selected_p_cat:
+            suggested_places = saved_pool
+        elif places_search_query.strip():
+            q_clean = places_search_query.strip().lower()
             suggested_places = [
                 p for p in suggested_places
-                if cat_match in p.get("category", "").lower() or any(cat_match in str(h).lower() for h in p.get("highlights", []))
+                if q_clean in p.get("name", "").lower()
+                or q_clean in p.get("address", "").lower()
+                or q_clean in p.get("category", "").lower()
             ]
+        if selected_p_cat and selected_p_cat != places_categories[0]:
+            cat_match = next((cid for cid, icon, label in cat_defs if f"{icon} {label}" == selected_p_cat), "")
+            if cat_match and cat_match != "all":
+                suggested_places = [
+                    p for p in suggested_places
+                    if cat_match in p.get("category", "").lower() or any(cat_match in str(h).lower() for h in p.get("highlights", []))
+                ]
 
-    if not suggested_places:
-
-
-
-        st.info(f"ℹ️ No points of interest or cultural highlights found within the immediate radius of {ref_label}. Select a different destination or explore nearby facilities.")
-
-
-
-    else:
-
-
-
-        sug_cols = st.columns(3)
+        if not suggested_places:
 
 
 
-        for idx, place in enumerate(suggested_places):
+            st.info(f"ℹ️ No points of interest or cultural highlights found within the immediate radius of {ref_label}. Select a different destination or explore nearby facilities.")
 
 
 
-            col_idx = idx % 3
+        else:
 
 
 
-            with sug_cols[col_idx]:
+            sug_cols = st.columns(3)
 
 
 
-                st.markdown(render_place_details_card_html(place, lang=st.session_state.app_language), unsafe_allow_html=True)
+            for idx, place in enumerate(suggested_places):
 
 
 
-                clean_name = place['name']
+                col_idx = idx % 3
 
 
 
-                for prefix in [ref_label, ref_label.split(',')[0]]:
+                with sug_cols[col_idx]:
 
 
 
-                    clean_name = clean_name.replace(prefix, '').strip(' -–,')
-
-
-
-                if not clean_name or len(clean_name) < 3:
+                    st.markdown(render_place_details_card_html(place, lang=st.session_state.app_language), unsafe_allow_html=True)
 
 
 
@@ -29607,78 +29610,206 @@ if st.session_state.get("current_view") == "places":
 
 
 
-                if len(clean_name) > 22:
+                    for prefix in [ref_label, ref_label.split(',')[0]]:
 
 
 
-                    clean_name = clean_name[:20] + "..."
+                        clean_name = clean_name.replace(prefix, '').strip(' -–,')
 
 
 
-                
+                    if not clean_name or len(clean_name) < 3:
+
+
+
+                        clean_name = place['name']
+
+
+
+                    if len(clean_name) > 22:
+
+
+
+                        clean_name = clean_name[:20] + "..."
 
 
 
 
 
 
-                cur_l = st.session_state.get("app_language", "en")
-                lbl_view_map = f"🗺️ {t('places.view_map', default='View Map', lang=cur_l)}"
-                lbl_directions = f"🧭 {t('places.directions', default='Directions', lang=cur_l)}"
-                lbl_info = f"ℹ️ {t('places.info', default='Info', lang=cur_l)}"
-                is_saved = any(s.get("name") == place["name"] for s in st.session_state.get("saved_locations", []))
-                save_lbl = f"⭐ {t('places.saved', default='Saved', lang=cur_l)}" if is_saved else f"⭐ {t('places.save', default='Save', lang=cur_l)}"
 
-                col_pb1, col_pb2, col_pb3, col_pb4 = st.columns([1.2, 1.2, 1.0, 1.0])
-                with col_pb1:
-                    if st.button(lbl_view_map, key=f"btn_view_sug_{place['place_id']}", use_container_width=True, type="primary"):
-                        st.session_state.map_center_lat = place["latitude"]
-                        st.session_state.map_center_lon = place["longitude"]
-                        st.session_state.map_zoom = 16
-                        st.session_state.auto_fit_bounds = False
-                        st.session_state.selected_marker_coords = (place["latitude"], place["longitude"])
-                        st.session_state.selected_marker_data = place
-                        st.session_state.scroll_to_app_map = True
-                        st.session_state.switch_to_nav_tab = True
-                        st.toast(f"📍 Centered map on {place['name']}", icon="🗺️")
-                        st.rerun()
-                with col_pb2:
-                    if st.button(lbl_directions, key=f"btn_dir_sug_{place['place_id']}", use_container_width=True):
-                        st.session_state.selected_dest_coords = (place["latitude"], place["longitude"])
-                        st.session_state.selected_dest_label = place["name"]
-                        st.session_state.pending_dest = place["name"]
-                        st.session_state.last_synced_dest = place["name"]
-                        st.session_state.movement_index = 0
-                        st.session_state.is_in_transit = False
-                        st.session_state.auto_fit_bounds = True
-                        st.session_state.focused_route_id = "ALL"
-                        st.session_state.scroll_to_app_map = True
-                        st.session_state.switch_to_nav_tab = True
-                        st.toast(f"🧭 Calculating route to {place['name']}...", icon="🛣️")
-                        st.rerun()
-                with col_pb3:
-                    if st.button(lbl_info, key=f"btn_info_sug_{place['place_id']}", use_container_width=True):
-                        st.session_state.active_info_target = {"type": "place", "data": place}
-                        st.session_state.selected_marker_coords = (place["latitude"], place["longitude"])
-                        st.session_state.selected_marker_data = place
-                        st.session_state.show_info_modal = True
-                        st.rerun()
-                with col_pb4:
-                    if st.button(save_lbl, key=f"btn_save_sug_{place['place_id']}", use_container_width=True):
-                        if "saved_locations" not in st.session_state:
-                            st.session_state.saved_locations = []
-                        if not is_saved:
-                            st.session_state.saved_locations.append(place)
-                            st.toast(f"⭐ Saved {place['name']} to bookmarks!", icon="📌")
+
+
+
+                    cur_l = st.session_state.get("app_language", "en")
+                    lbl_view_map = f"🗺️ {t('places.view_map', default='View Map', lang=cur_l)}"
+                    lbl_directions = f"🧭 {t('places.directions', default='Directions', lang=cur_l)}"
+                    lbl_info = f"ℹ️ {t('places.info', default='Info', lang=cur_l)}"
+                    is_saved = any(s.get("name") == place["name"] for s in st.session_state.get("saved_locations", []))
+                    save_lbl = f"⭐ {t('places.saved', default='Saved', lang=cur_l)}" if is_saved else f"⭐ {t('places.save', default='Save', lang=cur_l)}"
+
+                    col_pb1, col_pb2, col_pb3, col_pb4 = st.columns([1.2, 1.2, 1.0, 1.0])
+                    with col_pb1:
+                        if st.button(lbl_view_map, key=f"btn_view_sug_{place['place_id']}", use_container_width=True, type="primary"):
+                            st.session_state.map_center_lat = place["latitude"]
+                            st.session_state.map_center_lon = place["longitude"]
+                            st.session_state.map_zoom = 16
+                            st.session_state.auto_fit_bounds = False
+                            st.session_state.selected_marker_coords = (place["latitude"], place["longitude"])
+                            st.session_state.selected_marker_data = place
+                            st.session_state.scroll_to_app_map = True
+                            st.session_state.switch_to_nav_tab = True
+                            st.toast(f"📍 Centered map on {place['name']}", icon="🗺️")
                             st.rerun()
-                        else:
-                                st.toast(f"📌 {place['name']} is already saved.", icon="ℹ️")
+                    with col_pb2:
+                        if st.button(lbl_directions, key=f"btn_dir_sug_{place['place_id']}", use_container_width=True):
+                            st.session_state.selected_dest_coords = (place["latitude"], place["longitude"])
+                            st.session_state.selected_dest_label = place["name"]
+                            st.session_state.pending_dest = place["name"]
+                            st.session_state.last_synced_dest = place["name"]
+                            st.session_state.movement_index = 0
+                            st.session_state.is_in_transit = False
+                            st.session_state.auto_fit_bounds = True
+                            st.session_state.focused_route_id = "ALL"
+                            st.session_state.scroll_to_app_map = True
+                            st.session_state.switch_to_nav_tab = True
+                            st.toast(f"🧭 Calculating route to {place['name']}...", icon="🛣️")
+                            st.rerun()
+                    with col_pb3:
+                        if st.button(lbl_info, key=f"btn_info_sug_{place['place_id']}", use_container_width=True):
+                            st.session_state.active_info_target = {"type": "place", "data": place}
+                            st.session_state.selected_marker_coords = (place["latitude"], place["longitude"])
+                            st.session_state.selected_marker_data = place
+                            st.session_state.show_info_modal = True
+                            st.rerun()
+                    with col_pb4:
+                        if st.button(save_lbl, key=f"btn_save_sug_{place['place_id']}", use_container_width=True):
+                            if "saved_locations" not in st.session_state:
+                                st.session_state.saved_locations = []
+                            if "custom_saved_places" not in st.session_state:
+                                st.session_state.custom_saved_places = []
+                            if not is_saved:
+                                st.session_state.saved_locations.append(place)
+                                if not any(x.get("name") == place["name"] for x in st.session_state.custom_saved_places):
+                                    st.session_state.custom_saved_places.insert(0, place)
+                                    save_user_custom_saved_places(st.session_state.custom_saved_places)
+                                st.toast(f"⭐ Stored {place['name']} in Saved Places tab!", icon="📌")
+                                st.rerun()
+                            else:
+                                st.session_state.saved_locations = [x for x in st.session_state.saved_locations if x.get("name") != place["name"]]
+                                st.session_state.custom_saved_places = [x for x in st.session_state.custom_saved_places if x.get("name") != place["name"]]
+                                save_user_custom_saved_places(st.session_state.custom_saved_places)
+                                st.toast(f"🗑️ Removed {place['name']} from Saved Places.", icon="ℹ️")
+                                st.rerun()
 
+    with tab_saved_places:
+        st.markdown(f"""
+        <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;'>
+            <div style='display: flex; align-items: center; gap: 10px;'>
+                <span style='font-size: 1.5rem;'>⭐</span>
+                <div>
+                    <div style='font-size: 1.05rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.02em;'>
+                        ⭐ {t('places.saved_places_heading', default='SAVED & BOOKMARKED PLACES', lang=cur_l)}
+                    </div>
+                    <div style='font-size: 0.74rem; color: #94a3b8;'>
+                        {t('places.saved_places_sub', default='Access, route to, and manage your bookmarked locations and custom destinations.', lang=cur_l)}
+                    </div>
+                </div>
+            </div>
+            <span style='background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); color: #fbbf24; font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 20px;'>
+                ● {len(saved_pool)} {t('places.saved_count_label', default='PLACES STORED', lang=cur_l)}
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
 
+        if not saved_pool:
+            st.markdown(f"""
+            <div style='background: rgba(15, 23, 42, 0.7); border: 1.5px dashed rgba(251, 191, 36, 0.35); border-radius: 14px; padding: 36px 20px; text-align: center; margin: 16px 0;'>
+                <div style='font-size: 2.4rem; margin-bottom: 8px;'>⭐</div>
+                <div style='font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin-bottom: 6px;'>
+                    {t('places.no_saved_heading', default='No Saved Places Stored Yet', lang=cur_l)}
+                </div>
+                <div style='font-size: 0.80rem; color: #94a3b8; max-width: 480px; margin: 0 auto; line-height: 1.5;'>
+                    {t('places.no_saved_desc', default='When exploring places, sights, or nearby facilities, click the ⭐ Save button on any place card to bookmark and store it here for one-click navigation!', lang=cur_l)}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            col_srch, col_clr = st.columns([3, 1], vertical_alignment="center")
+            with col_srch:
+                saved_filter_q = st.text_input(
+                    "Search saved places",
+                    placeholder=t("places.search_saved_placeholder", default="Search stored places by name or address...", lang=cur_l),
+                    key="txt_saved_places_search_filter",
+                    label_visibility="collapsed"
+                )
+            with col_clr:
+                if st.button(f"🗑️ {t('places.clear_all_saved', default='Clear All Saved', lang=cur_l)}", key="btn_clear_all_saved_places_act", use_container_width=True):
+                    st.session_state.saved_locations = []
+                    st.session_state.custom_saved_places = []
+                    save_user_custom_saved_places([])
+                    st.toast("🗑️ Cleared all stored saved places.", icon="⭐")
+                    st.rerun()
 
+            display_saved = saved_pool
+            if saved_filter_q and saved_filter_q.strip():
+                sfq = saved_filter_q.strip().lower()
+                display_saved = [p for p in saved_pool if sfq in p.get("name", "").lower() or sfq in p.get("address", "").lower() or sfq in p.get("category", "").lower()]
 
+            if not display_saved:
+                st.info(f"ℹ️ No saved places match '{saved_filter_q}'.")
+            else:
+                saved_cols = st.columns(3)
+                for s_idx, s_place in enumerate(display_saved):
+                    s_col_idx = s_idx % 3
+                    with saved_cols[s_col_idx]:
+                        st.markdown(render_place_details_card_html(s_place, lang=st.session_state.app_language), unsafe_allow_html=True)
+                        cur_l = st.session_state.get("app_language", "en")
+                        lbl_view_map = f"🗺️ {t('places.view_map', default='View Map', lang=cur_l)}"
+                        lbl_directions = f"🧭 {t('places.directions', default='Directions', lang=cur_l)}"
+                        lbl_info = f"ℹ️ {t('places.info', default='Info', lang=cur_l)}"
 
-
+                        col_sp1, col_sp2, col_sp3, col_sp4 = st.columns([1.2, 1.2, 1.0, 1.0])
+                        with col_sp1:
+                            if st.button(lbl_view_map, key=f"btn_view_saved_{s_place.get('place_id', s_idx)}_{s_idx}", use_container_width=True, type="primary"):
+                                st.session_state.map_center_lat = s_place["latitude"]
+                                st.session_state.map_center_lon = s_place["longitude"]
+                                st.session_state.map_zoom = 16
+                                st.session_state.auto_fit_bounds = False
+                                st.session_state.selected_marker_coords = (s_place["latitude"], s_place["longitude"])
+                                st.session_state.selected_marker_data = s_place
+                                st.session_state.scroll_to_app_map = True
+                                st.session_state.switch_to_nav_tab = True
+                                st.toast(f"📍 Centered map on {s_place['name']}", icon="🗺️")
+                                st.rerun()
+                        with col_sp2:
+                            if st.button(lbl_directions, key=f"btn_dir_saved_{s_place.get('place_id', s_idx)}_{s_idx}", use_container_width=True):
+                                st.session_state.selected_dest_coords = (s_place["latitude"], s_place["longitude"])
+                                st.session_state.selected_dest_label = s_place["name"]
+                                st.session_state.pending_dest = s_place["name"]
+                                st.session_state.last_synced_dest = s_place["name"]
+                                st.session_state.movement_index = 0
+                                st.session_state.is_in_transit = False
+                                st.session_state.auto_fit_bounds = True
+                                st.session_state.focused_route_id = "ALL"
+                                st.session_state.scroll_to_app_map = True
+                                st.session_state.switch_to_nav_tab = True
+                                st.toast(f"🧭 Calculating route to {s_place['name']}...", icon="🛣️")
+                                st.rerun()
+                        with col_sp3:
+                            if st.button(lbl_info, key=f"btn_info_saved_{s_place.get('place_id', s_idx)}_{s_idx}", use_container_width=True):
+                                st.session_state.active_info_target = {"type": "place", "data": s_place}
+                                st.session_state.selected_marker_coords = (s_place["latitude"], s_place["longitude"])
+                                st.session_state.selected_marker_data = s_place
+                                st.session_state.show_info_modal = True
+                                st.rerun()
+                        with col_sp4:
+                            if st.button("🗑️ Remove", key=f"btn_del_saved_{s_place.get('place_id', s_idx)}_{s_idx}", use_container_width=True):
+                                st.session_state.saved_locations = [x for x in st.session_state.saved_locations if x.get("name") != s_place.get("name")]
+                                st.session_state.custom_saved_places = [x for x in st.session_state.custom_saved_places if x.get("name") != s_place.get("name")]
+                                save_user_custom_saved_places(st.session_state.custom_saved_places)
+                                st.toast(f"🗑️ Removed {s_place['name']} from Saved Places.", icon="⭐")
+                                st.rerun()
 
 if st.session_state.get("current_view") == "virtual_guide":
 
