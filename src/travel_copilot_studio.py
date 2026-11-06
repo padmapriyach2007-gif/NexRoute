@@ -594,7 +594,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     width: 100% !important;
     height: 100% !important;
     pointer-events: none !important;
-    z-index: 2 !important;
+    z-index: 1 !important;
     overflow: visible !important;
 }
 
@@ -623,7 +623,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     align-items: center !important;
     justify-content: flex-end !important;
     cursor: pointer !important;
-    z-index: 20 !important;
+    z-index: 30 !important;
     user-select: none !important;
     pointer-events: auto !important;
     transform-style: preserve-3d !important;
@@ -706,12 +706,15 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
     transform: translateY(-10px) rotateY(-8deg) rotateX(-4deg) scale(1.07) !important;
 }
 
-/* Crisp, full-resolution 3D robot mascot image */
+/* Crisp, full-resolution 3D robot mascot image with seamless edge blending */
 .aura-single-mascot-img,
 .lang-bot-walking-img {
     width: 110px !important;
     height: 118px !important;
     object-fit: contain !important;
+    border-radius: 24px !important;
+    -webkit-mask-image: radial-gradient(ellipse 94% 94% at 50% 50%, black 72%, transparent 100%) !important;
+    mask-image: radial-gradient(ellipse 94% 94% at 50% 50%, black 72%, transparent 100%) !important;
     filter: drop-shadow(0 14px 28px rgba(0, 240, 255, 0.50)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.70)) !important;
     display: block !important;
     margin: 0 auto !important;
@@ -746,7 +749,7 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 .aura-travel-speech-bubble,
 .lang-bot-speech-bubble {
     position: absolute !important;
-    top: -38px !important;
+    top: -42px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     background: linear-gradient(135deg, rgba(8, 20, 44, 0.98) 0%, rgba(13, 33, 68, 0.95) 100%) !important;
@@ -1474,8 +1477,8 @@ def render_main_language_bar():
                 </feMerge>
             </filter>
         </defs>
-        <path class="aura-track-guide" d="M 30,58 C 240,12 480,72 760,34 C 830,26 890,32 940,38" fill="none" stroke="rgba(0, 240, 255, 0.22)" stroke-width="2"/>
-        <path class="aura-track-stream" d="M 30,58 C 240,12 480,72 760,34 C 830,26 890,32 940,38" fill="none" stroke="url(#auraGlowGrad)" stroke-width="3" filter="url(#auraNeonGlow)" stroke-dasharray="10 8"/>
+        <path class="aura-track-guide" d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="rgba(0, 240, 255, 0.22)" stroke-width="2"/>
+        <path class="aura-track-stream" d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="url(#auraGlowGrad)" stroke-width="3" filter="url(#auraNeonGlow)" stroke-dasharray="10 8"/>
     </svg>
 
     <!-- The ONE Single Realistic 3D AI Robot -->

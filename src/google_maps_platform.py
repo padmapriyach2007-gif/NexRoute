@@ -74,8 +74,8 @@ def get_google_maps_api_key() -> str:
     except Exception:
         pass
 
-    # 2. Check process environment variables
-    for var in ["GOOGLE_MAPS_API_KEY", "GMAPS_API_KEY", "GOOGLE_API_KEY"]:
+    # 2. Check process environment variables (Google Maps Platform keys strictly start with AIza)
+    for var in ["GOOGLE_MAPS_API_KEY", "GMAPS_API_KEY"]:
         key = os.environ.get(var, "").strip()
         if key and not key.startswith("YOUR_"):
             return key
@@ -3302,7 +3302,7 @@ def build_google_maps_javascript_html(
                     var lat = paramsObj.orig_lat || paramsObj.picked_lat;
                     var lon = paramsObj.orig_lon || paramsObj.picked_lon;
                     var name = paramsObj.orig_name || paramsObj.picked_name || "Selected Location";
-                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\\s*/, '').trim();
+                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
                     var valToSet = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
 
                     var input = pDoc.querySelector('input[aria-label*="Starting Point"]')
@@ -3318,7 +3318,7 @@ def build_google_maps_javascript_html(
                     var lat = paramsObj.dest_lat || paramsObj.picked_lat;
                     var lon = paramsObj.dest_lon || paramsObj.picked_lon;
                     var name = paramsObj.dest_name || paramsObj.picked_name || "Destination";
-                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\\s*/, '').trim();
+                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
                     var valToSet = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
 
                     var input = pDoc.querySelector('input[aria-label*="Destination"]')
@@ -3724,14 +3724,18 @@ def build_google_maps_javascript_html(
                     iconSize: [34, 34],
                     iconAnchor: [17, 34]
                 }});
+                window._lastSearchResult = {{
+                    lat: Number(lat).toFixed(6),
+                    lng: Number(lng).toFixed(6),
+                    name: String(name || 'Selected Location')
+                }};
                 currentSearchMarker = L.marker([lat, lng], {{ icon: searchIcon }}).addTo(window.lMapInstance);
-                var safeName = (name || 'Selected Location').replace(/'/g, "\\'");
                 var popupContent = '<div class="iw-title">🔍 ' + name + '</div>' +
                                    '<div class="iw-cat">NexRoute Accurate Location Pinpoint</div>' +
                                    '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(6) + '°, Lon: ' + Number(lng).toFixed(6) + '°</div>' +
                                    '<div class="iw-actions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">' +
-                                   '<button class="iw-btn" style="flex:1 1 45%; background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(lat).toFixed(6) + '\', orig_lon:\'' + Number(lng).toFixed(6) + '\', orig_name:\'' + safeName + '\'}})">🟢 Set as Start</button>' +
-                                   '<button class="iw-btn" style="flex:1 1 45%; background:#059669; color:#fff;" onclick="window.safeNavigateParent({{dest_lat:\'' + Number(lat).toFixed(6) + '\', dest_lon:\'' + Number(lng).toFixed(6) + '\', dest_name:\'' + safeName + '\'}})">🏁 Set as Dest</button>' +
+                                   '<button class="iw-btn" style="flex:1 1 45%; background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat: window._lastSearchResult.lat, orig_lon: window._lastSearchResult.lng, orig_name: window._lastSearchResult.name}})">🟢 Set as Start</button>' +
+                                   '<button class="iw-btn" style="flex:1 1 45%; background:#059669; color:#fff;" onclick="window.safeNavigateParent({{dest_lat: window._lastSearchResult.lat, dest_lon: window._lastSearchResult.lng, dest_name: window._lastSearchResult.name}})">🏁 Set as Dest</button>' +
                                    '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.lMapInstance.setView([' + lat + ',' + lng + '], 18)">🔍 Zoom Closer</button>' +
                                    '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.toggleFullScreen(true)">⛶ Full Screen</button>' +
                                    '</div>';
@@ -3742,6 +3746,11 @@ def build_google_maps_javascript_html(
                 if (currentSearchMarker) {{
                     try {{ currentSearchMarker.setMap(null); }} catch(e) {{}}
                 }}
+                window._lastSearchResult = {{
+                    lat: Number(lat).toFixed(6),
+                    lng: Number(lng).toFixed(6),
+                    name: String(name || 'Selected Location')
+                }};
                 var pos = new google.maps.LatLng(lat, lng);
                 currentSearchMarker = new google.maps.Marker({{
                     position: pos,
@@ -3750,13 +3759,12 @@ def build_google_maps_javascript_html(
                     animation: google.maps.Animation.DROP,
                     icon: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png'
                 }});
-                var safeNameG = (name || 'Selected Location').replace(/'/g, "\\'");
                 var content = '<div class="iw-title">🔍 ' + name + '</div>' +
                               '<div class="iw-cat">NexRoute Accurate Location Pinpoint</div>' +
                               '<div class="iw-meta">' + (meta || '') + '<br>Lat: ' + Number(lat).toFixed(6) + '°, Lon: ' + Number(lng).toFixed(6) + '°</div>' +
                               '<div class="iw-actions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">' +
-                              '<button class="iw-btn" style="flex:1 1 45%; background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(lat).toFixed(6) + '\', orig_lon:\'' + Number(lng).toFixed(6) + '\', orig_name:\'' + safeNameG + '\'}})">🟢 Set as Start</button>' +
-                              '<button class="iw-btn" style="flex:1 1 45%; background:#059669; color:#fff;" onclick="window.safeNavigateParent({{dest_lat:\'' + Number(lat).toFixed(6) + '\', dest_lon:\'' + Number(lng).toFixed(6) + '\', dest_name:\'' + safeNameG + '\'}})">🏁 Set as Dest</button>' +
+                              '<button class="iw-btn" style="flex:1 1 45%; background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat: window._lastSearchResult.lat, orig_lon: window._lastSearchResult.lng, orig_name: window._lastSearchResult.name}})">🟢 Set as Start</button>' +
+                              '<button class="iw-btn" style="flex:1 1 45%; background:#059669; color:#fff;" onclick="window.safeNavigateParent({{dest_lat: window._lastSearchResult.lat, dest_lon: window._lastSearchResult.lng, dest_name: window._lastSearchResult.name}})">🏁 Set as Dest</button>' +
                               '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.gMap.setZoom(18); window.gMap.setCenter({{lat:' + lat + ',lng:' + lng + '}})">🔍 Zoom Closer</button>' +
                               '<button class="iw-btn secondary" style="flex:1 1 45%;" onclick="window.toggleFullScreen(true)">⛶ Full Screen</button>' +
                               '</div>';
@@ -3886,14 +3894,24 @@ def build_google_maps_javascript_html(
                         iconSize: [24, 24],
                         iconAnchor: [12, 12]
                     }});
+                    window._lastGpsResult = {{
+                        lat: Number(uLat).toFixed(6),
+                        lng: Number(uLng).toFixed(6),
+                        name: 'My Real-Time Location'
+                    }};
                     var myPopup = '<div class="iw-title">📍 My Real-Time GPS Location</div>' +
                                   '<div class="iw-meta">Lat: ' + uLat.toFixed(6) + '°, Lon: ' + uLng.toFixed(6) + '°<br>Accuracy: ±' + Math.round(acc) + ' meters</div>' +
                                   '<div class="iw-actions" style="margin-top:6px;">' +
-                                  '<button class="iw-btn" style="background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(uLat).toFixed(6) + '\', orig_lon:\'' + Number(uLng).toFixed(6) + '\', orig_name:\'My Real-Time Location\'}})">🟢 Set as Starting Point</button>' +
+                                  '<button class="iw-btn" style="background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat: window._lastGpsResult.lat, orig_lon: window._lastGpsResult.lng, orig_name: window._lastGpsResult.name}})">🟢 Set as Starting Point</button>' +
                                   '</div>';
                     activeUserGpsMarker = L.marker([uLat, uLng], {{ icon: myIcon, zIndexOffset: 9000 }}).addTo(window.lMapInstance);
                     activeUserGpsMarker.bindPopup(myPopup).openPopup();
                 }} else if (window.gMap) {{
+                    window._lastGpsResult = {{
+                        lat: Number(uLat).toFixed(6),
+                        lng: Number(uLng).toFixed(6),
+                        name: 'My Real-Time Location'
+                    }};
                     var posLatLng = new google.maps.LatLng(uLat, uLng);
                     window.gMap.panTo(posLatLng);
                     window.gMap.setZoom(16);
@@ -3930,7 +3948,7 @@ def build_google_maps_javascript_html(
                     var myPopupG = '<div class="iw-title">📍 My Real-Time GPS Location</div>' +
                                    '<div class="iw-meta">Lat: ' + uLat.toFixed(6) + '°, Lon: ' + uLng.toFixed(6) + '°<br>Accuracy: ±' + Math.round(acc) + ' meters</div>' +
                                    '<div class="iw-actions" style="margin-top:6px;">' +
-                                   '<button class="iw-btn" style="background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat:\'' + Number(uLat).toFixed(6) + '\', orig_lon:\'' + Number(uLng).toFixed(6) + '\', orig_name:\'My Real-Time Location\'}})">🟢 Set as Starting Point</button>' +
+                                   '<button class="iw-btn" style="background:#0284c7; color:#fff;" onclick="window.safeNavigateParent({{orig_lat: window._lastGpsResult.lat, orig_lon: window._lastGpsResult.lng, orig_name: window._lastGpsResult.name}})">🟢 Set as Starting Point</button>' +
                                    '</div>';
                     if (window.infoWindow) {{
                         window.infoWindow.setContent(myPopupG);
@@ -5505,13 +5523,20 @@ def build_google_maps_javascript_html(
                         if (el) el.style.display = 'none';
                         if (window.leafletBaseLayer && !window._fallbackActive) {{
                             window._fallbackActive = true;
-                            window.showMapToast('Switching to secondary satellite imagery stream...', '🛰️');
                             try {{
                                 lMap.removeLayer(window.leafletBaseLayer);
-                                window.leafletBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{
-                                    maxZoom: 19,
-                                    attribution: 'Tiles &copy; Esri, Maxar'
-                                }}).addTo(lMap);
+                                if (mt === 'roadmap' || mt === 'road' || mt === 'm') {{
+                                    window.leafletBaseLayer = L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png', {{
+                                        maxZoom: 19,
+                                        subdomains: 'abcd',
+                                        attribution: '&copy; OpenStreetMap &copy; CARTO'
+                                    }}).addTo(lMap);
+                                }} else {{
+                                    window.leafletBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{
+                                        maxZoom: 19,
+                                        attribution: 'Tiles &copy; Esri, Maxar'
+                                    }}).addTo(lMap);
+                                }}
                                 window.leafletBaseLayer.bringToBack();
                             }} catch(e) {{}}
                         }}
@@ -6226,6 +6251,14 @@ def build_google_maps_javascript_html(
             }} else {{
                 initLeafletFallback();
             }}
+        }} else {{
+            // Fail-safe watchdog: If Google Maps SDK fails to load or hang, activate Leaflet fallback automatically
+            setTimeout(function() {{
+                if (!window.gMap && !window.lMapInstance) {{
+                    console.warn("[NexRoute Watchdog] Google Maps SDK did not finish loading. Auto-activating Leaflet engine.");
+                    initLeafletFallback();
+                }}
+            }}, 2400);
         }}
     </script>
 </body>
