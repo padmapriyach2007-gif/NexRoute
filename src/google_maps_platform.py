@@ -3358,7 +3358,7 @@ def build_google_maps_javascript_html(
                                 url.searchParams.set(k, paramsObj[k]);
                             }}
                         }}
-                        if (paramsObj.picked_target || paramsObj.detect_gps) {{
+                        if (paramsObj.picked_target || paramsObj.detect_gps || paramsObj.orig_lat || paramsObj.dest_lat) {{
                             pWin.location.href = url.toString();
                         }} else if (pWin.history && pWin.history.replaceState) {{
                             pWin.history.replaceState(null, '', url.toString());

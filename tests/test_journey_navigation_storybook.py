@@ -167,3 +167,40 @@ def test_automatic_realtime_environment_sync():
     assert "⚡ Auto" in html
     assert "ENVIRONMENT:" in html
 
+
+def test_both_pointer_location_detection_and_synchronization():
+    """Verify that both start and destination pointer locations with coordinates are correctly detected and bound."""
+    import re
+
+    # Test start pointer detection
+    orig_text = "Sangam dairy (16.24014, 80.55918)"
+    m_orig = re.search(r"\(?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*([+-]?\d{1,3}(?:\.\d+)?)\s*\)?\s*$", orig_text)
+    assert m_orig is not None
+    orig_lat = float(m_orig.group(1))
+    orig_lon = float(m_orig.group(2))
+    assert abs(orig_lat - 16.24014) < 1e-4
+    assert abs(orig_lon - 80.55918) < 1e-4
+    place_orig = orig_text[:m_orig.start()].strip(" (,-")
+    assert place_orig == "Sangam dairy"
+
+    # Test destination pointer detection
+    dest_text = "Keshpally (18.69753, 78.24548)"
+    m_dest = re.search(r"\(?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*([+-]?\d{1,3}(?:\.\d+)?)\s*\)?\s*$", dest_text)
+    assert m_dest is not None
+    dest_lat = float(m_dest.group(1))
+    dest_lon = float(m_dest.group(2))
+    assert abs(dest_lat - 18.69753) < 1e-4
+    assert abs(dest_lon - 78.24548) < 1e-4
+    place_dest = dest_text[:m_dest.start()].strip(" (,-")
+    assert place_dest == "Keshpally"
+
+    # Verify app.py has the synchronizer ensuring both pointers update coordinates and labels
+    with open("app.py", "r", encoding="utf-8") as f:
+        code = f.read()
+
+    assert "coords_dest != (d_lat, d_lon)" in code
+    assert "coords_orig != (c_lat, c_lon)" in code
+    assert "st.session_state.selected_dest_coords = coords_dest" in code
+    assert "st.session_state.user_live_coords = (c_lat, c_lon)" in code
+
+

@@ -5203,41 +5203,20 @@ def detect_user_network_location() -> dict:
 
 
             if data and "latitude" in data and "longitude" in data:
-
-
-
                 c_lat = float(data["latitude"])
-
-
-
                 c_lon = float(data["longitude"])
-
-
-
                 c_city = data.get("city") or data.get("region") or "Dynamic Area"
 
-
+                # Filter out Streamlit Cloud / AWS North America server hosting locations (e.g. Oregon: 45.5999, -121.1871)
+                # Ensure server hosting IP never masquerades as the user's authentic local origin
+                if (c_lat > 35.0 and c_lon < -60.0) or (abs(c_lat - 45.5999) < 1.0 and abs(c_lon - (-121.1871)) < 1.0):
+                    return None
 
                 return {
-
-
-
                     "lat": c_lat,
-
-
-
                     "lon": c_lon,
-
-
-
                     "city": c_city,
-
-
-
                     "label": f"🚶 Dynamic Live Location"
-
-
-
                 }
 
 
@@ -7586,33 +7565,16 @@ if "dest_lat" in st.query_params and "dest_lon" in st.query_params:
 
 
             st.session_state.selected_dest_coords = (q_dest_lat, q_dest_lon)
-
-
-
             st.session_state.selected_dest_label = q_dest_name
-
-
-
             st.session_state.pending_dest = q_dest_name
-
-
-
             st.session_state.last_synced_dest = q_dest_name
-
-
-
+            st.session_state.txt_dest = q_dest_name
+            st.session_state._prev_route_sig = None
+            st.session_state.cached_candidate_routes = None
+            st.session_state.auto_fit_bounds = True
             st.session_state.movement_index = 0
-
-
-
             st.session_state.is_in_transit = False
-
-
-
             st.session_state.scroll_to_app_map = True
-
-
-
             st.session_state.target_tab = "nav"
 
 
@@ -7690,61 +7652,21 @@ if "orig_lat" in st.query_params and "orig_lon" in st.query_params:
 
 
             st.session_state.user_live_coords = (q_orig_lat, q_orig_lon)
-
-
-
             st.session_state.user_live_label = q_orig_name
-
-
-
             st.session_state.pending_orig = q_orig_name
-
-
-
             st.session_state.last_synced_orig = q_orig_name
-
-
-
+            st.session_state.txt_orig = q_orig_name
             st.session_state.is_custom_start_place = True
-
-
-
             st.session_state.orig_candidates = []
-
-
-
             st.session_state.orig_candidates_query = ""
-
-
-
             st.session_state.geocoding_orig_error = None
-
-
-
             st.session_state._prev_route_sig = None
-
-
-
+            st.session_state.cached_candidate_routes = None
             st.session_state.focused_route_id = "ALL"
-
-
-
             st.session_state.selected_route_id = None
-
-
-
             st.session_state.auto_fit_bounds = True
-
-
-
             st.session_state.scroll_to_app_map = True
-
-
-
             st.session_state.target_tab = "nav"
-
-
-
             st.session_state.real_location_service.set_manual_location(q_orig_lat, q_orig_lon, q_orig_name)
 
 
@@ -7978,53 +7900,19 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
 
 
                 st.session_state.pending_orig = p_name
-
-
-
                 st.session_state.last_synced_orig = p_name
-
-
-
+                st.session_state.txt_orig = p_name
                 st.session_state.is_custom_start_place = True
-
-
-
                 st.session_state.selected_orig_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
-
-
-
                 st.session_state.real_location_service.set_manual_location(p_lat, p_lon, p_name)
-
-
-
                 st.toast(f"🟢 Starting Point set to: {p_name}", icon="🟢")
-
-
-
             else:
-
-
-
                 st.session_state.selected_dest_coords = (p_lat, p_lon)
-
-
-
                 st.session_state.selected_dest_label = p_name
-
-
-
                 st.session_state.pending_dest = p_name
-
-
-
                 st.session_state.last_synced_dest = p_name
-
-
-
+                st.session_state.txt_dest = p_name
                 st.session_state.selected_dest_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
-
-
-
                 st.toast(f"🏁 Destination set to: {p_name}", icon="🏁")
 
 
@@ -9757,227 +9645,88 @@ dest_text = st.session_state.get("txt_dest", "")
 
 
 
-# Auto-resolve destination coordinates if text is provided but coordinates are not yet bound
-
-
-
-if not coords_dest and dest_text and dest_text.strip():
-
-
-
-    c_raw = dest_text.strip()
-
-
-
-    c_match_d = re.search(r"\(?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*([+-]?\d{1,3}(?:\.\d+)?)\s*\)?\s*$", c_raw)
-
-
-
+# Auto-resolve destination coordinates if text is provided or changed
+c_raw_d = (dest_text or "").strip()
+if c_raw_d:
+    c_match_d = re.search(r"\(?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*([+-]?\d{1,3}(?:\.\d+)?)\s*\)?\s*$", c_raw_d)
     if c_match_d:
-
-
-
         d_lat = float(c_match_d.group(1))
-
-
-
         d_lon = float(c_match_d.group(2))
-
-
-
         if -90.0 <= d_lat <= 90.0 and -180.0 <= d_lon <= 180.0:
-
-
-
-            place_lbl_d = c_raw[:c_match_d.start()].strip(" (,-")
-
-
-
-            if not place_lbl_d:
-
-
-
-                place_lbl_d = f"Destination ({d_lat:.4f}, {d_lon:.4f})"
-
-
-
-            st.session_state.selected_dest_coords = (d_lat, d_lon)
-
-
-
-            st.session_state.selected_dest_label = place_lbl_d
-
-
-
-            st.session_state.selected_dest_id = f"coord_{d_lat:.4f}_{d_lon:.4f}"
-
-
-
-            st.session_state.last_synced_dest = c_raw
-
-
-
-            coords_dest = st.session_state.selected_dest_coords
-
-
-
-    else:
-
-
-
+            if coords_dest != (d_lat, d_lon):
+                coords_dest = (d_lat, d_lon)
+                st.session_state.selected_dest_coords = coords_dest
+                place_lbl_d = c_raw_d[:c_match_d.start()].strip(" (,-") or f"Destination ({d_lat:.4f}, {d_lon:.4f})"
+                st.session_state.selected_dest_label = place_lbl_d
+                st.session_state.selected_dest_id = f"coord_{d_lat:.4f}_{d_lon:.4f}"
+                st.session_state.last_synced_dest = c_raw_d
+                st.session_state._prev_route_sig = None
+                st.session_state.cached_candidate_routes = None
+    elif not coords_dest or c_raw_d != st.session_state.get("last_synced_dest", ""):
         try:
-
-
-
-            cands_auto_d = st.session_state.real_map_service.get_disambiguation_candidates(c_raw, limit=3)
-
-
-
+            cands_auto_d = st.session_state.real_map_service.get_disambiguation_candidates(c_raw_d, limit=3)
             if not cands_auto_d:
-
-
-
-                cands_auto_d = st.session_state.real_map_service.geocode_candidates(c_raw, limit=3)
-
-
-
+                cands_auto_d = st.session_state.real_map_service.geocode_candidates(c_raw_d, limit=3)
             if cands_auto_d:
-
-
-
                 b_auto = cands_auto_d[0]
-
-
-
-                st.session_state.selected_dest_coords = (b_auto["lat"], b_auto["lon"])
-
-
-
-                st.session_state.selected_dest_label = b_auto.get("display_name", c_raw)
-
-
-
+                coords_dest = (b_auto["lat"], b_auto["lon"])
+                st.session_state.selected_dest_coords = coords_dest
+                st.session_state.selected_dest_label = b_auto.get("display_name", c_raw_d)
                 st.session_state.selected_dest_id = b_auto.get("provider_id", f"dest_{b_auto['lat']:.4f}_{b_auto['lon']:.4f}")
-
-
-
                 st.session_state.active_dest_meta = b_auto
-
-
-
-                coords_dest = st.session_state.selected_dest_coords
-
-
-
+                st.session_state.last_synced_dest = c_raw_d
+                st.session_state._prev_route_sig = None
+                st.session_state.cached_candidate_routes = None
         except Exception:
-
-
-
             pass
 
-
-
-
-
-
-
 # Auto-resolve origin coordinates if custom text is provided or if origin text changed
-
-
-
 raw_o = (orig_text or "").strip()
-
-
-
-if raw_o and (not coords_orig or raw_o != st.session_state.get("last_synced_orig", "")):
-
-
-
+if raw_o:
     clean_low_o = raw_o.lower().strip()
-
-
-
     text_only_o = re.sub(r"^[^\w\s]+", "", clean_low_o).strip()
-
-
-
     if text_only_o in ["current", "current location", "my location", "my current location", "live", "live location", "live device gps", "device gps", "gps", "satellite"]:
-
-
-
         st.session_state.is_custom_start_place = False
-
-
-
         CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
-
-
-
         st.session_state.user_live_coords = CURRENT_BASE
-
-
-
         coords_orig = CURRENT_BASE
-
-
-
     else:
-
-
-
-        st.session_state.is_custom_start_place = True
-
-
-
-        import re
-
-
-
         c_match = re.search(r"\(?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*([+-]?\d{1,3}(?:\.\d+)?)\s*\)?\s*$", raw_o)
-
-
-
         if c_match:
-
-
-
             c_lat = float(c_match.group(1))
-
-
-
             c_lon = float(c_match.group(2))
-
-
-
             if -90.0 <= c_lat <= 90.0 and -180.0 <= c_lon <= 180.0:
-
-
-
-                place_lbl = raw_o[:c_match.start()].strip(" (,-")
-
-
-
-                if not place_lbl:
-
-
-
-                    place_lbl = f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
-
-
-
-                st.session_state.user_live_coords = (c_lat, c_lon)
-
-
-
-                st.session_state.user_live_label = place_lbl
-
-
-
-                st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
-
-
-
-                st.session_state.last_synced_orig = raw_o
+                if coords_orig != (c_lat, c_lon):
+                    coords_orig = (c_lat, c_lon)
+                    st.session_state.user_live_coords = (c_lat, c_lon)
+                    place_lbl = raw_o[:c_match.start()].strip(" (,-") or f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
+                    st.session_state.user_live_label = place_lbl
+                    st.session_state.is_custom_start_place = True
+                    st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
+                    st.session_state.last_synced_orig = raw_o
+                    st.session_state._prev_route_sig = None
+                    st.session_state.cached_candidate_routes = None
+                    if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
+                        st.session_state.real_location_service.set_manual_location(c_lat, c_lon, place_lbl)
+        elif not coords_orig or raw_o != st.session_state.get("last_synced_orig", ""):
+            st.session_state.is_custom_start_place = True
+            try:
+                cands_auto_o = st.session_state.real_map_service.get_disambiguation_candidates(raw_o, limit=3)
+                if not cands_auto_o:
+                    cands_auto_o = st.session_state.real_map_service.geocode_candidates(raw_o, limit=3)
+                if cands_auto_o:
+                    b_auto_o = cands_auto_o[0]
+                    coords_orig = (b_auto_o["lat"], b_auto_o["lon"])
+                    st.session_state.user_live_coords = (b_auto_o["lat"], b_auto_o["lon"])
+                    st.session_state.user_live_label = b_auto_o.get("display_name", raw_o)
+                    st.session_state.selected_orig_id = b_auto_o.get("provider_id", f"orig_{b_auto_o['lat']:.4f}_{b_auto_o['lon']:.4f}")
+                    st.session_state.last_synced_orig = raw_o
+                    st.session_state._prev_route_sig = None
+                    st.session_state.cached_candidate_routes = None
+                    if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
+                        st.session_state.real_location_service.set_manual_location(coords_orig[0], coords_orig[1], raw_o)
+            except Exception:
+                pass
 
 
 
@@ -22992,11 +22741,13 @@ body {{
                                 pin_orig = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
 
                             st.session_state.user_live_label = pin_orig
+                            st.session_state.txt_orig = pin_orig
                             st.session_state.pending_orig = pin_orig
                             st.session_state.last_synced_orig = pin_orig
                             st.session_state.is_custom_start_place = True
                             st.session_state.orig_candidates = []
                             st.session_state._prev_route_sig = None
+                            st.session_state.cached_candidate_routes = None
                             if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
                                 st.session_state.real_location_service.set_manual_location(click_lat, click_lon, pin_orig)
                             st.toast(f"🟢 Starting Point pinned: {pin_orig}", icon="📍")
@@ -23014,8 +22765,11 @@ body {{
                                 pin_dest = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
 
                             st.session_state.selected_dest_label = pin_dest
+                            st.session_state.txt_dest = pin_dest
                             st.session_state.pending_dest = pin_dest
                             st.session_state.last_synced_dest = pin_dest
+                            st.session_state._prev_route_sig = None
+                            st.session_state.cached_candidate_routes = None
                             st.toast(f"🏁 Destination pinned: {pin_dest}", icon="📍")
                             st.rerun()
 
