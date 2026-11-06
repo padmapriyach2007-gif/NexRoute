@@ -559,10 +559,10 @@ def build_aura_journey_cockpit_html(
     from datetime import datetime
     now_dt = datetime.now()
     cur_hour = now_dt.hour + now_dt.minute / 60.0
-    if 17.25 <= cur_hour < 19.35:
+    if 17.0 <= cur_hour < 19.35:
         auto_detected_env = "sunset"
         time_desc = f"{now_dt.strftime('%I:%M %p')} • Sunset"
-    elif 6.0 <= cur_hour < 17.25:
+    elif 6.0 <= cur_hour < 17.0:
         auto_detected_env = "day"
         time_desc = f"{now_dt.strftime('%I:%M %p')} • Day"
     else:
@@ -1748,22 +1748,55 @@ def build_aura_journey_cockpit_html(
 
         let isAutoRealTimeEnv = true;
 
+        function formatUserLocalTime(d) {{
+            let hours = d.getHours();
+            const minutes = d.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            return hours + ':' + strMinutes + ' ' + ampm;
+        }}
+
         function getRealTimeEnv() {{
             const now = new Date();
             const h = now.getHours() + (now.getMinutes() / 60.0);
-            if (h >= 17.25 && h < 19.35) {{
+            if (h >= 17.0 && h < 19.35) {{
                 return 'sunset';
-            }} else if (h >= 6.0 && h < 17.25) {{
+            }} else if (h >= 6.0 && h < 17.0) {{
                 return 'day';
             }} else {{
                 return 'night';
             }}
         }}
 
+        function getRealTimeEnvInfo() {{
+            const now = new Date();
+            const env = getRealTimeEnv();
+            const label = env === 'sunset' ? 'Sunset' : (env === 'night' ? 'Cyber Night' : 'Day');
+            return {{
+                env: env,
+                label: label,
+                timeStr: formatUserLocalTime(now),
+                hour: now.getHours() + (now.getMinutes() / 60.0)
+            }};
+        }}
+
+        function syncRealTimeAutoEnvironment() {{
+            const info = getRealTimeEnvInfo();
+            const autoBtn = document.getElementById('env-auto');
+            if (autoBtn) {{
+                autoBtn.innerHTML = '⚡ Auto (' + info.timeStr + ' • ' + info.label + ')';
+                autoBtn.title = 'Real-time device clock synced: ' + info.timeStr + ' (' + info.label + ')';
+            }}
+            if (isAutoRealTimeEnv) {{
+                window.setEnvLight(info.env, true);
+            }}
+        }}
+
         window.toggleAutoRealTimeEnv = function() {{
             isAutoRealTimeEnv = true;
-            const env = getRealTimeEnv();
-            window.setEnvLight(env, true);
+            syncRealTimeAutoEnvironment();
         }};
 
         window.setEnvLight = function(env, fromAuto = false) {{
@@ -1784,7 +1817,8 @@ def build_aura_journey_cockpit_html(
 
             const envBadge = document.getElementById('hud-env-mode');
             if (envBadge) {{
-                envBadge.innerText = 'ENV: ' + env.toUpperCase() + (isAutoRealTimeEnv ? ' (REAL TIME)' : '');
+                const info = getRealTimeEnvInfo();
+                envBadge.innerText = 'ENV: ' + env.toUpperCase() + (isAutoRealTimeEnv ? ' (LIVE ' + info.timeStr + ')' : ' (MANUAL)');
             }}
 
             if (threeEnv) {{
@@ -2880,11 +2914,11 @@ def build_aura_journey_cockpit_html(
         initSensorWatchers();
         startStepProgressionLoop();
         updateMotionUI(isLiveMoving ? currentSpeedKmh : 0.0, motionState, isLiveMoving ? '🛰️ Parallel Sensor GPS' : 'Sensor Ready');
-        // Auto-synchronize real-time environment lighting
-        setTimeout(() => {{
-            const autoEnv = getRealTimeEnv();
-            window.setEnvLight(autoEnv, true);
-        }}, 120);
+        // Auto-synchronize real-time device clock and lighting immediately and keep continuous live sync
+        syncRealTimeAutoEnvironment();
+        setTimeout(syncRealTimeAutoEnvironment, 100);
+        setTimeout(syncRealTimeAutoEnvironment, 600);
+        setInterval(syncRealTimeAutoEnvironment, 3000);
         setTimeout(initAuraThreeScene, 80);
     }})();
     </script>

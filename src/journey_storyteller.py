@@ -2834,8 +2834,9 @@ def build_virtual_guide_turns_html(
                 </div>
                 <div style='display: flex; align-items: center; gap: 6px; flex-wrap: wrap;'>
                     <span style='font-size: 0.68rem; color: #facc15; font-weight: 800; letter-spacing: 0.04em;'>{vg_env_lighting}</span>
+                    <button id='btn-env-auto' class='guide-speed-pill active' onclick='toggleStorytellerAutoEnv()' title='Sync with real local device clock'>⚡ Auto</button>
                     <button id='btn-env-day' class='guide-speed-pill' onclick='setEnvironmentMode("day")' title='Bright Daylight Level'>{vg_env_day}</button>
-                    <button id='btn-env-sunset' class='guide-speed-pill active' onclick='setEnvironmentMode("sunset")' title='Golden Hour Sunset Level'>{vg_env_sunset}</button>
+                    <button id='btn-env-sunset' class='guide-speed-pill' onclick='setEnvironmentMode("sunset")' title='Golden Hour Sunset Level'>{vg_env_sunset}</button>
                     <button id='btn-env-night' class='guide-speed-pill' onclick='setEnvironmentMode("night")' title='Cyber Night Starlight Level'>{vg_env_night}</button>
                 </div>
             </div>
@@ -3121,7 +3122,46 @@ def build_virtual_guide_turns_html(
             }}
         }};
 
-        window.setEnvironmentMode = function(env) {{
+        let isStorytellerAutoEnv = true;
+
+        function getStorytellerRealTimeEnv() {{
+            const now = new Date();
+            const h = now.getHours() + (now.getMinutes() / 60.0);
+            if (h >= 17.0 && h < 19.35) return 'sunset';
+            else if (h >= 6.0 && h < 17.0) return 'day';
+            else return 'night';
+        }}
+
+        function syncStorytellerAutoEnv() {{
+            const now = new Date();
+            const env = getStorytellerRealTimeEnv();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+            const timeStr = hours + ':' + strMinutes + ' ' + ampm;
+            const label = env === 'sunset' ? 'Sunset' : (env === 'night' ? 'Cyber Night' : 'Day');
+
+            const autoBtn = document.getElementById('btn-env-auto');
+            if (autoBtn) {{
+                autoBtn.innerHTML = '⚡ Auto (' + timeStr + ' • ' + label + ')';
+                if (isStorytellerAutoEnv) autoBtn.classList.add('active');
+                else autoBtn.classList.remove('active');
+            }}
+            if (isStorytellerAutoEnv) {{
+                window.setEnvironmentMode(env, true);
+            }}
+        }}
+
+        window.toggleStorytellerAutoEnv = function() {{
+            isStorytellerAutoEnv = true;
+            syncStorytellerAutoEnv();
+        }};
+
+        window.setEnvironmentMode = function(env, fromAuto = false) {{
+            if (!fromAuto) isStorytellerAutoEnv = false;
             activeEnv = env;
             ['day', 'sunset', 'night'].forEach(e => {{
                 const btn = document.getElementById('btn-env-' + e);
@@ -3130,12 +3170,21 @@ def build_virtual_guide_turns_html(
                     else btn.classList.remove('active');
                 }}
             }});
+            const autoBtn = document.getElementById('btn-env-auto');
+            if (autoBtn) {{
+                if (isStorytellerAutoEnv) autoBtn.classList.add('active');
+                else autoBtn.classList.remove('active');
+            }}
             const canvas = document.getElementById('showcase-visual-svg-container');
             if (canvas) {{
                 canvas.classList.remove('env-day', 'env-sunset', 'env-night');
                 canvas.classList.add('env-' + env);
             }}
         }};
+
+        // Live clock sync for storyteller environment
+        syncStorytellerAutoEnv();
+        setInterval(syncStorytellerAutoEnv, 3000);
 
         const stageEl = document.getElementById('level-3d-stage');
         if (stageEl) {{
