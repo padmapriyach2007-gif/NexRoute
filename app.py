@@ -3800,7 +3800,7 @@ st.markdown("""
     .floating-tour-welcome-tooltip,
     .floating-aura-welcome-tooltip {
         position: fixed !important;
-        bottom: 180px !important;
+        bottom: 110px !important;
         right: 98px !important;
         z-index: 2147483645 !important;
         background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important;
@@ -3821,11 +3821,22 @@ st.markdown("""
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
+    /* Immediately hide floating tour FAB & tooltip when Chat Popover is open so they never block or overlap the chat */
+    body:has([data-testid="stPopoverBody"]) #pathfinder-tour-fab-trigger,
+    body:has([data-testid="stPopoverBody"]) #floating-tour-welcome-tooltip,
+    body:has([data-testid="stPopoverBody"]) .pathfinder-tour-fab-trigger,
+    body:has([data-testid="stPopoverBody"]) .floating-tour-welcome-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+    }
+
     /* Button 1: Dedicated 3D AI Guide Guided Tour Trigger */
     #pathfinder-tour-fab-trigger,
     .pathfinder-tour-fab-trigger {
         position: fixed !important;
-        bottom: 176px !important;
+        bottom: 104px !important;
         right: 24px !important;
         width: 64px !important;
         height: 64px !important;

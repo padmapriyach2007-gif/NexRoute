@@ -773,8 +773,19 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
                 }}
                 .floating-tour-welcome-tooltip {{
                     right: 70px !important;
-                    bottom: 150px !important;
+                    bottom: 110px !important;
                 }}
+            }}
+
+            /* Immediately hide tour FAB and tooltip when Chat Popover is open so they never block or overlap the chat */
+            body:has([data-testid="stPopoverBody"]) #pathfinder-tour-fab-trigger,
+            body:has([data-testid="stPopoverBody"]) #floating-tour-welcome-tooltip,
+            body:has([data-testid="stPopoverBody"]) .pathfinder-tour-fab-trigger,
+            body:has([data-testid="stPopoverBody"]) .floating-tour-welcome-tooltip {{
+                display: none !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                visibility: hidden !important;
             }}
 
             /* Backward compatibility selectors for tests */
@@ -1972,7 +1983,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         var fab = pDoc.createElement('div');
         fab.id = 'pathfinder-tour-fab-trigger';
         fab.className = 'pathfinder-tour-fab-trigger';
-        fab.title = 'NexRoute AI Guide • Start Quick Tour (3D రోబోట్ టూర్)';
+        fab.title = 'NexRoute AI Guide • Start Quick Tour';
 
         var iconHtml = welcomeSrc 
             ? '<img src="' + welcomeSrc + '" style="width: 52px; height: 52px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.75));" alt="3D AI Guide" />'
@@ -1982,7 +1993,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
         fab.style.cssText = [
             'position: fixed !important',
-            'bottom: 176px !important',
+            'bottom: 104px !important',
             'right: 24px !important',
             'width: 64px !important',
             'height: 64px !important',
@@ -2006,7 +2017,20 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             'margin: 0 !important'
         ].join(';');
 
-        // Welcome Tooltip attached directly to Button 1 (matches user requirement)
+        // Localized phrases for the floating tooltip
+        var tourPhrases = {{
+            "en": "Click me for a tour!",
+            "te": "టూర్ కోసం నన్ను క్లిక్ చేయండి!",
+            "hi": "टूर के लिए क्लिक करें!",
+            "ta": "சுற்றுலாவுக்கு கிளிக் செய்க!",
+            "kn": "ಟೂರ್‌ಗಾಗಿ ಕ್ಲಿಕ್ ಮಾಡಿ!",
+            "ml": "ടൂറിനായി ക്ലിക്ക് ചെയ്യുക!",
+            "bn": "ট্যুরের জন্য ক্লিক করুন!",
+            "mr": "टूरसाठी क्लिक करा!"
+        }};
+        var currentTourPhrase = tourPhrases[currentLang] || tourPhrases["en"];
+
+        // Welcome Tooltip attached directly to Button 1
         var tooltip = pDoc.createElement('div');
         tooltip.id = 'floating-tour-welcome-tooltip';
         tooltip.className = 'floating-tour-welcome-tooltip';
@@ -2017,7 +2041,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
             '    <span>AI Guide</span>',
             '</div>',
             '<div style="display: flex; align-items: center; gap: 6px; font-size: 0.86rem; font-weight: 800; color: #ffffff; letter-spacing: 0.02em; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;">',
-            '    <span>Click me for a tour!</span>',
+            '    <span>' + currentTourPhrase + '</span>',
             '    <span style="font-size: 0.82rem; filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8));">✨</span>',
             '</div>',
             '<div style="position: absolute; right: -7px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 7px solid #00f0ff;"></div>'
@@ -2025,7 +2049,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
         tooltip.style.cssText = [
             'position: fixed !important',
-            'bottom: 180px !important',
+            'bottom: 110px !important',
             'right: 98px !important',
             'z-index: 2147483645 !important',
             'background: linear-gradient(135deg, rgba(8, 20, 44, 0.96) 0%, rgba(13, 33, 68, 0.92) 100%) !important',
@@ -2099,6 +2123,33 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
 
         pDoc.body.appendChild(tooltip);
         pDoc.body.appendChild(fab);
+
+        // Immediate and dynamic hiding when chat popover is open
+        function syncTourFabWithPopover() {{
+            var fabEl = pDoc.getElementById('pathfinder-tour-fab-trigger');
+            var tipEl = pDoc.getElementById('floating-tour-welcome-tooltip');
+            if (!fabEl && !tipEl) return;
+            var popoverBody = pDoc.querySelector('[data-testid="stPopoverBody"]');
+            var isPopoverOpen = !!(popoverBody && popoverBody.offsetParent !== null);
+            if (isPopoverOpen) {{
+                if (fabEl) {{ fabEl.style.setProperty('display', 'none', 'important'); fabEl.style.setProperty('pointer-events', 'none', 'important'); }}
+                if (tipEl) {{ tipEl.style.setProperty('display', 'none', 'important'); tipEl.style.setProperty('pointer-events', 'none', 'important'); }}
+            }} else if (!isTourActive) {{
+                if (fabEl) {{ fabEl.style.setProperty('display', 'flex', 'important'); fabEl.style.setProperty('pointer-events', 'auto', 'important'); }}
+                if (tipEl) {{ tipEl.style.setProperty('display', 'flex', 'important'); tipEl.style.setProperty('pointer-events', 'auto', 'important'); }}
+            }}
+        }}
+
+        window._syncTourFabWithPopover = syncTourFabWithPopover;
+        syncTourFabWithPopover();
+        if (window.MutationObserver) {{
+            try {{
+                var popoverObs = new MutationObserver(function() {{
+                    syncTourFabWithPopover();
+                }});
+                popoverObs.observe(pDoc.body, {{ childList: true, subtree: true }});
+            }} catch(eObs) {{}}
+        }}
     }}
 
     // Check & Mount Mascot on Startup and DOM updates
@@ -2112,6 +2163,9 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
         if (!pDoc.getElementById('pathfinder-tour-fab-trigger')) {{
             initFloatingTourFab();
         }}
+        if (typeof window._syncTourFabWithPopover === 'function') {{
+            try {{ window._syncTourFabWithPopover(); }} catch(eSync) {{}}
+        }}
         var walkingAura = pDoc.getElementById('lang-box-walking-aura') || document.getElementById('lang-box-walking-aura');
         if (walkingAura && !walkingAura._hasTourClick) {{
             walkingAura._hasTourClick = true;
@@ -2121,7 +2175,7 @@ def build_quick_tour_html(lang: str = "en", bot_logo_uri: str = "") -> str:
                 startTour(0);
             }};
         }}
-    }}, 800);
+    }}, 400);
 
     checkFirstTimeWelcome();
 
