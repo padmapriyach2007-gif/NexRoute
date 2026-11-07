@@ -15,13 +15,35 @@ import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.facilities_service import haversine_km
+from src.nearby_places_service import NearbyPlacesService, PlaceCategory
 
-# In-memory cache for suggested places with 30-minute TTL
+# In-memory cache for suggested places with 15-minute TTL
 _SUGGESTED_PLACES_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
-_SUGGESTED_CACHE_TTL = 1800.0
+_SUGGESTED_CACHE_TTL = 900.0
 
 
 def generate_suggested_places_at_location(
+    lat: float,
+    lon: float,
+    location_name: str = "Active Location",
+    radius_km: float = 15.0
+) -> List[Dict[str, Any]]:
+    """
+    Retrieves authentic, geographically verified Points of Interest (POIs)
+    around any given coordinate worldwide using NearbyPlacesService.
+    Strictly NO fake synthetic places or fabricated hospitals/supermarkets.
+    """
+    clean_loc = location_name.replace("📍", "").replace("🏁", "").strip() or "Local Area"
+    return NearbyPlacesService.get_nearby_places(
+        lat=lat,
+        lon=lon,
+        radius_km=radius_km,
+        category=PlaceCategory.ALL,
+        location_name=clean_loc
+    )
+
+
+def _legacy_generate_suggested_places_at_location(
     lat: float,
     lon: float,
     location_name: str = "Active Location",

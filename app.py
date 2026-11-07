@@ -545,26 +545,13 @@ from src.google_maps_platform import (
 
 
 from src.places_and_driving_modes import (
-
-
-
     generate_suggested_places_at_location,
-
-
-
     compare_driving_travel_modes,
-
-
-
     render_place_details_card_html,
-
-
-
     render_driving_mode_cockpit_card_html,
-
-
-
     render_profile_calculation_details_html
+)
+from src.nearby_places_service import NearbyPlacesService, PlaceCategory
 
 
 
@@ -9963,15 +9950,13 @@ def resolve_virtual_guide_active_route(provided_item=None):
                     waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
                 )
             except TypeError:
-                st.session_state.real_route_engine = RealWorldRouteEngine()
                 calc_routes = st.session_state.real_route_engine.calculate_routes(
                     c_orig[0], c_orig[1],
                     c_dest[0], c_dest[1],
                     mode=travel_m,
                     avoid_tolls=st.session_state.get("avoid_tolls", False),
                     avoid_highways=st.session_state.get("avoid_highways", False),
-                    avoid_ferries=st.session_state.get("avoid_ferries", False),
-                    waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
+                    avoid_ferries=st.session_state.get("avoid_ferries", False)
                 )
 
 
@@ -18567,7 +18552,6 @@ body {{
                         )
                     except TypeError as _te:
                         if "waypoints" in str(_te):
-                            st.session_state.real_route_engine = RealWorldRouteEngine()
                             candidate_routes = st.session_state.real_route_engine.calculate_routes(
                                 coords_orig[0], coords_orig[1],
                                 coords_dest[0], coords_dest[1],
@@ -18579,8 +18563,7 @@ body {{
                                 avoid_highways=st.session_state.get("avoid_highways", False),
                                 avoid_ferries=st.session_state.get("avoid_ferries", False),
                                 speed_mode=st.session_state.selected_speed_mode.lower(),
-                                custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None,
-                                waypoints=cur_waypoints if cur_waypoints else None
+                                custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None
                             )
                         else:
                             raise
@@ -29619,35 +29602,10 @@ if st.session_state.get("current_view") == "places":
 
 
 
-        suggested_places = generate_suggested_places_at_location(
-
-
-
-            lat=ref_lat,
-
-
-
-            lon=ref_lon,
-
-
-
-            location_name=ref_label
-
-
-
-        )
-
-
-
-
-
-
-
         cur_l = st.session_state.get("app_language", "en")
         hdr_places_nearby = t("places.nearby_facilities_header", default="PLACES & NEARBY FACILITIES", lang=cur_l)
-        hdr_places_sub = t("places.header_sub", default="Discover useful places near your location or along your selected route.", lang=cur_l)
-        lbl_verified_pois = t("places.verified_pois", default="VERIFIED POIS", lang=cur_l)
-        search_placeholder = t("places.search_placeholder", default="Search places, landmarks, or addresses...", lang=cur_l)
+        hdr_places_sub = t("places.header_sub", default="Discover genuine verified places, healthcare, facilities, and famous attractions around your location.", lang=cur_l)
+        lbl_verified_pois = t("places.verified_pois", default="VERIFIED OSM DATA", lang=cur_l)
         lbl_categories = t("places.categories_label", default="Categories", lang=cur_l)
 
         st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;'>
@@ -29662,34 +29620,52 @@ if st.session_state.get("current_view") == "places":
     </div>
     </div>
     </div>
-    <span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;'>
+    <span style='background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;'>
     ● {lbl_verified_pois}
     </span>
     </div>""", unsafe_allow_html=True)
 
-        # Search & Category Filters
-        places_search_query = st.text_input(
-            "Search places",
-            placeholder=search_placeholder,
-            key="txt_places_main_search_box",
-            label_visibility="collapsed"
-        )
+        # Smart Search Radius & Search Input
+        col_sb1, col_sb2 = st.columns([1.6, 2.4])
+        with col_sb1:
+            radius_options = [
+                "5 km (Nearby Places)",
+                "10 km (Nearby Villages)",
+                "25 km (Nearby Towns)",
+                "50 km (Major Attractions)"
+            ]
+            radius_val_map = {
+                "5 km (Nearby Places)": 5.0,
+                "10 km (Nearby Villages)": 10.0,
+                "25 km (Nearby Towns)": 25.0,
+                "50 km (Major Attractions)": 50.0
+            }
+            if "places_smart_radius_select" not in st.session_state:
+                st.session_state.places_smart_radius_select = "10 km (Nearby Villages)"
+            sel_rad_label = st.selectbox(
+                "📏 Smart Search Radius",
+                radius_options,
+                index=radius_options.index(st.session_state.places_smart_radius_select) if st.session_state.places_smart_radius_select in radius_options else 1,
+                key="places_smart_radius_select"
+            )
+            sel_radius_km = radius_val_map[sel_rad_label]
+
+        with col_sb2:
+            places_search_query = st.text_input(
+                "Search verified places",
+                placeholder="Search temples, hospitals, clinics, dining, fuel...",
+                key="txt_places_main_search_box",
+                label_visibility="visible"
+            )
 
         cat_defs = [
-            ("all", "🌐", t("places.cat_all", default="All Categories", lang=cur_l)),
-            ("saved", "⭐", f"{t('places.cat_saved', default='Saved Places', lang=cur_l)} ({len(saved_pool)})"),
-            ("hospital", "🏥", t("places.cat_hospitals", default="Hospitals & Clinics", lang=cur_l)),
-            ("supermarket", "🛒", t("places.cat_supermarkets", default="Supermarkets", lang=cur_l)),
-            ("fuel", "⛽", t("places.cat_fuel", default="Fuel Stations", lang=cur_l)),
-            ("ev", "⚡", t("places.cat_ev", default="EV Charging", lang=cur_l)),
-            ("restaurant", "🍽️", t("places.cat_restaurants", default="Restaurants", lang=cur_l)),
-            ("bank", "🏧", t("places.cat_atms", default="ATMs & Banking", lang=cur_l)),
-            ("police", "🚓", t("places.cat_police", default="Police & Emergency Services", lang=cur_l)),
-            ("hotel", "🏨", t("places.cat_hotels", default="Hotels", lang=cur_l)),
-            ("tourist", "🏛️", t("places.cat_tourist", default="Tourist Attractions", lang=cur_l)),
-            ("mall", "🛍️", t("places.cat_malls", default="Shopping Malls", lang=cur_l)),
-            ("park", "🌳", t("places.cat_parks", default="Parks", lang=cur_l)),
-            ("rest", "🛣️", t("places.cat_rest_stops", default="Rest Stops", lang=cur_l)),
+            ("all", "🌐", "All Places"),
+            ("attractions", "🏛️", "Famous Attractions"),
+            ("healthcare", "🏥", "Healthcare"),
+            ("facilities", "🛡️", "Essential Facilities"),
+            ("food_stays", "🍽️", "Food & Stays"),
+            ("education", "🎓", "Educational Institutions"),
+            ("saved", "⭐", f"Saved Places ({len(saved_pool)})")
         ]
         places_categories = [f"{icon} {label}" for _, icon, label in cat_defs]
         selected_p_cat = st.pills(lbl_categories, options=places_categories, default=places_categories[0], key="pills_places_main_cat")
@@ -29702,37 +29678,70 @@ if st.session_state.get("current_view") == "places":
 
 
 
-        # Filter suggested places by search and category
-        if selected_p_cat and "Saved Places" in selected_p_cat:
+        active_cat_id = next((cid for cid, icon, label in cat_defs if f"{icon} {label}" == selected_p_cat), "all")
+
+        # Discover dynamic, authentic places via NearbyPlacesService
+        if active_cat_id == "saved":
             suggested_places = saved_pool
-        elif places_search_query.strip():
+        else:
+            with st.spinner(f"🔍 Discovering verified places within {sel_radius_km:.0f} km of {ref_label}..."):
+                suggested_places = NearbyPlacesService.get_nearby_places(
+                    lat=ref_lat,
+                    lon=ref_lon,
+                    radius_km=sel_radius_km,
+                    category=active_cat_id,
+                    location_name=ref_label
+                )
+
+        # Optional Famous Places Highlight Banner if on Attractions/All
+        if active_cat_id in ["all", "attractions"] and not places_search_query.strip():
+            famous_showcase = NearbyPlacesService.get_famous_places(
+                lat=ref_lat,
+                lon=ref_lon,
+                radius_km=max(25.0, sel_radius_km),
+                location_name=ref_label
+            )
+            if famous_showcase:
+                top_famous = famous_showcase[:2]
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, rgba(30, 27, 75, 0.70) 0%, rgba(15, 23, 42, 0.90) 100%); border: 1.5px solid rgba(139, 92, 246, 0.45); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px;'>
+                    <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;'>
+                        <span style='font-size: 0.82rem; font-weight: 800; color: #c084fc; letter-spacing: 0.04em;'>
+                            🏛️ FAMOUS CULTURAL & HISTORICAL PLACES • VERIFIED LANDMARKS
+                        </span>
+                        <span style='font-size: 0.68rem; background: rgba(139, 92, 246, 0.25); color: #e9d5ff; padding: 2px 8px; border-radius: 999px; font-weight: 700;'>
+                            Cultural Heritage
+                        </span>
+                    </div>
+                    <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;'>
+                        {''.join([f"<div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; padding: 8px 12px;'><div style='font-weight: 800; font-size: 0.88rem; color: #f8fafc;'>{fp['icon']} {fp['name']}</div><div style='font-size: 0.72rem; color: #a78bfa; margin-top: 2px;'>{fp['category']} • {fp['locality_badge']}</div><div style='font-size: 0.73rem; color: #94a3b8; margin-top: 4px;'>{fp['description']}</div></div>" for fp in top_famous])}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Filter suggested places by search query
+        if places_search_query.strip():
             q_clean = places_search_query.strip().lower()
             suggested_places = [
                 p for p in suggested_places
                 if q_clean in p.get("name", "").lower()
                 or q_clean in p.get("address", "").lower()
                 or q_clean in p.get("category", "").lower()
+                or q_clean in p.get("locality", "").lower()
             ]
-        if selected_p_cat and selected_p_cat != places_categories[0]:
-            cat_match = next((cid for cid, icon, label in cat_defs if f"{icon} {label}" == selected_p_cat), "")
-            if cat_match and cat_match != "all":
-                suggested_places = [
-                    p for p in suggested_places
-                    if cat_match in p.get("category", "").lower() or any(cat_match in str(h).lower() for h in p.get("highlights", []))
-                ]
 
         if not suggested_places:
-
-
-
-            st.info(f"ℹ️ No points of interest or cultural highlights found within the immediate radius of {ref_label}. Select a different destination or explore nearby facilities.")
-
-
-
+            st.warning("⚠️ No verified places found within this radius. Try expanding your search radius.")
+            c_exp1, c_exp2 = st.columns(2)
+            with c_exp1:
+                if st.button("🔍 Expand to 25 km (Nearby Towns)", key="btn_exp_25_km", use_container_width=True):
+                    st.session_state.places_smart_radius_select = "25 km (Nearby Towns)"
+                    st.rerun()
+            with c_exp2:
+                if st.button("🌐 Expand to 50 km (Major Attractions)", key="btn_exp_50_km", use_container_width=True):
+                    st.session_state.places_smart_radius_select = "50 km (Major Attractions)"
+                    st.rerun()
         else:
-
-
-
             sug_cols = st.columns(3)
 
 
@@ -29795,7 +29804,7 @@ if st.session_state.get("current_view") == "places":
                     is_saved = any(s.get("name") == place["name"] for s in st.session_state.get("saved_locations", []))
                     save_lbl = f"⭐ {t('places.saved', default='Saved', lang=cur_l)}" if is_saved else f"⭐ {t('places.save', default='Save', lang=cur_l)}"
 
-                    col_pb1, col_pb2, col_pb3, col_pb4 = st.columns([1.2, 1.2, 1.0, 1.0])
+                    col_pb1, col_pb2, col_pb3, col_pb4, col_pb5 = st.columns([1.1, 1.1, 1.1, 0.9, 0.9])
                     with col_pb1:
                         if st.button(lbl_view_map, key=f"btn_view_sug_{place['place_id']}", use_container_width=True, type="primary"):
                             st.session_state.map_center_lat = place["latitude"]
@@ -29823,13 +29832,39 @@ if st.session_state.get("current_view") == "places":
                             st.toast(f"🧭 Calculating route to {place['name']}...", icon="🛣️")
                             st.rerun()
                     with col_pb3:
+                        if st.button("➕ Stop", key=f"btn_add_stop_sug_{place['place_id']}", use_container_width=True, help="Add as intermediate route stop"):
+                            c_o = coords_orig
+                            c_d = coords_dest
+                            if not c_o or not c_d:
+                                st.warning("⚠️ Starting Point & Destination Required: Please select both in Navigation first.")
+                                st.toast("⚠️ Starting Point & Destination required first!", icon="⚠️")
+                            else:
+                                if "intermediate_stops" not in st.session_state or not isinstance(st.session_state.intermediate_stops, list):
+                                    st.session_state.intermediate_stops = []
+                                is_already = any(s.get("name") == place["name"] or (abs(float(s.get("lat", 0)) - float(place["latitude"])) < 0.0005 and abs(float(s.get("lon", 0)) - float(place["longitude"])) < 0.0005) for s in st.session_state.intermediate_stops)
+                                if is_already:
+                                    st.info(f"ℹ️ '{place['name']}' is already in your stops list.")
+                                    st.toast("Already in stops list", icon="ℹ️")
+                                else:
+                                    st.session_state.intermediate_stops.append({
+                                        "name": place["name"],
+                                        "lat": float(place["latitude"]),
+                                        "lon": float(place["longitude"]),
+                                        "stop_number": len(st.session_state.intermediate_stops) + 1
+                                    })
+                                    st.session_state.cached_candidate_routes = None
+                                    st.session_state.switch_to_nav_tab = True
+                                    st.session_state.scroll_to_app_map = True
+                                    st.toast(f"➕ Added {place['name']} as stop!", icon="🛣️")
+                                    st.rerun()
+                    with col_pb4:
                         if st.button(lbl_info, key=f"btn_info_sug_{place['place_id']}", use_container_width=True):
                             st.session_state.active_info_target = {"type": "place", "data": place}
                             st.session_state.selected_marker_coords = (place["latitude"], place["longitude"])
                             st.session_state.selected_marker_data = place
                             st.session_state.show_info_modal = True
                             st.rerun()
-                    with col_pb4:
+                    with col_pb5:
                         if st.button(save_lbl, key=f"btn_save_sug_{place['place_id']}", use_container_width=True):
                             if "saved_locations" not in st.session_state:
                                 st.session_state.saved_locations = []
