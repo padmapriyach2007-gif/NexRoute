@@ -987,10 +987,12 @@ def build_aura_journey_cockpit_html(
                 box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.85), 0 8px 24px rgba(0, 0, 0, 0.5);
                 background: radial-gradient(circle at 50% 30%, #1e40af 0%, #030712 100%);
             }}
-            #aura-threejs-canvas {{
+            #aura-threejs-canvas, #aura-scenic-canvas {{
                 width: 100%;
                 height: 100%;
-                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
             }}
             .scene-hud-overlay {{
                 position: absolute;
@@ -1440,11 +1442,14 @@ def build_aura_journey_cockpit_html(
             </div>
         </div>
 
-        <!-- 3D Three.js Animated Scene Viewport with Aura -->
+        <!-- 3D Three.js Animated Scene Viewport & Resilient 2.5D Scenic Companion -->
         <div class='aura-3d-scene-container' id='aura-3d-scene-box'>
-            <canvas id='aura-threejs-canvas'></canvas>
+            <!-- Dedicated WebGL Canvas (Only used by Three.js when WebGL is active) -->
+            <canvas id='aura-threejs-canvas' style='display: none; width: 100%; height: 100%;'></canvas>
+            <!-- Dedicated 2.5D Scenic Canvas (Zero-blank-screen guaranteed fallback) -->
+            <canvas id='aura-scenic-canvas' style='display: block; width: 100%; height: 100%;'></canvas>
             <div class='scene-hud-overlay'>
-                <div class='scene-badge' id='hud-runtime-badge'><span class='pulse-dot' id='hud-pulse-dot'></span> <span id='hud-runtime-text'>✦ 3D COMPANION ACTIVE</span></div>
+                <div class='scene-badge' id='hud-runtime-badge'><span class='pulse-dot' id='hud-pulse-dot'></span> <span id='hud-runtime-text'>✦ 2.5D SCENIC RUNTIME ACTIVE</span></div>
                 <div class='scene-cam-badge' id='hud-cam-mode'>CAM: 3D FOLLOW DRONE</div>
                 <div class='scene-cam-badge' id='hud-env-mode'>ENV: DAY</div>
             </div>
@@ -2517,20 +2522,16 @@ def build_aura_journey_cockpit_html(
         // =========================================================================
         let threeEnv = null;
         let threeSceneStarted = false;
+        let threeAnimId = null;
         let fallback2DAnimId = null;
 
         function initAuraThreeScene() {{
             const canvas = document.getElementById('aura-threejs-canvas');
+            const scenicCanvas = document.getElementById('aura-scenic-canvas');
             const container = document.getElementById('aura-3d-scene-box');
             if (!canvas || !container || typeof THREE === 'undefined') return false;
 
             try {{
-                const testGl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                if (!testGl) {{
-                    console.warn("WebGL unsupported; keeping 2.5D scenic companion active.");
-                    return false;
-                }}
-
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x38bdf8);
                 scene.fog = new THREE.FogExp2(0xc7d2fe, 0.0075);
@@ -2539,11 +2540,25 @@ def build_aura_journey_cockpit_html(
                 const height = container.clientHeight > 0 ? container.clientHeight : 360;
 
                 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 800);
-                const renderer = new THREE.WebGLRenderer({{ canvas: canvas, antialias: true, alpha: true, powerPreference: "high-performance" }});
+                const renderer = new THREE.WebGLRenderer({{
+                    canvas: canvas,
+                    antialias: false,
+                    alpha: false,
+                    powerPreference: "default",
+                    preserveDrawingBuffer: true
+                }});
                 renderer.setSize(width, height);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                canvas.addEventListener('webglcontextlost', function(e) {{
+                    e.preventDefault();
+                    console.warn("WebGL context lost; switching to resilient 2.5D companion.");
+                    threeSceneStarted = false;
+                    if (threeAnimId) cancelAnimationFrame(threeAnimId);
+                    if (scenicCanvas) scenicCanvas.style.display = 'block';
+                    canvas.style.display = 'none';
+                    startScenicFallback2D();
+                }}, false);
 
                 // -----------------------------------------------------------------
                 // 1. ATMOSPHERIC NATURAL LIGHTING
@@ -3219,6 +3234,12 @@ def build_aura_journey_cockpit_html(
                     renderer.render(scene, camera);
                 }}
 
+                // Test initial render to verify WebGL execution before hiding 2.5D companion
+                renderer.render(scene, camera);
+
+                // Verification successful: promote to full 3D companion
+                canvas.style.display = 'block';
+                if (scenicCanvas) scenicCanvas.style.display = 'none';
                 if (fallback2DAnimId) {{
                     cancelAnimationFrame(fallback2DAnimId);
                     fallback2DAnimId = null;
@@ -3311,7 +3332,7 @@ def build_aura_journey_cockpit_html(
                 const hudBadge = document.getElementById('hud-runtime-badge');
                 const hudDot = document.getElementById('hud-pulse-dot');
                 const hudText = document.getElementById('hud-runtime-text');
-                if (hudText) hudText.innerText = '✦ 3D RUNTIME ACTIVE';
+                if (hudText) hudText.innerText = '✦ 3D COMPANION ACTIVE';
                 if (hudBadge) {{
                     hudBadge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
                     hudBadge.style.color = '#34d399';
@@ -3347,7 +3368,11 @@ def build_aura_journey_cockpit_html(
 
                 return true;
             }} catch(e) {{
-                console.warn("Three.js init error:", e);
+                console.warn("Three.js init error, falling back to 2.5D scenic companion:", e);
+                threeSceneStarted = false;
+                if (scenicCanvas) scenicCanvas.style.display = 'block';
+                canvas.style.display = 'none';
+                startScenicFallback2D();
                 return false;
             }}
         }}
@@ -3356,7 +3381,7 @@ def build_aura_journey_cockpit_html(
         // RESILIENT 2.5D ANIMATED SCENIC COMPANION ENGINE (ZERO-BLANK-SCREEN GUARANTEE)
         // =========================================================================
         function startScenicFallback2D() {{
-            const canvas = document.getElementById('aura-threejs-canvas');
+            const canvas = document.getElementById('aura-scenic-canvas');
             const container = document.getElementById('aura-3d-scene-box');
             if (!canvas || !container) return;
             const ctx = canvas.getContext('2d');

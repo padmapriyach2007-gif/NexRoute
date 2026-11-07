@@ -142,6 +142,14 @@ class AuraIntentClassifier:
         if any(w in norm_q for w in ["pack", "packing", "what should i pack", "packing list", "packing tips"]):
             return AuraIntentType.BASIC_TRAVEL
 
+        # 8C. Travel Safety & Emergency (Check before itinerary so safety queries take precedence)
+        safety_words = [
+            "safety", "car breaks down", "car breakdown", "roadside assistance", "what should i do if i get lost",
+            "emergency services", "emergency number", "sos", "safe travel", "safe", "secure"
+        ]
+        if any(w in norm_q for w in safety_words):
+            return AuraIntentType.TRAVEL_SAFETY
+
         # 9. Itinerary / Trip Planning
         plan_words = [
             "plan a two-day trip", "plan a 2-day trip", "plan a three-day trip", "plan a 3-day trip",
@@ -392,32 +400,27 @@ class AuraAssistantMixin:
                 }
             }
 
-        # Avoid tolls
-        if any(w in q for w in ["avoid tolls", "without tolls", "toll free", "no tolls"]):
+        # Route Preferences (Avoid tolls, highways, ferries - combined or individual)
+        has_pref = any(w in q for w in ["avoid", "without", "no", "skip", "disable"]) and any(w in q for w in ["toll", "highway", "ferr", "expressway"])
+        if has_pref:
+            act = {"type": "update_preferences"}
+            desc = []
+            if "toll" in q:
+                act["avoid_tolls"] = True
+                desc.append("Tolls")
+            if "highway" in q or "expressway" in q:
+                act["avoid_highways"] = True
+                desc.append("Highways")
+            if "ferr" in q:
+                act["avoid_ferries"] = True
+                desc.append("Ferries")
             return {
                 "badge": "🛣️ AURA • PREFERENCE UPDATED",
                 "response": (
-                    "I have turned **ON** your **Avoid Tolls** preference! 🚫💰\n\n"
-                    "Recalculating routes using non-tolled state highways and bypasses."
+                    f"I have turned **ON** your **Avoid {' & '.join(desc)}** preference! 🌲\n\n"
+                    f"Recalculating routes to strictly bypass {' & '.join(desc).lower()}."
                 ),
-                "action": {
-                    "type": "update_preferences",
-                    "avoid_tolls": True
-                }
-            }
-
-        # Avoid highways
-        if any(w in q for w in ["avoid highways", "without highways", "no highways"]):
-            return {
-                "badge": "🛣️ AURA • PREFERENCE UPDATED",
-                "response": (
-                    "I have turned **ON** your **Avoid Highways** preference! 🌲\n\n"
-                    "Recalculating routes using scenic arterial and state roads."
-                ),
-                "action": {
-                    "type": "update_preferences",
-                    "avoid_highways": True
-                }
+                "action": act
             }
 
         # Bicycle routes

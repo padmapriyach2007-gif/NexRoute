@@ -2558,10 +2558,17 @@ def render_travel_copilot_studio():
                 "language": st.session_state.get("app_language", "en")
             }
             if bot:
-                ans = bot.answer(p_q, context=chat_ctx)
+                try:
+                    ans = bot.answer(p_q, context=chat_ctx)
+                except Exception as err:
+                    logger.exception("Copilot prompt error: %s", err)
+                    ans = {
+                        "response": f"I encountered an issue connecting to the AI model, but your navigation tools and itinerary parameters remain active!\n\n*(Error: {err})*",
+                        "badge": "🤖 COPILOT OFFLINE"
+                    }
                 st.session_state.aura_chat_history.append({
                     "role": "assistant",
-                    "content": ans["response"],
+                    "content": ans.get("response", "Response unavailable."),
                     "badge": ans.get("badge", "NEXROUTE AI")
                 })
             st.rerun()
@@ -2598,10 +2605,17 @@ def render_travel_copilot_studio():
                 "language": st.session_state.get("app_language", "en")
             }
             if bot:
-                ans = bot.answer(u_text, context=chat_ctx)
+                try:
+                    ans = bot.answer(u_text, context=chat_ctx)
+                except Exception as err:
+                    logger.exception("Copilot chat send error: %s", err)
+                    ans = {
+                        "response": f"I encountered an issue connecting to the AI model, but your navigation tools and itinerary parameters remain active!\n\n*(Error: {err})*",
+                        "badge": "🤖 COPILOT OFFLINE"
+                    }
                 st.session_state.aura_chat_history.append({
                     "role": "assistant",
-                    "content": ans["response"],
+                    "content": ans.get("response", "Response unavailable."),
                     "badge": ans.get("badge", "NEXROUTE AI")
                 })
             st.rerun()

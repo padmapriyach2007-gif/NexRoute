@@ -6134,26 +6134,19 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
 
 
 
-        ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx)
-
-
+        try:
+            ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx)
+        except Exception as chat_err:
+            logger.exception("PathfinderChatbot execution error: %s", chat_err)
+            ans = {
+                "response": f"I encountered an issue processing your query through external services, but your live route and navigation tools remain fully operational!\n\n*(Error details: {chat_err})*",
+                "badge": "🤖 AURA TRAVEL COPILOT"
+            }
 
         st.session_state.aura_chat_history.append({
-
-
-
             "role": "assistant",
-
-
-
-            "content": ans["response"],
-
-
-
+            "content": ans.get("response", "Response unavailable."),
             "badge": ans.get("badge", "NEXROUTE AI")
-
-
-
         })
 
 
@@ -21185,7 +21178,7 @@ body {{
                 </div>
                 """, unsafe_allow_html=True)
                 for s_i, st_pt in enumerate(act_stops):
-                    c_st1, c_st2 = st.columns([5, 1])
+                    c_st1, c_st_up, c_st_dn, c_st2 = st.columns([4.2, 0.6, 0.6, 0.6])
                     with c_st1:
                         st.markdown(f"""
                         <div style='background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; padding: 7px 10px; margin-bottom: 4px;'>
@@ -21197,14 +21190,41 @@ body {{
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
+                    with c_st_up:
+                        if s_i > 0:
+                            if st.button("▲", key=f"btn_up_stop_{s_i}", help=f"Move Stop #{s_i + 1} earlier in journey", use_container_width=True):
+                                act_stops[s_i], act_stops[s_i - 1] = act_stops[s_i - 1], act_stops[s_i]
+                                st.session_state._prev_route_sig = None
+                                st.session_state._prev_endpoint_sig = None
+                                st.session_state.cached_candidate_routes = []
+                                st.toast(f"Moved {st_pt['name']} Up to Stop #{s_i}!", icon="⬆️")
+                                st.rerun()
+                    with c_st_dn:
+                        if s_i < len(act_stops) - 1:
+                            if st.button("▼", key=f"btn_dn_stop_{s_i}", help=f"Move Stop #{s_i + 1} later in journey", use_container_width=True):
+                                act_stops[s_i], act_stops[s_i + 1] = act_stops[s_i + 1], act_stops[s_i]
+                                st.session_state._prev_route_sig = None
+                                st.session_state._prev_endpoint_sig = None
+                                st.session_state.cached_candidate_routes = []
+                                st.toast(f"Moved {st_pt['name']} Down to Stop #{s_i + 2}!", icon="⬇️")
+                                st.rerun()
                     with c_st2:
-                        if st.button("✕", key=f"btn_remove_stop_{s_i}", help=f"Remove stop {st_pt['name']}", use_container_width=True):
+                        if st.button("🗑️", key=f"btn_remove_stop_{s_i}", help=f"Remove stop {st_pt['name']}", use_container_width=True):
                             st.session_state.intermediate_stops.pop(s_i)
                             st.session_state._prev_route_sig = None
                             st.session_state._prev_endpoint_sig = None
                             st.session_state.cached_candidate_routes = []
                             st.toast(f"Removed stop {st_pt['name']}", icon="🗑️")
                             st.rerun()
+
+                if len(act_stops) > 1:
+                    if st.button("🗑️ Clear All Intermediate Stops", key="btn_clear_all_stops", use_container_width=True):
+                        st.session_state.intermediate_stops = []
+                        st.session_state._prev_route_sig = None
+                        st.session_state._prev_endpoint_sig = None
+                        st.session_state.cached_candidate_routes = []
+                        st.toast("Cleared all intermediate stops", icon="🧹")
+                        st.rerun()
 
             # 🏁 Destination Card
 
