@@ -618,7 +618,12 @@ class CorridorPlacesEngine:
             elif category_key == "shopping":
                 item_cat = "Shopping"
 
-            photo = img_list[idx % len(img_list)]
+            from src.nearby_places_service import PlaceImageManager
+            photo, _ = PlaceImageManager.get_contextual_place_image(
+                name=item["name"],
+                cat_group=category_key,
+                subcategory=item_cat
+            )
 
             results.append({
                 "name": item["name"],
@@ -703,9 +708,15 @@ class CorridorPlacesEngine:
             detour_km = float(p.get("detour_km", round(max(0.2, dist_from_step_km * 0.35), 1)))
             detour_mins = max(1, round(detour_km / 35.0 * 60.0))
 
-            # Select high-resolution photo from category library
-            img_pool = CATEGORY_IMAGE_LIBRARY.get(group_key, CATEGORY_IMAGE_LIBRARY["other"])
-            photo_url = img_pool[len(formatted_places) % len(img_pool)]
+            # Select high-resolution, contextually accurate photo via PlaceImageManager
+            from src.nearby_places_service import PlaceImageManager
+            p_name = p.get("name", "Verified Transit Amenity")
+            photo_url, _ = PlaceImageManager.get_contextual_place_image(
+                name=p_name,
+                cat_group=group_key,
+                subcategory=display_cat,
+                tags=p.get("tags", {})
+            )
 
             # Test requirement: if category_filter is 'hotels', category.lower() MUST be 'hotels'
             final_cat_name = display_cat

@@ -290,7 +290,11 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
     lon = place.get("longitude", 0.0)
     gmaps_url = place.get("google_maps_url", f"https://www.google.com/maps/search/?api=1&query={lat},{lon}")
     dir_url = place.get("directions_url", f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}")
-    photo_url = place.get("photo_url") or "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=600&auto=format&fit=crop&q=80"
+    from src.nearby_places_service import PlaceImageManager, PlaceCategory
+    cat_group = place.get("category_group", PlaceCategory.ALL)
+    fallback_photo = PlaceImageManager.get_category_fallback(cat_group)
+    photo_url = place.get("photo_url") or fallback_photo
+    photo_badge = place.get("photo_badge") or f"📸 {cat}"
 
     try:
         from src.i18n import t, get_current_language
@@ -343,11 +347,11 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
 
     card_html = f"""<div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%); border: 1.5px solid rgba(56, 189, 248, 0.4); border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;'>
 <div style='position: relative; width: 100%; height: 160px; border-radius: 10px; overflow: hidden; margin-bottom: 12px; background: #0f172a;'>
-<img src='{photo_url}' alt='{name}' style='width: 100%; height: 100%; object-fit: cover;' onerror="this.src='https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=600&auto=format&fit=crop&q=80';" />
+<img src='{photo_url}' alt='{name}' style='width: 100%; height: 100%; object-fit: cover; display: block;' onerror="this.onerror=null; this.src='{fallback_photo}';" />
 <div style='position: absolute; top: 10px; right: 10px;'>
 <span style='background: {tag_col}; color: #ffffff; padding: 4px 10px; border-radius: 12px; font-size: 0.68rem; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.5);'>{tag}</span>
 </div>
-<div style='position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); padding: 3px 8px; border-radius: 6px; font-size: 0.70rem; color: #38bdf8; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.3);'>📸 {cat}</div>
+<div style='position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(6px); padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; color: #38bdf8; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.4);'>{photo_badge}</div>
 </div>
 <div style='display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;'>
 <div>

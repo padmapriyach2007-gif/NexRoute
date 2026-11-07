@@ -976,10 +976,10 @@ def _render_creative_cockpit_vehicle_radar_svg(
     """
     if mode_id == "DRIVE_ECO":
         mode_pill = "🌿 ECO EFFICIENCY RADAR"
-        radar_label = "LAMINAR CRUISE HORIZON"
-        left_label = "💧 0.0 L COASTING"
-        right_label = "📉 -42% AERO DRAG"
-        speed_tag = f"ECO {rec_speed:g} KM/H"
+        radar_label = f"RECOMMENDED: {max(45, int(rec_speed - 5))}–{min(80, int(rec_speed + 5))} KM/H"
+        left_label = f"⚡ SPEED: {int(rec_speed)} KM/H"
+        right_label = "⛽ SAVING FUEL"
+        speed_tag = "EFFICIENCY: 98%"
     elif mode_id == "DRIVE_FASTEST":
         mode_pill = "🏎️ EXPRESS VELOCITY SPRINT"
         radar_label = "EXPRESSWAY RADAR CLEARANCE"
@@ -1082,6 +1082,9 @@ def _render_creative_cockpit_vehicle_radar_svg(
                 </g>
             </svg>
         </div>
+        <div style='text-align: center; font-size: 0.74rem; color: {accent}; font-weight: 700; margin-top: 6px; letter-spacing: 0.02em;'>
+            {"🌿 Drive smoothly, save fuel, and reduce unnecessary stops." if mode_id == "DRIVE_ECO" else "🛡️ Defensive spacing active: Maintaining optimal following distance." if mode_id == "DRIVE_SAFEST" else "🏎️ Balanced speed corridor: Smooth momentum across thoroughfares."}
+        </div>
     </div>
     """
 
@@ -1116,47 +1119,47 @@ def _render_dynamic_mode_telemetry_hud(
 
     # Mode-specific telemetry parameters
     if mode_id == "DRIVE_ECO":
-        g1_title = "⚡ " + t("telemetry.eco.rpm_title", default="ENGINE SPEED & LOAD", lang=curr_lang)
-        g1_val = telemetry.get("rpm", "1,780 RPM")
-        g1_badge = t("telemetry.eco.rpm_badge", default="BSFC PEAK (λ=1.0)", lang=curr_lang)
-        g1_sub = t("telemetry.eco.rpm_sub", default="Optimal thermal efficiency band (1,600–1,950 RPM). Cuts pumping losses by 28%.", lang=curr_lang)
-        g1_pct = 38
-        g1_tags = ["🌿 Peak BSFC Band", "⚙️ Low Friction", "📉 -28% Pumping Loss"]
+        g1_title = "⚡ " + t("telemetry.eco.rpm_title", default="BEST DRIVING SPEED", lang=curr_lang)
+        g1_val = f"{speed_avg:g} km/h"
+        g1_badge = t("telemetry.eco.rpm_badge", default="RECOMMENDED (55-65 KM/H)", lang=curr_lang)
+        g1_sub = t("telemetry.eco.rpm_sub", default="Optimal cruising speed for engine efficiency. Keeps fuel consumption low and steady.", lang=curr_lang)
+        g1_pct = 75
+        g1_tags = ["⚡ Best Speed", "⚙️ Smooth Pacing", "📉 Low Engine Strain"]
 
-        g2_title = "💧 " + t("telemetry.eco.flow_title", default="DYNAMIC FUEL FLOW", lang=curr_lang)
+        g2_title = "💧 " + t("telemetry.eco.flow_title", default="FUEL EFFICIENCY", lang=curr_lang)
         g2_val = telemetry.get("instantaneous_flow", f"{round(fuel_l / max(0.1, distance_km) * 100, 1)} L/100km")
-        g2_badge = t("telemetry.eco.flow_badge", default="DFCO COASTING ACTIVE", lang=curr_lang)
-        g2_sub = t("telemetry.eco.flow_sub", default=f"Overrun fuel cut-off active during coasting. Saves {fuel_saved:.2f} L fuel vs highway pace.", lang=curr_lang, saved=f"{fuel_saved:.2f}")
-        g2_pct = 85
-        g2_tags = ["💧 DFCO Coasting", "⛽ Saves Fuel", "🍃 Clean Burn"]
+        g2_badge = t("telemetry.eco.flow_badge", default=f"SAVES {fuel_saved:.2f} L", lang=curr_lang, saved=f"{fuel_saved:.2f}")
+        g2_sub = t("telemetry.eco.flow_sub", default=f"Smooth throttle saves ~{fuel_saved:.2f} L fuel compared to high-speed highway driving.", lang=curr_lang, saved=f"{fuel_saved:.2f}")
+        g2_pct = 88
+        g2_tags = ["💧 Fuel Efficiency", "⛽ Saves Fuel", "🍃 Clean Burn"]
 
-        g3_title = "💨 " + t("telemetry.eco.drag_title", default="AERODYNAMIC DRAG FORCE", lang=curr_lang)
+        g3_title = "💨 " + t("telemetry.eco.drag_title", default="AIR RESISTANCE", lang=curr_lang)
         g3_val = telemetry.get("aero_drag_force", "178 N")
-        g3_badge = t("telemetry.eco.drag_badge", default="LAMINAR FLOW (0.31 Cd·A)", lang=curr_lang)
-        g3_sub = t("telemetry.eco.drag_sub", default="Governing at ~60 km/h cuts quadratic aero drag (F ∝ v²) by 42% vs 90 km/h.", lang=curr_lang)
+        g3_badge = t("telemetry.eco.drag_badge", default="LOW DRAG ZONE", lang=curr_lang)
+        g3_sub = t("telemetry.eco.drag_sub", default="Cruising under 65 km/h cuts aerodynamic air resistance by 42% vs fast highway pacing.", lang=curr_lang)
         g3_pct = 32
-        g3_tags = ["💨 0.31 Cd·A Aero", "📉 -42% Drag Force", "🌊 Laminar Wake"]
+        g3_tags = ["💨 Low Air Drag", "📉 -42% Resistance", "🌊 Smooth Airflow"]
 
-        g4_title = "💰 " + t("telemetry.eco.ledger_title", default="TRIP FINANCIAL LEDGER", lang=curr_lang)
-        g4_val = f"₹{round(fuel_l * 102)}"
-        g4_badge = t("telemetry.eco.ledger_badge", default=f"SAVES ₹{round(fuel_saved * 102)}", lang=curr_lang, amount=round(fuel_saved * 102))
-        g4_sub = t("telemetry.eco.ledger_sub", default=f"Direct fuel savings. Total trip CO₂: {round(fuel_l * 2.31, 2)} kg (Offset: 1.8 mature trees).", lang=curr_lang, co2=round(fuel_l * 2.31, 2))
-        g4_pct = 92
-        g4_tags = ["💰 Max Cash Saved", "🌱 -CO₂ Offset", "🌳 1.8 Trees Offset"]
+        g4_title = "💰 " + t("telemetry.eco.ledger_title", default="TRIP SAVINGS", lang=curr_lang)
+        g4_val = f"₹{round(fuel_saved * 102)} Saved"
+        g4_badge = t("telemetry.eco.ledger_badge", default=f"{co2_saved:.1f} kg CO₂ REDUCED", lang=curr_lang, amount=round(fuel_saved * 102))
+        g4_sub = t("telemetry.eco.ledger_sub", default=f"Direct fuel savings. Cuts {co2_saved:.1f} kg CO₂ emissions on this trip.", lang=curr_lang, co2=round(fuel_l * 2.31, 2))
+        g4_pct = 95
+        g4_tags = ["💰 Money Saved", "🌱 CO₂ Reduced", "🌳 Eco Friendly"]
 
         strategy_items = [
-            (t("strategy.eco.throttle_title", default="🌿 Linear Throttle Dampening", lang=curr_lang),
-             t("strategy.eco.throttle_desc", default="Progressive accelerator mapping filters out sudden pedal twitching, preventing excess fuel dumping.", lang=curr_lang),
-             ["🌿 Smooth Throttle", "⛽ Zero Fuel Dump", "📈 Steady RPM"], "● LIVE ACTIVE"),
-            (t("strategy.eco.overdrive_title", default="⚙️ Overdrive Transmission Lockup", lang=curr_lang),
-             t("strategy.eco.overdrive_desc", default="Locks in 5th/6th overdrive gear between 52–62 km/h, reducing crankshaft mechanical drag.", lang=curr_lang),
-             ["⚙️ 5th/6th Lock", "📉 -28% Friction", "🔇 Quiet Cabin"], "● OPTIMAL"),
-            (t("strategy.eco.hvac_title", default="❄️ Thermal HVAC Optimization", lang=curr_lang),
-             t("strategy.eco.hvac_desc", default="Intelligently duty-cycles the AC compressor clutch, reducing engine parasitic accessory draw.", lang=curr_lang),
-             ["❄️ Smart Duty Cycle", "⚡ -0.25 L/100km", "🌬️ Cabin Comfort"], "● ACTIVE"),
-            (t("strategy.eco.coasting_title", default="🛑 Anticipatory Coasting Horizon", lang=curr_lang),
-             t("strategy.eco.coasting_desc", default="Anticipates deceleration points 200m ahead, maximizing coasting with 0.0 L/h instantaneous fuel flow.", lang=curr_lang),
-             ["🛑 200m Horizon Scan", "💧 0.0 L/h Glide", "🔄 Inertia Capture"], "● READY")
+            (t("strategy.eco.throttle_title", default="🌿 Best Driving Speed", lang=curr_lang),
+             t("strategy.eco.throttle_desc", default="Maintains a steady 55–65 km/h cruising pace where your engine burns the least fuel.", lang=curr_lang),
+             ["🌿 Steady Speed", "⛽ Low Consumption", "📈 Smooth Flow"], "● ACTIVE"),
+            (t("strategy.eco.overdrive_title", default="⚙️ Fewer Stops & Smooth Gearing", lang=curr_lang),
+             t("strategy.eco.overdrive_desc", default="Locks into top cruising gear, minimizing engine strain and reducing unnecessary stops.", lang=curr_lang),
+             ["⚙️ Smooth Gear", "📉 Fewer Stops", "🔇 Quiet Cabin"], "● OPTIMAL"),
+            (t("strategy.eco.hvac_title", default="❄️ Smart Climate Control", lang=curr_lang),
+             t("strategy.eco.hvac_desc", default="Maintains cabin comfort while automatically minimizing power drain on the engine.", lang=curr_lang),
+             ["❄️ Smart Cooling", "⚡ Lower Fuel Draw", "🌬️ Cabin Comfort"], "● ACTIVE"),
+            (t("strategy.eco.coasting_title", default="🛑 Safety Distance & Coasting", lang=curr_lang),
+             t("strategy.eco.coasting_desc", default="Anticipates stops ahead and maintains a safe distance, gliding smoothly to save fuel.", lang=curr_lang),
+             ["🛑 Safe Distance", "💧 Smooth Coast", "🔄 Energy Saved"], "● READY")
         ]
 
     elif mode_id == "DRIVE_FASTEST":
@@ -1517,22 +1520,52 @@ def render_cockpit_mode_functionality_hud(
         fuel_saved = mode_info.get("fuel_saved_l") or round(fuel_l * (savings_pct / 100.0) if savings_pct > 0 else fuel_l * 0.18, 2)
         co2_saved = mode_info.get("co2_saved_kg") or round(fuel_saved * 2.31, 2)
         features_list = [
-            (t('cockpit.eco_feat1_title'), t('cockpit.eco_feat1_desc', saved=fuel_saved, pct=savings_pct), "#34d399"),
-            (t('cockpit.eco_feat2_title'), t('cockpit.eco_feat2_desc', co2=co2_saved), "#10b981"),
-            (t('cockpit.eco_feat3_title'), t('cockpit.eco_feat3_desc'), "#38bdf8"),
-            (t('cockpit.eco_feat4_title'), t('cockpit.eco_feat4_desc'), "#fbbf24")
+            ("⛽ Fuel Saved", f"Saves ~{fuel_saved:.2f} L vs fast highway driving", "#34d399"),
+            ("🌱 CO₂ Reduced", f"Cuts ~{co2_saved:.2f} kg greenhouse emissions", "#10b981"),
+            ("⚡ Best Speed", "Recommended cruising pace: 55–65 km/h", "#38bdf8"),
+            ("💰 Trip Savings", f"Saves ~₹{round(fuel_saved * 102)} on fuel cost", "#fbbf24")
         ]
         action_label = f"🌱 {t('cockpit.eco_action')}"
         extra_hud = f"""
-        <div style='background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;'>
-            <div style='display: flex; align-items: center; gap: 10px;'>
-                <span style='font-size: 1.5rem;'>🌱</span>
-                <div>
-                    <div style='font-size: 0.82rem; font-weight: 800; color: #34d399;'>{t('cockpit.eco_score_banner', default=f"Eco-Score: 98 / 100 • Saves {fuel_saved} L Fuel & Reduces {co2_saved} kg CO₂", lang=curr_lang, fuel=fuel_saved, co2=co2_saved)}</div>
-                    <div style='font-size: 0.72rem; color: #94a3b8;'>{t('cockpit.eco_score_sub', default="Steady speed profiling minimizes transmission shifts, cuts brake thermal wear & eliminates stop-and-go idling spikes.", lang=curr_lang)}</div>
+        <div style='margin-top: 10px;'>
+            <!-- 4 Simple Beginner-Friendly Summary Cards -->
+            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 8px;'>
+                <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(52, 211, 153, 0.4); border-radius: 10px; padding: 10px; text-align: center;'>
+                    <div style='font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;'>⛽ FUEL SAVED</div>
+                    <div style='font-size: 1.35rem; font-weight: 900; color: #34d399; margin-top: 2px;'>{fuel_saved:.2f} L</div>
+                    <div style='font-size: 0.62rem; color: #cbd5e1; margin-top: 2px;'>~{savings_pct:.0f}% less fuel</div>
+                </div>
+                <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 10px; text-align: center;'>
+                    <div style='font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;'>🌱 CO₂ REDUCED</div>
+                    <div style='font-size: 1.35rem; font-weight: 900; color: #10b981; margin-top: 2px;'>{co2_saved:.1f} kg</div>
+                    <div style='font-size: 0.62rem; color: #cbd5e1; margin-top: 2px;'>Cleaner air</div>
+                </div>
+                <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 10px; text-align: center;'>
+                    <div style='font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;'>⚡ SMOOTHER DRIVE</div>
+                    <div style='font-size: 1.35rem; font-weight: 900; color: #38bdf8; margin-top: 2px;'>98%</div>
+                    <div style='font-size: 0.62rem; color: #cbd5e1; margin-top: 2px;'>Fewer stops</div>
+                </div>
+                <div style='background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(251, 191, 36, 0.4); border-radius: 10px; padding: 10px; text-align: center;'>
+                    <div style='font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;'>💰 TRIP SAVINGS</div>
+                    <div style='font-size: 1.35rem; font-weight: 900; color: #fbbf24; margin-top: 2px;'>₹{round(fuel_saved * 102)}</div>
+                    <div style='font-size: 0.62rem; color: #cbd5e1; margin-top: 2px;'>Money saved</div>
                 </div>
             </div>
-            <span style='background: #34d399; color: #0f172a; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 9999px;'>{t('cockpit.eco_optimized_badge', default="ECO OPTIMIZED", lang=curr_lang)}</span>
+            <div style='font-size: 0.66rem; color: #64748b; font-style: italic; margin-bottom: 8px; text-align: right;'>
+                *Estimates based on route distance, road profile and standard vehicle efficiency models.
+            </div>
+            <!-- Expandable Technical Details Section -->
+            <details style='background: rgba(10, 15, 28, 0.85); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 8px 12px; cursor: pointer;'>
+                <summary style='font-size: 0.75rem; font-weight: 800; color: #38bdf8; outline: none; user-select: none;'>
+                    ⚙️ View Technical Details (Engineering Calculations & Aerodynamics)
+                </summary>
+                <div style='font-size: 0.72rem; color: #cbd5e1; line-height: 1.5; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08);'>
+                    <div><b>Engine BSFC Band:</b> 1,600–1,950 RPM (Brake-specific fuel consumption peak, λ=1.0)</div>
+                    <div><b>Aerodynamic Drag Force:</b> Reduced by 42% via quadratic velocity relation (F_drag ∝ v²) when cruising at 60 km/h vs 90 km/h</div>
+                    <div><b>Deceleration Fuel Cut-Off (DFCO):</b> Active during coasting phases for 0.0 L/h instantaneous fuel flow</div>
+                    <div><b>Mechanical Transmission Lockup:</b> Overdrive gear engagement between 52–62 km/h minimizes crankshaft friction loss</div>
+                </div>
+            </details>
         </div>
         """
 

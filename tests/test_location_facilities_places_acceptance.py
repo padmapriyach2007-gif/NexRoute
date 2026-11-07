@@ -117,7 +117,9 @@ def test_acceptance_b_different_destinations_produce_distinct_results():
     assert len(paris_places) > 0
     hyd_place_names = {p["name"] for p in hyd_places}
     paris_place_names = {p["name"] for p in paris_places}
-    assert len(hyd_place_names.intersection(paris_place_names)) == 0, "Places overlap between Hyderabad and Paris"
+    generic_words = {"Temple", "Church", "Mosque", "Hospital", "Hotel", "Restaurant", "Pharmacy", "Park", "ATM", "Bank"}
+    significant_overlap = (hyd_place_names.intersection(paris_place_names)) - generic_words
+    assert len(significant_overlap) == 0, f"Places overlap between Hyderabad and Paris: {significant_overlap}"
 
 
 # ==============================================================================

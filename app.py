@@ -11123,7 +11123,25 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
         """
 
     # Creative Visual Storybook Hologram Deck (Replaces heavy text with high-tech interactive visual cards)
-    lore_snippet = (chapter.historical_lore[:140] + '...') if len(chapter.historical_lore) > 140 else chapter.historical_lore
+    def _to_1_2_sentences(text: str, max_chars: int = 150) -> str:
+        if not text:
+            return ""
+        sents = [s.strip() for s in text.replace("\n", " ").split(". ") if s.strip()]
+        if len(sents) >= 2:
+            joined = sents[0] + ". " + sents[1] + ("." if not sents[1].endswith(".") else "")
+        elif len(sents) == 1:
+            joined = sents[0] + ("." if not sents[0].endswith(".") else "")
+        else:
+            joined = text
+        if len(joined) > max_chars:
+            return joined[:max_chars].rstrip() + "..."
+        return joined
+
+    culture_summary = _to_1_2_sentences(getattr(chapter, "cultural_heritage", ""))
+    nature_summary = _to_1_2_sentences(getattr(chapter, "geography_nature", ""))
+    photo_summary = _to_1_2_sentences(getattr(chapter, "scenic_highlight", "Panoramic vistas of rural agricultural waterways."))
+    food_summary = _to_1_2_sentences(getattr(chapter, "culinary_highlight", "Authentic regional highway tiffins, fresh chai, and sweets."))
+
     st.markdown(f"""
     <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%); border: 1.5px solid rgba(56, 189, 248, 0.50); border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);'>
         {banner_img_html}
@@ -11146,93 +11164,81 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             </span>
         </div>
 
-        <!-- 4 Visual Bento Story Cards -->
+        <!-- Discover Along the Way (4 Compact Bento Story Cards in 2x2 Grid) -->
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 12px;'>
             <!-- Cultural Heritage -->
             <div style='background: linear-gradient(135deg, rgba(30, 27, 75, 0.50) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #c4b5fd;'>🎭 CULTURAL HERITAGE</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #c4b5fd;'>🎭 CULTURE</span>
                     <span style='font-size: 0.62rem; background: rgba(167, 139, 250, 0.2); color: #a78bfa; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Living Arts</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.42;'>
-                    {chapter.cultural_heritage}
+                    {culture_summary}
                 </div>
             </div>
 
             <!-- Geography & Nature -->
             <div style='background: linear-gradient(135deg, rgba(6, 78, 59, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #6ee7b7;'>🌿 GEOGRAPHY & NATURE</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #6ee7b7;'>🌿 NATURE</span>
                     <span style='font-size: 0.62rem; background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Landscape</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.42;'>
-                    {chapter.geography_nature}
+                    {nature_summary}
                 </div>
             </div>
 
             <!-- Scenic Photo Spot -->
             <div style='background: linear-gradient(135deg, rgba(120, 53, 15, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(251, 191, 36, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #fde68a;'>📸 SCENIC PHOTO SPOT</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #fde68a;'>📸 PHOTO SPOT</span>
                     <span style='font-size: 0.62rem; background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Visual Spot</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #fef3c7; line-height: 1.42;'>
-                    {getattr(chapter, "scenic_highlight", "Panoramic vistas of rural agricultural waterways.")}
+                    {photo_summary}
                 </div>
             </div>
 
             <!-- Local Culinary Specialty -->
             <div style='background: linear-gradient(135deg, rgba(131, 24, 67, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(244, 114, 182, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #fbcfe8;'>🍲 LOCAL CULINARY SPECIALTY</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #fbcfe8;'>🍲 LOCAL FOOD</span>
                     <span style='font-size: 0.62rem; background: rgba(244, 114, 182, 0.2); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Regional Food</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #fce7f3; line-height: 1.42;'>
-                    {getattr(chapter, "culinary_highlight", "Authentic regional highway tiffins, fresh chai, and sweets.")}
+                    {food_summary}
                 </div>
             </div>
         </div>
 
-        <!-- 🏛️ Historical Lore Interactive Capsule (Progressive Disclosure) -->
-        <div style='background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.30); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;'>
-            <div style='display: flex; align-items: center; justify-content: space-between;'>
-                <span style='font-size: 0.75rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 6px;'>
-                    🏛️ Historical Lore & Chronicle
-                </span>
-                <span style='font-size: 0.62rem; color: #94a3b8; font-weight: 700;'>Heritage Records</span>
+        <!-- 📖 Expandable Story Behind This Place (Full Lore, Dynasty Archives, & Travel Intel) -->
+        <details style='margin-top: 8px; cursor: pointer; background: rgba(10, 15, 28, 0.75); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 10px 14px;'>
+            <summary style='font-size: 0.80rem; font-weight: 800; color: #38bdf8; outline: none; user-select: none;'>
+                📖 Explore the Story Behind This Place
+            </summary>
+            <div style='margin-top: 10px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.55; padding: 10px 12px; background: rgba(15, 23, 42, 0.90); border-radius: 8px; border-left: 3px solid #38bdf8;'>
+                <div style='font-weight: 800; color: #f8fafc; margin-bottom: 4px;'>🏛️ Historical Lore & Heritage Records</div>
+                {chapter.historical_lore}
             </div>
-            <div style='font-size: 0.82rem; color: #cbd5e1; margin-top: 4px; line-height: 1.45;'>
-                {lore_snippet}
-            </div>
-            <details style='margin-top: 6px; cursor: pointer;'>
-                <summary style='font-size: 0.74rem; font-weight: 700; color: #38bdf8; outline: none; user-select: none;'>
-                    📜 Tap to read full historical lore & dynasty archives...
-                </summary>
-                <div style='margin-top: 8px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.55; padding: 10px 12px; background: rgba(10, 15, 28, 0.85); border-radius: 8px; border-left: 3px solid #38bdf8;'>
-                    {chapter.historical_lore}
+            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; margin-top: 10px;'>
+                <div style='background: rgba(30, 27, 75, 0.55); border-left: 3px solid #818cf8; border-radius: 8px; padding: 7px 12px;'>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;'>💡 AI Route Intelligence</span>
+                    <div style='font-size: 0.78rem; color: #e0e7ff; margin-top: 2px;'>{getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow.")}</div>
                 </div>
-            </details>
-        </div>
-
-        <!-- 💡 Tactical Travel Directive & Sensory Bar -->
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px;'>
-            <div style='background: rgba(30, 27, 75, 0.55); border-left: 3px solid #818cf8; border-radius: 8px; padding: 7px 12px;'>
-                <span style='font-size: 0.68rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;'>💡 AI Route Intelligence</span>
-                <div style='font-size: 0.78rem; color: #e0e7ff; margin-top: 2px;'>{getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow.")}</div>
+                <div style='background: rgba(49, 10, 100, 0.45); border-left: 3px solid #c084fc; border-radius: 8px; padding: 7px 12px;'>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #e9d5ff; text-transform: uppercase;'>💎 Hidden Gem</span>
+                    <div style='font-size: 0.78rem; color: #f3e8ff; margin-top: 2px;'>{getattr(chapter, "hidden_gem", "Historic wayside monument.")}</div>
+                </div>
+                <div style='background: rgba(8, 47, 73, 0.55); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 7px 12px;'>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #7dd3fc; text-transform: uppercase;'>👀 What to look for</span>
+                    <div style='font-size: 0.78rem; color: #e0f2fe; margin-top: 2px;'>{chapter.what_to_look_for}</div>
+                </div>
+                <div style='background: rgba(6, 78, 59, 0.45); border-left: 3px solid #34d399; border-radius: 8px; padding: 7px 12px;'>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #6ee7b7; text-transform: uppercase;'>🧭 Travel Tip</span>
+                    <div style='font-size: 0.78rem; color: #ecfdf5; margin-top: 2px;'>{chapter.travel_tip}</div>
+                </div>
             </div>
-            <div style='background: rgba(49, 10, 100, 0.45); border-left: 3px solid #c084fc; border-radius: 8px; padding: 7px 12px;'>
-                <span style='font-size: 0.68rem; font-weight: 800; color: #e9d5ff; text-transform: uppercase;'>💎 Hidden Gem</span>
-                <div style='font-size: 0.78rem; color: #f3e8ff; margin-top: 2px;'>{getattr(chapter, "hidden_gem", "Historic wayside monument.")}</div>
-            </div>
-            <div style='background: rgba(8, 47, 73, 0.55); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 7px 12px;'>
-                <span style='font-size: 0.68rem; font-weight: 800; color: #7dd3fc; text-transform: uppercase;'>👀 What to look for</span>
-                <div style='font-size: 0.78rem; color: #e0f2fe; margin-top: 2px;'>{chapter.what_to_look_for}</div>
-            </div>
-            <div style='background: rgba(6, 78, 59, 0.45); border-left: 3px solid #34d399; border-radius: 8px; padding: 7px 12px;'>
-                <span style='font-size: 0.68rem; font-weight: 800; color: #6ee7b7; text-transform: uppercase;'>🧭 Travel Tip</span>
-                <div style='font-size: 0.78rem; color: #ecfdf5; margin-top: 2px;'>{chapter.travel_tip}</div>
-            </div>
-        </div>
+        </details>
     </div>
     """, unsafe_allow_html=True)
 
@@ -20275,9 +20281,14 @@ body {{
             st.markdown(f"""
             <div style='background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(13, 31, 60, 0.94) 100%); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 14px; padding: 12px 14px 8px 14px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.2); margin-bottom: 10px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between;'>
-                    <span style='font-size: 0.90rem; font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 6px;'>
-                        🧭 {lbl_endpoints}
-                    </span>
+                    <div>
+                        <span style='font-size: 0.90rem; font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 6px;'>
+                            🧭 {lbl_endpoints}
+                        </span>
+                        <div style='font-size: 0.72rem; color: #94a3b8; margin-top: 2px;'>
+                            Choose where to start and where to go.
+                        </div>
+                    </div>
                     <span style='font-size: 0.68rem; font-weight: 800; background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 2px 8px; border-radius: 12px;'>
                         {lbl_hud}
                     </span>
@@ -21767,6 +21778,7 @@ body {{
             # ➕ Highly Visible "ADD A STOP TO YOUR ROUTE" Section (Requirement 6)
             st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
             with st.expander("➕ ADD A STOP TO YOUR ROUTE", expanded=False):
+                st.markdown("<div style='font-size: 0.74rem; color: #94a3b8; margin-bottom: 8px;'>✨ <i>Add places to visit along your journey.</i></div>", unsafe_allow_html=True)
                 if not coords_orig or not coords_dest:
                     st.info("⚠️ Please select your starting location and destination before adding stops.")
                 else:
@@ -27285,7 +27297,7 @@ body {{
                             {t('companion.banner_title', default='Aura • 3D Virtual Companion Journey Experience', lang=st.session_state.get('app_language', 'en'))}
                         </div>
                         <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px;">
-                            {t('companion.banner_sub', default='Complete 19-stage interactive guidance from departure to destination with 3D robot animations, audio chimes, and maneuvers', lang=st.session_state.get('app_language', 'en'))}
+                            {t('companion.banner_sub', default='Explore your route with interactive guidance • 19-stage 3D robot companion with real-time maneuvers and visual milestones', lang=st.session_state.get('app_language', 'en'))}
                         </div>
 
 
@@ -29463,7 +29475,7 @@ if st.session_state.get("current_view") == "places":
 
         cur_l = st.session_state.get("app_language", "en")
         hdr_places_nearby = t("places.nearby_facilities_header", default="PLACES & NEARBY FACILITIES", lang=cur_l)
-        hdr_places_sub = t("places.header_sub", default="Discover genuine verified places, healthcare, facilities, and famous attractions around your location.", lang=cur_l)
+        hdr_places_sub = t("places.header_sub", default="Find hospitals, fuel stations, restaurants and more around your selected location.", lang=cur_l)
         lbl_verified_pois = t("places.verified_pois", default="VERIFIED OSM DATA", lang=cur_l)
         lbl_categories = t("places.categories_label", default="Categories", lang=cur_l)
 
@@ -29910,7 +29922,7 @@ with st.popover(" ", help="Open AURA • Adaptive User Route Assistant"):
                     <span style="color: #00f0ff; font-size: 0.85rem;">✦</span> AURA • AI Guide
                 </div>
                 <div style="font-size: 0.66rem; color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
-                    ADAPTIVE ROUTE & TRAVEL ASSISTANT
+                    Ask questions, get travel advice and explore places using AI
                 </div>
             </div>
         </div>
