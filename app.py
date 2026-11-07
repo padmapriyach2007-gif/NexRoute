@@ -29635,6 +29635,9 @@ if st.session_state.get("current_view") == "places":
     </span>
     </div>""", unsafe_allow_html=True)
 
+        def _set_places_smart_radius(val: str):
+            st.session_state["places_smart_radius_select"] = val
+
         # Smart Search Radius & Search Input
         col_sb1, col_sb2 = st.columns([1.6, 2.4])
         with col_sb1:
@@ -29744,13 +29747,21 @@ if st.session_state.get("current_view") == "places":
             st.warning("⚠️ No verified places found within this radius. Try expanding your search radius.")
             c_exp1, c_exp2 = st.columns(2)
             with c_exp1:
-                if st.button("🔍 Expand to 25 km (Nearby Towns)", key="btn_exp_25_km", use_container_width=True):
-                    st.session_state.places_smart_radius_select = "25 km (Nearby Towns)"
-                    st.rerun()
+                st.button(
+                    "🔍 Expand to 25 km (Nearby Towns)",
+                    key="btn_exp_25_km",
+                    on_click=_set_places_smart_radius,
+                    args=("25 km (Nearby Towns)",),
+                    use_container_width=True
+                )
             with c_exp2:
-                if st.button("🌐 Expand to 50 km (Major Attractions)", key="btn_exp_50_km", use_container_width=True):
-                    st.session_state.places_smart_radius_select = "50 km (Major Attractions)"
-                    st.rerun()
+                st.button(
+                    "🌐 Expand to 50 km (Major Attractions)",
+                    key="btn_exp_50_km",
+                    on_click=_set_places_smart_radius,
+                    args=("50 km (Major Attractions)",),
+                    use_container_width=True
+                )
         else:
             sug_cols = st.columns(3)
 
