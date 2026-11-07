@@ -1444,7 +1444,7 @@ def build_aura_journey_cockpit_html(
         <div class='aura-3d-scene-container' id='aura-3d-scene-box'>
             <canvas id='aura-threejs-canvas'></canvas>
             <div class='scene-hud-overlay'>
-                <div class='scene-badge'><span class='pulse-dot'></span> 3D RUNTIME ACTIVE</div>
+                <div class='scene-badge' id='hud-runtime-badge'><span class='pulse-dot' id='hud-pulse-dot'></span> <span id='hud-runtime-text'>✦ 3D COMPANION ACTIVE</span></div>
                 <div class='scene-cam-badge' id='hud-cam-mode'>CAM: 3D FOLLOW DRONE</div>
                 <div class='scene-cam-badge' id='hud-env-mode'>ENV: DAY</div>
             </div>
@@ -1520,8 +1520,20 @@ def build_aura_journey_cockpit_html(
         </div>
     </div>
 
-    <!-- Load Three.js library for high-performance 3D companion runtime -->
+    <!-- Load Three.js library with resilient multi-CDN mirrors -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+    if (typeof THREE === 'undefined') {{
+        const cdnScript = document.createElement('script');
+        cdnScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
+        cdnScript.onerror = function() {{
+            const unpkgScript = document.createElement('script');
+            unpkgScript.src = 'https://unpkg.com/three@0.128.0/build/three.min.js';
+            document.head.appendChild(unpkgScript);
+        }};
+        document.head.appendChild(cdnScript);
+    }}
+    </script>
 
     <script>
     window.handleCockpitLangChange = function(newLang) {{
@@ -2505,24 +2517,32 @@ def build_aura_journey_cockpit_html(
         // THREE.JS 3D AURA ROBOT & ROADWAY SCENE ENGINE
         // =========================================================================
         let threeEnv = null;
+        let threeSceneStarted = false;
+        let fallback2DAnimId = null;
 
         function initAuraThreeScene() {{
             const canvas = document.getElementById('aura-threejs-canvas');
             const container = document.getElementById('aura-3d-scene-box');
-            if (!canvas || !container || typeof THREE === 'undefined') return;
+            if (!canvas || !container || typeof THREE === 'undefined') return false;
 
             try {{
+                const testGl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!testGl) {{
+                    console.warn("WebGL unsupported; keeping 2.5D scenic companion active.");
+                    return false;
+                }}
+
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x38bdf8);
                 scene.fog = new THREE.FogExp2(0xc7d2fe, 0.0075);
 
-                const width = container.clientWidth || 800;
-                const height = container.clientHeight || 360;
+                const width = container.clientWidth > 0 ? container.clientWidth : 800;
+                const height = container.clientHeight > 0 ? container.clientHeight : 360;
 
                 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 800);
                 const renderer = new THREE.WebGLRenderer({{ canvas: canvas, antialias: true, alpha: true, powerPreference: "high-performance" }});
                 renderer.setSize(width, height);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
                 renderer.shadowMap.enabled = true;
                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -3200,6 +3220,12 @@ def build_aura_journey_cockpit_html(
                     renderer.render(scene, camera);
                 }}
 
+                if (fallback2DAnimId) {{
+                    cancelAnimationFrame(fallback2DAnimId);
+                    fallback2DAnimId = null;
+                }}
+                threeSceneStarted = true;
+
                 renderLoop();
 
                 // Environment Lighting Controller
@@ -3279,6 +3305,37 @@ def build_aura_journey_cockpit_html(
                     }}
                 }};
 
+                // Immediately sync active environment lighting
+                threeEnv.updateLighting(activeEnv);
+
+                // Update HUD runtime badge to active 3D
+                const hudBadge = document.getElementById('hud-runtime-badge');
+                const hudDot = document.getElementById('hud-pulse-dot');
+                const hudText = document.getElementById('hud-runtime-text');
+                if (hudText) hudText.innerText = '✦ 3D RUNTIME ACTIVE';
+                if (hudBadge) {{
+                    hudBadge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                    hudBadge.style.color = '#34d399';
+                }}
+                if (hudDot) {{
+                    hudDot.style.background = '#34d399';
+                    hudDot.style.boxShadow = '0 0 8px #34d399';
+                }}
+
+                if (window.ResizeObserver && container) {{
+                    const ro = new ResizeObserver(entries => {{
+                        for (let entry of entries) {{
+                            const cr = entry.contentRect;
+                            if (cr.width > 0 && cr.height > 0) {{
+                                camera.aspect = cr.width / cr.height;
+                                camera.updateProjectionMatrix();
+                                renderer.setSize(cr.width, cr.height);
+                            }}
+                        }}
+                    }});
+                    ro.observe(container);
+                }}
+
                 window.addEventListener('resize', () => {{
                     const w = container.clientWidth;
                     const h = container.clientHeight;
@@ -3288,9 +3345,604 @@ def build_aura_journey_cockpit_html(
                         renderer.setSize(w, h);
                     }}
                 }});
+
+                return true;
             }} catch(e) {{
                 console.warn("Three.js init error:", e);
+                return false;
             }}
+        }}
+
+        // =========================================================================
+        // RESILIENT 2.5D ANIMATED SCENIC COMPANION ENGINE (ZERO-BLANK-SCREEN GUARANTEE)
+        // =========================================================================
+        function startScenicFallback2D() {{
+            const canvas = document.getElementById('aura-threejs-canvas');
+            const container = document.getElementById('aura-3d-scene-box');
+            if (!canvas || !container) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const hudBadge = document.getElementById('hud-runtime-badge');
+            const hudDot = document.getElementById('hud-pulse-dot');
+            const hudText = document.getElementById('hud-runtime-text');
+            if (hudText && !threeSceneStarted) hudText.innerText = '✦ 2.5D SCENIC RUNTIME ACTIVE';
+            if (hudBadge && !threeSceneStarted) {{
+                hudBadge.style.borderColor = 'rgba(56, 189, 248, 0.6)';
+                hudBadge.style.color = '#38bdf8';
+            }}
+            if (hudDot && !threeSceneStarted) {{
+                hudDot.style.background = '#38bdf8';
+                hudDot.style.boxShadow = '0 0 8px #38bdf8';
+            }}
+
+            // Fallback environment lighting controller
+            if (!threeEnv) {{
+                threeEnv = {{
+                    updateLighting: function(env) {{
+                        activeEnv = env;
+                    }}
+                }};
+            }}
+
+            function drawRoundedRect(c, x, y, w, h, r) {{
+                if (typeof c.roundRect === 'function') {{
+                    c.roundRect(x, y, w, h, r);
+                }} else {{
+                    c.rect(x, y, w, h);
+                }}
+            }}
+
+            let tStart = Date.now();
+            const stars = [];
+            for (let i = 0; i < 50; i++) {{
+                stars.push({{
+                    x: Math.random(),
+                    y: Math.random() * 0.52,
+                    r: 0.7 + Math.random() * 1.6,
+                    phase: Math.random() * Math.PI * 2
+                }});
+            }}
+
+            const clouds = [
+                {{ x: 30, y: 45, scale: 1.1, speed: 0.16 }},
+                {{ x: 240, y: 70, scale: 0.85, speed: 0.11 }},
+                {{ x: 490, y: 35, scale: 1.35, speed: 0.20 }},
+                {{ x: 710, y: 60, scale: 0.95, speed: 0.14 }}
+            ];
+
+            function drawCloud(cx, cy, s, color) {{
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 18 * s, 0, Math.PI * 2);
+                ctx.arc(cx + 16 * s, cy - 8 * s, 22 * s, 0, Math.PI * 2);
+                ctx.arc(cx + 36 * s, cy, 17 * s, 0, Math.PI * 2);
+                ctx.arc(cx + 20 * s, cy + 6 * s, 14 * s, 0, Math.PI * 2);
+                ctx.fill();
+            }}
+
+            function render() {{
+                if (threeSceneStarted) {{
+                    if (fallback2DAnimId) cancelAnimationFrame(fallback2DAnimId);
+                    return;
+                }}
+
+                const w = container.clientWidth || 800;
+                const h = container.clientHeight || 360;
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+                if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {{
+                    canvas.width = Math.round(w * dpr);
+                    canvas.height = Math.round(h * dpr);
+                }}
+
+                ctx.save();
+                ctx.scale(dpr, dpr);
+
+                const elapsed = (Date.now() - tStart) / 1000;
+                const isSunset = (activeEnv === 'sunset');
+                const isNight = (activeEnv === 'night');
+
+                // 1. SKY BACKGROUND GRADIENT
+                let skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.58);
+                if (isSunset) {{
+                    skyGrad.addColorStop(0, '#2e1065');
+                    skyGrad.addColorStop(0.45, '#c2410c');
+                    skyGrad.addColorStop(0.85, '#ea580c');
+                    skyGrad.addColorStop(1, '#fde047');
+                }} else if (isNight) {{
+                    skyGrad.addColorStop(0, '#020617');
+                    skyGrad.addColorStop(0.5, '#091124');
+                    skyGrad.addColorStop(1, '#1e1b4b');
+                }} else {{
+                    skyGrad.addColorStop(0, '#1d4ed8');
+                    skyGrad.addColorStop(0.5, '#38bdf8');
+                    skyGrad.addColorStop(1, '#e0f2fe');
+                }}
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                // 2. CELESTIAL BODIES (SUN / MOON & STARS)
+                if (isNight) {{
+                    // Stars
+                    for (let s of stars) {{
+                        const alpha = 0.3 + 0.65 * Math.abs(Math.sin(elapsed * 1.8 + s.phase));
+                        ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha.toFixed(2) + ')';
+                        ctx.beginPath();
+                        ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+                    // Crescent Moon with Halo
+                    const mx = w * 0.82, my = h * 0.22;
+                    let moonHalo = ctx.createRadialGradient(mx, my, 8, mx, my, 45);
+                    moonHalo.addColorStop(0, 'rgba(224, 231, 255, 0.35)');
+                    moonHalo.addColorStop(1, 'rgba(224, 231, 255, 0)');
+                    ctx.fillStyle = moonHalo;
+                    ctx.beginPath();
+                    ctx.arc(mx, my, 45, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath();
+                    ctx.arc(mx, my, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Shadow arc for crescent
+                    ctx.fillStyle = '#091124';
+                    ctx.beginPath();
+                    ctx.arc(mx - 7, my - 4, 16, 0, Math.PI * 2);
+                    ctx.fill();
+                }} else if (isSunset) {{
+                    const sx = w * 0.72, sy = h * 0.42;
+                    let sunGlow = ctx.createRadialGradient(sx, sy, 10, sx, sy, 65);
+                    sunGlow.addColorStop(0, 'rgba(254, 240, 138, 0.9)');
+                    sunGlow.addColorStop(0.4, 'rgba(249, 115, 22, 0.45)');
+                    sunGlow.addColorStop(1, 'rgba(234, 88, 12, 0)');
+                    ctx.fillStyle = sunGlow;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 65, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 20, 0, Math.PI * 2);
+                    ctx.fill();
+                }} else {{
+                    // Day Sun
+                    const sx = w * 0.76, sy = h * 0.20;
+                    let sunGlow = ctx.createRadialGradient(sx, sy, 12, sx, sy, 70);
+                    sunGlow.addColorStop(0, 'rgba(255, 253, 235, 0.95)');
+                    sunGlow.addColorStop(0.35, 'rgba(254, 240, 138, 0.5)');
+                    sunGlow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                    ctx.fillStyle = sunGlow;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 70, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fffae0';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 22, 0, Math.PI * 2);
+                    ctx.fill();
+                }}
+
+                // 3. DRIFTING CLOUDS
+                const cloudCol = isSunset ? 'rgba(254, 202, 202, 0.65)' : (isNight ? 'rgba(51, 65, 85, 0.55)' : 'rgba(255, 255, 255, 0.75)');
+                clouds.forEach(c => {{
+                    c.x += c.speed;
+                    if (c.x > w + 60) c.x = -60;
+                    drawCloud(c.x, c.y, c.scale, cloudCol);
+                }});
+
+                // 4. DISTANT CITY SKYLINE & CAMPUS TOWERS
+                const horizonY = h * 0.52;
+                const bldgList = [
+                    {{ x: 0.05, w: 45, bh: 70, col: isNight ? '#0f172a' : (isSunset ? '#311042' : '#334155') }},
+                    {{ x: 0.12, w: 55, bh: 95, col: isNight ? '#1e293b' : (isSunset ? '#4a154b' : '#1e293b') }},
+                    {{ x: 0.20, w: 40, bh: 65, col: isNight ? '#0f172a' : (isSunset ? '#311042' : '#475569') }},
+                    {{ x: 0.74, w: 48, bh: 85, col: isNight ? '#1e293b' : (isSunset ? '#4a154b' : '#1e293b') }},
+                    {{ x: 0.82, w: 60, bh: 110, col: isNight ? '#0f172a' : (isSunset ? '#311042' : '#334155') }},
+                    {{ x: 0.91, w: 42, bh: 75, col: isNight ? '#1e293b' : (isSunset ? '#4a154b' : '#475569') }}
+                ];
+                bldgList.forEach(b => {{
+                    const bx = b.x * w;
+                    const by = horizonY - b.bh;
+                    ctx.fillStyle = b.col;
+                    ctx.fillRect(bx, by, b.w, b.bh);
+
+                    // Rooftop beacon
+                    if (b.bh > 80) {{
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.fillRect(bx + b.w * 0.5 - 1, by - 16, 2, 16);
+                        const beaconAlpha = Math.sin(elapsed * 4) > 0 ? 1 : 0.2;
+                        ctx.fillStyle = 'rgba(239, 68, 68, ' + beaconAlpha + ')';
+                        ctx.beginPath();
+                        ctx.arc(bx + b.w * 0.5, by - 16, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+
+                    // Window grid
+                    const litCol = isNight ? '#fef08a' : (isSunset ? '#fed7aa' : '#93c5fd');
+                    const rows = 4, cols = 3;
+                    for (let r = 0; r < rows; r++) {{
+                        for (let c = 0; c < cols; c++) {{
+                            if ((r + c + Math.floor(b.x * 10)) % 2 === 0) {{
+                                ctx.fillStyle = isNight ? litCol : 'rgba(147, 197, 253, 0.45)';
+                                ctx.fillRect(bx + 6 + c * 12, by + 10 + r * 14, 6, 8);
+                            }}
+                        }}
+                    }}
+                }});
+
+                // 5. GROUND / GRASS TERRAIN
+                let groundGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+                if (isNight) {{
+                    groundGrad.addColorStop(0, '#064e3b');
+                    groundGrad.addColorStop(1, '#022c22');
+                }} else if (isSunset) {{
+                    groundGrad.addColorStop(0, '#78350f');
+                    groundGrad.addColorStop(1, '#1c1917');
+                }} else {{
+                    groundGrad.addColorStop(0, '#16a34a');
+                    groundGrad.addColorStop(1, '#14532d');
+                }}
+                ctx.fillStyle = groundGrad;
+                ctx.fillRect(0, horizonY, w, h - horizonY);
+
+                // 6. CURVING 3D PERSPECTIVE ROADWAY
+                const camXOffset = (activeCam === 'iso') ? w * 0.12 : ((activeCam === 'pov') ? -w * 0.05 : 0);
+                const roadCenterX = w * 0.5 + camXOffset;
+                const roadHorizonW = w * 0.08;
+                const roadBottomW = w * 0.65;
+                const roadCurve = Math.sin(elapsed * 0.35) * 16;
+
+                // Asphalt road surface
+                ctx.fillStyle = isNight ? '#0b1120' : (isSunset ? '#18181b' : '#1e293b');
+                ctx.beginPath();
+                ctx.moveTo(roadCenterX - roadHorizonW * 0.5 + roadCurve * 0.2, horizonY);
+                ctx.lineTo(roadCenterX + roadHorizonW * 0.5 + roadCurve * 0.2, horizonY);
+                ctx.quadraticCurveTo(roadCenterX + roadBottomW * 0.35 + roadCurve, (horizonY + h) * 0.5, roadCenterX + roadBottomW * 0.5, h);
+                ctx.lineTo(roadCenterX - roadBottomW * 0.5, h);
+                ctx.quadraticCurveTo(roadCenterX - roadBottomW * 0.35 + roadCurve, (horizonY + h) * 0.5, roadCenterX - roadHorizonW * 0.5 + roadCurve * 0.2, horizonY);
+                ctx.closePath();
+                ctx.fill();
+
+                // Left & Right Curbs
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Road Sidewalk Borders
+                ctx.fillStyle = isNight ? '#1e293b' : '#475569';
+                // Left sidewalk strip
+                ctx.beginPath();
+                ctx.moveTo(roadCenterX - roadHorizonW * 0.5 + roadCurve * 0.2, horizonY);
+                ctx.lineTo(roadCenterX - roadHorizonW * 0.7 + roadCurve * 0.2, horizonY);
+                ctx.lineTo(roadCenterX - roadBottomW * 0.58, h);
+                ctx.lineTo(roadCenterX - roadBottomW * 0.5, h);
+                ctx.closePath();
+                ctx.fill();
+
+                // Right sidewalk strip
+                ctx.beginPath();
+                ctx.moveTo(roadCenterX + roadHorizonW * 0.5 + roadCurve * 0.2, horizonY);
+                ctx.lineTo(roadCenterX + roadHorizonW * 0.7 + roadCurve * 0.2, horizonY);
+                ctx.lineTo(roadCenterX + roadBottomW * 0.58, h);
+                ctx.lineTo(roadCenterX + roadBottomW * 0.5, h);
+                ctx.closePath();
+                ctx.fill();
+
+                // Dashed Centerline (animated perspective movement)
+                const dashSpeed = (motionState === 'MOVING' || isLiveMoving) ? (Math.max(currentSpeedKmh, 5.0) * 12) : 24;
+                const dashOffset = (elapsed * dashSpeed) % 40;
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([12, 10]);
+                ctx.lineDashOffset = -dashOffset;
+                ctx.beginPath();
+                ctx.moveTo(roadCenterX + roadCurve * 0.2, horizonY);
+                ctx.quadraticCurveTo(roadCenterX + roadCurve, (horizonY + h) * 0.5, roadCenterX, h);
+                ctx.stroke();
+                ctx.setLineDash([]); // reset dash
+
+                // GLOWING CYAN AR TRAJECTORY RIBBON
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.75)';
+                ctx.lineWidth = 4;
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 14;
+                ctx.beginPath();
+                ctx.moveTo(roadCenterX + roadCurve * 0.2, horizonY + 4);
+                ctx.quadraticCurveTo(roadCenterX + roadCurve + 3, (horizonY + h) * 0.5, roadCenterX + 5, h);
+                ctx.stroke();
+                ctx.shadowBlur = 0; // reset shadow
+
+                // 7. ROADSIDE STREET LAMPS (animated glow in night/sunset)
+                const lampPositions = [
+                    {{ t: 0.25, side: -1 }},
+                    {{ t: 0.45, side: 1 }},
+                    {{ t: 0.68, side: -1 }},
+                    {{ t: 0.88, side: 1 }}
+                ];
+                lampPositions.forEach(lp => {{
+                    const ly = horizonY + (h - horizonY) * lp.t;
+                    const rWAtY = roadHorizonW + (roadBottomW - roadHorizonW) * lp.t;
+                    const lx = roadCenterX + lp.side * (rWAtY * 0.5 + 14);
+                    const lampHeight = 22 + lp.t * 32;
+
+                    // Pole
+                    ctx.strokeStyle = '#334155';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(lx, ly);
+                    ctx.lineTo(lx, ly - lampHeight);
+                    ctx.lineTo(lx - lp.side * 10, ly - lampHeight - 4);
+                    ctx.stroke();
+
+                    // Lamp head & glow
+                    if (isNight || isSunset) {{
+                        const lampGrad = ctx.createRadialGradient(lx - lp.side * 10, ly - lampHeight - 4, 2, lx - lp.side * 10, ly, 38);
+                        lampGrad.addColorStop(0, 'rgba(254, 240, 138, 0.75)');
+                        lampGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+                        ctx.fillStyle = lampGrad;
+                        ctx.beginPath();
+                        ctx.arc(lx - lp.side * 10, ly - lampHeight - 4, 38, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+                }});
+
+                // 8. ROADSIDE TREES WITH WIND SWAY
+                const treeSway = Math.sin(elapsed * 2.2) * 4;
+                const trees = [
+                    {{ x: roadCenterX - roadBottomW * 0.5 - 28, y: h * 0.88, h: 56, type: 'canopy' }},
+                    {{ x: roadCenterX - roadBottomW * 0.42 - 32, y: h * 0.74, h: 42, type: 'pine' }},
+                    {{ x: roadCenterX - roadBottomW * 0.32 - 25, y: h * 0.62, h: 32, type: 'canopy' }},
+                    {{ x: roadCenterX + roadBottomW * 0.5 + 28, y: h * 0.88, h: 54, type: 'pine' }},
+                    {{ x: roadCenterX + roadBottomW * 0.42 + 30, y: h * 0.72, h: 44, type: 'canopy' }},
+                    {{ x: roadCenterX + roadBottomW * 0.32 + 25, y: h * 0.62, h: 32, type: 'pine' }}
+                ];
+                trees.forEach(tr => {{
+                    // Trunk
+                    ctx.fillStyle = '#4a2e18';
+                    ctx.fillRect(tr.x - 3, tr.y - tr.h * 0.35, 6, tr.h * 0.35);
+
+                    // Crown
+                    ctx.fillStyle = isNight ? '#064e3b' : (isSunset ? '#14532d' : '#15803d');
+                    ctx.beginPath();
+                    if (tr.type === 'pine') {{
+                        ctx.moveTo(tr.x + treeSway * 0.6, tr.y - tr.h);
+                        ctx.lineTo(tr.x + tr.h * 0.35, tr.y - tr.h * 0.35);
+                        ctx.lineTo(tr.x - tr.h * 0.35, tr.y - tr.h * 0.35);
+                    }} else {{
+                        ctx.arc(tr.x + treeSway * 0.7, tr.y - tr.h * 0.65, tr.h * 0.38, 0, Math.PI * 2);
+                    }}
+                    ctx.fill();
+                }});
+
+                // 9. AURA: THE CUTE COMPANION (Foreground Live Avatar)
+                let auraBaseX = roadCenterX;
+                let auraBaseY = h * 0.78;
+
+                if (activeCam === 'pov') {{
+                    auraBaseX = w * 0.76;
+                    auraBaseY = h * 0.82;
+                }} else if (activeCam === 'iso') {{
+                    auraBaseX = roadCenterX + 45;
+                    auraBaseY = h * 0.75;
+                }}
+
+                // Animation Strides & Dynamics
+                let walkBob = 0;
+                let legLRot = 0;
+                let legRRot = 0;
+                let armLRot = 0;
+                let armRRot = 0;
+                let stickRot = 0;
+                let auraScale = (activeCam === 'pov') ? 0.95 : 1.15;
+
+                if (currentAnimState === 'arrive') {{
+                    // Celebration Jump & Wave
+                    walkBob = Math.abs(Math.sin(elapsed * 7)) * 22;
+                    armLRot = -1.2 + Math.sin(elapsed * 9) * 0.3;
+                    armRRot = 1.2 + Math.sin(elapsed * 9) * 0.3;
+                }} else if (currentAnimState === 'wave') {{
+                    armRRot = 1.4 + Math.sin(elapsed * 8) * 0.45;
+                    armLRot = 0.1;
+                }} else if (currentAnimState === 'run') {{
+                    walkBob = Math.abs(Math.sin(elapsed * 10)) * 7;
+                    legLRot = Math.sin(elapsed * 10) * 26;
+                    legRRot = -legLRot;
+                    armLRot = -legLRot * 0.6;
+                    armRRot = legLRot * 0.6;
+                }} else if (currentAnimState === 'turn_left') {{
+                    armRRot = -0.9;
+                    stickRot = -0.6;
+                }} else if (currentAnimState === 'turn_right') {{
+                    armRRot = 0.9;
+                    stickRot = 0.6;
+                }} else {{
+                    // Walking
+                    walkBob = Math.abs(Math.sin(elapsed * 5.5)) * 4.5;
+                    legLRot = Math.sin(elapsed * 5.5) * 16;
+                    legRRot = -legLRot;
+                    armLRot = -legLRot * 0.5;
+                    armRRot = legLRot * 0.5;
+                }}
+
+                const ax = auraBaseX;
+                const ay = auraBaseY - walkBob;
+
+                // Pulsing Holographic Ring on ground
+                const ringRadX = 26 * auraScale;
+                const ringRadY = 10 * auraScale;
+                ctx.save();
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 12;
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.85)';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.ellipse(ax, auraBaseY + 18 * auraScale, ringRadX, ringRadY, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // Aura Legs with Cyan Magnetic Boots
+                // Left Leg
+                ctx.save();
+                ctx.translate(ax - 10 * auraScale, ay + 6 * auraScale);
+                ctx.rotate(legLRot * Math.PI / 180);
+                ctx.fillStyle = '#0f2b48';
+                ctx.fillRect(-4 * auraScale, 0, 8 * auraScale, 18 * auraScale);
+                ctx.fillStyle = '#00f0ff';
+                ctx.fillRect(-5 * auraScale, 16 * auraScale, 11 * auraScale, 6 * auraScale);
+                ctx.restore();
+
+                // Right Leg
+                ctx.save();
+                ctx.translate(ax + 10 * auraScale, ay + 6 * auraScale);
+                ctx.rotate(legRRot * Math.PI / 180);
+                ctx.fillStyle = '#0f2b48';
+                ctx.fillRect(-4 * auraScale, 0, 8 * auraScale, 18 * auraScale);
+                ctx.fillStyle = '#00f0ff';
+                ctx.fillRect(-5 * auraScale, 16 * auraScale, 11 * auraScale, 6 * auraScale);
+                ctx.restore();
+
+                // Aura Torso (Chassis)
+                ctx.fillStyle = '#0f2b48';
+                ctx.beginPath();
+                drawRoundedRect(ctx, ax - 17 * auraScale, ay - 16 * auraScale, 34 * auraScale, 26 * auraScale, 8 * auraScale);
+                ctx.fill();
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Glowing Reactor Core
+                ctx.save();
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 10;
+                ctx.fillStyle = '#00f0ff';
+                ctx.beginPath();
+                ctx.arc(ax, ay - 3 * auraScale, 6 * auraScale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // Left Arm
+                ctx.save();
+                ctx.translate(ax - 20 * auraScale, ay - 10 * auraScale);
+                ctx.rotate(armLRot * Math.PI / 180);
+                ctx.fillStyle = '#0f2b48';
+                ctx.fillRect(-3 * auraScale, 0, 6 * auraScale, 18 * auraScale);
+                ctx.fillStyle = '#00f0ff';
+                ctx.beginPath();
+                ctx.arc(0, 18 * auraScale, 3.5 * auraScale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // Right Arm (Holding Glowing Navigation Stick!)
+                ctx.save();
+                ctx.translate(ax + 20 * auraScale, ay - 10 * auraScale);
+                ctx.rotate(-armRRot * Math.PI / 180);
+                ctx.fillStyle = '#0f2b48';
+                ctx.fillRect(-3 * auraScale, 0, 6 * auraScale, 18 * auraScale);
+
+                // NAVIGATION STICK
+                ctx.translate(0, 18 * auraScale);
+                ctx.rotate(stickRot);
+                // Gold Shaft
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillRect(-1.5 * auraScale, -24 * auraScale, 3 * auraScale, 32 * auraScale);
+                // Glowing Cyan Crystal Beacon
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 16;
+                ctx.fillStyle = '#00f0ff';
+                ctx.beginPath();
+                ctx.arc(0, -25 * auraScale, 6.5 * auraScale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(0, -25 * auraScale, 2.5 * auraScale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // Aura Head
+                const headY = ay - 32 * auraScale;
+                ctx.fillStyle = '#0f2b48';
+                ctx.beginPath();
+                drawRoundedRect(ctx, ax - 18 * auraScale, headY, 36 * auraScale, 26 * auraScale, 10 * auraScale);
+                ctx.fill();
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Visor Screen
+                ctx.fillStyle = '#030712';
+                ctx.beginPath();
+                drawRoundedRect(ctx, ax - 14 * auraScale, headY + 5 * auraScale, 28 * auraScale, 16 * auraScale, 6 * auraScale);
+                ctx.fill();
+
+                // Glowing Digital Eyes (with cute blink)
+                const isBlink = Math.sin(elapsed * 2.5) > 0.96;
+                ctx.fillStyle = '#38bdf8';
+                ctx.shadowColor = '#38bdf8';
+                ctx.shadowBlur = 8;
+                if (isBlink) {{
+                    ctx.fillRect(ax - 9 * auraScale, headY + 12 * auraScale, 6 * auraScale, 1.5 * auraScale);
+                    ctx.fillRect(ax + 3 * auraScale, headY + 12 * auraScale, 6 * auraScale, 1.5 * auraScale);
+                }} else {{
+                    ctx.beginPath();
+                    ctx.arc(ax - 6 * auraScale, headY + 12 * auraScale, 2.8 * auraScale, 0, Math.PI * 2);
+                    ctx.arc(ax + 6 * auraScale, headY + 12 * auraScale, 2.8 * auraScale, 0, Math.PI * 2);
+                    ctx.fill();
+                }}
+
+                // Digital Smile
+                ctx.strokeStyle = '#00f0ff';
+                ctx.lineWidth = 1.5 * auraScale;
+                ctx.beginPath();
+                ctx.arc(ax, headY + 15 * auraScale, 3.5 * auraScale, 0.1 * Math.PI, 0.9 * Math.PI, false);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Antenna Stem & Orb
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillRect(ax - 1 * auraScale, headY - 8 * auraScale, 2 * auraScale, 8 * auraScale);
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 10;
+                ctx.fillStyle = '#00f0ff';
+                ctx.beginPath();
+                ctx.arc(ax, headY - 10 * auraScale, 3.5 * auraScale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.restore();
+
+                fallback2DAnimId = requestAnimationFrame(render);
+            }}
+
+            render();
+        }}
+
+        function launchThreeSceneWithRetry() {{
+            let attempts = 0;
+            const maxAttempts = 50;
+
+            function checkThree() {{
+                attempts++;
+                const canvas = document.getElementById('aura-threejs-canvas');
+                const container = document.getElementById('aura-3d-scene-box');
+
+                if (typeof THREE !== 'undefined' && canvas && container) {{
+                    try {{
+                        const ok = initAuraThreeScene();
+                        if (ok) {{
+                            threeSceneStarted = true;
+                            return;
+                        }}
+                    }} catch(e) {{
+                        console.warn("Three.js init attempt error:", e);
+                    }}
+                }}
+
+                if (attempts < maxAttempts && !threeSceneStarted) {{
+                    setTimeout(checkThree, 100);
+                }}
+            }}
+
+            setTimeout(checkThree, 60);
         }}
 
         function syncIframeHeight() {{
@@ -3324,7 +3976,10 @@ def build_aura_journey_cockpit_html(
         setTimeout(syncRealTimeAutoEnvironment, 100);
         setTimeout(syncRealTimeAutoEnvironment, 600);
         setInterval(syncRealTimeAutoEnvironment, 3000);
-        setTimeout(initAuraThreeScene, 80);
+        // Immediately engage 2.5D scenic companion engine for instant visual rendering,
+        // and actively poll in background to promote to full 3D WebGL as soon as Three.js CDN loads!
+        startScenicFallback2D();
+        launchThreeSceneWithRetry();
     }})();
     </script>
     """
