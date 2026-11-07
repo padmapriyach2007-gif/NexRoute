@@ -603,12 +603,55 @@ div[role="tablist"] [role="tab"][aria-selected="true"] {
 }
 
 .aura-track-stream {
-    animation: auraStreamDash 1.25s linear infinite !important;
+    animation: auraStreamDash 1.2s linear infinite !important;
+}
+
+.aura-track-core {
+    animation: auraStreamDash 1.2s linear infinite !important;
+}
+
+.aura-harmonic-wave {
+    animation: auraWavePulse 2.4s ease-in-out infinite alternate !important;
 }
 
 @keyframes auraStreamDash {
-    from { stroke-dashoffset: 36; }
+    from { stroke-dashoffset: 37; }
     to { stroke-dashoffset: 0; }
+}
+
+@keyframes auraWavePulse {
+    0% { opacity: 0.35; stroke-dashoffset: 0; }
+    100% { opacity: 0.85; stroke-dashoffset: 20; }
+}
+
+.aura-beacon-pulse {
+    animation: auraBeaconPing 2s ease-out infinite !important;
+    transform-origin: center !important;
+}
+
+@keyframes auraBeaconPing {
+    0% { r: 5; opacity: 0.9; }
+    70% { r: 12; opacity: 0.15; }
+    100% { r: 14; opacity: 0; }
+}
+
+.aura-target-spin {
+    animation: auraTargetSpin 6s linear infinite !important;
+    transform-origin: 840px 70px !important;
+}
+
+@keyframes auraTargetSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.aura-star-sparkle {
+    animation: auraStarTwinkle 1.8s ease-in-out infinite alternate !important;
+}
+
+@keyframes auraStarTwinkle {
+    0% { opacity: 0.25; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1.35); filter: drop-shadow(0 0 6px #00f0ff); }
 }
 
 /* The SINGLE Moving 3D AI Robot Guide */
@@ -1442,25 +1485,142 @@ def render_main_language_bar():
 
     mascot_b64 = _get_aura_robot_b64()
     walking_robot_html = f"""<div class="aura-travel-stage" id="lang-box-walking-stage">
-    <!-- Glowing Curved Cyan Path Line -->
+    <!-- Creative Multi-Dimensional Holographic Flight Energy Line -->
     <svg class="aura-flight-svg" viewBox="0 0 1000 80" preserveAspectRatio="none">
         <defs>
             <linearGradient id="auraGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="rgba(0, 240, 255, 0.2)"/>
-                <stop offset="35%" stop-color="rgba(0, 240, 255, 0.9)"/>
-                <stop offset="70%" stop-color="rgba(56, 189, 248, 0.95)"/>
-                <stop offset="100%" stop-color="rgba(168, 85, 247, 0.95)"/>
+                <stop offset="0%" stop-color="rgba(0, 240, 255, 0.45)"/>
+                <stop offset="25%" stop-color="#00f0ff"/>
+                <stop offset="50%" stop-color="#38bdf8"/>
+                <stop offset="75%" stop-color="#a855f7"/>
+                <stop offset="100%" stop-color="#ec4899"/>
             </linearGradient>
-            <filter id="auraNeonGlow" x="-20%" y="-40%" width="140%" height="180%">
-                <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+            <linearGradient id="auraConduitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="rgba(0, 240, 255, 0.16)"/>
+                <stop offset="50%" stop-color="rgba(56, 189, 248, 0.28)"/>
+                <stop offset="100%" stop-color="rgba(236, 72, 153, 0.22)"/>
+            </linearGradient>
+            <linearGradient id="trailCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="rgba(0, 240, 255, 0)"/>
+                <stop offset="100%" stop-color="#00f0ff"/>
+            </linearGradient>
+            <linearGradient id="trailPurple" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="rgba(168, 85, 247, 0)"/>
+                <stop offset="100%" stop-color="#c084fc"/>
+            </linearGradient>
+            <radialGradient id="cometHeadGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="40%" stop-color="#00f0ff"/>
+                <stop offset="100%" stop-color="rgba(0, 240, 255, 0)"/>
+            </radialGradient>
+            <radialGradient id="cometPurpleGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="45%" stop-color="#c084fc"/>
+                <stop offset="100%" stop-color="rgba(192, 132, 252, 0)"/>
+            </radialGradient>
+            <filter id="auraNeonGlow" x="-30%" y="-50%" width="160%" height="200%">
+                <feGaussianBlur stdDeviation="3.2" result="coloredBlur"/>
                 <feMerge>
                     <feMergeNode in="coloredBlur"/>
                     <feMergeNode in="SourceGraphic"/>
                 </feMerge>
             </filter>
         </defs>
-        <path class="aura-track-guide" d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="rgba(0, 240, 255, 0.22)" stroke-width="2"/>
-        <path class="aura-track-stream" d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="url(#auraGlowGrad)" stroke-width="3" filter="url(#auraNeonGlow)" stroke-dasharray="10 8"/>
+
+        <!-- 1. Holographic Vertical Ground-Drop Tethers for 3D Perspective -->
+        <g opacity="0.65">
+            <line x1="160" y1="36" x2="160" y2="76" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1.2" stroke-dasharray="2,3"/>
+            <circle cx="160" cy="76" r="1.5" fill="#38bdf8" opacity="0.5"/>
+            <line x1="340" y1="32" x2="340" y2="76" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1.2" stroke-dasharray="2,3"/>
+            <circle cx="340" cy="76" r="1.5" fill="#38bdf8" opacity="0.5"/>
+            <line x1="520" y1="56" x2="520" y2="76" stroke="rgba(168, 85, 247, 0.25)" stroke-width="1.2" stroke-dasharray="2,3"/>
+            <circle cx="520" cy="76" r="1.5" fill="#a855f7" opacity="0.5"/>
+            <line x1="700" y1="42" x2="700" y2="76" stroke="rgba(236, 72, 153, 0.25)" stroke-width="1.2" stroke-dasharray="2,3"/>
+            <circle cx="700" cy="76" r="1.5" fill="#ec4899" opacity="0.5"/>
+        </g>
+
+        <!-- 2. Luminous Energy Conduit Outer Glow Ribbon -->
+        <path d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="url(#auraConduitGrad)" stroke-width="10" stroke-linecap="round" filter="url(#auraNeonGlow)"/>
+
+        <!-- 3. Secondary Quantum Sine Wave (Harmonic Oscillation Ribbon) -->
+        <path class="aura-harmonic-wave" d="M 30,62 C 140,40 240,12 360,34 C 480,56 600,24 720,48 C 780,58 810,46 840,70" fill="none" stroke="rgba(192, 132, 252, 0.55)" stroke-width="1.6" stroke-dasharray="4,6"/>
+
+        <!-- 4. Guide Track Background Shadow -->
+        <path class="aura-track-guide" d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="rgba(0, 240, 255, 0.22)" stroke-width="2.5"/>
+
+        <!-- 5. Main Rhythmic Segmented Laser Pulse Stream -->
+        <path class="aura-track-stream" d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="url(#auraGlowGrad)" stroke-width="3.4" filter="url(#auraNeonGlow)" stroke-dasharray="16 8 5 8" stroke-linecap="round"/>
+
+        <!-- 6. Ultra-Crisp White-Hot Core Laser -->
+        <path class="aura-track-core" d="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.82" stroke-dasharray="16 8 5 8" stroke-linecap="round"/>
+
+        <!-- 7. Moving Energy Comet 1 (Electric Cyan Photon) -->
+        <g class="aura-photon-comet-1">
+            <animateMotion path="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" dur="3.0s" repeatCount="indefinite" rotate="auto"/>
+            <line x1="-26" y1="0" x2="0" y2="0" stroke="url(#trailCyan)" stroke-width="3" stroke-linecap="round"/>
+            <circle r="6.5" fill="url(#cometHeadGrad)" filter="url(#auraNeonGlow)"/>
+            <circle r="2.8" fill="#ffffff"/>
+        </g>
+
+        <!-- 8. Moving Energy Comet 2 (Hyper Violet Photon) -->
+        <g class="aura-photon-comet-2">
+            <animateMotion path="M 30,62 C 240,20 480,72 720,40 C 770,34 810,50 840,70" dur="4.2s" begin="1.5s" repeatCount="indefinite" rotate="auto"/>
+            <line x1="-22" y1="0" x2="0" y2="0" stroke="url(#trailPurple)" stroke-width="2.6" stroke-linecap="round"/>
+            <circle r="5.5" fill="url(#cometPurpleGrad)" filter="url(#auraNeonGlow)"/>
+            <circle r="2" fill="#ffffff"/>
+        </g>
+
+        <!-- 9. Waypoint Milestone Beacons -->
+        <!-- Start Portal -->
+        <g>
+            <circle cx="30" cy="62" r="8" fill="none" stroke="#00f0ff" stroke-width="1.4" opacity="0.7" class="aura-beacon-pulse"/>
+            <circle cx="30" cy="62" r="3.8" fill="#00f0ff"/>
+            <circle cx="30" cy="62" r="1.8" fill="#ffffff"/>
+            <text x="30" y="78" font-size="6.5" font-weight="900" fill="#38bdf8" text-anchor="middle" font-family="sans-serif">● START</text>
+        </g>
+
+        <!-- Relay 1 -->
+        <g>
+            <circle cx="270" cy="28" r="7" fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.6" class="aura-beacon-pulse"/>
+            <polygon points="270,23 275,28 270,33 265,28" fill="#38bdf8" stroke="#ffffff" stroke-width="0.8"/>
+            <text x="270" y="19" font-size="6.5" font-weight="800" fill="#bae6fd" text-anchor="middle" font-family="sans-serif">◇ RELAY 1</text>
+        </g>
+
+        <!-- Relay 2 -->
+        <g>
+            <circle cx="520" cy="56" r="7" fill="none" stroke="#a855f7" stroke-width="1.2" opacity="0.6" class="aura-beacon-pulse"/>
+            <polygon points="520,51 525,56 520,61 515,56" fill="#a855f7" stroke="#ffffff" stroke-width="0.8"/>
+            <text x="520" y="71" font-size="6.5" font-weight="800" fill="#c084fc" text-anchor="middle" font-family="sans-serif">◇ RELAY 2</text>
+        </g>
+
+        <!-- Destination Target Reticle -->
+        <g>
+            <circle cx="840" cy="70" r="9.5" fill="none" stroke="#ec4899" stroke-width="1.4" stroke-dasharray="3,3" class="aura-target-spin"/>
+            <circle cx="840" cy="70" r="4.5" fill="#ec4899"/>
+            <circle cx="840" cy="70" r="1.8" fill="#ffffff"/>
+            <text x="840" y="86" font-size="6.5" font-weight="900" fill="#f472b6" text-anchor="middle" font-family="sans-serif">★ ARRIVAL</text>
+        </g>
+
+        <!-- 10. Cosmic Quantum Sparkles -->
+        <g class="aura-star-sparkle" transform="translate(120, 22)">
+            <path d="M 0,-5 L 1.2,-1.2 L 5,0 L 1.2,1.2 L 0,5 L -1.2,1.2 L -5,0 L -1.2,-1.2 Z" fill="#00f0ff"/>
+        </g>
+        <g class="aura-star-sparkle" transform="translate(410, 42)">
+            <path d="M 0,-4 L 1,-1 L 4,0 L 1,1 L 0,4 L -1,1 L -4,0 L -1,-1 Z" fill="#ffffff"/>
+        </g>
+        <g class="aura-star-sparkle" transform="translate(650, 28)">
+            <path d="M 0,-4.5 L 1.1,-1.1 L 4.5,0 L 1.1,1.1 L 0,4.5 L -1.1,1.1 L -4.5,0 L -1.1,-1.1 Z" fill="#f472b6"/>
+        </g>
+        <g class="aura-star-sparkle" transform="translate(760, 46)">
+            <path d="M 0,-3.5 L 0.9,-0.9 L 3.5,0 L 0.9,0.9 L 0,3.5 L -0.9,0.9 L -3.5,0 L -0.9,-0.9 Z" fill="#38bdf8"/>
+        </g>
+
+        <!-- 11. Holographic Quantum Telemetry Chip -->
+        <g transform="translate(365, 8)">
+            <rect width="126" height="14" rx="3" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(56, 189, 248, 0.45)" stroke-width="0.8"/>
+            <circle cx="10" cy="7" r="2.2" fill="#00f0ff"/>
+            <text x="68" y="10.2" font-size="6" font-weight="800" fill="#38bdf8" text-anchor="middle" font-family="monospace">⚡ QUANTUM GPS • LIVE TRACK</text>
+        </g>
     </svg>
 
     <!-- The ONE Single Realistic 3D AI Robot -->
