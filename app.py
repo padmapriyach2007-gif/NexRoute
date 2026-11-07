@@ -1,17 +1,11 @@
 import sys
-
-
-
 import os
-
-
-
 import types
-
-
-
+import logging
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Union, Tuple
+
+logger = logging.getLogger("nexroute")
 
 
 
