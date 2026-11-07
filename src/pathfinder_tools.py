@@ -210,6 +210,172 @@ TOOL_SCHEMAS = [
                 }
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_location",
+            "description": "Searches and geocodes any real-world address, landmark, town, or city using OpenStreetMap Nominatim, returning verified coordinates.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Place name, landmark, town, or address to search."
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_nearby_places",
+            "description": "Discovers verified nearby places around the user's location or destination (tourist attractions, healthcare, facilities, dining, stays).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "enum": ["all", "attractions", "healthcare", "facilities", "food_stays", "education"],
+                        "description": "Category of places to search."
+                    },
+                    "radius_km": {
+                        "type": "number",
+                        "description": "Search radius in kilometers (e.g. 5.0, 10.0, 25.0)."
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_nearby_hospitals",
+            "description": "Locates verified hospitals, multispecialty centers, clinics, and emergency health centers near the active location.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "radius_km": {
+                        "type": "number",
+                        "description": "Search radius in kilometers (default: 10.0)."
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_petrol_stations",
+            "description": "Locates verified petrol stations, fuel pumps, and EV charging stations near the active route or location.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "radius_km": {
+                        "type": "number",
+                        "description": "Search radius in kilometers (default: 10.0)."
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_restaurants",
+            "description": "Locates verified restaurants, dining spots, highway dhabas, and cafes near the active location or destination.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "radius_km": {
+                        "type": "number",
+                        "description": "Search radius in kilometers (default: 10.0)."
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_hotels",
+            "description": "Locates verified hotels, lodges, resorts, and stays near the destination.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "radius_km": {
+                        "type": "number",
+                        "description": "Search radius in kilometers (default: 15.0)."
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_route_stop",
+            "description": "Adds an intermediate stop or waypoint along the active journey route.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "stop_name": {
+                        "type": "string",
+                        "description": "Name or address of the stop to add."
+                    },
+                    "lat": {
+                        "type": "number",
+                        "description": "Optional latitude coordinate."
+                    },
+                    "lon": {
+                        "type": "number",
+                        "description": "Optional longitude coordinate."
+                    }
+                },
+                "required": ["stop_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "remove_route_stop",
+            "description": "Removes an intermediate stop from the active journey route by its 1-based stop number.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "stop_index": {
+                        "type": "integer",
+                        "description": "1-based index of the stop to remove."
+                    }
+                },
+                "required": ["stop_index"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_route_details",
+            "description": "Retrieves verified distance, travel time, and profile metrics for the current active route.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_navigation_instructions",
+            "description": "Retrieves the step-by-step turn maneuvers and guidance instructions for the active route.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
     }
 ]
 
@@ -273,10 +439,30 @@ class PathfinderToolExecutor:
             return self._tool_get_convoy_status(args, ctx, lang)
         elif tool_name == "get_traffic_and_movement_intelligence":
             return self._tool_get_traffic_and_movement_intelligence(args, ctx, lang)
+        elif tool_name == "search_location":
+            return self._tool_search_location(args, ctx, lang)
+        elif tool_name in ("find_nearby_places", "search_nearby_places"):
+            return self._tool_find_nearby_places(args, ctx, lang)
+        elif tool_name in ("find_nearby_hospitals", "find_hospitals"):
+            return self._tool_find_nearby_places(dict(args, category="healthcare"), ctx, lang)
+        elif tool_name in ("find_petrol_stations", "find_fuel_stations"):
+            return self._tool_find_nearby_places(dict(args, category="facilities", sub="fuel"), ctx, lang)
+        elif tool_name in ("find_restaurants", "find_food"):
+            return self._tool_find_nearby_places(dict(args, category="food_stays", sub="restaurant"), ctx, lang)
+        elif tool_name in ("find_hotels", "find_stays"):
+            return self._tool_find_nearby_places(dict(args, category="food_stays", sub="hotel"), ctx, lang)
+        elif tool_name == "add_route_stop":
+            return self._tool_add_route_stop(args, ctx, lang)
+        elif tool_name == "remove_route_stop":
+            return self._tool_remove_route_stop(args, ctx, lang)
+        elif tool_name == "get_route_details":
+            return self._tool_get_route_details(args, ctx, lang)
+        elif tool_name == "get_navigation_instructions":
+            return self._tool_get_navigation_instructions(args, ctx, lang)
         else:
             return {
                 "badge": "⚠️ TOOL ERROR",
-                "response": f"Unknown tool requested: '{tool_name}'. Available tools: calculate_route, search_nearby_facilities, get_route_alternatives, compare_routes, update_route_preferences, get_live_weather, get_current_journey_status, get_convoy_status, get_traffic_and_movement_intelligence.",
+                "response": f"Unknown tool requested: '{tool_name}'. Available tools: calculate_route, search_location, find_nearby_places, find_nearby_hospitals, find_petrol_stations, find_restaurants, find_hotels, add_route_stop, remove_route_stop, get_route_details, get_navigation_instructions.",
                 "success": False
             }
 
@@ -851,3 +1037,219 @@ class PathfinderToolExecutor:
                 "response": f"Unable to fetch convoy status: {e}",
                 "success": False
             }
+
+    # -------------------------------------------------------------------------
+    # Tool 11: search_location
+    # -------------------------------------------------------------------------
+    def _tool_search_location(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        query = (args.get("query") or "").strip()
+        if not query:
+            return {"badge": "🔍 SEARCH LOCATION", "response": "Please specify a location or place name to search.", "success": False}
+
+        cands = []
+        if not self.map_service:
+            try:
+                from src.map_service import MapService
+                self.map_service = MapService()
+            except Exception:
+                pass
+
+        if self.map_service:
+            try:
+                cands = self.map_service.geocode_candidates(query, limit=5)
+            except Exception as e:
+                logger.warning("Geocoding failed for %s: %s", query, e)
+
+        if not cands:
+            return {
+                "badge": "🔍 LOCATION NOT FOUND",
+                "response": f"Could not find verified map coordinates for **'{query}'**. Please verify spelling or provide a nearby landmark.",
+                "success": False
+            }
+
+        top = cands[0]
+        lat, lon = float(top["lat"]), float(top["lon"])
+        name = top.get("display_name", query)
+
+        other_matches = ""
+        if len(cands) > 1:
+            other_matches = "\n\n**Other Matching Locations:**\n" + "\n".join([f"• {c.get('display_name', '')}" for c in cands[1:4]])
+
+        return {
+            "badge": "📍 LOCATION FOUND",
+            "response": f"### 📍 Location Found: **{name.split(',')[0]}**\n\n• **Coordinates:** `{lat:.5f}, {lon:.5f}`\n• **Full Address:** {name}{other_matches}",
+            "action": {
+                "type": "set_destination",
+                "destination_name": name.split(",")[0],
+                "coords": (lat, lon)
+            },
+            "success": True,
+            "data": {"name": name, "lat": lat, "lon": lon}
+        }
+
+    # -------------------------------------------------------------------------
+    # Tool 12: find_nearby_places (Dynamic OSM Overpass POI discovery)
+    # -------------------------------------------------------------------------
+    def _tool_find_nearby_places(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        category = args.get("category", "all")
+        sub_filter = args.get("sub", "").lower()
+        radius_km = float(args.get("radius_km", 10.0))
+
+        # Determine reference point: destination coords or current coords
+        coords = ctx.get("dest_coords") or ctx.get("current_coords") or (16.2335, 80.5505)
+        ref_label = ctx.get("dest_label") or ctx.get("start_label") or "Current Area"
+
+        from src.nearby_places_service import NearbyPlacesService
+        try:
+            places = NearbyPlacesService.get_nearby_places(
+                lat=coords[0],
+                lon=coords[1],
+                radius_km=radius_km,
+                category=category
+            )
+        except Exception as e:
+            logger.warning("Nearby places lookup error: %s", e)
+            places = []
+
+        if sub_filter:
+            places = [p for p in places if sub_filter in p.get("subcategory", "").lower() or sub_filter in p.get("name", "").lower()]
+
+        if not places:
+            return {
+                "badge": f"📍 NEARBY {category.upper()}",
+                "response": f"No verified {category} places found within {radius_km:.0f} km of **{ref_label}**.",
+                "success": False
+            }
+
+        lines = [f"### 📍 Verified Places near **{ref_label}** ({len(places[:6])} found):\n"]
+        for p in places[:6]:
+            icon = p.get("icon", "📍")
+            name = p.get("name", "Place")
+            dist = p.get("distance_km", 0.0)
+            sub = p.get("subcategory_label", p.get("category", ""))
+            addr = p.get("address", "")
+            lines.append(f"• **{icon} {name}** — ~{dist:.1f} km away\n  *{sub}* • {addr}")
+
+        return {
+            "badge": f"📍 VERIFIED {category.upper()}",
+            "response": "\n".join(lines),
+            "action": {"type": "switch_tab", "tab": "places"},
+            "success": True,
+            "data": places[:6]
+        }
+
+    # -------------------------------------------------------------------------
+    # Tool 13: add_route_stop
+    # -------------------------------------------------------------------------
+    def _tool_add_route_stop(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        stop_name = (args.get("stop_name") or "").strip()
+        lat = args.get("lat")
+        lon = args.get("lon")
+
+        if not stop_name:
+            return {"badge": "➕ ADD STOP", "response": "Please specify the name of the stop to add.", "success": False}
+
+        if lat is None or lon is None:
+            # Geocode the stop
+            cands = []
+            if not self.map_service:
+                try:
+                    from src.map_service import MapService
+                    self.map_service = MapService()
+                except Exception:
+                    pass
+            if self.map_service:
+                cands = self.map_service.geocode_candidates(stop_name, limit=1)
+
+            if not cands:
+                return {
+                    "badge": "⚠️ STOP GEOCODE",
+                    "response": f"Could not find coordinates for intermediate stop **'{stop_name}'**. Please provide a more specific address or landmark.",
+                    "success": False
+                }
+            lat = float(cands[0]["lat"])
+            lon = float(cands[0]["lon"])
+            stop_name = cands[0].get("display_name", stop_name).split(",")[0].strip()
+
+        return {
+            "badge": "🟣 INTERMEDIATE STOP ADDED",
+            "response": f"### 🟣 Added Intermediate Stop: **{stop_name}**\n\n• **Coordinates:** `{lat:.5f}, {lon:.5f}`\n• **Status:** Added to journey itinerary. The route will automatically recalculate through this waypoint.",
+            "action": {
+                "type": "add_stop",
+                "stop": {
+                    "name": stop_name,
+                    "lat": lat,
+                    "lon": lon,
+                    "category_icon": "🟣"
+                }
+            },
+            "success": True
+        }
+
+    # -------------------------------------------------------------------------
+    # Tool 14: remove_route_stop
+    # -------------------------------------------------------------------------
+    def _tool_remove_route_stop(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        idx = int(args.get("stop_index", 1)) - 1
+        return {
+            "badge": "🗑️ STOP REMOVED",
+            "response": f"Removed intermediate stop #{idx + 1} from the active route itinerary.",
+            "action": {"type": "remove_stop", "index": idx},
+            "success": True
+        }
+
+    # -------------------------------------------------------------------------
+    # Tool 15: get_route_details
+    # -------------------------------------------------------------------------
+    def _tool_get_route_details(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        ranked = ctx.get("ranked_routes", [])
+        if not ranked:
+            return {
+                "badge": "🧭 ROUTE DETAILS",
+                "response": "No active route calculated yet. Please set your starting point and destination first.",
+                "success": False
+            }
+
+        top = ranked[0]
+        r = top.route if hasattr(top, "route") else top
+        d_km = getattr(top, "effective_distance_km", getattr(r, "distance_km", 0.0))
+        dur_m = getattr(top, "effective_duration_minutes", getattr(r, "duration_minutes", 0.0))
+        r_name = getattr(r, "name", "Primary Corridor")
+        steps = getattr(r, "steps", [])
+
+        return {
+            "badge": "🧭 ROUTE METRICS",
+            "response": f"### 🧭 Active Route: **{r_name}**\n\n• **Distance:** **{d_km:.1f} km**\n• **Estimated Time:** **~{round(dur_m)} minutes**\n• **Step Count:** **{len(steps)} turn maneuvers**\n• **Status:** Optimal, verified corridor on live road network.",
+            "success": True,
+            "data": {"distance_km": d_km, "duration_minutes": dur_m, "name": r_name, "steps_count": len(steps)}
+        }
+
+    # -------------------------------------------------------------------------
+    # Tool 16: get_navigation_instructions
+    # -------------------------------------------------------------------------
+    def _tool_get_navigation_instructions(self, args: Dict[str, Any], ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
+        ranked = ctx.get("ranked_routes", [])
+        if not ranked:
+            return {
+                "badge": "🚗 MANEUVER GUIDANCE",
+                "response": "Please generate a route first to view turn-by-turn guidance steps.",
+                "success": False
+            }
+
+        top = ranked[0]
+        r = top.route if hasattr(top, "route") else top
+        steps = getattr(r, "steps", [])
+        if not steps:
+            return {"badge": "🚗 MANEUVER GUIDANCE", "response": "Turn-by-turn maneuvers not available for this corridor.", "success": False}
+
+        lines = [f"### 🚗 Turn-by-Turn Guidance ({len(steps[:8])} steps):\n"]
+        for i, s in enumerate(steps[:8]):
+            inst = s.get("instruction", "Continue along road")
+            dist = s.get("distance_m", s.get("distance", 0))
+            lines.append(f"{i + 1}. **{inst}** ({int(dist)} m)")
+
+        return {
+            "badge": "🚗 MANEUVER GUIDANCE",
+            "response": "\n".join(lines),
+            "success": True
+        }

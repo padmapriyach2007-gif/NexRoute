@@ -488,6 +488,17 @@ class AuraAssistantMixin:
 
     def _handle_general_knowledge(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
         """Provides concise, knowledgeable answers to general non-travel inquiries without misrouting to navigation."""
+        if hasattr(self, "ai_service") and self.ai_service.is_configured():
+            lang = ctx.get("language", "en")
+            history = getattr(getattr(self, "conv_manager", None), "get_messages_for_llm", lambda: [])()
+            msgs = history + [{"role": "user", "content": raw_query}]
+            res = self.ai_service.generate(messages=msgs, lang=lang, context=ctx)
+            if res.get("success"):
+                return {
+                    "badge": res.get("badge", "✨ NEXROUTE AI"),
+                    "response": res["response"]
+                }
+
         if any(w in q for w in ["artificial intelligence", "what is ai", "ai in simple terms", "explain ai"]):
             return {
                 "badge": "🧠 AURA • ARTIFICIAL INTELLIGENCE",

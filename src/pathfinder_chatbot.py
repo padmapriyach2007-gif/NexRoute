@@ -21,6 +21,7 @@ from src.ai_assistant_engine import (
     GroundingEngine,
     PATHFINDER_TRAVEL_SYSTEM_PROMPT
 )
+from src.backend.ai.ai_service import AIService, DocumentParser, LANGUAGE_SPEECH_MAP
 from src.pathfinder_tools import PathfinderToolExecutor, TOOL_SCHEMAS
 from src.aura_assistant_handlers import AuraAssistantMixin, AuraIntentType, AuraIntentClassifier
 from src.route_engine import OSRMGlobalRoutingProvider
@@ -49,6 +50,7 @@ class PathfinderChatbot(AuraAssistantMixin):
         self.cognitive_engine = BuiltinCognitiveEngine()
         self.conv_manager = ConversationManager()
         self.routing_provider = OSRMGlobalRoutingProvider()
+        self.ai_service = AIService()
         self.tool_executor = PathfinderToolExecutor(
             pipeline=pipeline,
             map_service=map_service,
@@ -76,13 +78,13 @@ class PathfinderChatbot(AuraAssistantMixin):
         self.last_destination = None
         self.explanation_mode = "standard"
 
-    def answer(self, user_query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def answer(self, user_query: str, context: Optional[Dict[str, Any]] = None, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         Processes any user query using contextual awareness, tool routing, and adaptive intelligence.
         Returns a dictionary with 'badge', 'response', and optional 'action'.
         """
         raw_query = user_query.strip()
-        if not raw_query:
+        if not raw_query and not attachments:
             return {
                 "badge": "🤖 A.U.R.A. READY",
                 "response": (
@@ -102,7 +104,7 @@ class PathfinderChatbot(AuraAssistantMixin):
         elif any(p in q for p in ["standard explanation", "normal explanation"]):
             self.explanation_mode = "standard"
 
-        ans = self._compute_answer(raw_query, q, ctx)
+        ans = self._compute_answer(raw_query, q, ctx, attachments=attachments)
         if isinstance(ans, dict) and "response" in ans:
             self.conv_manager.add_turn("user", raw_query)
             self.conv_manager.add_turn("assistant", ans["response"], ans.get("badge"))
@@ -118,7 +120,7 @@ class PathfinderChatbot(AuraAssistantMixin):
             return (float(resolved[0]), float(resolved[1]))
         return None
 
-    def _compute_answer(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
+    def _compute_answer(self, raw_query: str, q: str, ctx: Dict[str, Any], attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """Core internal processing separating navigation actions from general conversation."""
 
         # ---------------------------------------------------------------------
@@ -368,7 +370,29 @@ class PathfinderChatbot(AuraAssistantMixin):
                     )
                 }
 
-        # Step 1: External LLM attempt if configured
+        # Step 0: Primary Unified AI Service (Gemini, OpenAI, Ollama)
+        if self.ai_service.is_configured() or attachments:
+            llm_msgs = self.conv_manager.get_messages_for_llm() + [{"role": "user", "content": raw_query}]
+            gen_res = self.ai_service.generate(
+                messages=llm_msgs,
+                lang=active_lang,
+                context=ctx,
+                attachments=attachments
+            )
+            if gen_res.get("success"):
+                return {
+                    "badge": gen_res.get("badge", "✨ NEXROUTE AI"),
+                    "response": gen_res["response"],
+                    "provider": gen_res.get("provider")
+                }
+            elif not self.ai_service.is_configured() and attachments:
+                return {
+                    "badge": "⚙️ SETUP REQUIRED",
+                    "response": gen_res.get("response", "Please configure an AI provider (Gemini, OpenAI, or Ollama) to analyze uploaded images and documents."),
+                    "provider": "none"
+                }
+
+        # Step 1: External LLM attempt if configured via LLMClient
         if self.llm_client.active_provider_name != "builtin":
             lang_code = (ctx.get("language") or "en").lower().strip()
             lang_prompts = {
@@ -409,13 +433,14 @@ class PathfinderChatbot(AuraAssistantMixin):
                 cog_res["response"] = err_prefix + cog_res.get("response", "")
                 return cog_res
 
-        # Step 2: Built-in Cognitive Reasoning Engine
-        return self.cognitive_engine.reason(
+        # Step 2: Built-in Cognitive Reasoning Engine (Offline fallback & unit testing)
+        cog_res = self.cognitive_engine.reason(
             query=raw_query,
             explanation_mode=self.explanation_mode,
             context=ctx,
             history=self.conv_manager.history
         )
+        return cog_res
 
     # =========================================================================
     # TOOL HANDLERS

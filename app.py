@@ -2,6 +2,8 @@ import sys
 import os
 import types
 import logging
+import base64
+from io import BytesIO
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Union, Tuple
 
@@ -231,6 +233,7 @@ from src.chatbot_agent import AegisChatbotAgent
 
 
 from src.pathfinder_chatbot import PathfinderChatbot
+from src.backend.ai.ai_service import AIService, DocumentParser, LANGUAGE_SPEECH_MAP
 
 
 
@@ -6072,60 +6075,27 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
 
 
 
-    def _execute_chat_turn(query_text: str):
-
-
-
-        st.session_state.aura_chat_history.append({"role": "user", "content": query_text})
-
-
+    def _execute_chat_turn(query_text: str, attachments: Optional[List[Dict[str, Any]]] = None):
+        att_list = attachments if attachments is not None else st.session_state.get("pending_chat_attachments", [])
+        user_msg = {"role": "user", "content": query_text}
+        if att_list:
+            user_msg["attachments"] = [a.get("name", "file") for a in att_list]
+        st.session_state.aura_chat_history.append(user_msg)
 
         chat_ctx = {
-
-
-
             "start_label": st.session_state.get("user_live_label", "Live Location"),
-
-
-
             "dest_label": st.session_state.get("selected_dest_label", "Destination"),
-
-
-
             "dest_coords": st.session_state.get("selected_dest_coords", (16.2335, 80.5505)),
-
-
-
             "current_coords": st.session_state.get("user_live_coords", (16.2335, 80.5505)),
-
-
-
             "active_objective_str": st.session_state.get("active_objective", OptimizationObjective.FASTEST).value,
-
-
-
             "ranked_routes": st.session_state.get("last_ranked_routes", []),
-
-
-
             "active_restrictions": st.session_state.road_condition_manager.get_active_restrictions() if "road_condition_manager" in st.session_state else [],
-
-
-
             "active_hazards": st.session_state.real_hazard_map.get_active_hazards() if "real_hazard_map" in st.session_state else [],
-
-
-
             "language": st.session_state.get("app_language", "en")
-
-
-
         }
 
-
-
         try:
-            ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx)
+            ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx, attachments=att_list)
         except Exception as chat_err:
             logger.exception("PathfinderChatbot execution error: %s", chat_err)
             ans = {
@@ -6138,6 +6108,8 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             "content": ans.get("response", "Response unavailable."),
             "badge": ans.get("badge", "NEXROUTE AI")
         })
+
+        st.session_state.pending_chat_attachments = []
 
 
 
@@ -6437,109 +6409,126 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
 
 
     with c_box:
+        cur_l = st.session_state.get("app_language", "en")
+        bcp_code = LANGUAGE_SPEECH_MAP.get(cur_l, {}).get("bcp47", "en-IN")
 
-
-
-        for msg in st.session_state.aura_chat_history:
-
-
-
+        for idx, msg in enumerate(st.session_state.aura_chat_history):
             if msg["role"] == "user":
-
-
+                att_chips = ""
+                if "attachments" in msg and msg["attachments"]:
+                    chips = "".join([f"<span style='background: rgba(255,255,255,0.25); border-radius: 4px; padding: 1px 6px; margin-right: 4px; font-size: 0.72rem;'>📎 {a}</span>" for a in msg["attachments"]])
+                    att_chips = f"<div style='margin-bottom: 4px;'>{chips}</div>"
 
                 st.markdown(f"""
-
-
-
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-
-
-
                     <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 85%; font-size: 0.82rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-weight: 500;">
-
-
-
+                        {att_chips}
                         {msg['content']}
-
-
-
                     </div>
-
-
-
                 </div>
-
-
-
                 """, unsafe_allow_html=True)
-
-
-
             else:
-
-
-
-                b_badge = f"<span style='font-size: 0.62rem; font-weight: 800; color: #38bdf8; font-family: monospace; letter-spacing: 0.05em; background: rgba(56, 189, 248, 0.12); padding: 1px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px;'>{msg.get('badge', 'A.U.R.A.')}</span>"
-
-
+                b_badge = f"<span style='font-size: 0.62rem; font-weight: 800; color: #38bdf8; font-family: monospace; letter-spacing: 0.05em; background: rgba(56, 189, 248, 0.12); padding: 1px 6px; border-radius: 4px; display: inline-block;'>{msg.get('badge', 'NEXROUTE AI')}</span>"
+                clean_text = re.sub(r'[*#_`~>\[\]\(\)]', ' ', msg.get('content', ''))[:260].replace("'", "\\'").replace('"', '\\"').replace("\n", " ")
 
                 st.markdown(f"""
-
-
-
-                <div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
-
-
-
-                    <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.22); color: #cbd5e1; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 95%; font-size: 0.82rem; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
-
-
-
-                        {b_badge}
-
-
-
-                        <div>{msg['content']}</div>
-
-
-
-                    </div>
-
-
-
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; margin-bottom: 4px;">
+                    <div>{b_badge}</div>
+                    <button onclick="window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance('{clean_text}'); u.lang = '{bcp_code}'; window.speechSynthesis.speak(u);" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; font-size: 0.68rem; font-weight: 700; border-radius: 6px; padding: 2px 8px; cursor: pointer;">
+                        🔊 Listen
+                    </button>
                 </div>
-
-
-
                 """, unsafe_allow_html=True)
+                st.markdown(msg.get("content", ""))
 
+    # ChatGPT-Style Toolbar: Attachments (+) & Voice Recognition (🎙️) & New Chat (🧹)
+    ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1.6, 1.4, 1.2])
+    with ctrl_col1:
+        with st.popover("➕ Attach File", help="Upload PDF, Image, Code, or Text for AI analysis"):
+            up_file = st.file_uploader(
+                "Upload Image or Document",
+                type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "md", "csv"],
+                key=f"chat_uploader_{key_prefix}"
+            )
+            if up_file is not None:
+                f_bytes = up_file.getvalue()
+                f_name = up_file.name
+                f_mime = up_file.type or "application/octet-stream"
+                if "pending_chat_attachments" not in st.session_state:
+                    st.session_state.pending_chat_attachments = []
 
+                if not any(a.get("name") == f_name for a in st.session_state.pending_chat_attachments):
+                    if f_mime.startswith("image/"):
+                        b64_str = base64.b64encode(f_bytes).decode("ascii")
+                        st.session_state.pending_chat_attachments.append({
+                            "type": "image",
+                            "name": f_name,
+                            "mime_type": f_mime,
+                            "data_base64": b64_str
+                        })
+                    else:
+                        txt_content, tag = DocumentParser.extract_text_from_bytes(f_bytes, f_name)
+                        st.session_state.pending_chat_attachments.append({
+                            "type": "document",
+                            "name": f_name,
+                            "text": txt_content,
+                            "summary": tag
+                        })
+                    st.success(f"Attached: {f_name}")
 
+    with ctrl_col2:
+        with st.popover("🎙️ Voice Input", help="Speak in your language"):
+            cur_lang = st.session_state.get("app_language", "en")
+            v_info = LANGUAGE_SPEECH_MAP.get(cur_lang, LANGUAGE_SPEECH_MAP["en"])
+            bcp47_lang = v_info.get("bcp47", "en-IN")
+            st.caption(f"Speech Language: **{v_info.get('name', 'English')}** (`{bcp47_lang}`)")
+            try:
+                aud_data = st.audio_input("Record voice question", key=f"rec_mic_{key_prefix}")
+                if aud_data is not None:
+                    import speech_recognition as sr
+                    r_engine = sr.Recognizer()
+                    with sr.AudioFile(BytesIO(aud_data.getvalue())) as s_src:
+                        a_recorded = r_engine.record(s_src)
+                        try:
+                            transcribed = r_engine.recognize_google(a_recorded, language=bcp47_lang)
+                            if transcribed:
+                                st.session_state[f"txt_{key_prefix}"] = transcribed
+                                st.success(f"🎙️ \"{transcribed}\"")
+                        except Exception as e_rec:
+                            st.info(f"Could not transcribe audio ({e_rec}). Type your query below.")
+            except Exception:
+                pass
 
+    with ctrl_col3:
+        if st.button("🧹 New Chat", key=f"btn_new_chat_{key_prefix}", help="Clear conversation and reset context", use_container_width=True):
+            qc_l = st.session_state.get("app_language", "en")
+            st.session_state.aura_chat_history = [get_aura_welcome_message(qc_l)]
+            st.session_state.pending_chat_attachments = []
+            if "pathfinder_bot" in st.session_state and hasattr(st.session_state.pathfinder_bot, "reset_conversation"):
+                st.session_state.pathfinder_bot.reset_conversation()
+            st.rerun()
 
-
+    # Active pending attachment pills
+    if st.session_state.get("pending_chat_attachments"):
+        p_col1, p_col2 = st.columns([0.82, 0.18])
+        with p_col1:
+            pills = "".join([f"<span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; padding: 2px 7px; border-radius: 6px; margin-right: 5px;'>📎 {a.get('name')}</span>" for a in st.session_state.pending_chat_attachments])
+            st.markdown(f"<div style='margin-bottom: 6px;'>{pills}</div>", unsafe_allow_html=True)
+        with p_col2:
+            if st.button("✖ Remove", key=f"btn_rm_att_{key_prefix}", use_container_width=True):
+                st.session_state.pending_chat_attachments = []
+                st.rerun()
 
     with st.form(f"aura_form_{key_prefix}", clear_on_submit=True):
-
-
-
         col_in, col_btn = st.columns([4, 1])
-
-
-
         with col_in:
-
-
-
-            u_text = st.text_input(t("chat.title"), placeholder=t("chat.placeholder"), label_visibility="collapsed", key=f"txt_{key_prefix}")
-
-
-
+            u_text = st.text_input(
+                t("chat.title"),
+                placeholder="Ask NexRoute AI anything... (Routes, places, math, code, general knowledge)",
+                label_visibility="collapsed",
+                key=f"txt_{key_prefix}"
+            )
         with col_btn:
-
-
-
             s_click = st.form_submit_button(t("chat.send"), use_container_width=True)
 
 
