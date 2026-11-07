@@ -283,7 +283,7 @@ class AuraSpeechGenerator:
                 lm = ctx.get("landmark_name", "a sight")
                 speech_text = f"Landmark nearby: {lm}!"
             elif stage == AuraJourneyStage.OFF_ROUTE:
-                speech_text = "Off route! Recalculating the optimal path."
+                speech_text = "You are off the planned route! Recalculating the optimal path."
             elif stage == AuraJourneyStage.NEAR_DESTINATION:
                 speech_text = f"Destination {dest} is just ahead!"
             else:
@@ -1067,65 +1067,289 @@ def build_aura_journey_cockpit_html(
                 box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
             }}
 
-            /* View All Pictures Modal */
+            /* View All Pictures Route Storyline Modal */
             .gallery-modal-overlay {{
                 display: none;
                 position: fixed;
                 inset: 0;
-                background: rgba(3, 7, 18, 0.88);
-                backdrop-filter: blur(8px);
+                background: rgba(3, 7, 18, 0.92);
+                backdrop-filter: blur(12px);
                 z-index: 99999;
                 align-items: center;
                 justify-content: center;
-                padding: 20px;
+                padding: 16px;
             }}
             .gallery-modal-card {{
-                background: linear-gradient(135deg, #070f1e 0%, #0b172a 100%);
+                background: linear-gradient(135deg, #070f1e 0%, #0b172a 50%, #050b16 100%);
                 border: 2px solid #38bdf8;
-                border-radius: 20px;
-                width: 92%;
-                max-width: 1040px;
-                max-height: 88vh;
+                border-radius: 22px;
+                width: 95%;
+                max-width: 1080px;
+                max-height: 90vh;
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
-                box-shadow: 0 24px 64px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.25);
+                box-shadow: 0 28px 72px rgba(0, 0, 0, 0.95), 0 0 50px rgba(56, 189, 248, 0.3);
             }}
             .gallery-header {{
-                padding: 16px 22px;
+                padding: 16px 24px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                background: rgba(15, 23, 42, 0.8);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                background: rgba(15, 23, 42, 0.88);
+                border-bottom: 1.5px solid rgba(56, 189, 248, 0.25);
+                gap: 14px;
+                flex-wrap: wrap;
             }}
-            .gallery-content-grid {{
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-                gap: 18px;
-                padding: 22px;
+            .gallery-scroll-container {{
+                flex: 1;
                 overflow-y: auto;
+                padding: 20px 24px 32px 24px;
+                scroll-behavior: smooth;
             }}
-            .gallery-card-item {{
-                background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 18, 36, 0.98) 100%);
-                border: 1.5px solid rgba(255, 255, 255, 0.12);
-                border-radius: 16px;
-                padding: 0;
+            .gallery-scroll-container::-webkit-scrollbar {{
+                width: 8px;
+            }}
+            .gallery-scroll-container::-webkit-scrollbar-track {{
+                background: rgba(15, 23, 42, 0.6);
+            }}
+            .gallery-scroll-container::-webkit-scrollbar-thumb {{
+                background: #0284c7;
+                border-radius: 4px;
+            }}
+            /* Connected Storyline Stream */
+            .storyline-stream {{
                 display: flex;
                 flex-direction: column;
+                align-items: center;
+                max-width: 840px;
+                margin: 0 auto;
+                width: 100%;
+            }}
+            .storyline-scene-card {{
+                width: 100%;
+                background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(9, 15, 30, 0.98) 100%);
+                border: 2px solid rgba(255, 255, 255, 0.12);
+                border-radius: 18px;
                 overflow: hidden;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+            }}
+            .storyline-scene-card:hover {{
+                border-color: #38bdf8;
+                box-shadow: 0 16px 40px rgba(56, 189, 248, 0.28);
+                transform: translateY(-2px);
+            }}
+            .storyline-scene-card.active {{
+                border-color: #38bdf8;
+                box-shadow: 0 0 32px rgba(56, 189, 248, 0.55), 0 12px 36px rgba(0, 0, 0, 0.8);
+            }}
+            .storyline-scene-card.completed {{
+                border-color: rgba(52, 211, 153, 0.4);
+            }}
+            .storyline-scene-header {{
+                padding: 12px 18px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(15, 23, 42, 0.85);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                gap: 10px;
+                flex-wrap: wrap;
+            }}
+            .scene-chapter-badge {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.80rem;
+                font-weight: 800;
+                color: #38bdf8;
+                letter-spacing: 0.04em;
+            }}
+            .scene-metrics-badges {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }}
+            .scene-pill-dist {{
+                font-size: 0.72rem;
+                font-weight: 800;
+                color: #34d399;
+                background: rgba(16, 185, 129, 0.16);
+                border: 1px solid rgba(16, 185, 129, 0.35);
+                padding: 3px 9px;
+                border-radius: 999px;
+            }}
+            .scene-pill-time {{
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: #94a3b8;
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 3px 9px;
+                border-radius: 999px;
+            }}
+            .scene-status-pill {{
+                font-size: 0.70rem;
+                font-weight: 800;
+                padding: 3px 8px;
+                border-radius: 999px;
+            }}
+            .scene-status-pill.active {{
+                background: #0284c7;
+                color: #ffffff;
+                box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+            }}
+            .scene-status-pill.completed {{
+                background: rgba(16, 185, 129, 0.2);
+                color: #34d399;
+                border: 1px solid #10b981;
+            }}
+            .scene-status-pill.upcoming {{
+                background: rgba(148, 163, 184, 0.15);
+                color: #94a3b8;
+                border: 1px solid rgba(148, 163, 184, 0.3);
+            }}
+            .storyline-pic-hero {{
+                width: 100%;
+                height: 180px;
+                position: relative;
+                overflow: hidden;
+                background: #070f1e;
                 cursor: pointer;
             }}
-            .gallery-card-item:hover {{
-                border-color: #38bdf8;
-                transform: translateY(-4px) scale(1.015);
-                box-shadow: 0 16px 36px rgba(56, 189, 248, 0.35);
+            .storyline-pic-hero svg {{
+                width: 100%;
+                height: 100%;
+                display: block;
+                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             }}
-            .gallery-card-item.active {{
-                border-color: #38bdf8;
-                box-shadow: 0 0 24px rgba(56, 189, 248, 0.6);
+            .storyline-scene-card:hover .storyline-pic-hero svg {{
+                transform: scale(1.03);
+            }}
+            .storyline-pic-overlay {{
+                position: absolute;
+                bottom: 10px;
+                left: 12px;
+                right: 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                pointer-events: none;
+            }}
+            .pic-road-pill {{
+                background: rgba(15, 23, 42, 0.88);
+                backdrop-filter: blur(6px);
+                border: 1px solid #38bdf8;
+                padding: 4px 12px;
+                border-radius: 999px;
+                font-size: 0.76rem;
+                font-weight: 800;
+                color: #e0f2fe;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            }}
+            .pic-jump-hint {{
+                background: rgba(2, 132, 199, 0.88);
+                backdrop-filter: blur(6px);
+                border: 1px solid #7dd3fc;
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.70rem;
+                font-weight: 800;
+                color: #ffffff;
+                box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+            }}
+            .storyline-narrative-box {{
+                padding: 14px 18px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                background: linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(10, 18, 36, 0.8) 100%);
+            }}
+            .storyline-headline {{
+                font-size: 1.05rem;
+                font-weight: 800;
+                color: #ffffff;
+                line-height: 1.35;
+            }}
+            .storyline-chronicle-text {{
+                font-size: 0.82rem;
+                color: #cbd5e1;
+                line-height: 1.5;
+            }}
+            .storyline-landmark-strip {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: rgba(56, 189, 248, 0.08);
+                border-left: 3px solid #38bdf8;
+                padding: 6px 10px;
+                border-radius: 6px;
+                font-size: 0.76rem;
+            }}
+            .storyline-action-row {{
+                padding: 0 18px 14px 18px;
+                display: flex;
+                justify-content: flex-end;
+            }}
+            .storyline-action-row .jump-btn {{
+                background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+                border: none;
+                color: #ffffff;
+                font-weight: 800;
+                padding: 6px 14px;
+                box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
+            }}
+            /* Connecting Storyline Ribbon */
+            .storyline-connector-segment {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin: 8px 0;
+                position: relative;
+                width: 100%;
+            }}
+            .storyline-connector-line {{
+                width: 3px;
+                height: 22px;
+                background: linear-gradient(180deg, #38bdf8 0%, rgba(56, 189, 248, 0.2) 100%);
+            }}
+            .storyline-connector-ribbon {{
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: rgba(15, 23, 42, 0.95);
+                border: 1.5px solid rgba(56, 189, 248, 0.45);
+                padding: 6px 16px;
+                border-radius: 999px;
+                box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+            }}
+            .connector-arrow {{
+                font-size: 0.85rem;
+                color: #38bdf8;
+                font-weight: 900;
+                animation: connectorPulse 1.6s infinite ease-in-out;
+            }}
+            .connector-badge {{
+                font-size: 0.72rem;
+                font-weight: 800;
+                color: #bae6fd;
+                letter-spacing: 0.04em;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }}
+            @keyframes connectorPulse {{
+                0%, 100% {{ transform: translateY(0); opacity: 0.6; }}
+                50% {{ transform: translateY(3px); opacity: 1; }}
+            }}
+            /* Grid View */
+            .storyline-grid-container {{
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+                gap: 20px;
+                width: 100%;
             }}
         </style>
 
@@ -1273,12 +1497,23 @@ def build_aura_journey_cockpit_html(
         <div id='pictures-modal' class='gallery-modal-overlay' onclick='if(event.target===this)closePicturesGallery()'>
             <div class='gallery-modal-card'>
                 <div class='gallery-header'>
-                    <div style='font-weight: 900; font-size: 1.1rem; color: #38bdf8; display: flex; align-items: center; gap: 8px;'>
-                        <span>🖼️</span> <span>VIEW ALL PICTURES: COMPLETE ROUTE STORY</span>
+                    <div style='display: flex; flex-direction: column; gap: 4px;'>
+                        <div style='font-weight: 900; font-size: 1.12rem; color: #38bdf8; display: flex; align-items: center; gap: 8px;'>
+                            <span>🖼️</span> <span>VIEW ALL PICTURES: COMPLETE ROUTE STORYLINE</span>
+                        </div>
+                        <div style='font-size: 0.74rem; color: #94a3b8;'>
+                            Visual connected storyline from departure to destination • Pictures depict road scenery, turns & milestones
+                        </div>
                     </div>
-                    <button class='btn-action-pill' onclick='closePicturesGallery()'>✕ Close</button>
+                    <div style='display: flex; gap: 8px; align-items: center;'>
+                        <div style='display: flex; background: rgba(15, 23, 42, 0.7); padding: 3px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);'>
+                            <button id='story-mode-timeline' class='btn-action-pill active' style='padding: 3px 10px; font-size: 0.72rem;' onclick='setStoryGalleryView("timeline")'>🎞️ Connected Storyline</button>
+                            <button id='story-mode-grid' class='btn-action-pill' style='padding: 3px 10px; font-size: 0.72rem;' onclick='setStoryGalleryView("grid")'>🖼️ Picture Grid</button>
+                        </div>
+                        <button class='btn-action-pill' onclick='closePicturesGallery()'>✕ Close</button>
+                    </div>
                 </div>
-                <div class='gallery-content-grid' id='gallery-grid-items'>
+                <div class='gallery-scroll-container' id='gallery-container-box'>
                     <!-- Dynamically populated via JS -->
                 </div>
             </div>
@@ -1375,128 +1610,146 @@ def build_aura_journey_cockpit_html(
 
         function getScenicStepSvg(dirType, roadName, stepNum, iconText, isCompleted, isActive) {{
             const rawDir = (dirType || '').toUpperCase();
-            const cleanRoad = String(roadName || 'Main Corridor').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-            const shortRoad = cleanRoad.length > 20 ? cleanRoad.substring(0, 18) + '...' : cleanRoad;
-            const uid = 'svg_' + stepNum + '_' + Math.random().toString(36).substr(2, 5);
+            const cleanRoad = String(roadName || 'Corridor Route').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const shortRoad = cleanRoad.length > 22 ? cleanRoad.substring(0, 20) + '...' : cleanRoad;
+            const uid = 'svg_' + stepNum + '_' + Math.random().toString(36).substr(2, 6);
             const labelBg = 'rgba(15, 23, 42, 0.88)';
+            const borderCol = isActive ? '#38bdf8' : (isCompleted ? '#34d399' : '#0284c7');
 
             if (rawDir.includes('ARRIVE') || rawDir.includes('DEST')) {{
                 return `
-                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                <svg viewBox="0 0 360 170" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px; overflow:hidden;">
                     <defs>
                         <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#0f172a"/>
-                            <stop offset="50%" stop-color="#047857"/>
+                            <stop offset="0%" stop-color="#022c22"/>
+                            <stop offset="40%" stop-color="#065f46"/>
                             <stop offset="100%" stop-color="#10b981"/>
                         </linearGradient>
                         <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#334155"/>
-                            <stop offset="100%" stop-color="#1e293b"/>
+                            <stop offset="100%" stop-color="#0f172a"/>
                         </linearGradient>
-                        <radialGradient id="sun_${{uid}}" cx="50%" cy="30%" r="50%">
-                            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
-                            <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.4"/>
-                            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+                        <radialGradient id="sun_${{uid}}" cx="50%" cy="35%" r="50%">
+                            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.95"/>
+                            <stop offset="50%" stop-color="#34d399" stop-opacity="0.4"/>
+                            <stop offset="100%" stop-color="#065f46" stop-opacity="0"/>
                         </radialGradient>
                     </defs>
-                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
-                    <circle cx="100" cy="36" r="38" fill="url(#sun_${{uid}})"/>
-                    <polygon points="0,50 35,40 70,48 110,36 150,46 185,38 200,46 200,54 0,54" fill="#064e3b" opacity="0.7"/>
-                    <rect y="48" width="200" height="44" fill="#065f46"/>
-                    <polygon points="65,92 135,92 112,48 88,48" fill="url(#road_${{uid}})"/>
-                    <line x1="100" y1="48" x2="100" y2="92" stroke="#34d399" stroke-width="2" stroke-dasharray="4,3"/>
-                    <path d="M 75 92 L 75 40 Q 100 26 125 40 L 125 92" fill="none" stroke="#34d399" stroke-width="3.5"/>
-                    <path d="M 78 43 Q 100 30 122 43" fill="none" stroke="#fef08a" stroke-width="1.8"/>
-                    <rect x="80" y="30" width="40" height="10" rx="3" fill="#064e3b" stroke="#34d399" stroke-width="1"/>
-                    <text x="100" y="37.5" font-size="5.5" font-weight="900" fill="#fef08a" text-anchor="middle" font-family="sans-serif">★ ARRIVAL ★</text>
-                    <text x="68" y="42" font-size="11">🏁</text>
-                    <text x="122" y="42" font-size="11">🏁</text>
-                    <rect x="8" y="72" width="70" height="14" rx="3" fill="${{labelBg}}" stroke="#34d399" stroke-width="1"/>
-                    <text x="43" y="82" font-size="6.5" font-weight="800" fill="#a7f3d0" text-anchor="middle" font-family="sans-serif">${{shortRoad}}</text>
+                    <rect width="360" height="170" fill="url(#sky_${{uid}})"/>
+                    <circle cx="180" cy="55" r="55" fill="url(#sun_${{uid}})"/>
+                    <polygon points="0,85 45,72 90,82 140,68 180,78 220,68 270,82 315,72 360,85 360,105 0,105" fill="#064e3b" opacity="0.6"/>
+                    <rect y="95" width="360" height="75" fill="#047857"/>
+                    <!-- Arrival Plaza Road -->
+                    <polygon points="120,170 240,170 198,95 162,95" fill="url(#road_${{uid}})"/>
+                    <polygon points="80,170 120,170 162,95 150,95" fill="#059669" opacity="0.6"/>
+                    <polygon points="240,170 280,170 210,95 198,95" fill="#059669" opacity="0.6"/>
+                    <line x1="180" y1="95" x2="180" y2="170" stroke="#34d399" stroke-width="3" stroke-dasharray="8,6"/>
+                    <!-- Grand Destination Archway -->
+                    <path d="M 130 170 L 130 65 Q 180 38 230 65 L 230 170" fill="none" stroke="#fef08a" stroke-width="4.5"/>
+                    <path d="M 134 68 Q 180 44 226 68" fill="none" stroke="#34d399" stroke-width="2.5"/>
+                    <rect x="142" y="48" width="76" height="18" rx="4" fill="#064e3b" stroke="#fef08a" stroke-width="1.5"/>
+                    <text x="180" y="60.5" font-size="7.5" font-weight="900" fill="#fef08a" text-anchor="middle" font-family="sans-serif">★ DESTINATION REACHED ★</text>
+                    <text x="114" y="70" font-size="16">🏁</text>
+                    <text x="232" y="70" font-size="16">🏁</text>
+                    <!-- Sparkles & Celebration -->
+                    <text x="70" y="55" font-size="14">✨</text>
+                    <text x="280" y="55" font-size="14">✨</text>
+                    <text x="180" y="32" font-size="16">🎉</text>
+                    <!-- Road Sign Pill -->
+                    <rect x="14" y="138" width="130" height="22" rx="5" fill="${{labelBg}}" stroke="${{borderCol}}" stroke-width="1.5"/>
+                    <text x="79" y="153" font-size="9" font-weight="800" fill="#a7f3d0" text-anchor="middle" font-family="sans-serif">🏁 ARRIVED • ${{shortRoad}}</text>
                 </svg>`;
             }} else if (rawDir.includes('LEFT')) {{
                 return `
-                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                <svg viewBox="0 0 360 170" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px; overflow:hidden;">
                     <defs>
                         <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#0369a1"/>
+                            <stop offset="60%" stop-color="#0284c7"/>
                             <stop offset="100%" stop-color="#38bdf8"/>
                         </linearGradient>
                         <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#1e293b"/>
+                            <stop offset="0%" stop-color="#0f172a"/>
+                            <stop offset="50%" stop-color="#1e293b"/>
                             <stop offset="100%" stop-color="#334155"/>
                         </linearGradient>
                     </defs>
-                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
-                    <circle cx="170" cy="20" r="13" fill="#fef08a" opacity="0.8"/>
-                    <ellipse cx="140" cy="18" rx="18" ry="6" fill="#ffffff" opacity="0.6"/>
-                    <rect y="46" width="200" height="46" fill="#0f766e"/>
-                    <path d="M 0 50 Q 60 53 90 92 L 155 92 Q 120 46 0 42 Z" fill="url(#road_${{uid}})"/>
-                    <path d="M 0 42 Q 120 46 155 92" fill="none" stroke="#64748b" stroke-width="2"/>
-                    <path d="M 0 50 Q 60 53 90 92" fill="none" stroke="#64748b" stroke-width="2"/>
-                    <path d="M 0 46 Q 90 50 122 92" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,4"/>
-                    <g transform="translate(68, 60) scale(0.6)">
-                        <path d="M 28 35 C 28 20, 15 12, -2 12 L -2 18 L -18 8 L -2 -2 L -2 5 C 20 5, 36 15, 36 35 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+                    <rect width="360" height="170" fill="url(#sky_${{uid}})"/>
+                    <circle cx="310" cy="35" r="22" fill="#fef08a" opacity="0.85"/>
+                    <ellipse cx="260" cy="32" rx="35" ry="10" fill="#ffffff" opacity="0.6"/>
+                    <ellipse cx="120" cy="24" rx="28" ry="8" fill="#ffffff" opacity="0.5"/>
+                    <rect y="80" width="360" height="90" fill="#0f766e"/>
+                    <!-- Road Curving Smoothly to Left -->
+                    <path d="M 0 88 Q 120 92 180 170 L 290 170 Q 220 84 0 74 Z" fill="url(#road_${{uid}})"/>
+                    <path d="M 0 74 Q 220 84 290 170" fill="none" stroke="#64748b" stroke-width="3"/>
+                    <path d="M 0 88 Q 120 92 180 170" fill="none" stroke="#64748b" stroke-width="3"/>
+                    <path d="M 0 81 Q 170 88 235 170" fill="none" stroke="#fbbf24" stroke-width="3.5" stroke-dasharray="10,6"/>
+                    <!-- High-Tech 3D Holographic Left Turn Arrow -->
+                    <g transform="translate(130, 105) scale(0.95)">
+                        <path d="M 40 45 C 40 24, 20 14, -4 14 L -4 22 L -24 9 L -4 -4 L -4 5 C 28 5, 50 18, 50 45 Z" fill="#ffffff" filter="drop-shadow(0 3px 8px rgba(0,0,0,0.6))"/>
+                        <path d="M 38 43 C 38 25, 20 16, -2 16 L -2 20 L -18 9 L -2 0 L -2 7 C 26 7, 46 19, 46 43 Z" fill="#38bdf8"/>
                     </g>
-                    <line x1="8" y1="44" x2="16" y2="50" stroke="#ffffff" stroke-width="3"/>
-                    <line x1="16" y1="44" x2="24" y2="50" stroke="#ffffff" stroke-width="3"/>
-                    <line x1="24" y1="44" x2="32" y2="50" stroke="#ffffff" stroke-width="3"/>
-                    <rect x="160" y="30" width="32" height="30" rx="2" fill="#1e293b" opacity="0.85"/>
-                    <rect x="165" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
-                    <rect x="175" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
-                    <circle cx="148" cy="44" r="9" fill="#15803d"/>
-                    <circle cx="148" cy="38" r="7" fill="#22c55e"/>
-                    <line x1="38" y1="26" x2="38" y2="48" stroke="#475569" stroke-width="2"/>
-                    <rect x="34" y="22" width="8" height="15" rx="2" fill="#0f172a"/>
-                    <circle cx="38" cy="26" r="2" fill="#ef4444"/>
-                    <circle cx="38" cy="30" r="2" fill="#f59e0b"/>
-                    <circle cx="38" cy="35" r="2.5" fill="#22c55e"/>
-                    <rect x="8" y="72" width="82" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
-                    <text x="49" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">TURN LEFT • ${{shortRoad}}</text>
+                    <!-- Street Lampposts with Glowing Cones -->
+                    <line x1="60" y1="46" x2="60" y2="86" stroke="#475569" stroke-width="3"/>
+                    <line x1="60" y1="46" x2="72" y2="46" stroke="#475569" stroke-width="2.5"/>
+                    <circle cx="72" cy="48" r="4" fill="#fef08a"/>
+                    <polygon points="72,48 50,86 94,86" fill="#fef08a" opacity="0.18"/>
+                    <!-- Roadside Trees and Buildings -->
+                    <circle cx="330" cy="80" r="14" fill="#15803d"/><circle cx="330" cy="70" r="11" fill="#22c55e"/>
+                    <rect x="280" y="55" width="34" height="35" rx="3" fill="#1e293b" opacity="0.9"/>
+                    <rect x="286" y="62" width="8" height="8" fill="#38bdf8" opacity="0.8"/>
+                    <rect x="300" y="62" width="8" height="8" fill="#fef08a" opacity="0.8"/>
+                    <!-- Road Sign Pill -->
+                    <rect x="14" y="138" width="145" height="22" rx="5" fill="${{labelBg}}" stroke="${{borderCol}}" stroke-width="1.5"/>
+                    <text x="86" y="153" font-size="9" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">↰ TURN LEFT • ${{shortRoad}}</text>
                 </svg>`;
             }} else if (rawDir.includes('RIGHT')) {{
                 return `
-                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                <svg viewBox="0 0 360 170" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px; overflow:hidden;">
                     <defs>
                         <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#0284c7"/>
+                            <stop offset="60%" stop-color="#0369a1"/>
                             <stop offset="100%" stop-color="#60a5fa"/>
                         </linearGradient>
                         <linearGradient id="road_${{uid}}" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#334155"/>
-                            <stop offset="100%" stop-color="#1e293b"/>
+                            <stop offset="0%" stop-color="#0f172a"/>
+                            <stop offset="50%" stop-color="#1e293b"/>
+                            <stop offset="100%" stop-color="#334155"/>
                         </linearGradient>
                     </defs>
-                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
-                    <circle cx="30" cy="20" r="13" fill="#fef08a" opacity="0.8"/>
-                    <ellipse cx="60" cy="18" rx="18" ry="6" fill="#ffffff" opacity="0.6"/>
-                    <rect y="46" width="200" height="46" fill="#0f766e"/>
-                    <path d="M 45 92 Q 80 46 200 42 L 200 50 Q 140 53 110 92 Z" fill="url(#road_${{uid}})"/>
-                    <path d="M 45 92 Q 80 46 200 42" fill="none" stroke="#64748b" stroke-width="2"/>
-                    <path d="M 110 92 Q 140 53 200 50" fill="none" stroke="#64748b" stroke-width="2"/>
-                    <path d="M 78 92 Q 110 50 200 46" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,4"/>
-                    <g transform="translate(115, 60) scale(0.6)">
-                        <path d="M -28 35 C -28 20, -15 12, 2 12 L 2 18 L 18 8 L 2 -2 L 2 5 C -20 5, -36 15, -36 35 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+                    <rect width="360" height="170" fill="url(#sky_${{uid}})"/>
+                    <circle cx="50" cy="35" r="22" fill="#fef08a" opacity="0.85"/>
+                    <ellipse cx="100" cy="32" rx="35" ry="10" fill="#ffffff" opacity="0.6"/>
+                    <ellipse cx="240" cy="24" rx="28" ry="8" fill="#ffffff" opacity="0.5"/>
+                    <rect y="80" width="360" height="90" fill="#0f766e"/>
+                    <!-- Road Curving Smoothly to Right -->
+                    <path d="M 70 170 Q 140 92 360 88 L 360 74 Q 140 84 180 170 Z" fill="url(#road_${{uid}})"/>
+                    <path d="M 180 170 Q 140 84 360 74" fill="none" stroke="#64748b" stroke-width="3"/>
+                    <path d="M 70 170 Q 140 92 360 88" fill="none" stroke="#64748b" stroke-width="3"/>
+                    <path d="M 125 170 Q 190 88 360 81" fill="none" stroke="#fbbf24" stroke-width="3.5" stroke-dasharray="10,6"/>
+                    <!-- High-Tech 3D Holographic Right Turn Arrow -->
+                    <g transform="translate(210, 105) scale(0.95)">
+                        <path d="M -40 45 C -40 24, -20 14, 4 14 L 4 22 L 24 9 L 4 -4 L 4 5 C -28 5, -50 18, -50 45 Z" fill="#ffffff" filter="drop-shadow(0 3px 8px rgba(0,0,0,0.6))"/>
+                        <path d="M -38 43 C -38 25, -20 16, 2 16 L 2 20 L 18 9 L 2 0 L 2 7 C -26 7, -46 19, -46 43 Z" fill="#38bdf8"/>
                     </g>
-                    <line x1="168" y1="44" x2="176" y2="50" stroke="#ffffff" stroke-width="3"/>
-                    <line x1="176" y1="44" x2="184" y2="50" stroke="#ffffff" stroke-width="3"/>
-                    <line x1="184" y1="44" x2="192" y2="50" stroke="#ffffff" stroke-width="3"/>
-                    <rect x="8" y="30" width="32" height="30" rx="2" fill="#1e293b" opacity="0.85"/>
-                    <rect x="13" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
-                    <rect x="23" y="36" width="6" height="6" fill="#38bdf8" opacity="0.75"/>
-                    <circle cx="52" cy="44" r="9" fill="#15803d"/>
-                    <circle cx="52" cy="38" r="7" fill="#22c55e"/>
-                    <line x1="158" y1="26" x2="158" y2="48" stroke="#475569" stroke-width="2"/>
-                    <rect x="154" y="22" width="8" height="15" rx="2" fill="#0f172a"/>
-                    <circle cx="158" cy="26" r="2" fill="#ef4444"/>
-                    <circle cx="158" cy="30" r="2" fill="#f59e0b"/>
-                    <circle cx="158" cy="35" r="2.5" fill="#22c55e"/>
-                    <rect x="108" y="72" width="84" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
-                    <text x="150" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">TURN RIGHT • ${{shortRoad}}</text>
+                    <!-- Street Lamppost on Left -->
+                    <line x1="300" y1="46" x2="300" y2="86" stroke="#475569" stroke-width="3"/>
+                    <line x1="300" y1="46" x2="288" y2="46" stroke="#475569" stroke-width="2.5"/>
+                    <circle cx="288" cy="48" r="4" fill="#fef08a"/>
+                    <polygon points="288,48 266,86 310,86" fill="#fef08a" opacity="0.18"/>
+                    <!-- Roadside Trees and Buildings -->
+                    <circle cx="30" cy="80" r="14" fill="#15803d"/><circle cx="30" cy="70" r="11" fill="#22c55e"/>
+                    <rect x="45" y="55" width="34" height="35" rx="3" fill="#1e293b" opacity="0.9"/>
+                    <rect x="52" y="62" width="8" height="8" fill="#38bdf8" opacity="0.8"/>
+                    <rect x="66" y="62" width="8" height="8" fill="#fef08a" opacity="0.8"/>
+                    <!-- Road Sign Pill -->
+                    <rect x="200" y="138" width="145" height="22" rx="5" fill="${{labelBg}}" stroke="${{borderCol}}" stroke-width="1.5"/>
+                    <text x="272" y="153" font-size="9" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">↱ TURN RIGHT • ${{shortRoad}}</text>
                 </svg>`;
             }} else if (rawDir.includes('START') || rawDir.includes('DEPART')) {{
                 return `
-                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                <svg viewBox="0 0 360 170" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px; overflow:hidden;">
                     <defs>
                         <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#0284c7"/>
@@ -1508,48 +1761,57 @@ def build_aura_journey_cockpit_html(
                             <stop offset="100%" stop-color="#1e293b"/>
                         </linearGradient>
                     </defs>
-                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
-                    <ellipse cx="100" cy="44" rx="50" ry="15" fill="#fef08a" opacity="0.6"/>
-                    <polygon points="10,44 25,34 35,44 50,30 65,44 80,36 95,44 110,32 130,44 150,37 170,44 190,34 195,44" fill="#0284c7" opacity="0.4"/>
-                    <rect y="44" width="200" height="48" fill="#065f46"/>
-                    <polygon points="40,92 160,92 106,44 94,44" fill="url(#road_${{uid}})"/>
-                    <polygon points="26,92 40,92 94,44 88,44" fill="#64748b"/>
-                    <polygon points="160,92 174,92 112,44 106,44" fill="#64748b"/>
-                    <line x1="100" y1="44" x2="100" y2="92" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,4"/>
-                    <rect x="74" y="58" width="52" height="6" rx="2" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
-                    <line x1="78" y1="64" x2="78" y2="88" stroke="#34d399" stroke-width="2.5"/>
-                    <line x1="122" y1="64" x2="122" y2="88" stroke="#34d399" stroke-width="2.5"/>
-                    <text x="100" y="63" font-size="5" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif">★ DEPARTURE GATE ★</text>
-                    <circle cx="100" cy="72" r="5" fill="#10b981"/>
-                    <circle cx="100" cy="72" r="2" fill="#ffffff"/>
-                    <circle cx="20" cy="54" r="8" fill="#15803d"/><circle cx="20" cy="48" r="6" fill="#22c55e"/>
-                    <circle cx="180" cy="54" r="8" fill="#15803d"/><circle cx="180" cy="48" r="6" fill="#22c55e"/>
-                    <rect x="8" y="72" width="76" height="14" rx="3" fill="${{labelBg}}" stroke="#10b981" stroke-width="1"/>
-                    <text x="46" y="82" font-size="6.5" font-weight="800" fill="#a7f3d0" text-anchor="middle" font-family="sans-serif">START • ${{shortRoad}}</text>
+                    <rect width="360" height="170" fill="url(#sky_${{uid}})"/>
+                    <!-- Horizon Sunrise -->
+                    <ellipse cx="180" cy="80" rx="90" ry="26" fill="#fef08a" opacity="0.7"/>
+                    <!-- Mountains Silhouette -->
+                    <polygon points="10,80 40,62 65,80 100,56 130,80 160,65 190,80 220,58 260,80 300,66 330,80 360,70 360,88 0,88" fill="#0284c7" opacity="0.45"/>
+                    <rect y="80" width="360" height="90" fill="#065f46"/>
+                    <!-- Straight Departing Road -->
+                    <polygon points="80,170 280,170 192,80 168,80" fill="url(#road_${{uid}})"/>
+                    <polygon points="50,170 80,170 168,80 158,80" fill="#64748b"/>
+                    <polygon points="280,170 310,170 202,80 192,80" fill="#64748b"/>
+                    <line x1="180" y1="80" x2="180" y2="170" stroke="#fbbf24" stroke-width="3" stroke-dasharray="10,6"/>
+                    <!-- Departure Gateway Structure -->
+                    <rect x="135" y="105" width="90" height="12" rx="3" fill="#059669" stroke="#34d399" stroke-width="2"/>
+                    <line x1="142" y1="117" x2="142" y2="160" stroke="#34d399" stroke-width="3.5"/>
+                    <line x1="218" y1="117" x2="218" y2="160" stroke="#34d399" stroke-width="3.5"/>
+                    <text x="180" y="114" font-size="7" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif">★ DEPARTURE GATEWAY ★</text>
+                    <circle cx="180" cy="132" r="7" fill="#10b981"/>
+                    <circle cx="180" cy="132" r="3" fill="#ffffff"/>
+                    <!-- Roadside Foliage -->
+                    <circle cx="35" cy="98" r="14" fill="#15803d"/><circle cx="35" cy="88" r="10" fill="#22c55e"/>
+                    <circle cx="325" cy="98" r="14" fill="#15803d"/><circle cx="325" cy="88" r="10" fill="#22c55e"/>
+                    <!-- Road Sign Pill -->
+                    <rect x="14" y="138" width="145" height="22" rx="5" fill="${{labelBg}}" stroke="#10b981" stroke-width="1.5"/>
+                    <text x="86" y="153" font-size="9" font-weight="800" fill="#a7f3d0" text-anchor="middle" font-family="sans-serif">🚀 START • ${{shortRoad}}</text>
                 </svg>`;
-            }} else if (rawDir.includes('ROUNDABOUT')) {{
+            }} else if (rawDir.includes('ROUNDABOUT') || rawDir.includes('ROTARY')) {{
                 return `
-                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                <svg viewBox="0 0 360 170" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px; overflow:hidden;">
                     <defs>
                         <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#0284c7"/>
                             <stop offset="100%" stop-color="#38bdf8"/>
                         </linearGradient>
                     </defs>
-                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
-                    <rect y="42" width="200" height="50" fill="#065f46"/>
-                    <ellipse cx="100" cy="68" rx="72" ry="23" fill="#334155" stroke="#64748b" stroke-width="2"/>
-                    <ellipse cx="100" cy="68" rx="36" ry="11" fill="#15803d" stroke="#22c55e" stroke-width="2"/>
-                    <circle cx="100" cy="66" r="5" fill="#f59e0b"/>
-                    <ellipse cx="100" cy="68" rx="54" ry="17" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,4"/>
-                    <text x="60" y="70" font-size="10" fill="#ffffff">↺</text>
-                    <text x="134" y="70" font-size="10" fill="#ffffff">↻</text>
-                    <rect x="8" y="72" width="82" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
-                    <text x="49" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">ROUNDABOUT • ${{shortRoad}}</text>
+                    <rect width="360" height="170" fill="url(#sky_${{uid}})"/>
+                    <rect y="75" width="360" height="95" fill="#065f46"/>
+                    <!-- Roundabout Island Perspective -->
+                    <ellipse cx="180" cy="120" rx="130" ry="42" fill="#334155" stroke="#64748b" stroke-width="3"/>
+                    <ellipse cx="180" cy="120" rx="65" ry="20" fill="#15803d" stroke="#22c55e" stroke-width="3"/>
+                    <circle cx="180" cy="116" r="9" fill="#f59e0b"/>
+                    <ellipse cx="180" cy="120" rx="98" ry="31" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="8,6"/>
+                    <text x="110" y="124" font-size="16" fill="#ffffff">↺</text>
+                    <text x="240" y="124" font-size="16" fill="#ffffff">↻</text>
+                    <!-- Road Sign Pill -->
+                    <rect x="14" y="138" width="155" height="22" rx="5" fill="${{labelBg}}" stroke="${{borderCol}}" stroke-width="1.5"/>
+                    <text x="91" y="153" font-size="9" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">🔄 ROUNDABOUT • ${{shortRoad}}</text>
                 </svg>`;
             }} else {{
+                // Cruising Straight Ahead
                 return `
-                <svg viewBox="0 0 200 92" width="100%" height="92" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px 12px 0 0; overflow:hidden;">
+                <svg viewBox="0 0 360 170" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="display:block; border-radius:12px; overflow:hidden;">
                     <defs>
                         <linearGradient id="sky_${{uid}}" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#0284c7"/>
@@ -1561,25 +1823,32 @@ def build_aura_journey_cockpit_html(
                             <stop offset="100%" stop-color="#1e293b"/>
                         </linearGradient>
                     </defs>
-                    <rect width="200" height="92" fill="url(#sky_${{uid}})"/>
-                    <ellipse cx="60" cy="18" rx="20" ry="6" fill="#ffffff" opacity="0.75"/>
-                    <ellipse cx="150" cy="14" rx="24" ry="7" fill="#ffffff" opacity="0.65"/>
-                    <polygon points="0,44 40,34 90,42 140,32 180,40 200,36 200,46 0,46" fill="#0369a1" opacity="0.5"/>
-                    <rect y="44" width="200" height="48" fill="#047857"/>
-                    <polygon points="35,92 165,92 106,44 94,44" fill="url(#road_${{uid}})"/>
-                    <polygon points="20,92 35,92 94,44 88,44" fill="#64748b"/>
-                    <polygon points="165,92 180,92 112,44 106,44" fill="#64748b"/>
-                    <line x1="100" y1="44" x2="100" y2="92" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="6,4"/>
-                    <circle cx="22" cy="60" r="10" fill="#15803d"/><circle cx="22" cy="52" r="8" fill="#22c55e"/>
-                    <circle cx="48" cy="50" r="6" fill="#15803d"/><circle cx="48" cy="45" r="4" fill="#22c55e"/>
-                    <circle cx="178" cy="60" r="10" fill="#15803d"/><circle cx="178" cy="52" r="8" fill="#22c55e"/>
-                    <circle cx="152" cy="50" r="6" fill="#15803d"/><circle cx="152" cy="45" r="4" fill="#22c55e"/>
-                    <rect x="76" y="50" width="48" height="9" rx="2" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
-                    <text x="100" y="56.5" font-size="5" font-weight="900" fill="#38bdf8" text-anchor="middle" font-family="sans-serif">⬆ STRAIGHT AHEAD</text>
-                    <rect x="8" y="72" width="76" height="14" rx="3" fill="${{labelBg}}" stroke="#38bdf8" stroke-width="1"/>
-                    <text x="46" y="82" font-size="6.5" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">${{shortRoad}}</text>
+                    <rect width="360" height="170" fill="url(#sky_${{uid}})"/>
+                    <!-- Clouds -->
+                    <ellipse cx="90" cy="30" rx="35" ry="10" fill="#ffffff" opacity="0.75"/>
+                    <ellipse cx="270" cy="25" rx="42" ry="12" fill="#ffffff" opacity="0.65"/>
+                    <!-- Distant Mountain Ranges -->
+                    <polygon points="0,78 70,60 160,74 250,56 320,70 360,64 360,82 0,82" fill="#0369a1" opacity="0.55"/>
+                    <rect y="78" width="360" height="92" fill="#047857"/>
+                    <!-- Highway Vanishing Point Road -->
+                    <polygon points="70,170 290,170 192,78 168,78" fill="url(#road_${{uid}})"/>
+                    <polygon points="40,170 70,170 168,78 158,78" fill="#64748b"/>
+                    <polygon points="290,170 320,170 202,78 192,78" fill="#64748b"/>
+                    <line x1="180" y1="78" x2="180" y2="170" stroke="#fbbf24" stroke-width="3.5" stroke-dasharray="10,6"/>
+                    <!-- Highway Overhead Guide Sign -->
+                    <rect x="135" y="88" width="90" height="16" rx="3" fill="#0f172a" stroke="#38bdf8" stroke-width="1.8"/>
+                    <text x="180" y="99.5" font-size="7" font-weight="900" fill="#38bdf8" text-anchor="middle" font-family="sans-serif">⬆ CRUISE STRAIGHT</text>
+                    <!-- Roadside Trees & Utility Poles -->
+                    <circle cx="36" cy="105" r="16" fill="#15803d"/><circle cx="36" cy="92" r="12" fill="#22c55e"/>
+                    <circle cx="80" cy="90" r="10" fill="#15803d"/><circle cx="80" cy="82" r="7" fill="#22c55e"/>
+                    <circle cx="324" cy="105" r="16" fill="#15803d"/><circle cx="324" cy="92" r="12" fill="#22c55e"/>
+                    <circle cx="280" cy="90" r="10" fill="#15803d"/><circle cx="280" cy="82" r="7" fill="#22c55e"/>
+                    <!-- Road Sign Pill -->
+                    <rect x="14" y="138" width="145" height="22" rx="5" fill="${{labelBg}}" stroke="${{borderCol}}" stroke-width="1.5"/>
+                    <text x="86" y="153" font-size="9" font-weight="800" fill="#e0f2fe" text-anchor="middle" font-family="sans-serif">🛣️ CRUISE • ${{shortRoad}}</text>
                 </svg>`;
             }}
+        }}
         }}
 
         // Render Pipeline Chips
@@ -2040,56 +2309,192 @@ def build_aura_journey_cockpit_html(
             if (!isVoiceOn && 'speechSynthesis' in window) window.speechSynthesis.cancel();
         }};
 
+        window.currentStoryGalleryMode = 'timeline';
+
         window.openPicturesGallery = function() {{
             const modal = document.getElementById('pictures-modal');
-            const grid = document.getElementById('gallery-grid-items');
-            if (!modal || !grid) return;
-
-            grid.innerHTML = '';
-            MANEUVERS.forEach((m, idx) => {{
-                const card = document.createElement('div');
-                card.className = 'gallery-card-item' + (idx === activeIdx ? ' active' : '');
-                const picSvg = getScenicStepSvg(m.direction_type, m.road_name, m.step_num, m.icon, idx < activeIdx, idx === activeIdx);
-                card.innerHTML = `
-                    <div class="step-picture-frame" style="height: 115px;">
-                        ${{picSvg}}
-                        <div class="step-pic-overlay-badge">
-                            <span class="step-num-pill" style="font-size: 0.72rem; padding: 3px 9px;">SCENE #${{m.step_num}}</span>
-                            <span class="step-icon-badge" style="font-size: 1.25rem;">${{m.icon}}</span>
-                        </div>
-                    </div>
-                    <div style="padding: 12px 14px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: space-between;">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
-                                <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; line-height: 1.35;">${{m.headline}}</div>
-                                <span style="font-size: 0.70rem; font-weight: 800; color: #34d399; background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 7px; border-radius: 999px; white-space: nowrap;">${{m.distance_human}}</span>
-                            </div>
-                            <div style="font-size: 0.76rem; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
-                                <span>🛣️ ${{m.road_name || 'Corridor Route'}}</span>
-                                <span>•</span>
-                                <span style="color: #38bdf8;">~${{m.time_estimate}}</span>
-                            </div>
-                        </div>
-
-                        <!-- Creative Aura Guide Story Bubble -->
-                        <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(168, 85, 247, 0.12) 100%); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 8px 10px; font-size: 0.75rem; color: #e2e8f0; line-height: 1.45;">
-                            <div style="font-size: 0.68rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.05em; display: flex; align-items: center; gap: 5px; margin-bottom: 2px;">
-                                <span>🤖 AURA GUIDE NOTES</span>
-                            </div>
-                            <div style="color: #cbd5e1; font-style: italic;">"${{m.aura_speech}}"</div>
-                            ${{m.what_to_look_for ? `<div style="margin-top: 4px; font-size: 0.70rem; color: #67e8f9; font-weight: 600;">👀 Look for: ${{m.what_to_look_for}}</div>` : ''}}
-                        </div>
-
-                        <button class="btn-action-pill" style="margin-top: 4px; width: 100%; justify-content: center; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: none; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.35); font-weight: 800;" onclick="selectStep(${{idx}}); closePicturesGallery();">
-                            <span>🧭</span> Jump to Scene #${{m.step_num}}
-                        </button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            }});
-
+            if (!modal) return;
+            renderStorylineGallery(window.currentStoryGalleryMode || 'timeline');
             modal.style.display = 'flex';
         }};
+
+        window.setStoryGalleryView = function(mode) {{
+            window.currentStoryGalleryMode = mode;
+            const btnTimeline = document.getElementById('story-mode-timeline');
+            const btnGrid = document.getElementById('story-mode-grid');
+            if (btnTimeline && btnGrid) {{
+                if (mode === 'timeline') {{
+                    btnTimeline.classList.add('active');
+                    btnGrid.classList.remove('active');
+                }} else {{
+                    btnTimeline.classList.remove('active');
+                    btnGrid.classList.add('active');
+                }}
+            }}
+            renderStorylineGallery(mode);
+        }};
+
+        function renderStorylineGallery(mode) {{
+            const container = document.getElementById('gallery-container-box') || document.getElementById('gallery-grid-items');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (mode === 'grid') {{
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'storyline-grid-container';
+                MANEUVERS.forEach((m, idx) => {{
+                    const card = document.createElement('div');
+                    card.className = 'storyline-scene-card' + (idx === activeIdx ? ' active' : (idx < activeIdx ? ' completed' : ''));
+                    const picSvg = getScenicStepSvg(m.direction_type, m.road_name, m.step_num, m.icon, idx < activeIdx, idx === activeIdx);
+                    const cleanNarrative = String(m.aura_speech || m.instruction || '').replace(/^"|"$/g, '');
+                    card.innerHTML = `
+                        <div class="storyline-scene-header">
+                            <div class="scene-chapter-badge">
+                                <span>🎬 SCENE #${{m.step_num}}</span>
+                                <span style="font-size: 1.15rem;">${{m.icon}}</span>
+                            </div>
+                            <div class="scene-metrics-badges">
+                                <span class="scene-pill-dist">${{m.distance_human}}</span>
+                                ${{idx === activeIdx ? '<span class="scene-status-pill active">LIVE</span>' : (idx < activeIdx ? '<span class="scene-status-pill completed">✓</span>' : '<span class="scene-status-pill upcoming">NEXT</span>')}}
+                            </div>
+                        </div>
+                        <div class="storyline-pic-hero" onclick="selectStep(${{idx}}); closePicturesGallery();" title="Jump to Scene #${{m.step_num}}">
+                            ${{picSvg}}
+                            <div class="storyline-pic-overlay">
+                                <span class="pic-road-pill">🛣️ ${{m.road_name || 'Corridor Route'}}</span>
+                                <span class="pic-jump-hint">🧭 Jump</span>
+                            </div>
+                        </div>
+                        <div class="storyline-narrative-box">
+                            <div class="storyline-headline">${{m.headline}}</div>
+                            <div class="storyline-chronicle-text">${{cleanNarrative}}</div>
+                            ${{idx < MANEUVERS.length - 1 ? `
+                                <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#38bdf8; font-weight:700; margin-top:4px;">
+                                    <span>➔ Leads to:</span>
+                                    <span style="color:#e0f2fe;">Scene #${{MANEUVERS[idx+1].step_num}} (${{MANEUVERS[idx+1].road_name || 'Road'}})</span>
+                                </div>
+                            ` : `
+                                <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#34d399; font-weight:800; margin-top:4px;">
+                                    <span>🏁 Final Destination Arrived!</span>
+                                </div>
+                            `}}
+                        </div>
+                        <div class="storyline-action-row">
+                            <button class="btn-action-pill jump-btn" onclick="selectStep(${{idx}}); closePicturesGallery();">
+                                <span>🧭</span> Jump to Scene #${{m.step_num}}
+                            </button>
+                        </div>
+                    `;
+                    gridDiv.appendChild(card);
+                }});
+                container.appendChild(gridDiv);
+            }} else {{
+                // Continuous Connected Storyline Track
+                const streamDiv = document.createElement('div');
+                streamDiv.className = 'storyline-stream';
+
+                // Storyline Journey Route Header Strip
+                const banner = document.createElement('div');
+                banner.style.cssText = 'width: 100%; display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.7); border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 12px 18px; margin-bottom: 22px; gap: 12px; flex-wrap: wrap; box-shadow: 0 4px 18px rgba(0,0,0,0.5); box-sizing: border-box;';
+                banner.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 1.6rem;">🗺️</span>
+                        <div>
+                            <div style="font-size: 0.95rem; font-weight: 900; color: #ffffff;">VISUAL ROUTE STORYLINE • ${{MANEUVERS.length}} CONNECTED EPISODES</div>
+                            <div style="font-size: 0.76rem; color: #94a3b8;">Sequential visual narrative linking departure to destination</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.74rem; font-weight: 800; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 10px; border-radius: 999px;">
+                            📍 Scene 1 ➔ Scene ${{MANEUVERS.length}}
+                        </span>
+                    </div>
+                `;
+                streamDiv.appendChild(banner);
+
+                MANEUVERS.forEach((m, idx) => {{
+                    const card = document.createElement('div');
+                    card.className = 'storyline-scene-card' + (idx === activeIdx ? ' active' : (idx < activeIdx ? ' completed' : ''));
+                    const picSvg = getScenicStepSvg(m.direction_type, m.road_name, m.step_num, m.icon, idx < activeIdx, idx === activeIdx);
+                    const cleanNarrative = String(m.aura_speech || m.instruction || '').replace(/^"|"$/g, '');
+
+                    let chapterTitle = 'WAYPOINT MILESTONE';
+                    const dt = (m.direction_type || '').toUpperCase();
+                    if (dt.includes('START') || dt.includes('DEPART')) chapterTitle = 'THE DEPARTURE JOURNEY';
+                    else if (dt.includes('ARRIVE') || dt.includes('DEST')) chapterTitle = 'DESTINATION ARRIVAL CELEBRATION';
+                    else if (dt.includes('LEFT')) chapterTitle = 'LEFT TURN CORRIDOR';
+                    else if (dt.includes('RIGHT')) chapterTitle = 'RIGHT TURN CORRIDOR';
+                    else if (dt.includes('ROUNDABOUT')) chapterTitle = 'ROTARY TRANSIT INTERCHANGE';
+                    else if (dt.includes('CRUISE') || dt.includes('STRAIGHT')) chapterTitle = 'OPEN HIGHWAY CRUISING STRETCH';
+
+                    card.innerHTML = `
+                        <div class="storyline-scene-header">
+                            <div class="scene-chapter-badge">
+                                <span style="font-size: 1.15rem;">${{m.icon}}</span>
+                                <span>🎬 CHAPTER ${{m.step_num}} OF ${{MANEUVERS.length}} • ${{chapterTitle}}</span>
+                            </div>
+                            <div class="scene-metrics-badges">
+                                <span class="scene-pill-dist">📏 ${{m.distance_human}}</span>
+                                <span class="scene-pill-time">⏱️ ~${{m.time_estimate}}</span>
+                                ${{idx === activeIdx ? '<span class="scene-status-pill active">⚡ ACTIVE SCENE</span>' : (idx < activeIdx ? '<span class="scene-status-pill completed">✓ COMPLETED</span>' : '<span class="scene-status-pill upcoming">⏳ UPCOMING</span>')}}
+                            </div>
+                        </div>
+
+                        <div class="storyline-pic-hero" onclick="selectStep(${{idx}}); closePicturesGallery();" title="Click to view Scene #${{m.step_num}} in 3D Companion">
+                            ${{picSvg}}
+                            <div class="storyline-pic-overlay">
+                                <span class="pic-road-pill">🛣️ ${{m.road_name || 'Corridor Route'}}</span>
+                                <span class="pic-jump-hint">🧭 Click Scene to View in 3D</span>
+                            </div>
+                        </div>
+
+                        <div class="storyline-narrative-box">
+                            <div class="storyline-headline">${{m.headline}}</div>
+                            <div class="storyline-chronicle-text">
+                                <span style="color: #38bdf8; font-weight: 700;">Storyline Chronicle: </span>
+                                "${{cleanNarrative}}"
+                            </div>
+                            ${{m.what_to_look_for ? `
+                                <div class="storyline-landmark-strip">
+                                    <span style="font-size: 0.88rem;">👀</span>
+                                    <span style="font-weight: 800; color: #38bdf8;">Visual Scenery Cues:</span>
+                                    <span style="color: #e2e8f0;">${{m.what_to_look_for}}</span>
+                                </div>
+                            ` : ''}}
+                        </div>
+
+                        <div class="storyline-action-row">
+                            <button class="btn-action-pill jump-btn" onclick="selectStep(${{idx}}); closePicturesGallery();">
+                                <span>🧭</span> Jump Cockpit to Scene #${{m.step_num}}
+                            </button>
+                        </div>
+                    `;
+                    streamDiv.appendChild(card);
+
+                    // Add visual Storyline Connector between scenes
+                    if (idx < MANEUVERS.length - 1) {{
+                        const nextM = MANEUVERS[idx + 1];
+                        const connector = document.createElement('div');
+                        connector.className = 'storyline-connector-segment';
+                        connector.innerHTML = `
+                            <div class="storyline-connector-line"></div>
+                            <div class="storyline-connector-ribbon">
+                                <span class="connector-arrow">↓</span>
+                                <span class="connector-badge">
+                                    <span>🛣️</span>
+                                    <span>CONTINUING STORYLINE ➔ TRANSIT TO SCENE #${{nextM.step_num}}: ${{nextM.road_name || 'Corridor'}} (~${{nextM.distance_human}})</span>
+                                </span>
+                                <span class="connector-arrow">↓</span>
+                            </div>
+                            <div class="storyline-connector-line"></div>
+                        `;
+                        streamDiv.appendChild(connector);
+                    }}
+                }});
+
+                container.appendChild(streamDiv);
+            }}
+        }}
 
         window.closePicturesGallery = function() {{
             const modal = document.getElementById('pictures-modal');

@@ -1590,7 +1590,9 @@ class BaseRoutingProvider:
 
         custom_speed_kmh: Optional[float] = None,
 
-        waypoints: Optional[List[Tuple[float, float]]] = None
+        waypoints: Optional[List[Tuple[float, float]]] = None,
+
+        **kwargs
 
     ) -> List[RouteOption]:
 
@@ -1640,7 +1642,9 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
         custom_speed_kmh: Optional[float] = None,
 
-        waypoints: Optional[List[Tuple[float, float]]] = None
+        waypoints: Optional[List[Tuple[float, float]]] = None,
+
+        **kwargs
 
     ) -> List[RouteOption]:
 
@@ -1814,7 +1818,9 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
         custom_speed_kmh: Optional[float] = None,
 
-        waypoints: Optional[List[Tuple[float, float]]] = None
+        waypoints: Optional[List[Tuple[float, float]]] = None,
+
+        **kwargs
 
     ) -> List[RouteOption]:
 
@@ -2132,6 +2138,8 @@ class RealWorldRouteEngine:
 
         self._route_cache: Dict[Tuple, List[RouteOption]] = {}
 
+        self._route_engine_version: int = 3
+
 
 
     def calculate_routes(
@@ -2160,7 +2168,9 @@ class RealWorldRouteEngine:
 
         custom_speed_kmh: Optional[float] = None,
 
-        waypoints: Optional[List[Tuple[float, float]]] = None
+        waypoints: Optional[List[Tuple[float, float]]] = None,
+
+        **kwargs
 
     ) -> List[RouteOption]:
 
@@ -2514,7 +2524,9 @@ class RealWorldRouteEngine:
 
         custom_speed_kmh: Optional[float] = None,
 
-        waypoints: Optional[List[Tuple[float, float]]] = None
+        waypoints: Optional[List[Tuple[float, float]]] = None,
+
+        **kwargs
 
     ) -> List[RouteOption]:
 
@@ -2906,7 +2918,9 @@ class RealWorldRouteEngine:
 
         custom_speed_kmh: Optional[float] = None,
 
-        waypoints: Optional[List[Tuple[float, float]]] = None
+        waypoints: Optional[List[Tuple[float, float]]] = None,
+
+        **kwargs
 
     ) -> List[RouteOption]:
 

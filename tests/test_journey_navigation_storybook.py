@@ -259,7 +259,7 @@ def test_add_as_stop_validation_redirection_and_routing():
 
 def test_route_engine_multi_stop_waypoint_calculation():
     """Verify that route engine and OSRM provider accept and route through intermediate waypoints."""
-    from src.route_engine import OSRMGlobalRoutingProvider, TravelMode
+    from src.route_engine import OSRMGlobalRoutingProvider, RealWorldRouteEngine, TravelMode
 
     provider = OSRMGlobalRoutingProvider()
     origin = (16.2430, 80.6400)      # Tenali
@@ -276,6 +276,58 @@ def test_route_engine_multi_stop_waypoint_calculation():
     assert len(routes) >= 1
     assert routes[0].distance_km > 0
     assert len(routes[0].polyline) >= 2
+
+    # Verify RealWorldRouteEngine directly accepts waypoints and arbitrary kwargs without raising TypeError
+    real_engine = RealWorldRouteEngine()
+    assert hasattr(real_engine, "_route_engine_version")
+    assert real_engine._route_engine_version >= 3
+
+    r_routes = real_engine.calculate_routes(
+        origin_lat=origin[0], origin_lon=origin[1],
+        dest_lat=dest[0], dest_lon=dest[1],
+        mode=TravelMode.DRIVING,
+        waypoints=[waypoint],
+        arbitrary_future_flag=True
+    )
+    assert len(r_routes) >= 1
+
+
+def test_connected_route_storyline_modal_generation():
+    """Verify that the View All Pictures modal renders connected visual storyline architecture."""
+    raw_maneuvers = [
+        {"instruction": "Head northeast on MG Road", "road": "MG Road", "distance": 500, "duration": 60, "type": "depart"},
+        {"instruction": "Turn left onto Brigade Road", "road": "Brigade Road", "distance": 800, "duration": 110, "type": "turn-left"},
+        {"instruction": "Turn right onto Church Street", "road": "Church Street", "distance": 1200, "duration": 150, "type": "turn-right"},
+        {"instruction": "Arrive at destination", "road": "Destination", "distance": 0, "duration": 0, "type": "arrive"}
+    ]
+    steps = ManeuverSequenceBuilder.build_sequence(
+        steps=raw_maneuvers,
+        origin_label="MG Road",
+        dest_label="Destination Plaza",
+        total_distance_m=2500.0,
+        travel_mode="car"
+    )
+
+    html = build_aura_journey_cockpit_html(
+        origin_name="MG Road",
+        dest_name="Destination Plaza",
+        travel_mode="car",
+        total_distance_km=2.5,
+        total_duration_mins=5.0,
+        maneuvers=steps,
+        current_step_idx=1
+    )
+
+    # Verify storyline container & view toggles
+    assert "gallery-modal-overlay" in html
+    assert "gallery-scroll-container" in html
+    assert "story-mode-timeline" in html
+    assert "story-mode-grid" in html
+    assert "renderStorylineGallery" in html
+    assert "storyline-connector-segment" in html
+    assert "storyline-pic-hero" in html
+    assert "CONTINUING STORYLINE" in html
+
 
 
 

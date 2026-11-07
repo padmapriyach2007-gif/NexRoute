@@ -5477,9 +5477,7 @@ if (
 
 
 
-if "real_route_engine" not in st.session_state:
-
-
+if "real_route_engine" not in st.session_state or not hasattr(st.session_state.real_route_engine, "_route_engine_version") or getattr(st.session_state.real_route_engine, "_route_engine_version", 0) < 3:
 
     st.session_state.real_route_engine = RealWorldRouteEngine()
 
@@ -9952,37 +9950,29 @@ def resolve_virtual_guide_active_route(provided_item=None):
 
 
 
-            calc_routes = st.session_state.real_route_engine.calculate_routes(
-
-
-
-                c_orig[0], c_orig[1],
-
-
-
-                c_dest[0], c_dest[1],
-
-
-
-                mode=travel_m,
-
-
-
-                avoid_tolls=st.session_state.get("avoid_tolls", False),
-
-
-
-                avoid_highways=st.session_state.get("avoid_highways", False),
-
-
-
-                avoid_ferries=st.session_state.get("avoid_ferries", False),
-
-                waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
-
-
-
-            )
+            if not hasattr(st.session_state.get("real_route_engine", None), "_route_engine_version") or getattr(st.session_state.real_route_engine, "_route_engine_version", 0) < 3:
+                st.session_state.real_route_engine = RealWorldRouteEngine()
+            try:
+                calc_routes = st.session_state.real_route_engine.calculate_routes(
+                    c_orig[0], c_orig[1],
+                    c_dest[0], c_dest[1],
+                    mode=travel_m,
+                    avoid_tolls=st.session_state.get("avoid_tolls", False),
+                    avoid_highways=st.session_state.get("avoid_highways", False),
+                    avoid_ferries=st.session_state.get("avoid_ferries", False),
+                    waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
+                )
+            except TypeError:
+                st.session_state.real_route_engine = RealWorldRouteEngine()
+                calc_routes = st.session_state.real_route_engine.calculate_routes(
+                    c_orig[0], c_orig[1],
+                    c_dest[0], c_dest[1],
+                    mode=travel_m,
+                    avoid_tolls=st.session_state.get("avoid_tolls", False),
+                    avoid_highways=st.session_state.get("avoid_highways", False),
+                    avoid_ferries=st.session_state.get("avoid_ferries", False),
+                    waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
+                )
 
 
 
@@ -18558,59 +18548,42 @@ body {{
 
 
                     cur_waypoints = [(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s]
-                    candidate_routes = st.session_state.real_route_engine.calculate_routes(
-
-
-
-                        coords_orig[0], coords_orig[1],
-
-
-
-                        coords_dest[0], coords_dest[1],
-
-
-
-                        mode=travel_mode,
-
-
-
-                        require_accessible=require_acc,
-
-
-
-                        is_in_transit=st.session_state.get("is_in_transit", False),
-
-
-
-                        active_hazard_count=active_restr_count,
-
-
-
-                        avoid_tolls=st.session_state.get("avoid_tolls", False),
-
-
-
-                        avoid_highways=st.session_state.get("avoid_highways", False),
-
-
-
-                        avoid_ferries=st.session_state.get("avoid_ferries", False),
-
-
-
-                        speed_mode=st.session_state.selected_speed_mode.lower(),
-
-
-
-                        custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None,
-
-
-
-                        waypoints=cur_waypoints if cur_waypoints else None
-
-
-
-                    )
+                    if not hasattr(st.session_state.get("real_route_engine", None), "_route_engine_version") or getattr(st.session_state.real_route_engine, "_route_engine_version", 0) < 3:
+                        st.session_state.real_route_engine = RealWorldRouteEngine()
+                    try:
+                        candidate_routes = st.session_state.real_route_engine.calculate_routes(
+                            coords_orig[0], coords_orig[1],
+                            coords_dest[0], coords_dest[1],
+                            mode=travel_mode,
+                            require_accessible=require_acc,
+                            is_in_transit=st.session_state.get("is_in_transit", False),
+                            active_hazard_count=active_restr_count,
+                            avoid_tolls=st.session_state.get("avoid_tolls", False),
+                            avoid_highways=st.session_state.get("avoid_highways", False),
+                            avoid_ferries=st.session_state.get("avoid_ferries", False),
+                            speed_mode=st.session_state.selected_speed_mode.lower(),
+                            custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None,
+                            waypoints=cur_waypoints if cur_waypoints else None
+                        )
+                    except TypeError as _te:
+                        if "waypoints" in str(_te):
+                            st.session_state.real_route_engine = RealWorldRouteEngine()
+                            candidate_routes = st.session_state.real_route_engine.calculate_routes(
+                                coords_orig[0], coords_orig[1],
+                                coords_dest[0], coords_dest[1],
+                                mode=travel_mode,
+                                require_accessible=require_acc,
+                                is_in_transit=st.session_state.get("is_in_transit", False),
+                                active_hazard_count=active_restr_count,
+                                avoid_tolls=st.session_state.get("avoid_tolls", False),
+                                avoid_highways=st.session_state.get("avoid_highways", False),
+                                avoid_ferries=st.session_state.get("avoid_ferries", False),
+                                speed_mode=st.session_state.selected_speed_mode.lower(),
+                                custom_speed_kmh=st.session_state.custom_speed_kmh if st.session_state.selected_speed_mode == "CUSTOM" else None,
+                                waypoints=cur_waypoints if cur_waypoints else None
+                            )
+                        else:
+                            raise
 
 
 
