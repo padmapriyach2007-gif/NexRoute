@@ -7846,28 +7846,39 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
 
 
         if -90.0 <= p_lat <= 90.0 and -180.0 <= p_lon <= 180.0:
-
-
-
             if p_target == "orig":
-
-
-
                 st.session_state.user_live_coords = (p_lat, p_lon)
-
-
-
                 st.session_state.user_live_label = p_name
-
-
-
                 st.session_state.pending_orig = p_name
                 st.session_state.last_synced_orig = p_name
                 st.session_state.txt_orig = p_name
                 st.session_state.is_custom_start_place = True
                 st.session_state.selected_orig_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
                 st.session_state.real_location_service.set_manual_location(p_lat, p_lon, p_name)
+                st.session_state.routes_generated = False
+                st.session_state.cached_candidate_routes = None
                 st.toast(f"🟢 Starting Point set to: {p_name}", icon="🟢")
+            elif p_target == "stop":
+                if "intermediate_stops" not in st.session_state or not isinstance(st.session_state.intermediate_stops, list):
+                    st.session_state.intermediate_stops = []
+                is_dup = any(abs(float(s.get("lat", 0)) - p_lat) < 0.0005 and abs(float(s.get("lon", 0)) - p_lon) < 0.0005 for s in st.session_state.intermediate_stops)
+                if not is_dup:
+                    stop_clean_name = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", p_name).strip() or f"Stop ({p_lat:.4f}, {p_lon:.4f})"
+                    st.session_state.intermediate_stops.append({
+                        "name": stop_clean_name,
+                        "address": p_name,
+                        "lat": p_lat,
+                        "lon": p_lon,
+                        "category_icon": "🟣"
+                    })
+                    st.session_state._prev_route_sig = None
+                    st.session_state._prev_endpoint_sig = None
+                    st.session_state.cached_candidate_routes = None
+                    if st.session_state.get("user_live_coords") and st.session_state.get("selected_dest_coords"):
+                        st.session_state.routes_generated = True
+                    st.toast(f"🟣 Added intermediate stop #{len(st.session_state.intermediate_stops)}: {stop_clean_name}", icon="🟣")
+                else:
+                    st.toast("⚠️ This location is already in your stops list", icon="ℹ️")
             else:
                 st.session_state.selected_dest_coords = (p_lat, p_lon)
                 st.session_state.selected_dest_label = p_name
@@ -7875,9 +7886,9 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.session_state.last_synced_dest = p_name
                 st.session_state.txt_dest = p_name
                 st.session_state.selected_dest_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
+                st.session_state.routes_generated = False
+                st.session_state.cached_candidate_routes = None
                 st.toast(f"🏁 Destination set to: {p_name}", icon="🏁")
-
-
 
             st.session_state.map_picking_mode = None
 
@@ -8027,55 +8038,34 @@ detected_label = detected_loc["label"] if detected_loc else TENALI_DEFAULT_LABEL
 
 
 
-cur_live = st.session_state.get("user_live_coords")
+# Requirement 1: On initial load, Start Location and Destination must be EMPTY.
+if "user_live_coords" not in st.session_state:
+    st.session_state.user_live_coords = None
+if "user_live_label" not in st.session_state:
+    st.session_state.user_live_label = ""
+if "txt_orig" not in st.session_state:
+    st.session_state.txt_orig = ""
+if "last_synced_orig" not in st.session_state:
+    st.session_state.last_synced_orig = ""
+if "selected_dest_coords" not in st.session_state:
+    st.session_state.selected_dest_coords = None
+if "selected_dest_label" not in st.session_state:
+    st.session_state.selected_dest_label = ""
+if "txt_dest" not in st.session_state:
+    st.session_state.txt_dest = ""
+if "last_synced_dest" not in st.session_state:
+    st.session_state.last_synced_dest = ""
+if "routes_generated" not in st.session_state:
+    st.session_state.routes_generated = False
+if "intermediate_stops" not in st.session_state:
+    st.session_state.intermediate_stops = []
 
-
-
-is_custom_start = st.session_state.get("is_custom_start_place", False)
-
-
-
-
-
-
-
-if "user_live_coords" not in st.session_state or (not is_custom_start and not cur_live):
-
-
-
-    initial_base = st.session_state.get("hardware_gps_coords") or detected_coords
-
-
-
-    initial_lbl = st.session_state.get("user_live_label") or detected_label
-
-
-
-    st.session_state.user_live_coords = initial_base
-
-
-
-    st.session_state.user_live_label = initial_lbl
-
-
-
-    if "txt_orig" not in st.session_state:
-
-
-
-        st.session_state.txt_orig = ""
-
-
-
-        st.session_state.last_synced_orig = ""
-
-
-
-    if "real_location_service" in st.session_state:
-
-
-
-        st.session_state.real_location_service.set_manual_location(initial_base[0], initial_base[1], initial_lbl)
+if st.session_state.user_live_coords and "real_location_service" in st.session_state:
+    st.session_state.real_location_service.set_manual_location(
+        st.session_state.user_live_coords[0],
+        st.session_state.user_live_coords[1],
+        st.session_state.user_live_label or "Starting Point"
+    )
 
 
 
@@ -10064,46 +10054,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-    # 1. Initialize Default Session State Coordinates if missing
-
-
-
-    if "user_live_coords" not in st.session_state or not st.session_state.user_live_coords:
-
-
-
-        st.session_state.user_live_coords = (16.2335, 80.5505)
-
-
-
-        st.session_state.user_live_label = "Vignan University Main Gate"
-
-
-
-
-
-
-
-    if "selected_dest_coords" not in st.session_state or not st.session_state.selected_dest_coords:
-
-
-
-        st.session_state.selected_dest_coords = (16.2415, 80.5590)
-
-
-
-        st.session_state.selected_dest_label = "Tenali Junction"
-
-
-
-
-
-
-
+    # 1. Ensure Travel Mode is set
     if "selected_travel_mode" not in st.session_state:
-
-
-
         st.session_state.selected_travel_mode = "CAR"
 
 
@@ -11390,9 +11342,9 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
                             st.session_state["stop_action_msg"] = {
                                 "type": "warning",
                                 "title": "⚠️ Starting Point & Destination Required",
-                                "text": f"Cannot add '{p['name']}' as an intermediate stop. Please select both a Starting Point and Destination in Navigation first."
+                                "text": "Please select your starting location and destination before adding stops."
                             }
-                            st.toast("⚠️ Starting Point & Destination required first!", icon="⚠️")
+                            st.toast("Please select your starting location and destination before adding stops.", icon="⚠️")
                             st.rerun()
 
                         # 2. Validation: Travel mode compatibility
@@ -18271,7 +18223,8 @@ body {{
 
 
 
-        if not coords_orig or not coords_dest or is_pending or is_same_endpoint:
+        routes_are_generated = bool(st.session_state.get("routes_generated", False))
+        if not coords_orig or not coords_dest or is_pending or is_same_endpoint or not routes_are_generated:
 
 
 
@@ -18331,6 +18284,62 @@ body {{
 
 
 
+            elif coords_orig and coords_dest and not routes_are_generated:
+
+
+
+                st.markdown("""
+
+
+
+                <div style='background: rgba(56, 189, 248, 0.12); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 18px 22px; margin: 14px 0; text-align: center;'>
+
+
+
+                    <div style='font-size: 2.2rem; margin-bottom: 6px;'>🚀</div>
+
+
+
+                    <div style='color: #38bdf8; font-weight: 800; font-size: 1.05rem;'>Locations Selected — Ready to Generate Routes</div>
+
+
+
+                    <div style='color: #94a3b8; font-size: 0.84rem; margin-top: 6px;'>
+
+
+
+                        Click the <b>GENERATE ROUTES</b> button below to calculate and rank optimal corridors with turn-by-turn guidance.
+
+
+
+                    </div>
+
+
+
+                </div>
+
+
+
+                """, unsafe_allow_html=True)
+
+
+
+                candidate_routes = []
+
+
+
+                ranked_routes = []
+
+
+
+                eligible_ranked = []
+
+
+
+                restricted_ranked = []
+
+
+
             else:
 
 
@@ -18339,67 +18348,67 @@ body {{
 
 
 
-            if not coords_orig:
+                if not coords_orig:
 
 
 
-                _missing.append("origin")
+                    _missing.append("origin")
 
 
 
-            if not coords_dest:
+                if not coords_dest:
 
 
 
-                _missing.append("destination")
+                    _missing.append("destination")
 
 
 
-            _missing_str = " and ".join(_missing)
+                _missing_str = " and ".join(_missing)
 
 
 
-            
+                pending_hint = ""
 
 
 
-            pending_hint = ""
+                if is_pending:
 
 
 
-            if is_pending:
+                    pending_hint = "<div style='color: #fbbf24; font-size: 0.85rem; margin-top: 6px; font-weight: 700;'>⏳ An endpoint is pending confirmation. Please select an area or confirm coordinates.</div>"
 
 
 
-                pending_hint = "<div style='color: #fbbf24; font-size: 0.85rem; margin-top: 6px; font-weight: 700;'>⏳ An endpoint is pending confirmation. Please select an area or confirm coordinates.</div>"
+                st.markdown(f"""
 
 
 
+                <div style='background: rgba(56, 189, 248, 0.10); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 18px 22px; margin: 14px 0; text-align: center;'>
 
 
 
-
-            st.markdown(f"""
-
-
-
-            <div style='background: rgba(56, 189, 248, 0.10); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 18px 22px; margin: 14px 0; text-align: center;'>
+                    <div style='font-size: 2.2rem; margin-bottom: 6px;'>🗺️</div>
 
 
 
-                <div style='font-size: 2.2rem; margin-bottom: 6px;'>🗺️</div>
+                    <div style='color: #7dd3fc; font-weight: 800; font-size: 1.0rem;'>Select your starting point and destination to begin your journey.</div>
 
 
 
-                <div style='color: #7dd3fc; font-weight: 800; font-size: 1.0rem;'>{t("nav.set_origin_dest")}</div>
+                    <div style='color: #94a3b8; font-size: 0.84rem; margin-top: 6px;'>
 
 
 
-                <div style='color: #94a3b8; font-size: 0.84rem; margin-top: 6px;'>
+                        {t("nav.enter_dest_prompt")}
 
 
 
-                    {t("nav.enter_dest_prompt")}
+                    </div>
+
+
+
+                    {pending_hint}
 
 
 
@@ -18407,31 +18416,23 @@ body {{
 
 
 
-                {pending_hint}
+                """, unsafe_allow_html=True)
 
 
 
-            </div>
+                candidate_routes = []
 
 
 
-            """, unsafe_allow_html=True)
+                ranked_routes = []
 
 
 
-            candidate_routes = []
+                eligible_ranked = []
 
 
 
-            ranked_routes = []
-
-
-
-            eligible_ranked = []
-
-
-
-            restricted_ranked = []
+                restricted_ranked = []
 
 
 
@@ -20474,7 +20475,7 @@ body {{
 
 
 
-                placeholder=f"🛰️ {t('nav.search_location')}...",
+                placeholder="Enter your starting location",
 
 
 
@@ -20959,53 +20960,18 @@ body {{
 
 
                     st.session_state.orig_candidates = []
-
-
-
                     st.session_state.orig_candidates_query = ""
-
-
-
-                    st.session_state.user_live_coords = (16.5062, 80.6480)
-
-
-
-                    st.session_state.user_live_label = "Vijayawada, Andhra Pradesh, India"
-
-
-
+                    st.session_state.user_live_coords = None
+                    st.session_state.user_live_label = ""
+                    st.session_state.routes_generated = False
                     st.session_state.txt_orig = ""
-
-
-
                     st.session_state.pending_orig = ""
-
-
-
                     st.session_state.last_synced_orig = ""
-
-
-
                     st.session_state.selected_orig_id = None
-
-
-
                     st.session_state._prev_route_sig = None
-
-
-
                     st.session_state._prev_endpoint_sig = None
-
-
-
                     st.session_state.cached_candidate_routes = None
-
-
-
-                    st.toast("Start location reset to default", icon="🗑️")
-
-
-
+                    st.toast("Start location cleared", icon="🗑️")
                     st.rerun()
 
 
@@ -21312,7 +21278,7 @@ body {{
 
 
 
-                placeholder=f"🗺️ {t('nav.search_location')}...",
+                placeholder="Enter your destination",
 
 
 
@@ -21685,57 +21651,19 @@ body {{
 
 
                     st.session_state.selected_dest_coords = None
-
-
-
                     st.session_state.selected_dest_label = None
-
-
-
+                    st.session_state.routes_generated = False
                     st.session_state.pending_dest = ""
-
-
-
                     st.session_state.last_synced_dest = ""
-
-
-
                     st.session_state.txt_dest = ""
-
-
-
                     st.session_state.selected_dest_id = None
-
-
-
                     st.session_state.active_dest_meta = None
-
-
-
                     st.session_state.dest_candidates = []
-
-
-
                     st.session_state.dest_candidates_query = ""
-
-
-
                     st.session_state._prev_route_sig = None
-
-
-
                     st.session_state._prev_endpoint_sig = None
-
-
-
                     st.session_state.cached_candidate_routes = None
-
-
-
                     st.toast("Destination cleared", icon="🗑️")
-
-
-
                     st.rerun()
 
 
@@ -21836,168 +21764,90 @@ body {{
 
 
 
-            # Global Route Action Buttons
+            # ➕ Highly Visible "ADD A STOP TO YOUR ROUTE" Section (Requirement 6)
+            st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
+            with st.expander("➕ ADD A STOP TO YOUR ROUTE", expanded=False):
+                if not coords_orig or not coords_dest:
+                    st.info("⚠️ Please select your starting location and destination before adding stops.")
+                else:
+                    st.caption("Add an intermediate stop along your route:")
+                    c_st_cat1, c_st_cat2, c_st_cat3 = st.columns(3)
+                    with c_st_cat1:
+                        if st.button("🍽️ Dining", key="btn_quick_stop_food", use_container_width=True):
+                            st.session_state["show_stop_category"] = "food"
+                    with c_st_cat2:
+                        if st.button("⛽ Fuel/EV", key="btn_quick_stop_fuel", use_container_width=True):
+                            st.session_state["show_stop_category"] = "fuel"
+                    with c_st_cat3:
+                        if st.button("🏥 Medical", key="btn_quick_stop_health", use_container_width=True):
+                            st.session_state["show_stop_category"] = "health"
 
+                    c_st_cat4, c_st_cat5, c_st_cat6 = st.columns(3)
+                    with c_st_cat4:
+                        if st.button("🏧 ATM/Bank", key="btn_quick_stop_atm", use_container_width=True):
+                            st.session_state["show_stop_category"] = "atm"
+                    with c_st_cat5:
+                        if st.button("🏨 Hotel", key="btn_quick_stop_hotel", use_container_width=True):
+                            st.session_state["show_stop_category"] = "hotel"
+                    with c_st_cat6:
+                        if st.button("🏛️ Tourist", key="btn_quick_stop_attraction", use_container_width=True):
+                            st.session_state["show_stop_category"] = "attraction"
 
-
-            col_act_calc, col_act_fit = st.columns([1.1, 0.9])
-
-
-
-            with col_act_calc:
-
-
-
-                cur_btn_l = st.session_state.get("app_language", "en")
-                if st.button("🚀 " + t("nav.find_best_route", default="Find Routes", lang=cur_btn_l), key="btn_side_calc_routes_action", use_container_width=True, type="primary", help="Find multiple optimal routes connecting Start and Destination"):
-
-
-
-                    if not coords_dest:
-
-
-
-                        # Auto-suggest or set destination near origin so multiple routes appear immediately
-
-
-
-                        if coords_orig:
-
-
-
-                            d_guntur = haversine_distance_m(coords_orig[0], coords_orig[1], 16.3067, 80.4365)
-
-
-
-                            if d_guntur > 4000:
-
-
-
-                                st.session_state.selected_dest_coords = (16.3067, 80.4365)
-
-
-
-                                st.session_state.selected_dest_label = "Guntur City Center, Andhra Pradesh"
-
-
-
-                                st.session_state.txt_dest = "Guntur City Center"
-
-
-
+                    stop_search_input = st.text_input(
+                        "Search stop location:",
+                        placeholder="Search landmark, restaurant, petrol pump...",
+                        key="txt_custom_stop_search",
+                        label_visibility="collapsed"
+                    )
+                    c_add_txt, c_add_map = st.columns([1.2, 1.0])
+                    with c_add_txt:
+                        if st.button("➕ Add Search Stop", key="btn_confirm_add_txt_stop", use_container_width=True, disabled=not bool(stop_search_input)):
+                            cands = st.session_state.real_map_service.geocode_candidates(stop_search_input, limit=3)
+                            if cands:
+                                b_stop = cands[0]
+                                if "intermediate_stops" not in st.session_state or not isinstance(st.session_state.intermediate_stops, list):
+                                    st.session_state.intermediate_stops = []
+                                st.session_state.intermediate_stops.append({
+                                    "name": b_stop.get("display_name", stop_search_input).split(",")[0].strip(),
+                                    "address": b_stop.get("display_name", stop_search_input),
+                                    "lat": float(b_stop["lat"]),
+                                    "lon": float(b_stop["lon"]),
+                                    "category_icon": "🟣"
+                                })
+                                st.session_state._prev_route_sig = None
+                                st.session_state._prev_endpoint_sig = None
+                                st.session_state.cached_candidate_routes = None
+                                st.session_state.routes_generated = True
+                                st.toast(f"🟣 Added intermediate stop: {b_stop.get('display_name', stop_search_input).split(',')[0]}", icon="🟣")
+                                st.rerun()
                             else:
-
-
-
-                                st.session_state.selected_dest_coords = (16.5062, 80.6480)
-
-
-
-                                st.session_state.selected_dest_label = "Vijayawada City Center, Andhra Pradesh"
-
-
-
-                                st.session_state.txt_dest = "Vijayawada City Center"
-
-
-
-                            st.session_state.is_custom_start_place = True
-
-
-
-                            st.session_state._prev_route_sig = None
-
-
-
-                            st.session_state._prev_endpoint_sig = None
-
-
-
-                            st.session_state.cached_candidate_routes = None
-
-
-
-                            st.session_state.auto_fit_bounds = True
-
-
-
+                                st.toast("Could not find coordinates for this stop name.", icon="⚠️")
+                    with c_add_map:
+                        if st.button("🗺️ Pick on Map", key="btn_pick_stop_on_map_exp", use_container_width=True):
+                            st.session_state.map_picking_mode = "stop"
                             st.session_state.scroll_to_app_map = True
-
-
-
-                            st.toast(f"🎯 Connected to {st.session_state.selected_dest_label}! Calculating multiple routes...", icon="🚀")
-
-
-
+                            st.toast("Click anywhere on the map to add an intermediate stop", icon="🟣")
                             st.rerun()
 
-
-
-                        else:
-
-
-
-                            st.session_state.map_picking_mode = "dest"
-
-
-
-                            st.toast("⚠️ Please set a destination or tap 'Pick Destination on Map'!", icon="🏁")
-
-
-
-                            st.rerun()
-
-
-
-                    else:
-
-
-
-                        st.session_state._prev_route_sig = None
-
-
-
-                        st.session_state._prev_endpoint_sig = None
-
-
-
-                        st.session_state.cached_candidate_routes = None
-
-
-
-                        st.session_state.auto_fit_bounds = True
-
-
-
-                        st.session_state.scroll_to_app_map = True
-
-
-
-                        st.toast("Finding multiple optimal route options...", icon="🚀")
-
-
-
-                        st.rerun()
-
-
+            # Global Route Action Buttons
+            col_act_calc, col_act_fit = st.columns([1.2, 0.8])
+            with col_act_calc:
+                is_route_btn_disabled = not bool(coords_orig and coords_dest and coords_orig != coords_dest)
+                if st.button("🚀 GENERATE ROUTES", key="btn_side_calc_routes_action", use_container_width=True, type="primary", disabled=is_route_btn_disabled, help="Generate multiple optimal corridors connecting Start and Destination"):
+                    st.session_state.routes_generated = True
+                    st.session_state._prev_route_sig = None
+                    st.session_state._prev_endpoint_sig = None
+                    st.session_state.cached_candidate_routes = None
+                    st.session_state.auto_fit_bounds = True
+                    st.session_state.scroll_to_app_map = True
+                    st.toast("Finding multiple optimal route options...", icon="🚀")
+                    st.rerun()
 
             with col_act_fit:
-
-
-
                 cur_btn_l = st.session_state.get("app_language", "en")
                 if st.button("🔍 " + t("nav.fit_route", default="Fit Route", lang=cur_btn_l), key="btn_side_fit_route_bounds_act", use_container_width=True, help="Adjust map camera to encompass complete route geometry"):
-
-
-
                     st.session_state.auto_fit_bounds = True
-
-
-
                     st.session_state.scroll_to_app_map = True
-
-
-
                     st.rerun()
 
 
@@ -22448,10 +22298,8 @@ body {{
 
 
 
-                    auto_fit_bounds=st.session_state.get("auto_fit_bounds", True)
-
-
-
+                    auto_fit_bounds=st.session_state.get("auto_fit_bounds", True),
+                    intermediate_stops=st.session_state.get("intermediate_stops", [])
                 )
 
 
@@ -22524,10 +22372,8 @@ body {{
 
 
 
-                    auto_fit_bounds=st.session_state.get("auto_fit_bounds", True)
-
-
-
+                    auto_fit_bounds=st.session_state.get("auto_fit_bounds", True),
+                    intermediate_stops=st.session_state.get("intermediate_stops", [])
                 )
 
 
@@ -22548,7 +22394,10 @@ body {{
 
 
 
-                map_key = f"real_world_gmap_{cur_map_style}_{st.session_state.map_zoom}_{cur_focus}_{len(hazard_markers)}_{len(restriction_markers)}_{coords_orig[0]:.3f}_{coords_orig[1]:.3f}_{coords_dest[0]:.3f}_{coords_dest[1]:.3f}_{cur_cat_key}_{len(all_map_facilities)}"
+                o_str = f"{coords_orig[0]:.3f}_{coords_orig[1]:.3f}" if coords_orig else "no_orig"
+                d_str = f"{coords_dest[0]:.3f}_{coords_dest[1]:.3f}" if coords_dest else "no_dest"
+                stops_len = len(st.session_state.get("intermediate_stops", []))
+                map_key = f"real_world_gmap_{cur_map_style}_{st.session_state.map_zoom}_{cur_focus}_{len(hazard_markers)}_{len(restriction_markers)}_{o_str}_{d_str}_{cur_cat_key}_{len(all_map_facilities)}_st_{stops_len}"
 
 
 
@@ -29857,8 +29706,8 @@ if st.session_state.get("current_view") == "places":
                             c_o = coords_orig
                             c_d = coords_dest
                             if not c_o or not c_d:
-                                st.warning("⚠️ Starting Point & Destination Required: Please select both in Navigation first.")
-                                st.toast("⚠️ Starting Point & Destination required first!", icon="⚠️")
+                                st.warning("⚠️ Please select your starting location and destination before adding stops.")
+                                st.toast("Please select your starting location and destination before adding stops.", icon="⚠️")
                             else:
                                 if "intermediate_stops" not in st.session_state or not isinstance(st.session_state.intermediate_stops, list):
                                     st.session_state.intermediate_stops = []

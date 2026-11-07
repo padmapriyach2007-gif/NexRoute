@@ -1235,7 +1235,8 @@ class MapService:
         traveler_avatar: str = "boy",
         emergency_facilities: Optional[List[Dict[str, Any]]] = None,
         is_custom_origin: bool = False,
-        fleet_members: Optional[List[Dict[str, Any]]] = None
+        fleet_members: Optional[List[Dict[str, Any]]] = None,
+        intermediate_stops: Optional[List[Dict[str, Any]]] = None
     ) -> folium.Map:
         """
         Creates a rich, multi-layered interactive Folium Leaflet Map with:
@@ -1501,46 +1502,36 @@ class MapService:
             avatar_key = str(traveler_avatar).lower()
             if "tractor" in avatar_key:
                 avatar_sym = "🚜"
-                avatar_title = "🚜 Virtual Tractor (Standing at Start Point)"
-                badge_title = "🚜 Virtual Tractor (Start Point)"
-                halo_border = "#16a34a"
-                halo_bg = "rgba(22, 163, 74, 0.35)"
+                avatar_title = "🟢 START: Virtual Tractor"
+                badge_title = "🟢 START"
             elif "bike" in avatar_key or "motorcycle" in avatar_key:
                 avatar_sym = "🏍️"
-                avatar_title = "🏍️ Virtual Motorcyclist (Standing at Start Point)"
-                badge_title = "🏍️ Virtual Motorcyclist (Start Point)"
-                halo_border = "#0284c7"
-                halo_bg = "rgba(2, 132, 199, 0.35)"
+                avatar_title = "🟢 START: Virtual Motorcyclist"
+                badge_title = "🟢 START"
             elif "truck" in avatar_key:
                 avatar_sym = "🚚"
-                avatar_title = "🚚 Virtual Truck (Standing at Start Point)"
-                badge_title = "🚚 Virtual Truck (Start Point)"
-                halo_border = "#f59e0b"
-                halo_bg = "rgba(245, 158, 11, 0.35)"
+                avatar_title = "🟢 START: Virtual Truck"
+                badge_title = "🟢 START"
             elif "bicycle" in avatar_key:
                 avatar_sym = "🚴"
-                avatar_title = "🚴 Virtual Cyclist (Standing at Start Point)"
-                badge_title = "🚴 Virtual Cyclist (Start Point)"
-                halo_border = "#10b981"
-                halo_bg = "rgba(16, 185, 129, 0.35)"
+                avatar_title = "🟢 START: Virtual Cyclist"
+                badge_title = "🟢 START"
             elif "walk" in avatar_key or avatar_key == "boy":
                 avatar_sym = "🚶‍♂️"
-                avatar_title = "🚶‍♂️ Virtual Boy Walking (Standing at Start Point)"
-                badge_title = "🚶‍♂️ Virtual Boy Walking (Start Point)"
-                halo_border = "#38bdf8"
-                halo_bg = "rgba(56, 189, 248, 0.35)"
+                avatar_title = "🟢 START: Departure Point (Walking)"
+                badge_title = "🟢 START"
             elif "runner" in avatar_key or "run" in avatar_key:
                 avatar_sym = "🏃‍♂️"
-                avatar_title = "🏃‍♂️ Virtual Runner (Standing at Start Point)"
-                badge_title = "🏃‍♂️ Virtual Runner (Start Point)"
-                halo_border = "#38bdf8"
-                halo_bg = "rgba(56, 189, 248, 0.35)"
+                avatar_title = "🟢 START: Departure Point (Runner)"
+                badge_title = "🟢 START"
             else:
                 avatar_sym = "🚗"
-                avatar_title = "🚗 Virtual Car Companion (Standing at Start Point)"
-                badge_title = "🚗 Virtual Car (Start Point)"
-                halo_border = "#0284c7"
-                halo_bg = "rgba(2, 132, 199, 0.35)"
+                avatar_title = "🟢 START: Departure Point (Driving)"
+                badge_title = "🟢 START"
+
+            # Requirement 3: Starting Point Marker must always be styled in GREEN
+            halo_border = "#10b981"
+            halo_bg = "rgba(16, 185, 129, 0.35)"
 
             # Inject CSS animation styles into Folium map
             folium_css = """
@@ -1645,14 +1636,57 @@ class MapService:
                 tooltip="Live Movement Trail"
             ).add_to(m)
 
-        # 2. Add Destination Marker
+        # 2. Add Destination Marker (Requirement 3: Distinct RED Destination Marker)
         if destination_coords:
+            dest_popup_html = f"""
+            <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 4px;">
+                <div style="font-weight: 800; color: #ef4444; font-size: 13px;">🏁 DESTINATION</div>
+                <div style="color: #334155; font-size: 11px; margin-top: 2px;">Coords: {destination_coords[0]:.5f}, {destination_coords[1]:.5f}</div>
+            </div>
+            """
             folium.Marker(
                 location=destination_coords,
-                popup=folium.Popup("<b>🏁 Safe Destination</b><br>Designated assembly or target", max_width=250),
-                tooltip="Safe Destination",
-                icon=folium.Icon(color="green", icon="flag-checkered", prefix="fa")
+                popup=folium.Popup(dest_popup_html, max_width=250),
+                tooltip="🏁 DESTINATION",
+                icon=folium.Icon(color="red", icon="flag-checkered", prefix="fa")
             ).add_to(m)
+
+        # 2B. Add Intermediate Stops Markers (Requirement 5: Distinct PURPLE Intermediate Stop Markers)
+        if intermediate_stops:
+            for s_idx, st_pt in enumerate(intermediate_stops):
+                try:
+                    s_lat = float(st_pt.get("lat", 0))
+                    s_lon = float(st_pt.get("lon", 0))
+                except (TypeError, ValueError):
+                    continue
+                if not s_lat or not s_lon:
+                    continue
+                s_name = st_pt.get("name", f"Stop #{s_idx + 1}")
+                s_addr = st_pt.get("address", "")
+                stop_num = s_idx + 1
+                stop_html = f"""
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 48px; height: 48px; cursor: pointer;">
+                    <div style="position: absolute; bottom: 44px; background: #7c3aed; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 0 10px #8b5cf6; border: 1.5px solid #c4b5fd; z-index: 20; pointer-events: none;">🟣 STOP #{stop_num}: {s_name}</div>
+                    <div style="position: absolute; width: 36px; height: 36px; border-radius: 50%; background: rgba(139, 92, 246, 0.35); border: 2px solid #8b5cf6; box-shadow: 0 0 14px #8b5cf6;"></div>
+                    <div style="position: relative; z-index: 10; font-size: 22px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));">🟣</div>
+                </div>
+                """
+                folium.Marker(
+                    location=[s_lat, s_lon],
+                    popup=folium.Popup(f"<b>🟣 Stop #{stop_num}: {s_name}</b><br>{s_addr}<br>Coords: {s_lat:.5f}, {s_lon:.5f}", max_width=260),
+                    tooltip=f"🟣 Stop #{stop_num}: {s_name}",
+                    icon=folium.DivIcon(html=stop_html, icon_size=(48, 48), icon_anchor=(24, 24))
+                ).add_to(m)
+
+        # 2C. Clean Map Instruction Overlay (Requirement 3: When no locations selected, keep map clean with instructional overlay)
+        if not origin_coords and not destination_coords:
+            clean_overlay_html = """
+            <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid rgba(56, 189, 248, 0.55); border-radius: 999px; padding: 9px 24px; z-index: 1000; color: #f8fafc; font-size: 13px; font-weight: 700; box-shadow: 0 8px 30px rgba(0,0,0,0.7); pointer-events: none; display: flex; align-items: center; gap: 9px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.01em;">
+                <span style="font-size: 16px;">🗺️</span>
+                <span>Select your starting point and destination to begin your journey.</span>
+            </div>
+            """
+            m.get_root().html.add_child(folium.Element(clean_overlay_html))
 
         # 3. Add Verified Road Restrictions & Blockages with Caution Symbols
         if road_closures:
@@ -2465,7 +2499,8 @@ class MapService:
         traveler_avatar: str = "boy",
         emergency_facilities: Optional[List[Dict[str, Any]]] = None,
         is_custom_origin: bool = False,
-        fleet_members: Optional[List[Dict[str, Any]]] = None
+        fleet_members: Optional[List[Dict[str, Any]]] = None,
+        intermediate_stops: Optional[List[Dict[str, Any]]] = None
     ) -> folium.Map:
         """Adapts route polylines, road restrictions, and breadcrumb trails for Folium map rendering."""
         routes_adapted = []
@@ -2496,7 +2531,8 @@ class MapService:
             traveler_avatar=traveler_avatar,
             emergency_facilities=emergency_facilities,
             is_custom_origin=is_custom_origin,
-            fleet_members=fleet_members
+            fleet_members=fleet_members,
+            intermediate_stops=intermediate_stops
         )
 
     def render_hazard_map(

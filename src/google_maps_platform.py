@@ -307,6 +307,7 @@ def build_google_maps_javascript_html(
     route_polylines: Optional[List[Dict[str, Any]]] = None,
     ai_road_report: Optional[Dict[str, Any]] = None,
     fleet_members: Optional[List[Dict[str, Any]]] = None,
+    intermediate_stops: Optional[List[Dict[str, Any]]] = None,
     **kwargs
 ) -> str:
     """
@@ -383,6 +384,7 @@ def build_google_maps_javascript_html(
     hazards_json = json.dumps(hazards or [])
     ai_road_report_json = json.dumps(ai_road_report or {})
     fleet_members_json = json.dumps(fleet_members or [])
+    stops_json = json.dumps(intermediate_stops or kwargs.get("intermediate_stops") or [])
 
     orig_json = json.dumps({
         "lat": origin_coords[0],
@@ -2019,6 +2021,12 @@ def build_google_maps_javascript_html(
 </head>
 <body>
     <div id="gmap-container">
+        <!-- Subtle Clean Map Instruction Overlay (Requirement 3) -->
+        <div id="gmap-clean-instruction-overlay" style="position: absolute; top: 68px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid rgba(56, 189, 248, 0.55); border-radius: 999px; padding: 9px 24px; z-index: 1000; color: #f8fafc; font-size: 13px; font-weight: 700; box-shadow: 0 8px 30px rgba(0,0,0,0.7); pointer-events: none; display: {'none' if (origin_coords or dest_coords) else 'flex'}; align-items: center; gap: 9px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.01em;">
+            <span style="font-size: 16px;">🗺️</span>
+            <span>Select your starting point and destination to begin your journey.</span>
+        </div>
+
         <!-- Floating Controls -->
         <div class="gmap-toolbar">
             <div class="gmap-search-wrapper">
@@ -2428,6 +2436,7 @@ def build_google_maps_javascript_html(
             travelerAvatarIcon: "{avatar_icon}",
             travelerAvatarLabel: "{avatar_label}",
             fleetMembers: {fleet_members_json},
+            intermediateStops: {stops_json},
             mapPickingMode: "{kwargs.get('map_picking_mode') or ''}",
             isCustomOrigin: {str(bool(kwargs.get("is_custom_origin", False))).lower()},
             autoFitBounds: {str(bool(kwargs.get("auto_fit_bounds", True))).lower()}
@@ -2441,9 +2450,10 @@ def build_google_maps_javascript_html(
                 var hudTitle = document.getElementById('map-picking-hud-title');
                 var hudDesc = document.getElementById('map-picking-hud-desc');
                 var isOrig = (window.activeMapPickingTarget === 'orig');
-                if (hudIcon) hudIcon.innerText = isOrig ? "🟢" : "🏁";
-                if (hudTitle) hudTitle.innerText = isOrig ? "START SELECTION MODE" : "DESTINATION SELECTION MODE";
-                if (hudDesc) hudDesc.innerText = isOrig ? "Tap or drag to set your start." : "Tap or drag to set your destination.";
+                var isStop = (window.activeMapPickingTarget === 'stop');
+                if (hudIcon) hudIcon.innerText = isOrig ? "🟢" : (isStop ? "🟣" : "🏁");
+                if (hudTitle) hudTitle.innerText = isOrig ? "START SELECTION MODE" : (isStop ? "INTERMEDIATE STOP SELECTION MODE" : "DESTINATION SELECTION MODE");
+                if (hudDesc) hudDesc.innerText = isOrig ? "Click anywhere on the map to set your starting location" : (isStop ? "Click anywhere on the map to add an intermediate stop" : "Click anywhere on the map to set your destination");
                 if (hud) hud.style.display = 'flex';
             }}, 200);
         }}
@@ -3612,6 +3622,7 @@ def build_google_maps_javascript_html(
         window.handleMapPickingClick = async function(lat, lng) {{
             var target = window.activeMapPickingTarget || 'orig';
             var isOrig = (target === 'orig');
+            var isStop = (target === 'stop');
             var card = document.getElementById('map-picking-card');
             var badgeEl = document.getElementById('map-pick-confirm-badge');
             var coordsEl = document.getElementById('map-pick-coords-text');
@@ -3619,18 +3630,21 @@ def build_google_maps_javascript_html(
             var addrEl = document.getElementById('map-pick-addr-text');
             var btnEl = document.getElementById('map-pick-confirm-btn');
 
-            if (badgeEl) badgeEl.innerHTML = isOrig ? "🟢 CONFIRM STARTING POINT" : "🏁 CONFIRM DESTINATION";
+            if (badgeEl) badgeEl.innerHTML = isOrig ? "🟢 CONFIRM STARTING POINT" : (isStop ? "🟣 CONFIRM INTERMEDIATE STOP" : "🏁 CONFIRM DESTINATION");
             if (coordsEl) coordsEl.innerText = Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
-            if (btnEl) btnEl.innerText = isOrig ? "✅ Confirm Starting Point" : "✅ Confirm Destination";
+            if (btnEl) btnEl.innerText = isOrig ? "✅ Confirm Starting Point" : (isStop ? "✅ Confirm Intermediate Stop" : "✅ Confirm Destination");
             if (nameEl) nameEl.innerText = "Detecting Location Details...";
             if (addrEl) addrEl.innerText = "Querying multi-provider geographic database...";
             if (card) card.style.display = 'block';
+
+            var pinColor = isOrig ? '#10b981' : (isStop ? '#8b5cf6' : '#f43f5e');
+            var pinIconSymbol = isOrig ? '🟢' : (isStop ? '🟣' : '🏁');
 
             if (window.lMapInstance) {{
                 if (pickedMapMarker) try {{ window.lMapInstance.removeLayer(pickedMapMarker); }} catch(e) {{}}
                 var pickIcon = L.divIcon({{
                     className: 'pf-picking-pin',
-                    html: '<div style="background:' + (isOrig ? '#10b981' : '#f43f5e') + '; width:28px; height:28px; border-radius:50%; border:2.5px solid #fff; box-shadow:0 0 16px ' + (isOrig ? '#10b981' : '#f43f5e') + '; display:flex; align-items:center; justify-content:center; font-size:14px; cursor:move; animation:markerDotPulse 1.2s infinite ease-in-out;" title="Drag marker to refine exact coordinates">' + (isOrig ? '🟢' : '🏁') + '</div>',
+                    html: '<div style="background:' + pinColor + '; width:28px; height:28px; border-radius:50%; border:2.5px solid #fff; box-shadow:0 0 16px ' + pinColor + '; display:flex; align-items:center; justify-content:center; font-size:14px; cursor:move; animation:markerDotPulse 1.2s infinite ease-in-out;" title="Drag marker to refine exact coordinates">' + pinIconSymbol + '</div>',
                     iconSize: [28, 28],
                     iconAnchor: [14, 14]
                 }});
@@ -3645,7 +3659,7 @@ def build_google_maps_javascript_html(
                     position: {{ lat: Number(lat), lng: Number(lng) }},
                     map: window.gMap,
                     draggable: true,
-                    title: isOrig ? "Selected Starting Point (Drag to refine position)" : "Selected Destination (Drag to refine position)",
+                    title: isOrig ? "Selected Starting Point (Drag to refine position)" : (isStop ? "Selected Intermediate Stop (Drag to refine position)" : "Selected Destination (Drag to refine position)"),
                     zIndex: 99999
                 }});
                 google.maps.event.addListener(window.pickedGMapMarker, 'dragend', function(evt) {{
@@ -3657,7 +3671,7 @@ def build_google_maps_javascript_html(
                 target: target,
                 lat: lat,
                 lon: lng,
-                name: (isOrig ? "Custom Start" : "Custom Dest") + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")",
+                name: (isOrig ? "Custom Start" : (isStop ? "Intermediate Stop" : "Custom Dest")) + " (" + Number(lat).toFixed(4) + ", " + Number(lng).toFixed(4) + ")",
                 address: "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5)
             }};
 
@@ -5422,7 +5436,44 @@ def build_google_maps_javascript_html(
                 hasBounds = true;
             }}
 
-            if (hasBounds && orig && dest) {{
+            // Requirement 5: Render Intermediate Stops in Purple
+            var stops = window.GMAP_DATA.intermediateStops || [];
+            stops.forEach(function(stItem, sIdx) {{
+                var sLat = Number(stItem.lat || stItem.latitude || 0);
+                var sLon = Number(stItem.lon || stItem.longitude || 0);
+                if (!sLat || !sLon) return;
+                var sLatLng = new google.maps.LatLng(sLat, sLon);
+                var sName = stItem.name || ('Stop #' + (sIdx + 1));
+                var sNum = sIdx + 1;
+                var sMarker = new google.maps.Marker({{
+                    position: sLatLng,
+                    map: gMap,
+                    title: '🟣 STOP #' + sNum + ': ' + sName,
+                    label: {{
+                        text: String(sNum),
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        fontSize: '11px'
+                    }},
+                    icon: {{
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 14,
+                        fillColor: '#8b5cf6',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2.5
+                    }},
+                    zIndex: 998
+                }});
+                sMarker.addListener('click', function() {{
+                    infoWindow.setContent('<div class="iw-title">🟣 STOP #' + sNum + ': ' + sName + '</div><div class="iw-cat">Intermediate Waypoint</div><div class="iw-meta">' + (stItem.address || '') + '</div>');
+                    infoWindow.open(gMap, sMarker);
+                }});
+                bounds.extend(sLatLng);
+                hasBounds = true;
+            }});
+
+            if (hasBounds && ((orig && dest) || stops.length > 0)) {{
                 gMap.fitBounds(bounds);
             }}
         }}

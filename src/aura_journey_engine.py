@@ -1452,6 +1452,7 @@ def build_aura_journey_cockpit_html(
                 <div class='scene-badge' id='hud-runtime-badge'><span class='pulse-dot' id='hud-pulse-dot'></span> <span id='hud-runtime-text'>✦ 2.5D SCENIC RUNTIME ACTIVE</span></div>
                 <div class='scene-cam-badge' id='hud-cam-mode'>CAM: 3D FOLLOW DRONE</div>
                 <div class='scene-cam-badge' id='hud-env-mode'>ENV: DAY</div>
+                <button id='btn-toggle-engine' class='scene-cam-badge' style='cursor: pointer; pointer-events: auto; background: rgba(56, 189, 248, 0.25); border: 1px solid rgba(56, 189, 248, 0.6); color: #e0f2fe; font-weight: 700;' onclick='window.toggleEngineCompanion()'>🔄 Toggle 3D / 2.5D</button>
             </div>
         </div>
 
@@ -2525,6 +2526,10 @@ def build_aura_journey_cockpit_html(
         let threeAnimId = null;
         let fallback2DAnimId = null;
 
+        function safeLerp(a, b, t) {{
+            return a + (b - a) * t;
+        }}
+
         function initAuraThreeScene() {{
             const canvas = document.getElementById('aura-threejs-canvas');
             const scenicCanvas = document.getElementById('aura-scenic-canvas');
@@ -2532,6 +2537,9 @@ def build_aura_journey_cockpit_html(
             if (!canvas || !container || typeof THREE === 'undefined') return false;
 
             try {{
+                // Ensure canvas is visible before WebGL context creation to avoid 0x0 buffer allocation
+                canvas.style.display = 'block';
+
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x38bdf8);
                 scene.fog = new THREE.FogExp2(0xc7d2fe, 0.0075);
@@ -2540,9 +2548,12 @@ def build_aura_journey_cockpit_html(
                 const height = container.clientHeight > 0 ? container.clientHeight : 360;
 
                 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 800);
+                camera.position.set(0, 2.3, -4.2);
+                camera.lookAt(0, 1.1, 3.0);
+
                 const renderer = new THREE.WebGLRenderer({{
                     canvas: canvas,
-                    antialias: false,
+                    antialias: true,
                     alpha: false,
                     powerPreference: "default",
                     preserveDrawingBuffer: true
@@ -3127,114 +3138,125 @@ def build_aura_journey_cockpit_html(
                 let clock = new THREE.Clock();
 
                 function renderLoop() {{
-                    requestAnimationFrame(renderLoop);
-                    const elapsed = clock.getElapsedTime();
+                    threeAnimId = requestAnimationFrame(renderLoop);
+                    try {{
+                        const elapsed = clock.getElapsedTime();
 
-                    // Procedural Skeletal Animations
-                    if (currentAnimState === 'arrive') {{
-                        // Celebratory Jumping & Dual Arm Waves
-                        const hop = Math.abs(Math.sin(elapsed * 7.5)) * 0.45;
-                        auraRoot.position.y = hop;
-                        armRGroup.rotation.z = 0.8 + Math.sin(elapsed * 9) * 0.3;
-                        armRGroup.rotation.x = -1.2;
-                        armLGroup.rotation.z = -0.8 - Math.sin(elapsed * 9) * 0.3;
-                        armLGroup.rotation.x = -1.2;
-                        legLGroup.rotation.x = -hop * 0.5;
-                        legRGroup.rotation.x = -hop * 0.5;
-                        headGroup.rotation.y = Math.sin(elapsed * 4) * 0.25;
-                        auraRing.scale.setScalar(1.0 + Math.sin(elapsed * 6) * 0.4);
-                        auraRing.material.opacity = 0.9;
-                    }} else if (currentAnimState === 'turn_left') {{
-                        // Smoothly point stick to the left
-                        auraRoot.position.y = 0;
-                        auraRoot.rotation.y = THREE.MathUtils.lerp(auraRoot.rotation.y, 0.65, 0.1);
-                        headGroup.rotation.y = 0.35;
-                        armRGroup.rotation.z = -1.1; // Raise and point left
-                        armRGroup.rotation.x = 0.6;
-                        navStickGroup.rotation.z = -0.5;
-                        armLGroup.rotation.x = 0.2;
-                        legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
-                        legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
-                        auraRing.material.opacity = 0.3;
-                    }} else if (currentAnimState === 'turn_right') {{
-                        // Smoothly point stick to the right
-                        auraRoot.position.y = 0;
-                        auraRoot.rotation.y = THREE.MathUtils.lerp(auraRoot.rotation.y, -0.65, 0.1);
-                        headGroup.rotation.y = -0.35;
-                        armRGroup.rotation.z = 1.2; // Raise and point right
-                        armRGroup.rotation.x = 0.6;
-                        navStickGroup.rotation.z = 0.5;
-                        armLGroup.rotation.x = 0.2;
-                        legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
-                        legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
-                        auraRing.material.opacity = 0.3;
-                    }} else if (currentAnimState === 'wave') {{
-                        // Waving hello
-                        auraRoot.position.y = 0;
-                        auraRoot.rotation.y = THREE.MathUtils.lerp(auraRoot.rotation.y, 0, 0.1);
-                        headGroup.rotation.y = Math.sin(elapsed * 3) * 0.15;
-                        armRGroup.rotation.z = 1.3 + Math.sin(elapsed * 10) * 0.35;
-                        armRGroup.rotation.x = 0.2;
-                        armLGroup.rotation.x = 0.1;
-                        legLGroup.rotation.x = 0;
-                        legRGroup.rotation.x = 0;
-                    }} else if (currentAnimState === 'run') {{
-                        // High-speed Stride
-                        const stride = Math.sin(elapsed * 10) * 0.85;
-                        legLGroup.rotation.x = stride;
-                        legRGroup.rotation.x = -stride;
-                        armLGroup.rotation.x = -stride * 0.7;
-                        armRGroup.rotation.x = stride * 0.7;
-                        armRGroup.rotation.z = 0.2;
-                        auraRoot.position.y = Math.abs(Math.sin(elapsed * 10)) * 0.12;
-                        headGroup.rotation.y = 0;
-                    }} else {{
-                        // Natural Walking Stride
-                        const stride = Math.sin(elapsed * 5.5) * 0.52;
-                        legLGroup.rotation.x = stride;
-                        legRGroup.rotation.x = -stride;
-                        armLGroup.rotation.x = -stride * 0.6;
-                        armRGroup.rotation.x = stride * 0.6;
-                        armRGroup.rotation.z = 0.15;
-                        auraRoot.position.y = Math.abs(Math.sin(elapsed * 5.5)) * 0.06;
-                        headGroup.rotation.y = Math.sin(elapsed * 2.5) * 0.1;
-                        auraRoot.rotation.y = THREE.MathUtils.lerp(auraRoot.rotation.y, 0, 0.1);
-                        auraRing.material.opacity = 0.4;
+                        // Procedural Skeletal Animations
+                        if (currentAnimState === 'arrive') {{
+                            // Celebratory Jumping & Dual Arm Waves
+                            const hop = Math.abs(Math.sin(elapsed * 7.5)) * 0.45;
+                            auraRoot.position.y = hop;
+                            armRGroup.rotation.z = 0.8 + Math.sin(elapsed * 9) * 0.3;
+                            armRGroup.rotation.x = -1.2;
+                            armLGroup.rotation.z = -0.8 - Math.sin(elapsed * 9) * 0.3;
+                            armLGroup.rotation.x = -1.2;
+                            legLGroup.rotation.x = -hop * 0.5;
+                            legRGroup.rotation.x = -hop * 0.5;
+                            headGroup.rotation.y = Math.sin(elapsed * 4) * 0.25;
+                            auraRing.scale.setScalar(1.0 + Math.sin(elapsed * 6) * 0.4);
+                            auraRing.material.opacity = 0.9;
+                        }} else if (currentAnimState === 'turn_left') {{
+                            // Smoothly point stick to the left
+                            auraRoot.position.y = 0;
+                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0.65, 0.1);
+                            headGroup.rotation.y = 0.35;
+                            armRGroup.rotation.z = -1.1; // Raise and point left
+                            armRGroup.rotation.x = 0.6;
+                            navStickGroup.rotation.z = -0.5;
+                            armLGroup.rotation.x = 0.2;
+                            legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
+                            legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
+                            auraRing.material.opacity = 0.3;
+                        }} else if (currentAnimState === 'turn_right') {{
+                            // Smoothly point stick to the right
+                            auraRoot.position.y = 0;
+                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, -0.65, 0.1);
+                            headGroup.rotation.y = -0.35;
+                            armRGroup.rotation.z = 1.2; // Raise and point right
+                            armRGroup.rotation.x = 0.6;
+                            navStickGroup.rotation.z = 0.5;
+                            armLGroup.rotation.x = 0.2;
+                            legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
+                            legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
+                            auraRing.material.opacity = 0.3;
+                        }} else if (currentAnimState === 'wave') {{
+                            // Waving hello
+                            auraRoot.position.y = 0;
+                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0, 0.1);
+                            headGroup.rotation.y = Math.sin(elapsed * 3) * 0.15;
+                            armRGroup.rotation.z = 1.3 + Math.sin(elapsed * 10) * 0.35;
+                            armRGroup.rotation.x = 0.2;
+                            armLGroup.rotation.x = 0.1;
+                            legLGroup.rotation.x = 0;
+                            legRGroup.rotation.x = 0;
+                        }} else if (currentAnimState === 'run') {{
+                            // High-speed Stride
+                            const stride = Math.sin(elapsed * 10) * 0.85;
+                            legLGroup.rotation.x = stride;
+                            legRGroup.rotation.x = -stride;
+                            armLGroup.rotation.x = -stride * 0.7;
+                            armRGroup.rotation.x = stride * 0.7;
+                            armRGroup.rotation.z = 0.2;
+                            auraRoot.position.y = Math.abs(Math.sin(elapsed * 10)) * 0.12;
+                            headGroup.rotation.y = 0;
+                        }} else {{
+                            // Natural Walking Stride
+                            const stride = Math.sin(elapsed * 5.5) * 0.52;
+                            legLGroup.rotation.x = stride;
+                            legRGroup.rotation.x = -stride;
+                            armLGroup.rotation.x = -stride * 0.6;
+                            armRGroup.rotation.x = stride * 0.6;
+                            armRGroup.rotation.z = 0.15;
+                            auraRoot.position.y = Math.abs(Math.sin(elapsed * 5.5)) * 0.06;
+                            headGroup.rotation.y = Math.sin(elapsed * 2.5) * 0.1;
+                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0, 0.1);
+                            auraRing.material.opacity = 0.4;
+                        }}
+
+                        // Blinking Visor Eyes
+                        const blinkScale = Math.sin(elapsed * 2.5) > 0.96 ? 0.1 : 1.0;
+                        eyeL.scale.y = blinkScale;
+                        eyeR.scale.y = blinkScale;
+
+                        // Procedural Cloud Drifting
+                        cloudList.forEach(c => {{
+                            c.obj.position.x += c.speed;
+                            if (c.obj.position.x > 85) c.obj.position.x = -85;
+                        }});
+
+                        // Gentle Foliage Wind Sway
+                        treeSwayList.forEach(t => {{
+                            t.group.rotation.z = Math.sin(elapsed * 1.8 + t.phase) * 0.024;
+                        }});
+
+                        // Camera Modes
+                        if (activeCam === 'pov') {{
+                            camera.position.set(0, 1.45, -1.8);
+                            camera.lookAt(0, 1.3, 15);
+                        }} else if (activeCam === 'iso') {{
+                            camera.position.set(4.5, 5.2, -4.5);
+                            camera.lookAt(0, 0.9, 2.0);
+                        }} else {{
+                            // 3D Follow Drone
+                            camera.position.set(0, 2.3, -4.2);
+                            camera.lookAt(0, 1.1, 3.0);
+                        }}
+
+                        renderer.render(scene, camera);
+                    }} catch(loopErr) {{
+                        console.warn("Three.js renderLoop caught error, gracefully reverting to 2.5D scenic companion:", loopErr);
+                        if (threeAnimId) cancelAnimationFrame(threeAnimId);
+                        threeSceneStarted = false;
+                        canvas.style.display = 'none';
+                        if (scenicCanvas) scenicCanvas.style.display = 'block';
+                        startScenicFallback2D();
                     }}
-
-                    // Blinking Visor Eyes
-                    const blinkScale = Math.sin(elapsed * 2.5) > 0.96 ? 0.1 : 1.0;
-                    eyeL.scale.y = blinkScale;
-                    eyeR.scale.y = blinkScale;
-
-                    // Procedural Cloud Drifting
-                    cloudList.forEach(c => {{
-                        c.obj.position.x += c.speed;
-                        if (c.obj.position.x > 85) c.obj.position.x = -85;
-                    }});
-
-                    // Gentle Foliage Wind Sway
-                    treeSwayList.forEach(t => {{
-                        t.group.rotation.z = Math.sin(elapsed * 1.8 + t.phase) * 0.024;
-                    }});
-
-                    // Camera Modes
-                    if (activeCam === 'pov') {{
-                        camera.position.set(0, 1.45, -1.8);
-                        camera.lookAt(0, 1.3, 15);
-                    }} else if (activeCam === 'iso') {{
-                        camera.position.set(4.5, 5.2, -4.5);
-                        camera.lookAt(0, 0.9, 2.0);
-                    }} else {{
-                        // 3D Follow Drone
-                        camera.position.set(0, 2.3, -4.2);
-                        camera.lookAt(0, 1.1, 3.0);
-                    }}
-
-                    renderer.render(scene, camera);
                 }}
 
                 // Test initial render to verify WebGL execution before hiding 2.5D companion
+                camera.position.set(0, 2.3, -4.2);
+                camera.lookAt(0, 1.1, 3.0);
                 renderer.render(scene, camera);
 
                 // Verification successful: promote to full 3D companion
@@ -3968,6 +3990,40 @@ def build_aura_journey_cockpit_html(
 
             setTimeout(checkThree, 60);
         }}
+
+        window.toggleEngineCompanion = function() {{
+            const canvas = document.getElementById('aura-threejs-canvas');
+            const scenicCanvas = document.getElementById('aura-scenic-canvas');
+            const hudText = document.getElementById('hud-runtime-text');
+            const hudBadge = document.getElementById('hud-runtime-badge');
+            const hudDot = document.getElementById('hud-pulse-dot');
+
+            if (threeSceneStarted) {{
+                threeSceneStarted = false;
+                if (threeAnimId) cancelAnimationFrame(threeAnimId);
+                if (canvas) canvas.style.display = 'none';
+                if (scenicCanvas) scenicCanvas.style.display = 'block';
+                if (hudText) hudText.innerText = '✦ 2.5D SCENIC RUNTIME ACTIVE';
+                if (hudBadge) {{
+                    hudBadge.style.borderColor = 'rgba(56, 189, 248, 0.6)';
+                    hudBadge.style.color = '#38bdf8';
+                }}
+                if (hudDot) {{
+                    hudDot.style.background = '#38bdf8';
+                    hudDot.style.boxShadow = '0 0 8px #38bdf8';
+                }}
+                startScenicFallback2D();
+            }} else {{
+                if (typeof THREE !== 'undefined') {{
+                    if (fallback2DAnimId) cancelAnimationFrame(fallback2DAnimId);
+                    if (scenicCanvas) scenicCanvas.style.display = 'none';
+                    if (canvas) canvas.style.display = 'block';
+                    initAuraThreeScene();
+                }} else {{
+                    console.warn("Three.js library is loading; scenic engine active.");
+                }}
+            }}
+        }};
 
         function syncIframeHeight() {{
             try {{
