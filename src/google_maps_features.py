@@ -18,7 +18,9 @@ def get_google_maps_app_url(
     travel_mode: str = "driving",
     avoid_tolls: bool = False,
     avoid_highways: bool = False,
-    avoid_ferries: bool = False
+    avoid_ferries: bool = False,
+    waypoints: Optional[List[Any]] = None,
+    **kwargs: Any
 ) -> str:
     """Returns direct Google Maps turn-by-turn navigation URL for browser or native app deep-link."""
     if origin_lat is None or origin_lon is None or dest_lat is None or dest_lon is None:
@@ -35,7 +37,9 @@ def get_google_maps_app_url(
         travel_mode=travel_mode,
         avoid_tolls=avoid_tolls,
         avoid_highways=avoid_highways,
-        avoid_ferries=avoid_ferries
+        avoid_ferries=avoid_ferries,
+        waypoints=waypoints,
+        **kwargs
     )
 
 

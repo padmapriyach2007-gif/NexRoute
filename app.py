@@ -19736,48 +19736,29 @@ body {{
 
 
         if coords_orig and coords_dest:
-
-
-
-            gmaps_nav_url = get_google_maps_app_url(
-
-
-
-                origin_lat=coords_orig[0],
-
-
-
-                origin_lon=coords_orig[1],
-
-
-
-                dest_lat=coords_dest[0],
-
-
-
-                dest_lon=coords_dest[1],
-
-
-
-                travel_mode=travel_mode.value if hasattr(travel_mode, "value") else "driving",
-
-
-
-                avoid_tolls=st.session_state.get("avoid_tolls", False),
-
-
-
-                avoid_highways=st.session_state.get("avoid_highways", False),
-
-
-
-                avoid_ferries=st.session_state.get("avoid_ferries", False),
-
-                waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
-
-
-
-            )
+            try:
+                gmaps_nav_url = get_google_maps_app_url(
+                    origin_lat=coords_orig[0],
+                    origin_lon=coords_orig[1],
+                    dest_lat=coords_dest[0],
+                    dest_lon=coords_dest[1],
+                    travel_mode=travel_mode.value if hasattr(travel_mode, "value") else "driving",
+                    avoid_tolls=st.session_state.get("avoid_tolls", False),
+                    avoid_highways=st.session_state.get("avoid_highways", False),
+                    avoid_ferries=st.session_state.get("avoid_ferries", False),
+                    waypoints=[(float(s["lat"]), float(s["lon"])) for s in st.session_state.get("intermediate_stops", []) if "lat" in s and "lon" in s] or None
+                )
+            except TypeError:
+                gmaps_nav_url = get_google_maps_app_url(
+                    origin_lat=coords_orig[0],
+                    origin_lon=coords_orig[1],
+                    dest_lat=coords_dest[0],
+                    dest_lon=coords_dest[1],
+                    travel_mode=travel_mode.value if hasattr(travel_mode, "value") else "driving",
+                    avoid_tolls=st.session_state.get("avoid_tolls", False),
+                    avoid_highways=st.session_state.get("avoid_highways", False),
+                    avoid_ferries=st.session_state.get("avoid_ferries", False)
+                )
 
 
 

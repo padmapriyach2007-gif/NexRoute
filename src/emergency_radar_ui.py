@@ -21,10 +21,12 @@ def generate_google_maps_directions_url(
     travel_mode: str = "driving",
     avoid_tolls: bool = False,
     avoid_highways: bool = False,
-    avoid_ferries: bool = False
+    avoid_ferries: bool = False,
+    waypoints: Optional[List[Any]] = None,
+    **kwargs: Any
 ) -> str:
     """
-    Generates a direct Google Maps navigation URL with origin, destination, travel mode, and avoidances.
+    Generates a direct Google Maps navigation URL with origin, destination, travel mode, avoidances, and intermediate waypoints.
     Opens directly in Google Maps on desktop and mobile browsers.
     """
     base_url = "https://www.google.com/maps/dir/?api=1"
@@ -43,6 +45,16 @@ def generate_google_maps_directions_url(
         "destination": f"{dest_lat:.6f},{dest_lon:.6f}",
         "travelmode": clean_mode
     }
+    if waypoints:
+        wp_coords = []
+        for wp in waypoints:
+            if isinstance(wp, (tuple, list)) and len(wp) >= 2:
+                wp_coords.append(f"{float(wp[0]):.6f},{float(wp[1]):.6f}")
+            elif isinstance(wp, str) and wp.strip():
+                wp_coords.append(wp.strip())
+        if wp_coords:
+            params["waypoints"] = "|".join(wp_coords)
+
     avoids = []
     if avoid_tolls:
         avoids.append("tolls")

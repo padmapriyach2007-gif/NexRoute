@@ -26,6 +26,17 @@ def test_get_google_maps_app_url():
     assert "destination=16.233500%2C80.550500" in url
     assert "avoid=tolls%2Chighways" in url or "avoid=tolls,highways" in url
 
+    # Test with intermediate waypoints
+    url_with_wps = get_google_maps_app_url(
+        origin_lat=16.3067,
+        origin_lon=80.4365,
+        dest_lat=16.2335,
+        dest_lon=80.5505,
+        waypoints=[(16.2500, 80.5000), (16.2400, 80.5200)]
+    )
+    assert "waypoints=" in url_with_wps
+    assert "16.250000%2C80.500000" in url_with_wps or "16.250000,80.500000" in url_with_wps
+
 
 def test_get_google_maps_loopholes_data():
     loopholes = get_google_maps_loopholes_data()
