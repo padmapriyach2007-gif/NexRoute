@@ -558,3 +558,4 @@ No external or local AI model provider is currently active. To enable full gener
 
 ---
 *Note: Your live GPS satellite navigation, turn-by-turn guidance, route calculations, and nearby facility search continue functioning at 100% full capacity.*"""
+

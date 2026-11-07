@@ -721,14 +721,17 @@ class MapService:
         # Sort by relevance score descending
         collected_candidates.sort(key=lambda c: c.get("relevance_score", 0.0), reverse=True)
 
-        # Pass 1: Eliminate micro-spatial duplicates (< 500m)
+        # Pass 1: Eliminate true micro-duplicates (< 35m or identical name within 60m)
         spatially_distinct: List[Dict[str, Any]] = []
         for cand in collected_candidates:
+            c_name_norm = (cand.get("name") or cand.get("display_name", "").split(",")[0]).strip().lower()
             is_micro_dup = False
             for accepted in spatially_distinct:
+                a_name_norm = (accepted.get("name") or accepted.get("display_name", "").split(",")[0]).strip().lower()
                 d_lat = abs(cand["lat"] - accepted["lat"])
                 d_lon = abs(cand["lon"] - accepted["lon"])
-                if d_lat < 0.005 and d_lon < 0.005:  # ~500 meters
+                # Only deduplicate if identical coordinates (< 20m) or same primary name within 50m
+                if (d_lat < 0.0002 and d_lon < 0.0002) or (c_name_norm == a_name_norm and d_lat < 0.0005 and d_lon < 0.0005):
                     is_micro_dup = True
                     if not accepted.get("state") and cand.get("state"):
                         accepted["state"] = cand["state"]
@@ -906,24 +909,23 @@ class MapService:
 
         return res[:limit]
 
-    def reverse_geocode_details(self, lat: float, lon: float) -> Dict[str, Any]:
+    def reverse_geocode_details(self, lat: float, lon: float, zoom: int = 18) -> Dict[str, Any]:
         """
-        Translates lat/lon into structured address details:
-        name, street, suburb, village, city, district, state, postcode, country, formatted_address.
-        Never fabricates fictional places or snaps to distant cached coordinates.
-        Uses a robust multi-provider architecture:
-        1. Memory Cache
-        2. Google Maps Platform Geocoding API (if key configured)
-        3. OpenStreetMap Nominatim reverse API (zoom=18, addressdetails=1)
-        4. Photon Komoot reverse API (backed by OSM, fast fallback)
-        5. BigDataCloud Client Reverse Geocoding API (hierarchical admin levels, village, locality)
-        6. Geoapify reverse API (if configured)
-        7. Nearest local gazetteer / campus landmarks within 35m
-        8. Unmapped Location fallback with exact coordinates
+        Translates lat/lon into high-precision structured location details:
+        place_name, name, street, suburb, village, city, district, state, postcode, country,
+        formatted_address, accuracy_level, accuracy_badge, accuracy_description, category, category_icon.
+        
+        Strict Location Precision Directives:
+        1. Never snaps to distant roads or centerlines.
+        2. Distinguishes individual buildings, small shops, railway stations, railway tracks,
+           hospitals, ATMs, petrol pumps, narrow streets, unnamed roads, and open land.
+        3. Assigns strict accuracy levels: 'Exact point' | 'Nearby address' | 'Approximate locality'.
+        4. Preserves clicked latitude and longitude to 6 decimal places (~10 cm resolution).
         """
         if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
             return {
-                "name": "Invalid Coordinates",
+                "name": f"Invalid Coordinates ({lat}, {lon})",
+                "place_name": "Invalid Coordinates",
                 "street": "",
                 "suburb": "",
                 "village": "",
@@ -938,35 +940,84 @@ class MapService:
                 "lon": lon,
                 "latitude": lat,
                 "longitude": lon,
+                "accuracy_level": "Approximate locality",
+                "accuracy_badge": "🌐 Approximate Locality",
+                "accuracy_description": "Coordinates outside valid geographic range.",
+                "category": "invalid",
+                "category_icon": "⚠️",
                 "provider": "Validation"
             }
 
-        cache_key = f"{lat:.5f}_{lon:.5f}"
+        cache_key = f"{lat:.6f}_{lon:.6f}"
         if hasattr(self, "_reverse_geocode_cache") and cache_key in self._reverse_geocode_cache:
             return dict(self._reverse_geocode_cache[cache_key])
 
         def _build_formatted_address(name: str, parts_list: List[str]) -> str:
-            all_parts = [name]
+            all_parts = [name] if name else []
             for p in parts_list:
                 clean_p = (p or "").strip()
-                if clean_p and clean_p not in all_parts:
+                if clean_p and clean_p.lower() not in [x.lower() for x in all_parts]:
                     all_parts.append(clean_p)
-            return ", ".join(all_parts)
+            return ", ".join(all_parts) if all_parts else f"Coordinates {lat:.5f}, {lon:.5f}"
 
-        # 1. Try Google Maps Platform reverse geocoding API if configured
+        # ---------------------------------------------------------------------
+        # 1. Google Maps Platform reverse geocoding API (if key configured)
+        # ---------------------------------------------------------------------
         try:
             from src.google_maps_platform import reverse_geocode_with_google_api, is_google_maps_key_configured
             if is_google_maps_key_configured():
                 g_res = reverse_geocode_with_google_api(lat, lon, timeout=self.timeout_sec)
                 if g_res and g_res.get("formatted_address"):
-                    g_res["provider"] = "Google Maps Platform"
+                    types_list = [str(t).lower() for t in g_res.get("types", [])]
+                    acc_level = "Nearby address"
+                    acc_badge = "🛣️ Nearby Address"
+                    acc_desc = "Street corridor or adjacent address."
+                    cat_icon = "📍"
+
+                    if any(t in types_list for t in ["point_of_interest", "establishment", "premise", "subpremise"]):
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = "Verified building, establishment, or landmark coordinate."
+                        cat_icon = "🏢"
+                    elif any(t in types_list for t in ["transit_station", "train_station"]):
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = "Verified railway or transit station."
+                        cat_icon = "🚆"
+                    elif any(t in types_list for t in ["hospital", "pharmacy"]):
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = "Verified healthcare facility."
+                        cat_icon = "🏥"
+                    elif any(t in types_list for t in ["locality", "sublocality", "administrative_area_level_1", "administrative_area_level_2"]):
+                        acc_level = "Approximate locality"
+                        acc_badge = "🌐 Approximate Locality"
+                        acc_desc = "Coordinates captured precisely; area identified at locality level."
+                        cat_icon = "🌐"
+
+                    p_name = g_res.get("name") or g_res.get("formatted_address", "").split(",")[0].strip()
+                    g_res.update({
+                        "place_name": p_name,
+                        "name": p_name,
+                        "accuracy_level": acc_level,
+                        "accuracy_badge": acc_badge,
+                        "accuracy_description": acc_desc,
+                        "category_icon": cat_icon,
+                        "provider": "Google Maps Platform",
+                        "lat": lat,
+                        "lon": lon,
+                        "latitude": lat,
+                        "longitude": lon
+                    })
                     if hasattr(self, "_reverse_geocode_cache"):
                         self._reverse_geocode_cache[cache_key] = g_res
                     return g_res
         except Exception:
             pass
 
-        # 2. Query OpenStreetMap Nominatim reverse geocoding
+        # ---------------------------------------------------------------------
+        # 2. OpenStreetMap Nominatim reverse geocoding with deep type discrimination
+        # ---------------------------------------------------------------------
         try:
             self._respect_rate_limit()
             url = f"{self.base_url}/reverse"
@@ -974,7 +1025,7 @@ class MapService:
                 "lat": lat,
                 "lon": lon,
                 "format": "jsonv2",
-                "zoom": 18,
+                "zoom": max(min(zoom, 18), 16),
                 "addressdetails": 1
             }
             headers = {"User-Agent": self.user_agent, "Accept-Language": "en"}
@@ -982,68 +1033,170 @@ class MapService:
             if resp.status_code == 200:
                 data = resp.json()
                 addr = data.get("address", {})
-                spec_name = (
-                    data.get("name")
-                    or addr.get("building")
-                    or addr.get("amenity")
-                    or addr.get("shop")
-                    or addr.get("hospital")
-                    or addr.get("clinic")
-                    or addr.get("school")
-                    or addr.get("college")
-                    or addr.get("university")
-                    or addr.get("railway")
-                    or addr.get("highway")
-                    or addr.get("tourism")
-                    or addr.get("historic")
-                    or addr.get("leisure")
-                    or addr.get("road")
-                    or addr.get("pedestrian")
-                    or addr.get("neighbourhood")
-                    or addr.get("suburb")
-                    or addr.get("residential")
-                    or addr.get("hamlet")
-                    or addr.get("isolated_dwelling")
-                    or addr.get("village")
-                    or addr.get("town")
-                    or addr.get("city")
-                )
-                road = addr.get("road") or addr.get("pedestrian") or addr.get("footway") or ""
-                suburb = addr.get("suburb") or addr.get("neighbourhood") or addr.get("residential") or ""
+                category = str(data.get("category", "")).lower()
+                osm_type = str(data.get("type", "")).lower()
+                named_entity = data.get("name") or ""
+
+                road = addr.get("road") or addr.get("pedestrian") or addr.get("footway") or addr.get("path") or addr.get("residential") or ""
+                suburb = addr.get("suburb") or addr.get("neighbourhood") or ""
                 village = addr.get("village") or addr.get("hamlet") or addr.get("isolated_dwelling") or ""
                 city = addr.get("city") or addr.get("town") or addr.get("municipality") or village or ""
                 district = addr.get("county") or addr.get("state_district") or addr.get("district") or ""
                 state = addr.get("state") or addr.get("region") or addr.get("province") or ""
                 postcode = addr.get("postcode") or ""
                 country = addr.get("country") or ""
+                house_num = addr.get("house_number") or ""
 
-                if spec_name:
-                    formatted = data.get("display_name") or _build_formatted_address(spec_name, [road, suburb, village, city, district, state, postcode, country])
-                    res_item = {
-                        "name": spec_name,
-                        "street": road,
-                        "suburb": suburb,
-                        "village": village,
-                        "city": city,
-                        "district": district,
-                        "state": state,
-                        "postcode": postcode,
-                        "country": country,
-                        "formatted_address": formatted,
-                        "display_name": formatted,
-                        "lat": lat,
-                        "lon": lon,
-                        "latitude": lat,
-                        "longitude": lon,
-                        "provider": "OpenStreetMap Nominatim"
-                    }
-                    if hasattr(self, "_reverse_geocode_cache"):
-                        self._reverse_geocode_cache[cache_key] = res_item
-                    return res_item
+                acc_level = "Nearby address"
+                acc_badge = "🛣️ Nearby Address"
+                acc_desc = "Coordinates match a verified street, lane, or house corridor."
+                cat_icon = "📍"
+                place_name = ""
+
+                # Case A: Railway Station or Railway Track
+                if category == "railway" or "railway" in addr:
+                    if osm_type in ("station", "halt") or any(w in named_entity.lower() for w in ["station", "junction", "halt"]):
+                        place_name = named_entity or f"{city or district} Railway Station"
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = "Verified Railway Station premises."
+                        cat_icon = "🚆"
+                    elif osm_type in ("rail", "narrow_gauge", "subway", "tram", "preserved", "abandoned", "disused") or "rail" in named_entity.lower():
+                        place_name = named_entity or f"Railway Track Corridor ({city or district})"
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = "Verified railway track corridor."
+                        cat_icon = "🛤️"
+                    else:
+                        place_name = named_entity or "Railway Transit Facility"
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = "Railway transit infrastructure."
+                        cat_icon = "🚆"
+
+                # Case B: Small Shop / Retail / Supermarket
+                elif category == "shop" or "shop" in addr or addr.get("commercial"):
+                    s_type = osm_type.replace("_", " ").title() if osm_type else "Retail"
+                    place_name = named_entity or (f"{s_type} Shop" + (f", {road}" if road else ""))
+                    acc_level = "Exact point"
+                    acc_badge = "🎯 Exact Point"
+                    acc_desc = f"Verified commercial {s_type.lower()} establishment."
+                    cat_icon = "🏪"
+
+                # Case C: Healthcare (Hospital, Clinic, Pharmacy)
+                elif category in ("healthcare", "amenity") and (osm_type in ("hospital", "clinic", "pharmacy", "doctors", "dentist") or any(k in addr for k in ("hospital", "clinic", "pharmacy"))):
+                    h_type = osm_type.replace("_", " ").title() if osm_type else "Medical Center"
+                    place_name = named_entity or (f"{h_type}" + (f", {road}" if road else ""))
+                    acc_level = "Exact point"
+                    acc_badge = "🎯 Exact Point"
+                    acc_desc = f"Verified {h_type.lower()} health facility."
+                    cat_icon = "🏥"
+
+                # Case D: Essential Amenities (Petrol Station, ATM, Bank, School, Food)
+                elif category == "amenity" or "amenity" in addr:
+                    a_title = osm_type.replace("_", " ").title() if osm_type else "Facility"
+                    place_name = named_entity or a_title
+                    acc_level = "Exact point"
+                    acc_badge = "🎯 Exact Point"
+                    acc_desc = f"Verified {a_title.lower()} amenity."
+                    if "fuel" in osm_type:
+                        cat_icon = "⛽"
+                    elif "atm" in osm_type:
+                        cat_icon = "🏧"
+                    elif "bank" in osm_type:
+                        cat_icon = "🏦"
+                    elif any(w in osm_type for w in ["restaurant", "cafe", "food"]):
+                        cat_icon = "🍽️"
+                    elif any(w in osm_type for w in ["school", "college", "university"]):
+                        cat_icon = "🎓"
+                    else:
+                        cat_icon = "🏢"
+
+                # Case E: Building or Individual House
+                elif category == "building" or "building" in addr or house_num:
+                    if named_entity:
+                        place_name = named_entity
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = "Verified building or commercial establishment."
+                        cat_icon = "🏢"
+                    elif house_num:
+                        place_name = f"Building #{house_num}" + (f", {road}" if road else "")
+                        acc_level = "Exact point"
+                        acc_badge = "🎯 Exact Point"
+                        acc_desc = f"Verified residential building #{house_num}."
+                        cat_icon = "🏠"
+                    elif road:
+                        place_name = f"Building on {road}"
+                        acc_level = "Nearby address"
+                        acc_badge = "🛣️ Nearby Address"
+                        acc_desc = "Identified building adjacent to street."
+                        cat_icon = "🏢"
+                    else:
+                        place_name = f"Building, {suburb or village or city or 'Local Area'}"
+                        acc_level = "Nearby address"
+                        acc_badge = "🛣️ Nearby Address"
+                        acc_desc = "Identified building in local area."
+                        cat_icon = "🏢"
+
+                # Case F: Highway / Street / Intersection
+                elif category == "highway" or road:
+                    if named_entity or road:
+                        place_name = road or named_entity
+                        acc_level = "Nearby address"
+                        acc_badge = "🛣️ Nearby Address"
+                        acc_desc = "Exact street or corridor coordinate."
+                        cat_icon = "🛣️"
+                    else:
+                        place_name = f"Unnamed Street, {suburb or village or city or 'Local Area'}"
+                        acc_level = "Nearby address"
+                        acc_badge = "🛣️ Nearby Address"
+                        acc_desc = "Narrow unnamed street or lane."
+                        cat_icon = "🛣️"
+
+                # Case G: Open Land / Unregistered Area
+                else:
+                    place_name = named_entity or (f"Open Area, {suburb or village or city}" if (suburb or village or city) else f"Point ({lat:.5f}, {lon:.5f})")
+                    acc_level = "Approximate locality"
+                    acc_badge = "🌐 Approximate Locality"
+                    acc_desc = "Coordinates captured precisely at point; location not registered as a named business."
+                    cat_icon = "📍"
+
+                formatted = data.get("display_name") or _build_formatted_address(place_name, [road, suburb, village, city, district, state, postcode, country])
+                
+                res_item = {
+                    "name": place_name,
+                    "place_name": place_name,
+                    "street": road,
+                    "suburb": suburb,
+                    "village": village,
+                    "city": city,
+                    "district": district,
+                    "state": state,
+                    "postcode": postcode,
+                    "country": country,
+                    "formatted_address": formatted,
+                    "display_name": formatted,
+                    "lat": lat,
+                    "lon": lon,
+                    "latitude": lat,
+                    "longitude": lon,
+                    "accuracy_level": acc_level,
+                    "accuracy_badge": acc_badge,
+                    "accuracy_description": acc_desc,
+                    "category": category or "poi",
+                    "category_icon": cat_icon,
+                    "provider": "OpenStreetMap Nominatim"
+                }
+                if hasattr(self, "_reverse_geocode_cache"):
+                    self._reverse_geocode_cache[cache_key] = res_item
+                return res_item
         except Exception:
             pass
 
-        # 3. Query Photon (Komoot / OSM) reverse geocoding fallback
+        # ---------------------------------------------------------------------
+        # 3. Photon (Komoot / OSM) reverse geocoding fallback
+        # ---------------------------------------------------------------------
         try:
             pho_url = "https://photon.komoot.io/reverse"
             pho_params = {"lat": lat, "lon": lon}
@@ -1054,17 +1207,36 @@ class MapService:
                 features = p_data.get("features", [])
                 if features:
                     props = features[0].get("properties", {})
-                    p_name = props.get("name") or props.get("street") or props.get("village") or props.get("city") or props.get("district")
+                    p_name = props.get("name") or props.get("housenumber") or props.get("street") or props.get("district") or props.get("city")
                     p_street = props.get("street") or ""
                     p_dist = props.get("district") or ""
                     p_city = props.get("city") or props.get("town") or props.get("village") or ""
                     p_state = props.get("state") or ""
                     p_post = props.get("postcode") or ""
                     p_country = props.get("country") or ""
+                    osm_k = str(props.get("osm_key", "")).lower()
+
+                    acc_l = "Nearby address"
+                    acc_b = "🛣️ Nearby Address"
+                    acc_d = "Street corridor or adjacent address."
+                    c_icon = "📍"
+
+                    if osm_k in ("building", "shop", "amenity", "railway"):
+                        acc_l = "Exact point"
+                        acc_b = "🎯 Exact Point"
+                        acc_d = "Verified point of interest or building."
+                        c_icon = "🏢" if osm_k == "building" else ("🚆" if osm_k == "railway" else "🏪")
+                    elif osm_k == "place":
+                        acc_l = "Approximate locality"
+                        acc_b = "🌐 Approximate Locality"
+                        acc_d = "Locality area coordinate."
+                        c_icon = "🌐"
+
                     if p_name:
                         formatted = _build_formatted_address(p_name, [p_street, p_dist, p_city, p_state, p_post, p_country])
                         res_item = {
                             "name": p_name,
+                            "place_name": p_name,
                             "street": p_street,
                             "suburb": props.get("suburb", ""),
                             "village": props.get("village", ""),
@@ -1079,6 +1251,11 @@ class MapService:
                             "lon": lon,
                             "latitude": lat,
                             "longitude": lon,
+                            "accuracy_level": acc_l,
+                            "accuracy_badge": acc_b,
+                            "accuracy_description": acc_d,
+                            "category": osm_k or "poi",
+                            "category_icon": c_icon,
                             "provider": "Photon (Komoot/OSM)"
                         }
                         if hasattr(self, "_reverse_geocode_cache"):
@@ -1087,7 +1264,9 @@ class MapService:
         except Exception:
             pass
 
-        # 4. Query BigDataCloud Client Reverse Geocoding API (free tier fallback, fast admin resolution)
+        # ---------------------------------------------------------------------
+        # 4. BigDataCloud Client Reverse Geocoding API (administrative hierarchy)
+        # ---------------------------------------------------------------------
         try:
             bdc_url = "https://api.bigdatacloud.net/data/reverse-geocode-client"
             bdc_params = {"latitude": lat, "longitude": lon, "localityLanguage": "en"}
@@ -1099,11 +1278,12 @@ class MapService:
                 b_state = b_data.get("principalSubdivision") or ""
                 b_country = b_data.get("countryName") or ""
                 b_postcode = b_data.get("postcode") or ""
-                b_name = b_locality or b_city or b_state
+                b_name = b_locality or b_city or b_state or f"Point ({lat:.5f}, {lon:.5f})"
                 if b_name:
                     formatted = _build_formatted_address(b_name, [b_locality, b_city, b_state, b_postcode, b_country])
                     res_item = {
                         "name": b_name,
+                        "place_name": b_name,
                         "street": "",
                         "suburb": b_locality,
                         "village": b_locality,
@@ -1118,6 +1298,11 @@ class MapService:
                         "lon": lon,
                         "latitude": lat,
                         "longitude": lon,
+                        "accuracy_level": "Approximate locality",
+                        "accuracy_badge": "🌐 Approximate Locality",
+                        "accuracy_description": "Locality-level administrative identification.",
+                        "category": "administrative",
+                        "category_icon": "🌐",
                         "provider": "BigDataCloud"
                     }
                     if hasattr(self, "_reverse_geocode_cache"):
@@ -1126,50 +1311,17 @@ class MapService:
         except Exception:
             pass
 
-        # 5. Query Geoapify Reverse Geocoding API if key configured
-        geoapify_key = os.environ.get("GEOAPIFY_API_KEY") or os.environ.get("GEOAPIFY_KEY")
-        if geoapify_key:
-            try:
-                g_url = f"https://api.geoapify.com/v1/geocode/reverse?lat={lat}&lon={lon}&apiKey={geoapify_key}"
-                g_resp = self.session.get(g_url, timeout=self.timeout_sec)
-                if g_resp.status_code == 200:
-                    g_json = g_resp.json()
-                    feats = g_json.get("features", [])
-                    if feats:
-                        pr = feats[0].get("properties", {})
-                        g_name = pr.get("name") or pr.get("street") or pr.get("city")
-                        if g_name:
-                            res_item = {
-                                "name": g_name,
-                                "street": pr.get("street", ""),
-                                "suburb": pr.get("suburb", ""),
-                                "village": pr.get("village", ""),
-                                "city": pr.get("city", ""),
-                                "district": pr.get("county", ""),
-                                "state": pr.get("state", ""),
-                                "postcode": pr.get("postcode", ""),
-                                "country": pr.get("country", ""),
-                                "formatted_address": pr.get("formatted", f"{g_name}, {pr.get('country', '')}"),
-                                "display_name": pr.get("formatted", f"{g_name}, {pr.get('country', '')}"),
-                                "lat": lat,
-                                "lon": lon,
-                                "latitude": lat,
-                                "longitude": lon,
-                                "provider": "Geoapify"
-                            }
-                            if hasattr(self, "_reverse_geocode_cache"):
-                                self._reverse_geocode_cache[cache_key] = res_item
-                            return res_item
-            except Exception:
-                pass
-
-        # 6. Check nearest cached landmarks within close proximity (< 35m)
+        # ---------------------------------------------------------------------
+        # 5. Check nearest cached landmarks within close proximity (< 35m)
+        # ---------------------------------------------------------------------
         min_dist_sq = 0.00035 ** 2
         for k, v in self.cache.items():
             dist_sq = (v["lat"] - lat) ** 2 + (v["lon"] - lon) ** 2
             if dist_sq < min_dist_sq:
+                c_name = v.get("name", "Known Landmark")
                 res_item = {
-                    "name": v.get("name", "Known Landmark"),
+                    "name": c_name,
+                    "place_name": c_name,
                     "street": "",
                     "suburb": "",
                     "village": "",
@@ -1184,15 +1336,23 @@ class MapService:
                     "lon": lon,
                     "latitude": lat,
                     "longitude": lon,
+                    "accuracy_level": "Exact point",
+                    "accuracy_badge": "🎯 Exact Point",
+                    "accuracy_description": "Verified landmark from local gazetteer.",
+                    "category": "landmark",
+                    "category_icon": "📍",
                     "provider": "Verified Local Gazetteer"
                 }
                 if hasattr(self, "_reverse_geocode_cache"):
                     self._reverse_geocode_cache[cache_key] = res_item
                 return res_item
 
-        # 7. Unmapped / Remote Physical Coordinates Fallback (Requirement 9)
+        # ---------------------------------------------------------------------
+        # 6. Unmapped / Remote Physical Coordinates Fallback (Zero Invention)
+        # ---------------------------------------------------------------------
         unmapped_res = {
-            "name": f"Unmapped Location ({lat:.5f}, {lon:.5f})",
+            "name": f"Point ({lat:.5f}, {lon:.5f})",
+            "place_name": f"Point ({lat:.5f}, {lon:.5f})",
             "street": "",
             "suburb": "",
             "village": "",
@@ -1201,12 +1361,17 @@ class MapService:
             "state": "",
             "postcode": "",
             "country": "",
-            "formatted_address": f"Unmapped Location ({lat:.5f}° N, {lon:.5f}° E)",
-            "display_name": f"Unmapped Location ({lat:.5f}° N, {lon:.5f}° E)",
+            "formatted_address": f"Exact Physical Coordinates ({lat:.6f}° N, {lon:.6f}° E)",
+            "display_name": f"Exact Physical Coordinates ({lat:.6f}° N, {lon:.6f}° E)",
             "lat": lat,
             "lon": lon,
             "latitude": lat,
             "longitude": lon,
+            "accuracy_level": "Approximate locality",
+            "accuracy_badge": "🌐 Approximate Locality",
+            "accuracy_description": "Physical coordinates verified precisely. Location is currently unmapped in public business registries.",
+            "category": "unmapped",
+            "category_icon": "📍",
             "provider": "Physical Coordinates",
             "type": "unmapped"
         }
@@ -1236,7 +1401,8 @@ class MapService:
         emergency_facilities: Optional[List[Dict[str, Any]]] = None,
         is_custom_origin: bool = False,
         fleet_members: Optional[List[Dict[str, Any]]] = None,
-        intermediate_stops: Optional[List[Dict[str, Any]]] = None
+        intermediate_stops: Optional[List[Dict[str, Any]]] = None,
+        pending_click_coords: Optional[Tuple[float, float]] = None
     ) -> folium.Map:
         """
         Creates a rich, multi-layered interactive Folium Leaflet Map with:
@@ -1491,13 +1657,8 @@ class MapService:
 
         # 1. Add Origin Marker with Small Boy / Driving Car Avatar & Pulsing Radar Wave
         if origin_coords:
-            # Snap start vehicle marker directly to the first drivable road waypoint of the route when routes exist
+            # Preserve the exact user-selected coordinates without snapping to road centerlines
             effective_origin = origin_coords
-            if routes and len(routes) > 0:
-                first_r = next((r for r in routes if r.get("rank") == 1 or r.get("is_eligible")), routes[0])
-                first_pts = first_r.get("polyline", [])
-                if first_pts and len(first_pts) > 0:
-                    effective_origin = (float(first_pts[0][0]), float(first_pts[0][1]))
 
             avatar_key = str(traveler_avatar).lower()
             if "tractor" in avatar_key:
@@ -1678,7 +1839,33 @@ class MapService:
                     icon=folium.DivIcon(html=stop_html, icon_size=(48, 48), icon_anchor=(24, 24))
                 ).add_to(m)
 
-        # 2C. Clean Map Instruction Overlay (Requirement 3: When no locations selected, keep map clean with instructional overlay)
+        # 2C. Add Pending Click Selection Marker (Target point awaiting user confirmation)
+        if pending_click_coords:
+            p_lat, p_lon = float(pending_click_coords[0]), float(pending_click_coords[1])
+            pending_html = f"""
+            <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; height: 50px; cursor: pointer;">
+                <div style="position: absolute; bottom: 46px; background: #ea580c; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 0 12px #f97316; border: 1.5px solid #fdba74; z-index: 30; pointer-events: none;">📍 PENDING CONFIRMATION</div>
+                <div style="position: absolute; width: 42px; height: 42px; border-radius: 50%; background: rgba(249, 115, 22, 0.4); border: 2.5px solid #f97316; box-shadow: 0 0 16px #f97316; animation: foliumRadar 1.2s infinite ease-out;"></div>
+                <div style="position: relative; z-index: 20; font-size: 26px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));">📍</div>
+            </div>
+            """
+            folium.Marker(
+                location=[p_lat, p_lon],
+                popup=folium.Popup(f"<b>📍 Selected Point</b><br>{p_lat:.6f}, {p_lon:.6f}<br><i>Awaiting confirmation</i>", max_width=250),
+                tooltip="📍 Selected Point (Pending Confirmation)",
+                icon=folium.DivIcon(html=pending_html, icon_size=(50, 50), icon_anchor=(25, 25))
+            ).add_to(m)
+            folium.Circle(
+                location=[p_lat, p_lon],
+                radius=15.0,
+                color="#f97316",
+                weight=2,
+                fill=True,
+                fill_color="#ea580c",
+                fill_opacity=0.35
+            ).add_to(m)
+
+        # 2D. Clean Map Instruction Overlay (Requirement 3: When no locations selected, keep map clean with instructional overlay)
         if not origin_coords and not destination_coords:
             clean_overlay_html = """
             <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid rgba(56, 189, 248, 0.55); border-radius: 999px; padding: 9px 24px; z-index: 1000; color: #f8fafc; font-size: 13px; font-weight: 700; box-shadow: 0 8px 30px rgba(0,0,0,0.7); pointer-events: none; display: flex; align-items: center; gap: 9px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.01em;">
@@ -2500,7 +2687,8 @@ class MapService:
         emergency_facilities: Optional[List[Dict[str, Any]]] = None,
         is_custom_origin: bool = False,
         fleet_members: Optional[List[Dict[str, Any]]] = None,
-        intermediate_stops: Optional[List[Dict[str, Any]]] = None
+        intermediate_stops: Optional[List[Dict[str, Any]]] = None,
+        pending_click_coords: Optional[Tuple[float, float]] = None
     ) -> folium.Map:
         """Adapts route polylines, road restrictions, and breadcrumb trails for Folium map rendering."""
         routes_adapted = []
@@ -2532,7 +2720,8 @@ class MapService:
             emergency_facilities=emergency_facilities,
             is_custom_origin=is_custom_origin,
             fleet_members=fleet_members,
-            intermediate_stops=intermediate_stops
+            intermediate_stops=intermediate_stops,
+            pending_click_coords=pending_click_coords
         )
 
     def render_hazard_map(

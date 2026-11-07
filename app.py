@@ -22300,7 +22300,8 @@ body {{
 
 
                     auto_fit_bounds=st.session_state.get("auto_fit_bounds", True),
-                    intermediate_stops=st.session_state.get("intermediate_stops", [])
+                    intermediate_stops=st.session_state.get("intermediate_stops", []),
+                    pending_click_coords=st.session_state.get("pending_click_coords")
                 )
 
 
@@ -22374,7 +22375,8 @@ body {{
 
 
                     auto_fit_bounds=st.session_state.get("auto_fit_bounds", True),
-                    intermediate_stops=st.session_state.get("intermediate_stops", [])
+                    intermediate_stops=st.session_state.get("intermediate_stops", []),
+                    pending_click_coords=st.session_state.get("pending_click_coords")
                 )
 
 
@@ -22530,103 +22532,109 @@ body {{
 
 
                 with col_click_hint:
-
-
-
                     st.caption(f"💡 *Click anywhere on the map to set your **{'Starting Point' if 'Starting Point' in click_mode_val else 'Destination'}**.*")
 
+                # Smart Location Confirmation Card (Requirement 4: Smart Location Confirmation Card)
+                pending_conf = st.session_state.get("pending_location_confirmation")
+                if pending_conf:
+                    p_details = pending_conf.get("details", {})
+                    p_name = p_details.get("place_name") or p_details.get("name") or "Selected Location"
+                    p_addr = p_details.get("formatted_address") or "Geographic point coordinates"
+                    p_lat = float(pending_conf.get("lat", 0.0))
+                    p_lon = float(pending_conf.get("lon", 0.0))
+                    p_mode = pending_conf.get("mode", "Set Destination")
+                    p_target_label = "🟢 Starting Point" if p_mode == "Set Start Point" else "🏁 Destination"
+                    acc_badge = p_details.get("accuracy_badge", "🎯 Exact Point")
+                    acc_desc = p_details.get("accuracy_description", "Coordinates verified precisely.")
+                    cat_icon = p_details.get("category_icon", "📍")
 
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95)); border: 1.5px solid #f97316; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(249, 115, 22, 0.25);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #fdba74; text-transform: uppercase; letter-spacing: 0.05em;">
+                                📍 Confirm Location for {p_target_label}
+                            </span>
+                            <span style="font-size: 0.75rem; font-weight: 800; background: rgba(249, 115, 22, 0.2); border: 1px solid #f97316; color: #ffedd5; padding: 3px 8px; border-radius: 999px;">
+                                {acc_badge}
+                            </span>
+                        </div>
+                        <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin-bottom: 4px;">
+                            {cat_icon} {p_name}
+                        </div>
+                        <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 6px;">
+                            {p_addr}
+                        </div>
+                        <div style="font-size: 0.78rem; font-family: monospace; color: #38bdf8; margin-bottom: 6px;">
+                            📌 Exact Coordinates: {p_lat:.6f}° N, {p_lon:.6f}° E
+                        </div>
+                        <div style="font-size: 0.74rem; color: #94a3b8; font-style: italic;">
+                            {acc_desc}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-
-
-
+                    btn_c1, btn_c2 = st.columns(2)
+                    with btn_c1:
+                        if st.button("✅ CONFIRM THIS LOCATION", key="btn_confirm_pending_loc", use_container_width=True):
+                            if p_mode == "Set Start Point":
+                                st.session_state.user_live_coords = (p_lat, p_lon)
+                                pin_orig = f"{p_name} ({p_lat:.4f}, {p_lon:.4f})"
+                                st.session_state.user_live_label = pin_orig
+                                st.session_state.txt_orig = pin_orig
+                                st.session_state.pending_orig = pin_orig
+                                st.session_state.last_synced_orig = pin_orig
+                                st.session_state.is_custom_start_place = True
+                                st.session_state.orig_candidates = []
+                                st.session_state._prev_route_sig = None
+                                st.session_state.cached_candidate_routes = None
+                                if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
+                                    st.session_state.real_location_service.set_manual_location(p_lat, p_lon, pin_orig)
+                                st.toast(f"🟢 Starting Point confirmed: {p_name}", icon="✅")
+                            else:
+                                st.session_state.selected_dest_coords = (p_lat, p_lon)
+                                pin_dest = f"{p_name} ({p_lat:.4f}, {p_lon:.4f})"
+                                st.session_state.selected_dest_label = pin_dest
+                                st.session_state.txt_dest = pin_dest
+                                st.session_state.pending_dest = pin_dest
+                                st.session_state.last_synced_dest = pin_dest
+                                st.session_state._prev_route_sig = None
+                                st.session_state.cached_candidate_routes = None
+                                st.toast(f"🏁 Destination confirmed: {p_name}", icon="✅")
+                            st.session_state.pending_location_confirmation = None
+                            st.session_state.pending_click_coords = None
+                            st.rerun()
+                    with btn_c2:
+                        if st.button("🔄 SELECT AGAIN", key="btn_cancel_pending_loc", use_container_width=True):
+                            st.session_state.pending_location_confirmation = None
+                            st.session_state.pending_click_coords = None
+                            st.toast("Selection cleared. Click anywhere on the map to select a point.", icon="🔄")
+                            st.rerun()
 
                 map_out = st_folium(folium_map, zoom=st.session_state.map_zoom, width=None, height=720, key=map_key, use_container_width=True, returned_objects=["last_clicked"])
 
-
-
-
-
-
-
                 if map_out and map_out.get("zoom") is not None:
-
-
-
                     live_zoom = map_out["zoom"]
-
-
-
                     if isinstance(live_zoom, (int, float)) and int(live_zoom) != st.session_state.map_zoom:
-
-
-
                         st.session_state.map_zoom = int(live_zoom)
 
-
-
-
-
-
-
                 if map_out and map_out.get("last_clicked"):
-
-
-
-                    click_lat = round(map_out["last_clicked"]["lat"], 5)
-
-
-
-                    click_lon = round(map_out["last_clicked"]["lng"], 5)
-
-
-
-                    if st.session_state.get("map_click_mode") == "Set Start Point":
-
-
-
-                        if (click_lat, click_lon) != st.session_state.user_live_coords:
-                            st.session_state.user_live_coords = (click_lat, click_lon)
-                            try:
-                                rev_name = st.session_state.map_service.reverse_geocode(click_lat, click_lon)
-                                if rev_name and not rev_name.startswith("Geographic Point"):
-                                    pin_orig = rev_name.split(",")[0].strip() + f" ({click_lat:.4f}, {click_lon:.4f})"
-                                else:
-                                    pin_orig = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
-                            except Exception:
-                                pin_orig = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
-
-                            st.session_state.user_live_label = pin_orig
-                            st.session_state.txt_orig = pin_orig
-                            st.session_state.pending_orig = pin_orig
-                            st.session_state.last_synced_orig = pin_orig
-                            st.session_state.is_custom_start_place = True
-                            st.session_state.orig_candidates = []
-                            st.session_state._prev_route_sig = None
-                            st.session_state.cached_candidate_routes = None
-                            if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
-                                st.session_state.real_location_service.set_manual_location(click_lat, click_lon, pin_orig)
-                            st.toast(f"🟢 Starting Point pinned: {pin_orig}", icon="📍")
-                            st.rerun()
-                    else:
-                        if (click_lat, click_lon) != st.session_state.selected_dest_coords:
-                            st.session_state.selected_dest_coords = (click_lat, click_lon)
-                            try:
-                                rev_name = st.session_state.map_service.reverse_geocode(click_lat, click_lon)
-                                if rev_name and not rev_name.startswith("Geographic Point"):
-                                    pin_dest = rev_name.split(",")[0].strip() + f" ({click_lat:.4f}, {click_lon:.4f})"
-                                else:
-                                    pin_dest = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
-                            except Exception:
-                                pin_dest = f"Map Pin ({click_lat:.5f}, {click_lon:.5f})"
-
-                            st.session_state.selected_dest_label = pin_dest
-                            st.session_state.txt_dest = pin_dest
-                            st.session_state.pending_dest = pin_dest
-                            st.session_state.last_synced_dest = pin_dest
-                            st.session_state._prev_route_sig = None
-                            st.session_state.cached_candidate_routes = None
-                            st.toast(f"🏁 Destination pinned: {pin_dest}", icon="📍")
+                    raw_click = map_out["last_clicked"]
+                    raw_lat = float(raw_click.get("lat", 0.0))
+                    raw_lng = float(raw_click.get("lng", 0.0))
+                    if raw_lat and raw_lng:
+                        click_lat = round(raw_lat, 6)
+                        click_lon = round(raw_lng, 6)
+                        last_proc = st.session_state.get("_last_processed_map_click")
+                        if last_proc != (click_lat, click_lon):
+                            st.session_state._last_processed_map_click = (click_lat, click_lon)
+                            details = st.session_state.real_map_service.reverse_geocode_details(click_lat, click_lon, zoom=st.session_state.map_zoom)
+                            st.session_state.pending_location_confirmation = {
+                                "lat": click_lat,
+                                "lon": click_lon,
+                                "mode": st.session_state.get("map_click_mode", "Set Destination"),
+                                "details": details
+                            }
+                            st.session_state.pending_click_coords = (click_lat, click_lon)
                             st.rerun()
 
 
@@ -29485,8 +29493,17 @@ if st.session_state.get("current_view") == "places":
     </span>
     </div>""", unsafe_allow_html=True)
 
+        # Ensure default radius in session state
+        if "places_smart_radius_choice" not in st.session_state:
+            st.session_state.places_smart_radius_choice = "10 km (Nearby Villages)"
+
+        # Check if an expand button was clicked
+        if st.session_state.get("_pending_radius_choice"):
+            st.session_state.places_smart_radius_choice = st.session_state.pop("_pending_radius_choice")
+            st.session_state["places_radius_picker"] = st.session_state.places_smart_radius_choice
+
         def _set_places_smart_radius(val: str):
-            st.session_state["places_smart_radius_select"] = val
+            st.session_state["_pending_radius_choice"] = val
 
         # Smart Search Radius & Search Input
         col_sb1, col_sb2 = st.columns([1.6, 2.4])
@@ -29503,15 +29520,21 @@ if st.session_state.get("current_view") == "places":
                 "25 km (Nearby Towns)": 25.0,
                 "50 km (Major Attractions)": 50.0
             }
-            if "places_smart_radius_select" not in st.session_state:
-                st.session_state.places_smart_radius_select = "10 km (Nearby Villages)"
+            cur_choice = st.session_state.places_smart_radius_choice
+            if cur_choice not in radius_options:
+                cur_choice = "10 km (Nearby Villages)"
+
+            def _on_radius_picker_changed():
+                st.session_state.places_smart_radius_choice = st.session_state.places_radius_picker
+
             sel_rad_label = st.selectbox(
                 "📏 Smart Search Radius",
                 radius_options,
-                index=radius_options.index(st.session_state.places_smart_radius_select) if st.session_state.places_smart_radius_select in radius_options else 1,
-                key="places_smart_radius_select"
+                index=radius_options.index(cur_choice),
+                key="places_radius_picker",
+                on_change=_on_radius_picker_changed
             )
-            sel_radius_km = radius_val_map[sel_rad_label]
+            sel_radius_km = radius_val_map.get(sel_rad_label, 10.0)
 
         with col_sb2:
             places_search_query = st.text_input(
