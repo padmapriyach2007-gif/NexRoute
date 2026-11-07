@@ -19146,17 +19146,12 @@ body {{
 
 
                 "route_id": r_item.route.route_id,
-
-
-
                 "status": r_item.status.value,
-
-
-
+                "distance_km": float(getattr(r_item, "effective_distance_km", None) or getattr(r_item.route, "distance_km", 0.0)),
+                "duration_minutes": float(getattr(r_item, "effective_duration_minutes", None) or getattr(r_item.route, "duration_minutes", 0.0)),
+                "road_condition": getattr(r_item.route, "road_condition", "Good routable road network"),
+                "summary": getattr(r_item.route, "summary", ""),
                 "steps": getattr(r_item.route, "steps", [])
-
-
-
             })
 
 

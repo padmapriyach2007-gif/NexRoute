@@ -1681,61 +1681,34 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
         else:
             coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
 
-        url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=true&steps=true"
-
-
+        url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=3&steps=true"
 
         routes = self._fetch_osrm(
-
             url, mode, require_accessible,
-
             origin_coords=(origin_lat, origin_lon),
-
             dest_coords=(dest_lat, dest_lon),
-
             speed_mode=speed_mode,
-
             custom_speed_kmh=custom_speed_kmh
-
         )
 
         if not routes:
-
             # Fallback to secondary public OSRM mirror if primary timed out or returned no route
-
             alt_mirrors = [
-
                 "https://routing.openstreetmap.de/routed-car",
-
                 "https://routing.openstreetmap.de/routed-foot" if profile == "foot" else "https://routing.openstreetmap.de/routed-bike" if profile == "bike" else "https://routing.openstreetmap.de/routed-car"
-
             ]
-
             for mirror in alt_mirrors:
-
                 if mirror.rstrip("/") != self.base_url.rstrip("/"):
-
-                    alt_url = f"{mirror}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=true&steps=true"
-
+                    alt_url = f"{mirror}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=3&steps=true"
                     routes = self._fetch_osrm(
-
                         alt_url, mode, require_accessible,
-
                         origin_coords=(origin_lat, origin_lon),
-
                         dest_coords=(dest_lat, dest_lon),
-
                         speed_mode=speed_mode,
-
                         custom_speed_kmh=custom_speed_kmh
-
                     )
-
                     if routes:
-
                         break
-
-
 
         if routes:
             distinct_routes = filter_distinct_routes(
@@ -1745,8 +1718,8 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                 dest_coords=(dest_lat, dest_lon)
             )
 
-            # If only 1 route returned by standard OSRM endpoint for driving/cycling, query alternative via-corridor
-            if len(distinct_routes) < 2 and mode in [TravelMode.DRIVING, TravelMode.BICYCLING] and not waypoints:
+            # Discover multiple alternative routes (up to 3-4 distinct corridors) across the full road network
+            if len(distinct_routes) < 3 and mode in [TravelMode.DRIVING, TravelMode.BICYCLING] and not waypoints:
                 try:
                     import math
                     mid_lat = (origin_lat + dest_lat) / 2.0
@@ -1755,14 +1728,15 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                     cos_m = math.cos(math.radians(mid_lat))
                     d_lon = (dest_lon - origin_lon) * cos_m
 
-                    for offset_frac in [0.12, -0.12, 0.20, -0.20]:
+                    # Probe multiple road corridors on both lateral flanks
+                    for offset_frac in [0.15, -0.15, 0.25, -0.25, 0.35, -0.35]:
                         perp_lat = -d_lon * offset_frac
                         perp_lon = (d_lat * offset_frac) / max(0.0001, cos_m)
                         via_lat = mid_lat + perp_lat
                         via_lon = mid_lon + perp_lon
 
                         via_coords = f"{origin_lon:.6f},{origin_lat:.6f};{via_lon:.6f},{via_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
-                        via_url = f"{self.base_url}/route/v1/{profile}/{via_coords}?overview=full&geometries=geojson&steps=true"
+                        via_url = f"{self.base_url}/route/v1/{profile}/{via_coords}?overview=full&geometries=geojson&alternatives=3&steps=true"
                         via_routes = self._fetch_osrm(
                             via_url, mode, require_accessible,
                             origin_coords=(origin_lat, origin_lon),
@@ -1772,7 +1746,7 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                         )
                         if via_routes:
                             for vr in via_routes:
-                                if vr.distance_meters <= routes[0].distance_meters * 1.65:
+                                if vr.distance_meters <= routes[0].distance_meters * 1.75:
                                     routes.append(vr)
                             distinct_routes = filter_distinct_routes(
                                 routes,
@@ -1780,14 +1754,23 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                                 origin_coords=(origin_lat, origin_lon),
                                 dest_coords=(dest_lat, dest_lon)
                             )
-                            if len(distinct_routes) >= 2:
+                            if len(distinct_routes) >= 3:
                                 break
                 except Exception:
                     pass
 
-            # Re-index unique route IDs sequentially to ensure clean distinct IDs
+            # Assign sequential unique route IDs and descriptive road network designations
             for r_idx, r in enumerate(distinct_routes):
                 r.route_id = f"OSRM_{r_idx + 1}"
+                if not r.name or r.name.startswith("Route"):
+                    if r_idx == 0:
+                        r.name = "Recommended Highway Route (Fastest)"
+                    elif r_idx == 1:
+                        r.name = "Alternative 1: Via Arterial Network"
+                    elif r_idx == 2:
+                        r.name = "Alternative 2: Regional Bypass Route"
+                    elif r_idx == 3:
+                        r.name = "Alternative 3: Connecting Corridor"
 
             if distinct_routes:
                 self._CACHE[cache_key] = distinct_routes

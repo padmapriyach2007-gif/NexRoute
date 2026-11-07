@@ -12,11 +12,23 @@ import os
 import requests
 import json
 import time
+import math
 from typing import Dict, List, Tuple, Optional, Any
 import folium
 from folium import plugins
 from concurrent.futures import ThreadPoolExecutor
 import re
+
+
+def haversine_distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculates geodesic distance in meters between two coordinates."""
+    R = 6371000.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    a = math.sin(delta_phi / 2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0) ** 2
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return R * c
 
 # Pre-cached regional landmarks, micro-areas, wards, colonies, and campus blocks
 OFFLINE_GEOCODE_CACHE = {
@@ -1460,7 +1472,27 @@ class MapService:
             show=is_terrain
         ).add_to(m)
 
-        # 4. Live Real-Time Traffic Congestion Layer (Official Google traffic stream: Green/Orange/Red)
+        # 4. OpenStreetMap Standard Global Cartography (Worldwide Road Network Hierarchy)
+        folium.TileLayer(
+            tiles="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            attr="OpenStreetMap",
+            name="🌍 OpenStreetMap Roads",
+            overlay=False,
+            control=True,
+            show=False
+        ).add_to(m)
+
+        # 5. Full-Map Road Network Overlay (Highways, State Highways, Connecting Arterials & Village Streets)
+        folium.TileLayer(
+            tiles="https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}",
+            attr="Google Roads",
+            name="🛣️ Full Road Network (Highways & Streets)",
+            overlay=True,
+            control=True,
+            show=True
+        ).add_to(m)
+
+        # 6. Live Real-Time Traffic Congestion Layer (Official Google traffic stream: Green/Orange/Red)
         folium.TileLayer(
             tiles="https://mt1.google.com/vt/lyrs=h,traffic&x={x}&y={y}&z={z}",
             attr="Google Traffic",
@@ -1470,8 +1502,63 @@ class MapService:
             show=True
         ).add_to(m)
 
-        # Interactive Google Maps Layer Switcher
+        # Interactive Layer Control Switcher
         folium.LayerControl(position="topright", collapsed=True).add_to(m)
+
+        # Full-Map Road Network Detection Telemetry HUD (Dynamic pan/zoom road awareness)
+        road_hud_html = f"""
+        <div id="full-map-road-hud" style="position: absolute; bottom: 25px; left: 16px; z-index: 1000; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 12px; padding: 8px 14px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,0.65); pointer-events: none; max-width: 380px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px;">
+                <span style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                    Full-Map Road Network
+                </span>
+                <span id="hud-zoom-level" style="font-size: 10px; font-weight: 700; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;">Zoom {zoom}</span>
+            </div>
+            <div style="font-size: 11px; color: #f1f5f9; line-height: 1.3;">
+                Highways • State Highways • City Arterials • Village Connecting Roads
+            </div>
+            <div id="hud-bounds-info" style="font-size: 10px; color: #64748b; margin-top: 3px; font-family: monospace;">
+                Scanning visible geographical area...
+            </div>
+        </div>
+        <script>
+        (function() {{
+            function initRoadHUD() {{
+                var mapInstance = null;
+                for (var key in window) {{
+                    if (key.startsWith('map_') && window[key] && typeof window[key].getBounds === 'function') {{
+                        mapInstance = window[key];
+                        break;
+                    }}
+                }}
+                if (!mapInstance) {{
+                    setTimeout(initRoadHUD, 200);
+                    return;
+                }}
+                function updateBoundsTelemetry() {{
+                    try {{
+                        var bounds = mapInstance.getBounds();
+                        var z = mapInstance.getZoom();
+                        var zEl = document.getElementById('hud-zoom-level');
+                        var bEl = document.getElementById('hud-bounds-info');
+                        if (zEl) zEl.innerText = 'Zoom ' + z;
+                        if (bEl && bounds) {{
+                            var sw = bounds.getSouthWest();
+                            var ne = bounds.getNorthEast();
+                            bEl.innerText = 'Area: ' + sw.lat.toFixed(3) + '°N, ' + sw.lng.toFixed(3) + '°E to ' + ne.lat.toFixed(3) + '°N, ' + ne.lng.toFixed(3) + '°E';
+                        }}
+                    }} catch(e) {{}}
+                }}
+                mapInstance.on('moveend zoomend', updateBoundsTelemetry);
+                setTimeout(updateBoundsTelemetry, 400);
+            }}
+            if (document.readyState === 'complete') initRoadHUD();
+            else window.addEventListener('load', initRoadHUD);
+        }})();
+        </script>
+        """
+        m.get_root().html.add_child(folium.Element(road_hud_html))
 
         # High-Accuracy Real-Time GPS Tracking Plugin (Google Maps style)
         try:
@@ -2132,8 +2219,9 @@ class MapService:
                     popup=folium.Popup(popup_html, max_width=260)
                 ).add_to(m)
 
-        # 5. Add Route Polylines with Multi-Objective Visual Hierarchy
+        # 5. Add Multiple Route Polylines with Intelligent Dual-Stroke Visual Hierarchy
         if routes:
+            palette = ["#00f0b5", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#3b82f6"]
             for idx, r in enumerate(routes):
                 coords = r.get("polyline", [])
                 if not coords or len(coords) < 2:
@@ -2145,44 +2233,95 @@ class MapService:
                 is_selected = r.get("is_selected", False)
                 has_selection = any(rt.get("is_selected") for rt in routes)
 
+                dist_km = float(r.get("distance_km") or 0.0)
+                dur_min = float(r.get("duration_minutes") or 0.0)
+                if dist_km <= 0.0 and len(coords) >= 2:
+                    calc_m = 0.0
+                    for p_i in range(len(coords) - 1):
+                        calc_m += haversine_distance_m(coords[p_i][0], coords[p_i][1], coords[p_i+1][0], coords[p_i+1][1])
+                    dist_km = round(calc_m / 1000.0, 1)
+                    if dur_min <= 0.0:
+                        dur_min = max(2.0, round(dist_km / 55.0 * 60.0, 1))
+
+                # Route styling and palette selection
                 if not is_eligible or "RESTRICT" in str(status).upper() or "INACCESSIBLE" in str(status).upper():
-                    line_color = "#ef4444"  # Muted red for closed routes
+                    line_color = "#ef4444"  # Red for restricted / closed corridors
                     dash_array = "5, 10"
-                    opacity = 0.85 if is_selected else (0.35 if has_selection else 0.55)
-                    weight = 6 if is_selected else 3.5
+                    opacity = 0.85 if is_selected else (0.40 if has_selection else 0.55)
+                    weight = 6.0 if is_selected else 3.5
                 elif is_selected:
-                    line_color = r.get("color") or ("#38bdf8" if rank > 1 else "#10b981")  # Vibrant luminous highlight
+                    line_color = r.get("color") or palette[(rank - 1) % len(palette)]
                     dash_array = None
                     opacity = 1.0
                     weight = 8.5
                 elif has_selection:
-                    # Visible distinct alternative when another route is selected
-                    line_color = r.get("color") or ("#64748b" if rank != 1 else "#059669")
+                    # Alternative routes visible alongside the focused selection
+                    line_color = r.get("color") or palette[(rank - 1) % len(palette)]
                     dash_array = None
                     opacity = 0.70
                     weight = 5.0
                 else:
-                    line_color = r.get("color") or ("#10b981" if rank == 1 else ("#38bdf8" if rank == 2 else "#a855f7"))
+                    line_color = r.get("color") or palette[(rank - 1) % len(palette)]
                     dash_array = None
-                    opacity = 0.95 if rank == 1 else 0.90
-                    weight = 6.5 if rank == 1 else 5.5
+                    opacity = 0.95 if rank == 1 else 0.85
+                    weight = 7.0 if rank == 1 else 5.5
 
                 route_label = r.get("name", f"Route {idx+1}")
-                dist_km = r.get("distance_km", 0.0)
-                dur_min = r.get("duration_minutes", 0.0)
+                cond_text = r.get("road_condition", "Smooth paved asphalt")
 
+                # Background dual-stroke casing line: deep contrast outline against satellite imagery
+                casing_color = "#020617" if is_selected else "#0f172a"
+                casing_weight = weight + 3.0
+                casing_opacity = 0.85 if is_selected else 0.65
+
+                folium.PolyLine(
+                    locations=coords,
+                    color=casing_color,
+                    weight=casing_weight,
+                    opacity=casing_opacity,
+                    dash_array=dash_array
+                ).add_to(m)
+
+                # Foreground vibrant polyline
+                popup_html = f"""
+                <div style='font-family: -apple-system, BlinkMacSystemFont, sans-serif; min-width: 220px;'>
+                    <div style='font-weight: 800; font-size: 13px; color: {line_color}; margin-bottom: 4px;'>
+                        {'⭐ RECOMMENDED ROUTE' if rank == 1 else f'ALTERNATIVE ROUTE #{rank}'}
+                    </div>
+                    <div style='font-weight: 700; font-size: 12px; color: #0f172a;'>{route_label}</div>
+                    <div style='font-size: 11px; color: #334155; margin-top: 6px; line-height: 1.45;'>
+                        📏 <b>Distance:</b> {dist_km:.1f} km<br>
+                        ⏱️ <b>Est. Time:</b> {dur_min:.0f} mins<br>
+                        🛣️ <b>Road Condition:</b> {cond_text}<br>
+                        🛡️ <b>Status:</b> <code>{status}</code>
+                    </div>
+                </div>
+                """
                 folium.PolyLine(
                     locations=coords,
                     color=line_color,
                     weight=weight,
                     opacity=opacity,
                     dash_array=dash_array,
-                    tooltip=f"{route_label} ({dist_km:.1f} km, ~{dur_min:.0f} min) - {status}",
-                    popup=folium.Popup(
-                        f"<b>{route_label}</b><br>Distance: {dist_km:.2f} km<br>Est. Time: {dur_min:.1f} min<br>Status: <code>{status}</code>",
-                        max_width=300
-                    )
+                    tooltip=f"{'⭐ RECOMMENDED: ' if rank == 1 else ''}{route_label} ({dist_km:.1f} km, ~{dur_min:.0f} min)",
+                    popup=folium.Popup(popup_html, max_width=320)
                 ).add_to(m)
+
+                # Midpoint route checkpoint badge
+                if coords and len(coords) >= 6:
+                    mid_idx = len(coords) // 2
+                    mid_pt = coords[mid_idx]
+                    badge_lbl = f"⭐ {dist_km:.1f} km" if rank == 1 else f"Alt {rank}: {dist_km:.1f} km"
+                    badge_txt_color = "#0f172a" if (rank == 1 or rank == 3) else "#ffffff"
+                    badge_html = f"""
+                    <div style='background: {line_color}; color: {badge_txt_color}; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.65); border: 1.5px solid #ffffff; white-space: nowrap; pointer-events: none; transform: translate(-50%, -50%);'>
+                        {badge_lbl}
+                    </div>
+                    """
+                    folium.Marker(
+                        location=mid_pt,
+                        icon=folium.DivIcon(html=badge_html, icon_size=(70, 20), icon_anchor=(35, 10))
+                    ).add_to(m)
 
 
         # Dynamic Auto Fit-Bounds: Frame map automatically across global routes & waypoints when explicitly enabled
@@ -2701,7 +2840,12 @@ class MapService:
                     "color": r.get("color"),
                     "is_eligible": r.get("is_eligible", True),
                     "is_selected": r.get("is_selected", False),
-                    "safety_status": r.get("status", "ROUTE_ELIGIBLE")
+                    "safety_status": r.get("status", "ROUTE_ELIGIBLE"),
+                    "distance_km": r.get("distance_km", 0.0),
+                    "duration_minutes": r.get("duration_minutes", 0.0),
+                    "road_condition": r.get("road_condition", "Good condition"),
+                    "summary": r.get("summary", ""),
+                    "route_id": r.get("route_id", f"R_{idx}")
                 })
 
         return self.create_interactive_map(
