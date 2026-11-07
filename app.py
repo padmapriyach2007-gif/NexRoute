@@ -7832,8 +7832,9 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.session_state.is_custom_start_place = True
                 st.session_state.selected_orig_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
                 st.session_state.real_location_service.set_manual_location(p_lat, p_lon, p_name)
-                st.session_state.routes_generated = False
                 st.session_state.cached_candidate_routes = None
+                if st.session_state.get("selected_dest_coords"):
+                    st.session_state.routes_generated = True
                 st.toast(f"🟢 Starting Point set to: {p_name}", icon="🟢")
             elif p_target == "stop":
                 if "intermediate_stops" not in st.session_state or not isinstance(st.session_state.intermediate_stops, list):
@@ -7862,8 +7863,9 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.session_state.pending_dest = p_name
                 st.session_state.last_synced_dest = p_name
                 st.session_state.selected_dest_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
-                st.session_state.routes_generated = False
                 st.session_state.cached_candidate_routes = None
+                if st.session_state.get("user_live_coords"):
+                    st.session_state.routes_generated = True
                 st.toast(f"🏁 Destination set to: {p_name}", icon="🏁")
 
             st.session_state.map_picking_mode = None
@@ -18187,8 +18189,7 @@ body {{
 
 
 
-        routes_are_generated = bool(st.session_state.get("routes_generated", False))
-        if not coords_orig or not coords_dest or is_pending or is_same_endpoint or not routes_are_generated:
+        if not coords_orig or not coords_dest or is_pending or is_same_endpoint:
 
 
 
@@ -18217,62 +18218,6 @@ body {{
 
 
                         Starting point and destination are at the exact same location (< 25m). Please select a distinct destination to calculate driving routes.
-
-
-
-                    </div>
-
-
-
-                </div>
-
-
-
-                """, unsafe_allow_html=True)
-
-
-
-                candidate_routes = []
-
-
-
-                ranked_routes = []
-
-
-
-                eligible_ranked = []
-
-
-
-                restricted_ranked = []
-
-
-
-            elif coords_orig and coords_dest and not routes_are_generated:
-
-
-
-                st.markdown("""
-
-
-
-                <div style='background: rgba(56, 189, 248, 0.12); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 18px 22px; margin: 14px 0; text-align: center;'>
-
-
-
-                    <div style='font-size: 2.2rem; margin-bottom: 6px;'>🚀</div>
-
-
-
-                    <div style='color: #38bdf8; font-weight: 800; font-size: 1.05rem;'>Locations Selected — Ready to Generate Routes</div>
-
-
-
-                    <div style='color: #94a3b8; font-size: 0.84rem; margin-top: 6px;'>
-
-
-
-                        Click the <b>GENERATE ROUTES</b> button below to calculate and rank optimal corridors with turn-by-turn guidance.
 
 
 
@@ -18699,6 +18644,7 @@ body {{
 
 
                 st.session_state["active_ranked_routes"] = ranked_routes
+                st.session_state.routes_generated = True
 
 
 
@@ -21628,100 +21574,7 @@ body {{
                     st.toast("Destination cleared", icon="🗑️")
                     st.rerun()
 
-
-
-
-
-
-
-            if not has_dest:
-
-
-
-                st.caption("🎯 Quick destination suggestions:")
-
-
-
-                quick_dests = [
-
-
-
-                    ("Guntur", (16.3067, 80.4365), "Guntur City Center, Andhra Pradesh"),
-
-
-
-                    ("Vijayawada", (16.5062, 80.6480), "Vijayawada City Center, Andhra Pradesh"),
-
-
-
-                    ("Amaravati", (16.5415, 80.5150), "Amaravati Secretariat, Andhra Pradesh")
-
-
-
-                ]
-
-
-
-                col_qd1, col_qd2, col_qd3 = st.columns(3)
-
-
-
-                for q_col, (q_name, q_coords, q_lbl) in zip([col_qd1, col_qd2, col_qd3], quick_dests):
-
-
-
-                    with q_col:
-
-
-
-                        if st.button(f"🏁 {q_name}", key=f"btn_quick_dest_{q_name}", use_container_width=True):
-
-
-
-                            st.session_state.selected_dest_coords = q_coords
-                            st.session_state.selected_dest_label = q_lbl
-                            st.session_state.pending_dest = q_name
-                            st.session_state.last_synced_dest = q_name
-
-
-
-                            st.session_state.is_custom_start_place = True
-
-
-
-                            st.session_state._prev_route_sig = None
-
-
-
-                            st.session_state._prev_endpoint_sig = None
-
-
-
-                            st.session_state.cached_candidate_routes = None
-
-
-
-                            st.session_state.auto_fit_bounds = True
-
-
-
-                            st.session_state.scroll_to_app_map = True
-
-
-
-                            st.toast(f"Destination set to {q_name}. Calculating routes...", icon="🚀")
-
-
-
-                            st.rerun()
-
-
-
-
-
-
-
-            # ➕ Highly Visible "ADD A STOP TO YOUR ROUTE" Section (Requirement 6)
+# ➕ Highly Visible "ADD A STOP TO YOUR ROUTE" Section (Requirement 6)
             st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
             with st.expander("➕ ADD A STOP TO YOUR ROUTE", expanded=False):
                 st.markdown("<div style='font-size: 0.74rem; color: #94a3b8; margin-bottom: 8px;'>✨ <i>Add places to visit along your journey.</i></div>", unsafe_allow_html=True)
@@ -21791,7 +21644,9 @@ body {{
             col_act_calc, col_act_fit = st.columns([1.2, 0.8])
             with col_act_calc:
                 is_route_btn_disabled = not bool(coords_orig and coords_dest and coords_orig != coords_dest)
-                if st.button("🚀 GENERATE ROUTES", key="btn_side_calc_routes_action", use_container_width=True, type="primary", disabled=is_route_btn_disabled, help="Generate multiple optimal corridors connecting Start and Destination"):
+                has_endpoints = bool(coords_orig and coords_dest and coords_orig != coords_dest)
+                btn_lbl = "🔄 RECALCULATE ROUTES" if has_endpoints else "🚀 GENERATE ROUTES"
+                if st.button(btn_lbl, key="btn_side_calc_routes_action", use_container_width=True, type="primary" if has_endpoints else "secondary", disabled=not has_endpoints, help="Recalculate multiple optimal corridors connecting Start and Destination"):
                     st.session_state.routes_generated = True
                     st.session_state._prev_route_sig = None
                     st.session_state._prev_endpoint_sig = None
