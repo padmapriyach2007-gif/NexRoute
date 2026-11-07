@@ -6068,12 +6068,8 @@ if st.session_state.get("show_info_modal", False):
 
 
 def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
-
-
-
     """Renders the upgraded interactive Pathfinder conversational travel assistant interface."""
-
-
+    logger = logging.getLogger("nexroute")
 
     def _execute_chat_turn(query_text: str, attachments: Optional[List[Dict[str, Any]]] = None):
         att_list = attachments if attachments is not None else st.session_state.get("pending_chat_attachments", [])
@@ -6097,6 +6093,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         try:
             ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx, attachments=att_list)
         except Exception as chat_err:
+            logger = logging.getLogger("nexroute")
             logger.exception("PathfinderChatbot execution error: %s", chat_err)
             ans = {
                 "response": f"I encountered an issue processing your query through external services, but your live route and navigation tools remain fully operational!\n\n*(Error details: {chat_err})*",
@@ -29455,13 +29452,13 @@ if st.session_state.get("current_view") == "places":
         if "places_smart_radius_choice" not in st.session_state:
             st.session_state.places_smart_radius_choice = "10 km (Nearby Villages)"
 
-        # Check if an expand button was clicked
-        if st.session_state.get("_pending_radius_choice"):
-            st.session_state.places_smart_radius_choice = st.session_state.pop("_pending_radius_choice")
-            st.session_state["places_radius_picker"] = st.session_state.places_smart_radius_choice
-
         def _set_places_smart_radius(val: str):
-            st.session_state["_pending_radius_choice"] = val
+            st.session_state["places_smart_radius_choice"] = val
+            st.session_state["places_radius_picker"] = val
+
+        # Handle any pending radius choice safely
+        if "_pending_radius_choice" in st.session_state:
+            st.session_state.places_smart_radius_choice = st.session_state.pop("_pending_radius_choice")
 
         # Smart Search Radius & Search Input
         col_sb1, col_sb2 = st.columns([1.6, 2.4])
