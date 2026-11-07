@@ -1861,7 +1861,6 @@ def build_aura_journey_cockpit_html(
                 </svg>`;
             }}
         }}
-        }}
 
         // Render Pipeline Chips
         function renderPipeline() {{
