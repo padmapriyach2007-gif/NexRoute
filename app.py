@@ -11707,6 +11707,24 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
     photo_summary = _to_1_2_sentences(getattr(chapter, "scenic_highlight", "Panoramic vistas of rural agricultural waterways."))
     food_summary = _to_1_2_sentences(getattr(chapter, "culinary_highlight", "Authentic regional highway tiffins, fresh chai, and sweets."))
 
+    cur_sb_l = st.session_state.get("app_language", "en")
+    sb_header_txt = t("storybook.header", default="CORRIDOR STORYBOOK", lang=cur_sb_l)
+    sb_leg_txt = t("storybook.leg_of", default=f"Leg {chapter.chapter_num} of {chapter.total_chapters}", cur=chapter.chapter_num, total=chapter.total_chapters, lang=cur_sb_l)
+    sb_culture_txt = t("storybook.culture", default="CULTURE", lang=cur_sb_l)
+    sb_living_arts_txt = t("storybook.living_arts", default="Living Arts", lang=cur_sb_l)
+    sb_nature_txt = t("storybook.nature", default="NATURE", lang=cur_sb_l)
+    sb_landscape_txt = t("storybook.landscape", default="Landscape", lang=cur_sb_l)
+    sb_photospot_txt = t("storybook.photospot", default="PHOTO SPOT", lang=cur_sb_l)
+    sb_visual_spot_txt = t("storybook.visual_spot", default="Visual Spot", lang=cur_sb_l)
+    sb_local_food_txt = t("storybook.local_food", default="LOCAL FOOD", lang=cur_sb_l)
+    sb_regional_food_txt = t("storybook.regional_food", default="Regional Food", lang=cur_sb_l)
+    sb_explore_lore_txt = t("storybook.explore_lore", default="Explore the Story Behind This Place", lang=cur_sb_l)
+    sb_heritage_records_txt = t("storybook.heritage_records", default="Historical Lore & Heritage Records", lang=cur_sb_l)
+    sb_ai_intel_txt = t("storybook.ai_intel", default="AI Route Intelligence", lang=cur_sb_l)
+    sb_hidden_gem_txt = t("storybook.hidden_gem", default="Hidden Gem", lang=cur_sb_l)
+    sb_what_to_look_txt = t("storybook.what_to_look_for", default="What to look for", lang=cur_sb_l)
+    sb_travel_tip_txt = t("storybook.travel_tip", default="Travel Tip", lang=cur_sb_l)
+
     st.markdown(f"""
     <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%); border: 1.5px solid rgba(56, 189, 248, 0.50); border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);'>
         {banner_img_html}
@@ -11714,10 +11732,10 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             <div>
                 <div style='display: flex; align-items: center; gap: 8px;'>
                     <span style='font-size: 0.70rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase;'>
-                        📖 CORRIDOR STORYBOOK • {chapter.title}
+                        📖 {sb_header_txt} • {chapter.title}
                     </span>
                     <span style='font-size: 0.65rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.35); padding: 2px 7px; border-radius: 999px;'>
-                        Leg {chapter.chapter_num} of {chapter.total_chapters}
+                        {sb_leg_txt}
                     </span>
                 </div>
                 <div style='font-size: 1.18rem; font-weight: 900; color: #ffffff; margin-top: 3px;'>
@@ -11734,8 +11752,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             <!-- Cultural Heritage -->
             <div style='background: linear-gradient(135deg, rgba(30, 27, 75, 0.50) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #c4b5fd;'>🎭 CULTURE</span>
-                    <span style='font-size: 0.62rem; background: rgba(167, 139, 250, 0.2); color: #a78bfa; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Living Arts</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #c4b5fd;'>🎭 {sb_culture_txt}</span>
+                    <span style='font-size: 0.62rem; background: rgba(167, 139, 250, 0.2); color: #a78bfa; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>{sb_living_arts_txt}</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.42;'>
                     {culture_summary}
@@ -11745,8 +11763,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             <!-- Geography & Nature -->
             <div style='background: linear-gradient(135deg, rgba(6, 78, 59, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #6ee7b7;'>🌿 NATURE</span>
-                    <span style='font-size: 0.62rem; background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Landscape</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #6ee7b7;'>🌿 {sb_nature_txt}</span>
+                    <span style='font-size: 0.62rem; background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>{sb_landscape_txt}</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #e2e8f0; line-height: 1.42;'>
                     {nature_summary}
@@ -11756,8 +11774,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             <!-- Scenic Photo Spot -->
             <div style='background: linear-gradient(135deg, rgba(120, 53, 15, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(251, 191, 36, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #fde68a;'>📸 PHOTO SPOT</span>
-                    <span style='font-size: 0.62rem; background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Visual Spot</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #fde68a;'>📸 {sb_photospot_txt}</span>
+                    <span style='font-size: 0.62rem; background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>{sb_visual_spot_txt}</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #fef3c7; line-height: 1.42;'>
                     {photo_summary}
@@ -11767,8 +11785,8 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             <!-- Local Culinary Specialty -->
             <div style='background: linear-gradient(135deg, rgba(131, 24, 67, 0.40) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(244, 114, 182, 0.35); border-radius: 12px; padding: 12px 14px;'>
                 <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;'>
-                    <span style='font-size: 0.70rem; font-weight: 800; color: #fbcfe8;'>🍲 LOCAL FOOD</span>
-                    <span style='font-size: 0.62rem; background: rgba(244, 114, 182, 0.2); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>Regional Food</span>
+                    <span style='font-size: 0.70rem; font-weight: 800; color: #fbcfe8;'>🍲 {sb_local_food_txt}</span>
+                    <span style='font-size: 0.62rem; background: rgba(244, 114, 182, 0.2); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-weight: 700;'>{sb_regional_food_txt}</span>
                 </div>
                 <div style='font-size: 0.81rem; color: #fce7f3; line-height: 1.42;'>
                     {food_summary}
@@ -11779,27 +11797,27 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
         <!-- 📖 Expandable Story Behind This Place (Full Lore, Dynasty Archives, & Travel Intel) -->
         <details style='margin-top: 8px; cursor: pointer; background: rgba(10, 15, 28, 0.75); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 10px 14px;'>
             <summary style='font-size: 0.80rem; font-weight: 800; color: #38bdf8; outline: none; user-select: none;'>
-                📖 Explore the Story Behind This Place
+                📖 {sb_explore_lore_txt}
             </summary>
             <div style='margin-top: 10px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.55; padding: 10px 12px; background: rgba(15, 23, 42, 0.90); border-radius: 8px; border-left: 3px solid #38bdf8;'>
-                <div style='font-weight: 800; color: #f8fafc; margin-bottom: 4px;'>🏛️ Historical Lore & Heritage Records</div>
+                <div style='font-weight: 800; color: #f8fafc; margin-bottom: 4px;'>🏛️ {sb_heritage_records_txt}</div>
                 {chapter.historical_lore}
             </div>
             <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; margin-top: 10px;'>
                 <div style='background: rgba(30, 27, 75, 0.55); border-left: 3px solid #818cf8; border-radius: 8px; padding: 7px 12px;'>
-                    <span style='font-size: 0.68rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;'>💡 AI Route Intelligence</span>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;'>💡 {sb_ai_intel_txt}</span>
                     <div style='font-size: 0.78rem; color: #e0e7ff; margin-top: 2px;'>{getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow.")}</div>
                 </div>
                 <div style='background: rgba(49, 10, 100, 0.45); border-left: 3px solid #c084fc; border-radius: 8px; padding: 7px 12px;'>
-                    <span style='font-size: 0.68rem; font-weight: 800; color: #e9d5ff; text-transform: uppercase;'>💎 Hidden Gem</span>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #e9d5ff; text-transform: uppercase;'>💎 {sb_hidden_gem_txt}</span>
                     <div style='font-size: 0.78rem; color: #f3e8ff; margin-top: 2px;'>{getattr(chapter, "hidden_gem", "Historic wayside monument.")}</div>
                 </div>
                 <div style='background: rgba(8, 47, 73, 0.55); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 7px 12px;'>
-                    <span style='font-size: 0.68rem; font-weight: 800; color: #7dd3fc; text-transform: uppercase;'>👀 What to look for</span>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #7dd3fc; text-transform: uppercase;'>👀 {sb_what_to_look_txt}</span>
                     <div style='font-size: 0.78rem; color: #e0f2fe; margin-top: 2px;'>{chapter.what_to_look_for}</div>
                 </div>
                 <div style='background: rgba(6, 78, 59, 0.45); border-left: 3px solid #34d399; border-radius: 8px; padding: 7px 12px;'>
-                    <span style='font-size: 0.68rem; font-weight: 800; color: #6ee7b7; text-transform: uppercase;'>🧭 Travel Tip</span>
+                    <span style='font-size: 0.68rem; font-weight: 800; color: #6ee7b7; text-transform: uppercase;'>🧭 {sb_travel_tip_txt}</span>
                     <div style='font-size: 0.78rem; color: #ecfdf5; margin-top: 2px;'>{chapter.travel_tip}</div>
                 </div>
             </div>
@@ -11827,14 +11845,14 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
     cat_cols = st.columns(8)
     categories = [
-        ("all", "🌟 All Places"),
-        ("attractions", "🏛️ Attractions"),
-        ("dining", "🍽️ Dining"),
-        ("fuel", "⛽ Fuel & EV"),
-        ("medical", "🏥 Medical"),
-        ("hotels", "🏨 Hotels"),
-        ("scenic", "🌿 Scenic"),
-        ("shopping", "🛍️ Shopping")
+        ("all", f"🌟 {t('cat.all_places', default='All Places', lang=cur_sb_l)}"),
+        ("attractions", f"🏛️ {t('cat.attractions', default='Attractions', lang=cur_sb_l)}"),
+        ("dining", f"🍽️ {t('cat.dining', default='Dining', lang=cur_sb_l)}"),
+        ("fuel", f"⛽ {t('cat.fuel', default='Fuel & EV', lang=cur_sb_l)}"),
+        ("medical", f"🏥 {t('cat.medical', default='Medical', lang=cur_sb_l)}"),
+        ("hotels", f"🏨 {t('cat.hotels', default='Hotels', lang=cur_sb_l)}"),
+        ("scenic", f"🌿 {t('cat.scenic', default='Scenic', lang=cur_sb_l)}"),
+        ("shopping", f"🛍️ {t('cat.shopping', default='Shopping', lang=cur_sb_l)}")
     ]
     for c_col, (cat_id, cat_lbl) in zip(cat_cols, categories):
         with c_col:
@@ -29099,11 +29117,28 @@ body {{
 
                     cat_col = cat_info["color"]
 
+                    cat_raw = fac.get("facility_type", cat_info["short_label"])
+                    c_lower = str(cat_raw).lower()
+                    if "supermarket" in c_lower or "grocery" in c_lower:
+                        cat_lbl = t("cat.supermarket", default="Supermarket", lang=cur_l)
+                    elif "hotel" in c_lower or "resort" in c_lower:
+                        cat_lbl = t("cat.hotel", default="Hotel", lang=cur_l)
+                    elif "atm" in c_lower or "bank" in c_lower:
+                        cat_lbl = t("cat.atm", default="ATM", lang=cur_l)
+                    elif "clinic" in c_lower or "dispensary" in c_lower:
+                        cat_lbl = t("cat.clinic", default="Clinic", lang=cur_l)
+                    elif "hospital" in c_lower:
+                        cat_lbl = t("cat.hospital", default="Hospital", lang=cur_l)
+                    elif "pharmacy" in c_lower or "medical" in c_lower:
+                        cat_lbl = t("cat.medical", default="Medical", lang=cur_l)
+                    elif "fuel" in c_lower or "petrol" in c_lower or "ev" in c_lower:
+                        cat_lbl = t("cat.fuel", default="Fuel / EV", lang=cur_l)
+                    elif "restaurant" in c_lower or "dining" in c_lower or "food" in c_lower:
+                        cat_lbl = t("cat.dining", default="Dining", lang=cur_l)
+                    else:
+                        cat_lbl = cat_raw
 
-
-                    cat_lbl = fac.get("facility_type", cat_info["short_label"])
-
-
+                    mins_label = t("nav.mins", default="mins", lang=cur_l)
 
                     amenity_ico = fac.get("amenity_icon", cat_info["icon"])
 
@@ -29213,7 +29248,7 @@ body {{
 
 
 
-                        f"<b>{t('fac.corridor_distance', 'Corridor:')}</b> {dist_corridor:.1f} km • <span style='color: #38bdf8; font-weight: 700;'>🚗 ~{road_dist:.1f} km ({eta_mins:.0f} mins)</span>"
+                        f"<b>{t('fac.corridor_distance', 'Corridor:')}</b> {dist_corridor:.1f} km • <span style='color: #38bdf8; font-weight: 700;'>🚗 ~{road_dist:.1f} km ({eta_mins:.0f} {mins_label})</span>"
 
 
 
@@ -29850,13 +29885,16 @@ if st.session_state.get("current_view") == "places":
         # Smart Search Radius & Search Input
         col_sb1, col_sb2 = st.columns([1.6, 2.4])
         with col_sb1:
-            radius_options = [
-                "5 km (Nearby Places)",
-                "10 km (Nearby Villages)",
-                "25 km (Nearby Towns)",
-                "50 km (Major Attractions)"
-            ]
+            rad_5_lbl = t("places.radius_5km", default="5 km (Nearby Places)", lang=cur_l)
+            rad_10_lbl = t("places.radius_10km", default="10 km (Nearby Villages)", lang=cur_l)
+            rad_25_lbl = t("places.radius_25km", default="25 km (Nearby Towns)", lang=cur_l)
+            rad_50_lbl = t("places.radius_50km", default="50 km (Major Attractions)", lang=cur_l)
+            radius_options = [rad_5_lbl, rad_10_lbl, rad_25_lbl, rad_50_lbl]
             radius_val_map = {
+                rad_5_lbl: 5.0,
+                rad_10_lbl: 10.0,
+                rad_25_lbl: 25.0,
+                rad_50_lbl: 50.0,
                 "5 km (Nearby Places)": 5.0,
                 "10 km (Nearby Villages)": 10.0,
                 "25 km (Nearby Towns)": 25.0,
@@ -29864,13 +29902,13 @@ if st.session_state.get("current_view") == "places":
             }
             cur_choice = st.session_state.places_smart_radius_choice
             if cur_choice not in radius_options:
-                cur_choice = "10 km (Nearby Villages)"
+                cur_choice = rad_10_lbl
 
             def _on_radius_picker_changed():
                 st.session_state.places_smart_radius_choice = st.session_state.places_radius_picker
 
             sel_rad_label = st.selectbox(
-                "📏 Smart Search Radius",
+                f"📏 {t('places.radius_label', default='Smart Search Radius', lang=cur_l)}",
                 radius_options,
                 index=radius_options.index(cur_choice),
                 key="places_radius_picker",
@@ -29880,31 +29918,23 @@ if st.session_state.get("current_view") == "places":
 
         with col_sb2:
             places_search_query = st.text_input(
-                "Search verified places",
-                placeholder="Search temples, hospitals, clinics, dining, fuel...",
+                t("places.search_input_label", default="Search verified places", lang=cur_l),
+                placeholder=t("places.search_placeholder", default="Search temples, hospitals, clinics, dining, fuel...", lang=cur_l),
                 key="txt_places_main_search_box",
                 label_visibility="visible"
             )
 
         cat_defs = [
-            ("all", "🌐", "All Places"),
-            ("attractions", "🏛️", "Famous Attractions"),
-            ("healthcare", "🏥", "Healthcare"),
-            ("facilities", "🛡️", "Essential Facilities"),
-            ("food_stays", "🍽️", "Food & Stays"),
-            ("education", "🎓", "Educational Institutions"),
-            ("saved", "⭐", f"Saved Places ({len(saved_pool)})")
+            ("all", "🌐", t("places.cat_all_places", default="All Places", lang=cur_l)),
+            ("attractions", "🏛️", t("places.cat_famous_attractions", default="Famous Attractions", lang=cur_l)),
+            ("healthcare", "🏥", t("places.cat_healthcare", default="Healthcare", lang=cur_l)),
+            ("facilities", "🛡️", t("places.cat_essential_facilities", default="Essential Facilities", lang=cur_l)),
+            ("food_stays", "🍽️", t("places.cat_food_stays", default="Food & Stays", lang=cur_l)),
+            ("education", "🎓", t("places.cat_educational_institutions", default="Educational Institutions", lang=cur_l)),
+            ("saved", "⭐", f"{t('places.tab_saved', default='Saved Places', lang=cur_l)} ({len(saved_pool)})")
         ]
         places_categories = [f"{icon} {label}" for _, icon, label in cat_defs]
         selected_p_cat = st.pills(lbl_categories, options=places_categories, default=places_categories[0], key="pills_places_main_cat")
-
-
-
-
-
-
-
-
 
         active_cat_id = next((cid for cid, icon, label in cat_defs if f"{icon} {label}" == selected_p_cat), "all")
 
@@ -29935,10 +29965,10 @@ if st.session_state.get("current_view") == "places":
                 <div style='background: linear-gradient(135deg, rgba(30, 27, 75, 0.70) 0%, rgba(15, 23, 42, 0.90) 100%); border: 1.5px solid rgba(139, 92, 246, 0.45); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px;'>
                     <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;'>
                         <span style='font-size: 0.82rem; font-weight: 800; color: #c084fc; letter-spacing: 0.04em;'>
-                            🏛️ FAMOUS CULTURAL & HISTORICAL PLACES • VERIFIED LANDMARKS
+                            🏛️ {t('places.famous_banner_title', default='FAMOUS CULTURAL & HISTORICAL PLACES • VERIFIED LANDMARKS', lang=cur_l)}
                         </span>
                         <span style='font-size: 0.68rem; background: rgba(139, 92, 246, 0.25); color: #e9d5ff; padding: 2px 8px; border-radius: 999px; font-weight: 700;'>
-                            Cultural Heritage
+                            {t('places.cultural_heritage', default='Cultural Heritage', lang=cur_l)}
                         </span>
                     </div>
                     <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;'>

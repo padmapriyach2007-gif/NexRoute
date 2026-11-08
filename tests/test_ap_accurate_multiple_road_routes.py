@@ -70,3 +70,4 @@ def test_distinct_route_corridors_and_colors():
         expected_color = palette[(item.rank - 1) % len(palette)]
         assert expected_color.startswith("#")
         assert len(item.route.polyline) > 20
+

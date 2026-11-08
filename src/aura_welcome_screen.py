@@ -245,9 +245,9 @@ def render_aura_welcome_hud(
     <div class="hud-center">
         <div class="hud-status-row">
             <span style="font-weight: 800; font-size: 0.76rem; color: #f8fafc; letter-spacing: 0.04em;">AURA</span>
-            <span class="hud-status-badge" id="statusBadge">● IDLE • READY</span>
+            <span class="hud-status-badge" id="statusBadge">{status_idle_txt}</span>
         </div>
-        <div class="hud-transcript-text" id="transcriptBox">Voice navigation active. Speak anytime, Boss.</div>
+        <div class="hud-transcript-text" id="transcriptBox">{transcript_ready_txt}</div>
     </div>
     <div class="hud-waveform">
         <canvas id="auraWaveCanvas"></canvas>
@@ -1356,6 +1356,7 @@ def _build_jarvis_controller_script(
     var txtProcessing = {json.dumps(t("aura.status_processing", default="⚡ PROCESSING...", lang=current_lang))};
     var txtPaused = {json.dumps(t("aura.status_paused", default="⏸️ PAUSED", lang=current_lang))};
     var txtIdle = {json.dumps(t("aura.status_idle", default="● IDLE • READY", lang=current_lang))};
+    var txtIdlePrompt = {json.dumps(t("aura.status_idle_prompt", default="Ready for your command... Speak or click avatar.", lang=current_lang))};
     var txtOffline = {json.dumps(t("aura.status_offline", default="● AURA OFFLINE", lang=current_lang))};
     var txtBtnPause = {json.dumps(t("aura.btn_pause", default="⏸ PAUSE", lang=current_lang))};
     var txtBtnResume = {json.dumps(t("aura.btn_resume", default="▶ RESUME", lang=current_lang))};
@@ -1832,7 +1833,7 @@ function stopOngoingSpeech() {{
                     try {{ recognition.stop(); }} catch(e) {{}}
                 }}
                 currentSpeechBuffer = '';
-                setSessionState('IDLE', 'Ready for your command... Speak or click avatar to command.');
+                setSessionState('IDLE', txtIdlePrompt);
             }}
         }}, voiceConfig.extendedSilenceMs);
     }}
@@ -1971,7 +1972,7 @@ function stopOngoingSpeech() {{
                 if (event.error === 'no-speech') {{
                     // No speech captured during active window: enter IDLE to prevent infinite mic loop
                     if (sessionState === 'LISTENING') {{
-                        setSessionState('IDLE', 'Ready for your command... Speak or click avatar to command.');
+                        setSessionState('IDLE', txtIdlePrompt);
                     }}
                     return;
                 }} else if (event.error === 'not-allowed') {{
@@ -1999,7 +2000,7 @@ function stopOngoingSpeech() {{
             recognition.start();
         }} catch(err) {{
             console.warn("[AURA] Could not start speech recognition:", err);
-            setSessionState('IDLE', 'Ready for your command... Click avatar to activate.');
+            setSessionState('IDLE', txtIdlePrompt);
         }}
     }}
 
@@ -2197,14 +2198,14 @@ function stopOngoingSpeech() {{
         try {{
             if (sessionStorage.getItem(sessionKey) === 'true') {{
                 greetingTriggered = true;
-                setSessionState('IDLE', 'Ready for your command... Speak or click avatar.');
+                setSessionState('IDLE', txtIdlePrompt);
                 return;
             }}
         }} catch(e) {{}}
 
         if (!shouldAutoSpeak) {{
             greetingTriggered = true;
-            setSessionState('IDLE', 'Ready for your command... Speak or click avatar.');
+            setSessionState('IDLE', txtIdlePrompt);
             return;
         }}
 

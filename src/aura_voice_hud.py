@@ -696,6 +696,13 @@ def render_jarvis_chatbot_hud_html(
         else '<span style="color: #00f0ff; font-size: 20px; font-weight: 900;">⚡</span>'
     )
 
+    try:
+        from src.i18n import t
+        txt_idle = t("aura.status_idle", default="● IDLE • READY", lang=current_lang)
+    except Exception:
+        txt_idle = "● IDLE • READY"
+    txt_idle_json = json.dumps(txt_idle)
+
     initial_voice_state = "true" if voice_enabled else "false"
 
     return f"""<!DOCTYPE html>
@@ -1004,7 +1011,7 @@ def render_jarvis_chatbot_hud_html(
             <span class="brand-subtitle">INTELLIGENT CHATBOT VOICE</span>
         </div>
         <div class="status-and-wave-row">
-            <span class="status-badge idle" id="jarvisStatusBadge">● IDLE • READY</span>
+            <span class="status-badge idle" id="jarvisStatusBadge">{txt_idle}</span>
             <div class="waveform-canvas-box">
                 <canvas id="auraJarvisWaveform"></canvas>
             </div>
@@ -1177,7 +1184,7 @@ def render_jarvis_chatbot_hud_html(
             isSpeaking = false;
             isThinking = false;
             badge.className = 'status-badge idle';
-            badge.innerText = '● IDLE • READY';
+            badge.innerText = {txt_idle_json};
             btnToggle.className = 'btn-session-main start';
             btnToggle.innerHTML = '🎙️ SPEAK';
             if (btnEnd) btnEnd.style.display = 'inline-flex';

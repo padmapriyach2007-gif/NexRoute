@@ -303,6 +303,54 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
         actual_lang = lang or "en"
         def t(k, default="", lang=None): return default
 
+    # Localize tag, badge, and category
+    def localize_tag(t_raw: str) -> str:
+        t_up = str(t_raw).upper().strip()
+        if t_up == "HEALTH":
+            return t("places.tag_health", default="HEALTH", lang=actual_lang)
+        elif t_up in ["HERITAGE", "HISTORIC"]:
+            return t("places.tag_heritage", default="HERITAGE", lang=actual_lang)
+        elif t_up == "POPULAR":
+            return t("places.tag_popular", default="POPULAR", lang=actual_lang)
+        elif t_up == "VERIFIED":
+            return t("places.tag_verified", default="VERIFIED", lang=actual_lang)
+        return t_raw
+
+    def localize_badge(b_raw: str) -> str:
+        b_str = str(b_raw)
+        if "Landmark" in b_str:
+            return f"📸 {t('places.photo_landmark', default='Verified Landmark Photo', lang=actual_lang)}"
+        elif "Category" in b_str:
+            return f"📸 {t('places.photo_category', default='Verified Category Photo', lang=actual_lang)}"
+        elif "Place" in b_str:
+            return f"📸 {t('places.photo_place', default='Verified Place Photo', lang=actual_lang)}"
+        elif "Commons" in b_str:
+            return f"📸 {t('places.photo_commons', default='Wikimedia Commons', lang=actual_lang)}"
+        return b_str
+
+    def localize_cat(c_raw: str) -> str:
+        c_low = str(c_raw).lower()
+        if "clinic" in c_low or "dispensary" in c_low:
+            return t("cat.clinic_dispensary", default="Local Clinic & Dispensary", lang=actual_lang)
+        elif "heritage" in c_low or "landmark" in c_low:
+            return t("cat.heritage_landmark", default="Heritage Landmark", lang=actual_lang)
+        elif "hospital" in c_low:
+            return t("cat.hospital", default="Hospital", lang=actual_lang)
+        elif "hotel" in c_low or "resort" in c_low or "stay" in c_low:
+            return t("cat.hotel", default="Hotel", lang=actual_lang)
+        elif "supermarket" in c_low:
+            return t("cat.supermarket", default="Supermarket", lang=actual_lang)
+        elif "atm" in c_low or "bank" in c_low:
+            return t("cat.atm", default="ATM", lang=actual_lang)
+        elif "fuel" in c_low or "petrol" in c_low or "ev" in c_low:
+            return t("cat.fuel", default="Fuel & EV", lang=actual_lang)
+        return c_raw
+
+    tag_disp = localize_tag(tag)
+    badge_disp = localize_badge(photo_badge)
+    cat_disp = localize_cat(cat)
+    mins_unit = t("nav.mins", default="min", lang=actual_lang)
+
     # Translate highlights
     def localize_highlight(h_text: str) -> str:
         hl_lower = h_text.lower()
@@ -349,9 +397,9 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
 <div style='position: relative; width: 100%; height: 160px; border-radius: 10px; overflow: hidden; margin-bottom: 12px; background: #0f172a;'>
 <img src='{photo_url}' alt='{name}' style='width: 100%; height: 100%; object-fit: cover; display: block;' onerror="this.onerror=null; this.src='{fallback_photo}';" />
 <div style='position: absolute; top: 10px; right: 10px;'>
-<span style='background: {tag_col}; color: #ffffff; padding: 4px 10px; border-radius: 12px; font-size: 0.68rem; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.5);'>{tag}</span>
+<span style='background: {tag_col}; color: #ffffff; padding: 4px 10px; border-radius: 12px; font-size: 0.68rem; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.5);'>{tag_disp}</span>
 </div>
-<div style='position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(6px); padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; color: #38bdf8; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.4);'>{photo_badge}</div>
+<div style='position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(6px); padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; color: #38bdf8; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.4);'>{badge_disp}</div>
 </div>
 <div style='display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;'>
 <div>
@@ -361,7 +409,7 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
 </div>
 <div style='display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
 {rating_badge}
-<span style='color: #cbd5e1; font-size: 0.74rem;'>• {cat}</span>
+<span style='color: #cbd5e1; font-size: 0.74rem;'>• {cat_disp}</span>
 </div>
 </div>
 </div>
@@ -370,7 +418,7 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
 <div style='background: rgba(0,0,0,0.25); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 0.73rem; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;'>
 <div>📍 <b>{addr_label}</b> {addr}</div>
 <div>⏰ <b>{status_label}</b> <span style='color: #34d399; font-weight: 700;'>● {status_disp}</span></div>
-<div>🧭 <b>{dist_label}</b> ~{dist} km ({eta} min)</div>
+<div>🧭 <b>{dist_label}</b> ~{dist} km ({eta} {mins_unit})</div>
 {phone_html}
 </div>
 </div>"""

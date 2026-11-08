@@ -2105,6 +2105,31 @@ def render_view_navigation_header(title: str, subtitle: str, current_key: str = 
                 st.session_state.launch_quick_tour = True
                 st.rerun()
 
+    # Universal 8-Language Quick Bar accessible on EVERY view
+    lang_codes = list(SUPPORTED_LANGUAGES.keys())
+    with st.container(key=f"nav_quick_lang_bar_{current_key}"):
+        q_cols = st.columns(len(lang_codes))
+        for idx, code in enumerate(lang_codes):
+            with q_cols[idx]:
+                meta = SUPPORTED_LANGUAGES[code]
+                is_active = (code == cur_lang)
+                btn_label = f"🌐 {meta['native']}" if code == "en" else meta['native']
+                btn_type = "primary" if is_active else "secondary"
+                if st.button(btn_label, key=f"hdr_lang_btn_{current_key}_{code}", type=btn_type, use_container_width=True):
+                    if code != cur_lang:
+                        st.session_state.app_language = code
+                        try:
+                            from src.i18n import set_current_language
+                            set_current_language(code)
+                        except Exception:
+                            pass
+                        try:
+                            st.query_params["lang"] = code
+                        except Exception:
+                            pass
+                        st.toast(f"🌐 Switched to {meta['native']} ({meta['name']})", icon="✅")
+                        st.rerun()
+
     try:
         from src.aura_welcome_screen import render_aura_welcome_hud
         import streamlit.components.v1 as components
