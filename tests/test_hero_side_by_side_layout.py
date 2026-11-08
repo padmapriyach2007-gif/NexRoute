@@ -18,12 +18,11 @@ from src.travel_copilot_studio import (
 
 class TestHeroSideBySideLayout:
     def test_quantum_realm_css_contains_side_card_styling(self):
-        """QUANTUM_REALM_CSS must contain .qr-hero-card-side styles matching the 435px HUD height."""
+        """QUANTUM_REALM_CSS must contain borderless .qr-hero-card-side styles matching the 435px HUD height."""
         assert ".qr-hero-card-side" in QUANTUM_REALM_CSS
         assert "435px" in QUANTUM_REALM_CSS
-        assert "radial-gradient" in QUANTUM_REALM_CSS
-        assert "qr-hero-grid-overlay" in QUANTUM_REALM_CSS
-        assert "qr-hero-ambient-flare" in QUANTUM_REALM_CSS
+        assert "border: none" in QUANTUM_REALM_CSS
+        assert "background: transparent" in QUANTUM_REALM_CSS
 
     def test_render_quantum_hero_title_card_side_by_side(self, monkeypatch):
         """render_quantum_hero_title_card(side_by_side=True) must output .qr-hero-card-side."""

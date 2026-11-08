@@ -185,49 +185,26 @@ button[data-testid="baseButton-header"] {
     margin-bottom: 0px !important;
     min-height: 435px !important;
     height: 435px !important;
-    background: radial-gradient(ellipse 90% 70% at 50% 10%, rgba(14, 30, 68, 0.94) 0%, rgba(4, 9, 24, 0.98) 100%) !important;
-    border: 1.5px solid rgba(0, 240, 255, 0.32) !important;
-    border-radius: 22px !important;
-    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.14), inset 0 0 24px rgba(56, 189, 248, 0.05) !important;
-    backdrop-filter: blur(24px) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
     position: relative !important;
     overflow: hidden !important;
 }
 
 .qr-hero-card-side::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 8%;
-    right: 8%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent 0%, #00f0ff 25%, #818cf8 50%, #00f0ff 75%, transparent 100%) !important;
-    opacity: 0.95 !important;
-    box-shadow: 0 0 12px #00f0ff !important;
+    display: none !important;
+    content: none !important;
 }
 
 .qr-hero-card-side .qr-hero-grid-overlay {
-    position: absolute;
-    inset: 0;
-    background-image: 
-        linear-gradient(rgba(0, 240, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
-    background-size: 28px 28px;
-    pointer-events: none;
-    opacity: 0.7;
+    display: none !important;
 }
 
 .qr-hero-card-side .qr-hero-ambient-flare {
-    position: absolute;
-    top: 38%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 280px;
-    height: 160px;
-    background: radial-gradient(circle, rgba(0, 240, 255, 0.14) 0%, rgba(129, 140, 248, 0.08) 45%, transparent 75%);
-    filter: blur(34px);
-    pointer-events: none;
-    z-index: 1;
+    display: none !important;
 }
 
 .qr-hero-card-side .qr-hero-heading {
@@ -236,9 +213,11 @@ button[data-testid="baseButton-header"] {
 }
 
 .qr-hero-card-side .qr-hero-subtag {
+    font-family: 'JetBrains Mono', monospace !important;
     font-size: clamp(0.62rem, 1.1vw, 0.72rem) !important;
     letter-spacing: 0.18em !important;
     margin-bottom: 12px !important;
+    color: #94a3b8 !important;
 }
 
 .qr-hero-card-side .qr-hero-tagline {
@@ -1911,8 +1890,7 @@ def render_quantum_hero_title_card(side_by_side: bool = True):
     """
     Renders the NexRoute landing hero card with emblem, bold gradient title,
     subtag, and tagline.
-    When side_by_side=True, applies .qr-hero-card-side styling with matching 435px height,
-    futuristic neon cyan edge border, and glassmorphic telemetry glow.
+    When side_by_side=True, applies borderless .qr-hero-card-side styling with matching 435px height.
     """
     cur_lang = st.session_state.get("app_language", "en")
     ld = DASHBOARD_I18N.get(cur_lang, DASHBOARD_I18N["en"])
@@ -1920,11 +1898,9 @@ def render_quantum_hero_title_card(side_by_side: bool = True):
     extra_class = " qr-hero-card-side" if side_by_side else ""
     st.markdown(f"""
     <div class="qr-hero-wrapper{extra_class}" id="pathfinder-hero-wrapper">
-        <div class="qr-hero-grid-overlay"></div>
-        <div class="qr-hero-ambient-flare"></div>
         <!-- Hidden button for legacy quick-tour trigger compatibility -->
         <button id="btn-hero-quick-tour" class="quick-tour-trigger-btn" style="display:none;"></button>
-        <div class="qr-hero-main-content" style="position: relative; z-index: 2;">
+        <div class="qr-hero-main-content">
             <div class="qr-hero-emblem">🧭</div>
             <h1 class="qr-hero-heading" id="pathfinder-hero-title">{ld['title']}</h1>
             <div class="qr-hero-subtag">{ld['subtag']}</div>
