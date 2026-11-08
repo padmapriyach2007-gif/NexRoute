@@ -11212,7 +11212,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-        if st.button("◀ Previous Step", key=f"btn_step_prev{key_suffix}", disabled=is_first, use_container_width=True, help="Navigate backward to previous waypoint"):
+        if st.button(t("guide.prev_step", default="◀ Previous Step", lang=st.session_state.get("app_language", "en")), key=f"btn_step_prev{key_suffix}", disabled=is_first, use_container_width=True, help="Navigate backward to previous waypoint"):
 
 
 
@@ -11364,7 +11364,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
-        if st.button("Next Step ▶", key=f"btn_step_next{key_suffix}", disabled=is_last, use_container_width=True, help="Advance to next itinerary waypoint"):
+        if st.button(t("guide.next_step", default="Next Step ▶", lang=st.session_state.get("app_language", "en")), key=f"btn_step_next{key_suffix}", disabled=is_last, use_container_width=True, help="Advance to next itinerary waypoint"):
 
 
 
@@ -21292,7 +21292,7 @@ body {{
 
 
 
-            if st.button("📍 Pick Start on Map", key="btn_side_pick_start", use_container_width=True, help="Pick start point on map"):
+            if st.button(t("nav.pick_start_map", default="📍 Pick Start on Map", lang=c_lang_hud), key="btn_side_pick_start", use_container_width=True, help="Pick start point on map"):
 
 
 
@@ -21324,7 +21324,7 @@ body {{
 
 
 
-                if st.button("🎯 Focus Start", key="btn_side_focus_start", disabled=not has_orig, use_container_width=True, help="Center and zoom map directly on Start marker"):
+                if st.button(t("nav.focus_start", default="🎯 Focus Start", lang=c_lang_hud), key="btn_side_focus_start", disabled=not has_orig, use_container_width=True, help="Center and zoom map directly on Start marker"):
 
 
 
@@ -21368,7 +21368,7 @@ body {{
 
 
 
-                if st.button("✕ Clear Start", key="btn_side_clear_start", use_container_width=True, help="Clear start location"):
+                if st.button(t("nav.clear_start", default="✕ Clear Start", lang=c_lang_hud), key="btn_side_clear_start", use_container_width=True, help="Clear start location"):
 
 
 
@@ -21396,7 +21396,7 @@ body {{
 
 
 
-            if st.button("⇅ Swap Locations", key="btn_side_swap_endpoints", use_container_width=True, help="Swap Start and Destination locations"):
+            if st.button(t("nav.swap_locations", default="⇅ Swap Locations", lang=c_lang_hud), key="btn_side_swap_endpoints", use_container_width=True, help="Swap Start and Destination locations"):
 
 
 
@@ -21946,7 +21946,7 @@ body {{
 
 
 
-            if st.button("🏁 Pick Destination on Map", key="btn_side_pick_dest", use_container_width=True, help="Pick destination on map"):
+            if st.button(t("nav.pick_dest_map", default="🏁 Pick Destination on Map", lang=c_lang_hud), key="btn_side_pick_dest", use_container_width=True, help="Pick destination on map"):
 
 
 
@@ -21978,7 +21978,7 @@ body {{
 
 
 
-                if st.button("🎯 Focus Destination", key="btn_side_focus_dest", disabled=not has_dest, use_container_width=True, help="Center and zoom map directly on Destination marker"):
+                if st.button(t("nav.focus_dest", default="🎯 Focus Destination", lang=c_lang_hud), key="btn_side_focus_dest", disabled=not has_dest, use_container_width=True, help="Center and zoom map directly on Destination marker"):
 
 
 
@@ -22022,7 +22022,7 @@ body {{
 
 
 
-                if st.button("✕ Clear Destination", key="btn_side_clear_dest", disabled=not has_dest, use_container_width=True, help="Clear target destination"):
+                if st.button(t("nav.clear_dest", default="✕ Clear Destination", lang=c_lang_hud), key="btn_side_clear_dest", disabled=not has_dest, use_container_width=True, help="Clear target destination"):
 
 
 
@@ -22043,7 +22043,7 @@ body {{
 
             # Dedicated Clear Locations button: clears all route alternatives, start/destination pins, and resets state
             has_active_locs = bool(coords_orig or coords_dest or st.session_state.get("cached_candidate_routes") or st.session_state.get("persistent_route_data"))
-            if st.button("🗑️ Clear Locations", key="btn_clear_all_locations_routes", use_container_width=True, disabled=not has_active_locs, help="Clear all route paths, start/destination pins, and return map to clean unrouted view"):
+            if st.button(t("nav.clear_all_locations", default="🗑️ Clear Locations", lang=c_lang_hud), key="btn_clear_all_locations_routes", use_container_width=True, disabled=not has_active_locs, help="Clear all route paths, start/destination pins, and return map to clean unrouted view"):
                 st.session_state.is_custom_start_place = False
                 st.session_state.orig_candidates = []
                 st.session_state.orig_candidates_query = ""
@@ -22079,7 +22079,7 @@ body {{
 
 # ➕ Highly Visible "ADD A STOP TO YOUR ROUTE" Section (Requirement 6)
             st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
-            with st.expander("➕ ADD A STOP TO YOUR ROUTE", expanded=False):
+            with st.expander(t("nav.add_stop_expander", default="➕ ADD A STOP TO YOUR ROUTE", lang=c_lang_hud), expanded=False):
                 st.markdown("<div style='font-size: 0.74rem; color: #94a3b8; margin-bottom: 8px;'>✨ <i>Add places to visit along your journey.</i></div>", unsafe_allow_html=True)
                 if not coords_orig or not coords_dest:
                     st.info("⚠️ Please select your starting location and destination before adding stops.")
@@ -22087,24 +22087,24 @@ body {{
                     st.caption("Add an intermediate stop along your route:")
                     c_st_cat1, c_st_cat2, c_st_cat3 = st.columns(3)
                     with c_st_cat1:
-                        if st.button("🍽️ Dining", key="btn_quick_stop_food", use_container_width=True):
+                        if st.button(t("cat.dining", default="🍽️ Dining", lang=c_lang_hud), key="btn_quick_stop_food", use_container_width=True):
                             st.session_state["show_stop_category"] = "food"
                     with c_st_cat2:
-                        if st.button("⛽ Fuel/EV", key="btn_quick_stop_fuel", use_container_width=True):
+                        if st.button(t("cat.fuel", default="⛽ Fuel/EV", lang=c_lang_hud), key="btn_quick_stop_fuel", use_container_width=True):
                             st.session_state["show_stop_category"] = "fuel"
                     with c_st_cat3:
-                        if st.button("🏥 Medical", key="btn_quick_stop_health", use_container_width=True):
+                        if st.button(t("cat.medical", default="🏥 Medical", lang=c_lang_hud), key="btn_quick_stop_health", use_container_width=True):
                             st.session_state["show_stop_category"] = "health"
 
                     c_st_cat4, c_st_cat5, c_st_cat6 = st.columns(3)
                     with c_st_cat4:
-                        if st.button("🏧 ATM/Bank", key="btn_quick_stop_atm", use_container_width=True):
+                        if st.button(t("cat.atm", default="🏧 ATM/Bank", lang=c_lang_hud), key="btn_quick_stop_atm", use_container_width=True):
                             st.session_state["show_stop_category"] = "atm"
                     with c_st_cat5:
-                        if st.button("🏨 Hotel", key="btn_quick_stop_hotel", use_container_width=True):
+                        if st.button(t("cat.hotel", default="🏨 Hotel", lang=c_lang_hud), key="btn_quick_stop_hotel", use_container_width=True):
                             st.session_state["show_stop_category"] = "hotel"
                     with c_st_cat6:
-                        if st.button("🏛️ Tourist", key="btn_quick_stop_attraction", use_container_width=True):
+                        if st.button(t("cat.tourist", default="🏛️ Tourist", lang=c_lang_hud), key="btn_quick_stop_attraction", use_container_width=True):
                             st.session_state["show_stop_category"] = "attraction"
 
                     stop_search_input = st.text_input(
@@ -22354,7 +22354,7 @@ body {{
 
 
 
-                if st.button("🧭 Fit Both on Map", key="btn_side_fit_both", use_container_width=True, help="Fit both Start and Destination within visible map view"):
+                if st.button(t("nav.fit_both", default="🧭 Fit Both on Map", lang=c_lang_hud), key="btn_side_fit_both", use_container_width=True, help="Fit both Start and Destination within visible map view"):
 
 
 

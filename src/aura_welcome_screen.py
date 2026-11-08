@@ -12,6 +12,7 @@ Full real-time voice assistant engine providing:
 import json
 import datetime
 from typing import Optional, Dict, Any
+from src.i18n import t
 
 
 def get_aura_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
@@ -99,6 +100,24 @@ def render_aura_welcome_hud(
     permission handling, zero-reload WebSocket command execution, and continuous conversational listening.
     """
     greeting_text = get_aura_startup_greeting(current_lang, user_name)
+
+    # Dynamic Multilingual Localization for all AURA HUD words & labels
+    brand_title = t("aura.brand_title", default="NEXROUTE", lang=current_lang)
+    brand_sub = t("aura.brand_sub", default="AUTONOMOUS SATELLITE TRAVEL", lang=current_lang)
+    brand_pill = t("aura.brand_pill", default="AURA • JARVIS AI COPILOT", lang=current_lang)
+    btn_start_txt = t("aura.btn_speak", default="🎙️ SPEAK", lang=current_lang)
+    btn_end_txt = t("aura.btn_end", default="⏹ END", lang=current_lang)
+    status_idle_txt = t("aura.status_idle", default="● IDLE • READY", lang=current_lang)
+    transcript_ready_txt = t("aura.transcript_ready", default="Ready for your command, Boss. Speak anytime or select an orbital module.", lang=current_lang)
+
+    nav_title = t("nav.module_title", default="Navigation", lang=current_lang)
+    nav_sub = t("nav.module_sub", default="CORRIDOR ROUTING", lang=current_lang)
+    hotels_title = t("hotels.module_title", default="Hotels", lang=current_lang)
+    hotels_sub = t("hotels.module_sub", default="STAYS & RESORTS", lang=current_lang)
+    flights_title = t("flights.module_title", default="Flights", lang=current_lang)
+    flights_sub = t("flights.module_sub", default="AIR CORRIDORS", lang=current_lang)
+    food_title = t("food.module_title", default="Restaurants", lang=current_lang)
+    food_sub = t("food.module_sub", default="DINING & FOOD", lang=current_lang)
 
     bcp47_map = {
         "en": "en-IN",
@@ -1003,26 +1022,26 @@ def render_aura_welcome_hud(
                 </svg>
             </div>
             <div class="brand-titles">
-                <span class="brand-nexroute-title">NEXROUTE</span>
-                <span class="brand-nexroute-sub">AUTONOMOUS SATELLITE TRAVEL</span>
+                <span class="brand-nexroute-title">{brand_title}</span>
+                <span class="brand-nexroute-sub">{brand_sub}</span>
             </div>
         </div>
 
         <div class="brand-pill">
-            AURA • JARVIS AI COPILOT
+            {brand_pill}
         </div>
 
         <div class="top-right-controls">
             <!-- Persistent Smart Voice Session Toggle -->
             <button class="btn-session-main start" id="btnSessionToggle" onclick="window.togglePersistentVoiceSession()" title="Start / Pause Continuous Voice Session">
-                ▶ START AURA
+                {btn_start_txt}
             </button>
             <!-- End Session Button -->
             <button class="btn-session-end" id="btnEndSession" onclick="window.endVoiceSession()" style="display: none;" title="End Voice Session (Offline)">
-                ⏹ END
+                {btn_end_txt}
             </button>
-            <div class="status-badge offline" id="statusBadge">
-                ● AURA OFFLINE
+            <div class="status-badge idle" id="statusBadge">
+                {status_idle_txt}
             </div>
         </div>
     </div>
@@ -1102,7 +1121,7 @@ def render_aura_welcome_hud(
             </div>
 
             <div class="live-transcript-box" id="transcriptBox">
-                Ready for voice command, Boss. Speak anytime or select an orbital module.
+                {transcript_ready_txt}
             </div>
         </div>
 
@@ -1123,8 +1142,8 @@ def render_aura_welcome_hud(
                     </svg>
                 </div>
                 <div class="holo-node-meta">
-                    <span class="holo-node-title">Navigation</span>
-                    <span class="holo-node-sub">CORRIDOR ROUTING</span>
+                    <span class="holo-node-title">{nav_title}</span>
+                    <span class="holo-node-sub">{nav_sub}</span>
                 </div>
                 <div class="holo-status-blip" style="background: #00e5ff; box-shadow: 0 0 8px #00e5ff;"></div>
             </div>
@@ -1148,8 +1167,8 @@ def render_aura_welcome_hud(
                     </svg>
                 </div>
                 <div class="holo-node-meta">
-                    <span class="holo-node-title">Hotels</span>
-                    <span class="holo-node-sub" style="color: #fbbf24;">STAYS & RESORTS</span>
+                    <span class="holo-node-title">{hotels_title}</span>
+                    <span class="holo-node-sub" style="color: #fbbf24;">{hotels_sub}</span>
                 </div>
                 <div class="holo-status-blip" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></div>
             </div>
@@ -1167,8 +1186,8 @@ def render_aura_welcome_hud(
                     </svg>
                 </div>
                 <div class="holo-node-meta">
-                    <span class="holo-node-title">Flights</span>
-                    <span class="holo-node-sub" style="color: #00ffc6;">AIR CORRIDORS</span>
+                    <span class="holo-node-title">{flights_title}</span>
+                    <span class="holo-node-sub" style="color: #00ffc6;">{flights_sub}</span>
                 </div>
                 <div class="holo-status-blip" style="background: #00ffc6; box-shadow: 0 0 8px #00ffc6;"></div>
             </div>
@@ -1190,8 +1209,8 @@ def render_aura_welcome_hud(
                     </svg>
                 </div>
                 <div class="holo-node-meta">
-                    <span class="holo-node-title">Restaurants</span>
-                    <span class="holo-node-sub" style="color: #f472b6;">DINING & FOOD</span>
+                    <span class="holo-node-title">{food_title}</span>
+                    <span class="holo-node-sub" style="color: #f472b6;">{food_sub}</span>
                 </div>
                 <div class="holo-status-blip" style="background: #ec4899; box-shadow: 0 0 8px #ec4899;"></div>
             </div>
@@ -1223,6 +1242,18 @@ def _build_jarvis_controller_script(
     var bcp47Lang = {json.dumps(bcp47_code)};
     var shouldAutoSpeak = {json.dumps(bool(auto_speak))};
     var initialGreetingText = {json.dumps(greeting_text)};
+
+    var txtGreeting = {json.dumps(t("aura.status_greeting", default="🔊 GREETING, BOSS...", lang=current_lang))};
+    var txtListening = {json.dumps(t("aura.status_listening", default="🎙️ LISTENING...", lang=current_lang))};
+    var txtSpeaking = {json.dumps(t("aura.status_speaking", default="🔊 SPEAKING...", lang=current_lang))};
+    var txtProcessing = {json.dumps(t("aura.status_processing", default="⚡ PROCESSING...", lang=current_lang))};
+    var txtPaused = {json.dumps(t("aura.status_paused", default="⏸️ PAUSED", lang=current_lang))};
+    var txtIdle = {json.dumps(t("aura.status_idle", default="● IDLE • READY", lang=current_lang))};
+    var txtOffline = {json.dumps(t("aura.status_offline", default="● AURA OFFLINE", lang=current_lang))};
+    var txtBtnPause = {json.dumps(t("aura.btn_pause", default="⏸ PAUSE", lang=current_lang))};
+    var txtBtnResume = {json.dumps(t("aura.btn_resume", default="▶ RESUME", lang=current_lang))};
+    var txtBtnSpeak = {json.dumps(t("aura.btn_speak", default="🎙️ SPEAK", lang=current_lang))};
+    var txtBtnStart = {json.dumps(t("aura.btn_start", default="▶ START AURA", lang=current_lang))};
 
     var pWin = window;
     var pDoc = document;
@@ -1371,11 +1402,11 @@ def _build_jarvis_controller_script(
             isProcessing = false;
             if (badge) {{
                 badge.className = 'status-badge greeting';
-                badge.innerText = '🔊 GREETING, BOSS...';
+                badge.innerText = txtGreeting;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main pause';
-                btnToggle.innerHTML = '⏸ PAUSE';
+                btnToggle.innerHTML = txtBtnPause;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
@@ -1385,11 +1416,11 @@ def _build_jarvis_controller_script(
             isProcessing = false;
             if (badge) {{
                 badge.className = 'status-badge listening';
-                badge.innerText = '🎙️ LISTENING...';
+                badge.innerText = txtListening;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main pause';
-                btnToggle.innerHTML = '⏸ PAUSE';
+                btnToggle.innerHTML = txtBtnPause;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (midRing) midRing.style.boxShadow = '0 0 32px #00f0ff';
@@ -1399,11 +1430,11 @@ def _build_jarvis_controller_script(
             isProcessing = false;
             if (badge) {{
                 badge.className = 'status-badge speaking';
-                badge.innerText = '🔊 SPEAKING...';
+                badge.innerText = txtSpeaking;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main pause';
-                btnToggle.innerHTML = '⏸ PAUSE';
+                btnToggle.innerHTML = txtBtnPause;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
@@ -1413,11 +1444,11 @@ def _build_jarvis_controller_script(
             isProcessing = true;
             if (badge) {{
                 badge.className = 'status-badge thinking';
-                badge.innerText = '⚡ PROCESSING...';
+                badge.innerText = txtProcessing;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main pause';
-                btnToggle.innerHTML = '⏸ PAUSE';
+                btnToggle.innerHTML = txtBtnPause;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (midRing) midRing.style.boxShadow = '0 0 28px #a855f7';
@@ -1427,11 +1458,11 @@ def _build_jarvis_controller_script(
             isProcessing = false;
             if (badge) {{
                 badge.className = 'status-badge paused';
-                badge.innerText = '⏸️ PAUSED';
+                badge.innerText = txtPaused;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main resume';
-                btnToggle.innerHTML = '▶ RESUME';
+                btnToggle.innerHTML = txtBtnResume;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (midRing) midRing.style.boxShadow = '0 0 16px rgba(245, 158, 11, 0.45)';
@@ -1441,11 +1472,11 @@ def _build_jarvis_controller_script(
             isProcessing = false;
             if (badge) {{
                 badge.className = 'status-badge idle';
-                badge.innerText = '● IDLE • READY';
+                badge.innerText = txtIdle;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main start';
-                btnToggle.innerHTML = '🎙️ SPEAK';
+                btnToggle.innerHTML = txtBtnSpeak;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (midRing) midRing.style.boxShadow = '0 0 18px rgba(0, 240, 255, 0.45)';
@@ -1456,11 +1487,11 @@ def _build_jarvis_controller_script(
             isProcessing = false;
             if (badge) {{
                 badge.className = 'status-badge offline';
-                badge.innerText = '● AURA OFFLINE';
+                badge.innerText = txtOffline;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main start';
-                btnToggle.innerHTML = '▶ START AURA';
+                btnToggle.innerHTML = txtBtnStart;
             }}
             if (btnEnd) btnEnd.style.display = 'none';
             if (midRing) midRing.style.boxShadow = '0 0 16px rgba(0, 240, 255, 0.35)';

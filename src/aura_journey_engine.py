@@ -1438,8 +1438,8 @@ def build_aura_journey_cockpit_html(
         <!-- Dynamic Route Journey Pipeline (Every Turn Represented) -->
         <div class='journey-pipeline-section'>
             <div class='pipeline-label-row'>
-                <span>ROUTE JOURNEY PIPELINE ({len(maneuvers)} ORDERED STEPS)</span>
-                <span>STEP <span id='hud-active-step'>{current_step_idx + 1}</span> OF {len(maneuvers)}</span>
+                <span>{t('guide.pipeline_title', default=f'ROUTE JOURNEY PIPELINE ({len(maneuvers)} ORDERED STEPS)', count=len(maneuvers), lang=curr_lang)}</span>
+                <span>{t('guide.step_of', default=f'STEP {{cur}} OF {{total}}', cur=f"<span id='hud-active-step'>{current_step_idx + 1}</span>", total=len(maneuvers), lang=curr_lang)}</span>
             </div>
             <div class='pipeline-track' id='pipeline-track-container'>
                 <!-- Dynamically populated via JS -->
@@ -1457,7 +1457,7 @@ def build_aura_journey_cockpit_html(
                 <div class='scene-cam-badge' id='hud-vehicle-mode'>VEHICLE: {norm_travel_mode}</div>
                 <div class='scene-cam-badge' id='hud-cam-mode'>CAM: 3D FOLLOW DRONE</div>
                 <div class='scene-cam-badge' id='hud-env-mode'>ENV: DAY</div>
-                <button id='btn-toggle-engine' class='scene-cam-badge' style='cursor: pointer; pointer-events: auto; background: rgba(56, 189, 248, 0.25); border: 1px solid rgba(56, 189, 248, 0.6); color: #e0f2fe; font-weight: 700;' onclick='window.toggleEngineCompanion()'>🔄 Toggle 3D / 2.5D</button>
+                <button id='btn-toggle-engine' class='scene-cam-badge' style='cursor: pointer; pointer-events: auto; background: rgba(56, 189, 248, 0.25); border: 1px solid rgba(56, 189, 248, 0.6); color: #e0f2fe; font-weight: 700;' onclick='window.toggleEngineCompanion()'>{t('guide.toggle_engine', default='🔄 Toggle 3D / 2.5D', lang=curr_lang)}</button>
             </div>
         </div>
 
@@ -1479,17 +1479,17 @@ def build_aura_journey_cockpit_html(
         <div class='controls-toolbar'>
             <!-- Dynamic Vehicle Mode Selector -->
             <div style='display: flex; gap: 5px; align-items: center; flex-wrap: wrap; width: 100%; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 6px;'>
-                <span style='font-size: 0.72rem; font-weight: 800; color: #38bdf8;'>TRAVEL VEHICLE:</span>
-                <button id='btn-veh-CAR' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "CAR" else ""}' data-mode='CAR' onclick='window.switchVehicleMode("CAR")'>🚗 Car</button>
-                <button id='btn-veh-BIKE' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BIKE" else ""}' data-mode='BIKE' onclick='window.switchVehicleMode("BIKE")'>🏍️ Bike</button>
-                <button id='btn-veh-BUS' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BUS" else ""}' data-mode='BUS' onclick='window.switchVehicleMode("BUS")'>🚌 Bus</button>
-                <button id='btn-veh-BICYCLE' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BICYCLE" else ""}' data-mode='BICYCLE' onclick='window.switchVehicleMode("BICYCLE")'>🚴 Cycle</button>
-                <button id='btn-veh-WALK' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "WALK" else ""}' data-mode='WALK' onclick='window.switchVehicleMode("WALK")'>🚶 Walk</button>
-                <button id='btn-veh-TRUCK' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRUCK" else ""}' data-mode='TRUCK' onclick='window.switchVehicleMode("TRUCK")'>🚚 Truck</button>
-                <button id='btn-veh-TRACTOR' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRACTOR" else ""}' data-mode='TRACTOR' onclick='window.switchVehicleMode("TRACTOR")'>🚜 Tractor</button>
-                <button id='btn-veh-FLIGHT' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "FLIGHT" else ""}' data-mode='FLIGHT' onclick='window.switchVehicleMode("FLIGHT")'>✈️ Flight</button>
-                <button id='btn-veh-WATERWAY' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "WATERWAY" else ""}' data-mode='WATERWAY' onclick='window.switchVehicleMode("WATERWAY")'>🚢 Ship</button>
-                <button id='btn-veh-TRAIN' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRAIN" else ""}' data-mode='TRAIN' onclick='window.switchVehicleMode("TRAIN")'>🚆 Train</button>
+                <span style='font-size: 0.72rem; font-weight: 800; color: #38bdf8;'>{t('guide.travel_vehicle', default='TRAVEL VEHICLE:', lang=curr_lang)}</span>
+                <button id='btn-veh-CAR' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "CAR" else ""}' data-mode='CAR' onclick='window.switchVehicleMode("CAR")'>🚗 {t('mode.car', default='Car', lang=curr_lang)}</button>
+                <button id='btn-veh-BIKE' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BIKE" else ""}' data-mode='BIKE' onclick='window.switchVehicleMode("BIKE")'>🏍️ {t('mode.bike', default='Bike', lang=curr_lang)}</button>
+                <button id='btn-veh-BUS' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BUS" else ""}' data-mode='BUS' onclick='window.switchVehicleMode("BUS")'>🚌 {t('mode.bus', default='Bus', lang=curr_lang)}</button>
+                <button id='btn-veh-BICYCLE' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BICYCLE" else ""}' data-mode='BICYCLE' onclick='window.switchVehicleMode("BICYCLE")'>🚴 {t('mode.cycle', default='Cycle', lang=curr_lang)}</button>
+                <button id='btn-veh-WALK' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "WALK" else ""}' data-mode='WALK' onclick='window.switchVehicleMode("WALK")'>🚶 {t('mode.walk', default='Walk', lang=curr_lang)}</button>
+                <button id='btn-veh-TRUCK' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRUCK" else ""}' data-mode='TRUCK' onclick='window.switchVehicleMode("TRUCK")'>🚚 {t('mode.truck', default='Truck', lang=curr_lang)}</button>
+                <button id='btn-veh-TRACTOR' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRACTOR" else ""}' data-mode='TRACTOR' onclick='window.switchVehicleMode("TRACTOR")'>🚜 {t('mode.tractor', default='Tractor', lang=curr_lang)}</button>
+                <button id='btn-veh-FLIGHT' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "FLIGHT" else ""}' data-mode='FLIGHT' onclick='window.switchVehicleMode("FLIGHT")'>✈️ {t('mode.flight', default='Flight', lang=curr_lang)}</button>
+                <button id='btn-veh-WATERWAY' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "WATERWAY" else ""}' data-mode='WATERWAY' onclick='window.switchVehicleMode("WATERWAY")'>🚢 {t('mode.ship', default='Ship', lang=curr_lang)}</button>
+                <button id='btn-veh-TRAIN' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRAIN" else ""}' data-mode='TRAIN' onclick='window.switchVehicleMode("TRAIN")'>🚆 {t('mode.train', default='Train', lang=curr_lang)}</button>
             </div>
             <!-- Avatar Actions -->
             <div style='display: flex; gap: 6px; align-items: center;'>
