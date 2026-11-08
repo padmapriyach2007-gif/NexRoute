@@ -6530,16 +6530,32 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
 
     speech_to_play = st.session_state.pop("aura_last_response_to_speak", "")
 
+    try:
+        import importlib
+        import src.aura_voice_hud
+        importlib.reload(src.aura_voice_hud)
+    except Exception:
+        pass
     from src.aura_voice_hud import render_jarvis_chatbot_hud_html
-    jarvis_hud_code = render_jarvis_chatbot_hud_html(
-        current_lang=cur_chat_l,
-        bot_logo_uri=aura_logo_uri,
-        auto_greeting_text=auto_greet_to_play,
-        last_response_text=speech_to_play,
-        key_prefix=key_prefix,
-        voice_enabled=st.session_state.get("aura_chatbot_voice_enabled", True),
-        continuous_mode=st.session_state.get("aura_chatbot_continuous_mode", False)
-    )
+    try:
+        jarvis_hud_code = render_jarvis_chatbot_hud_html(
+            current_lang=cur_chat_l,
+            bot_logo_uri=aura_logo_uri,
+            auto_greeting_text=auto_greet_to_play,
+            last_response_text=speech_to_play,
+            key_prefix=key_prefix,
+            voice_enabled=st.session_state.get("aura_chatbot_voice_enabled", True),
+            continuous_mode=st.session_state.get("aura_chatbot_continuous_mode", False)
+        )
+    except TypeError:
+        # Backward-compatibility fallback if an older version of the function is cached in sys.modules
+        jarvis_hud_code = render_jarvis_chatbot_hud_html(
+            current_lang=cur_chat_l,
+            bot_logo_uri=aura_logo_uri,
+            auto_greeting_text=auto_greet_to_play,
+            last_response_text=speech_to_play,
+            key_prefix=key_prefix
+        )
     components.html(jarvis_hud_code, height=72, scrolling=False)
 
     # Top Toolbar: History Drawer Toggle + New Chat

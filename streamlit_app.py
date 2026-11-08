@@ -38,6 +38,11 @@ else:
     src_pkg.__package__ = "src"
     sys.modules["src"] = src_pkg
 
+# Purge cached src submodules so hot reloads on Streamlit Community Cloud pick up fresh code
+for mod_name in list(sys.modules.keys()):
+    if mod_name.startswith("src."):
+        del sys.modules[mod_name]
+
 # Ensure working directory is project root
 os.chdir(str(ROOT_DIR))
 

@@ -627,7 +627,9 @@ def render_jarvis_chatbot_hud_html(
     last_response_text: str = "",
     key_prefix: str = "main",
     voice_enabled: bool = True,
-    continuous_mode: bool = False
+    continuous_mode: bool = False,
+    *args,
+    **kwargs
 ) -> str:
     """
     Renders the unified Jarvis Voice Assistant interface header for the AURA Chatbot.
