@@ -6750,126 +6750,127 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 st.rerun()
 
     # Unified ChatGPT-Style Message Composer Capsule (Plus Button + Input + Mic + Send Arrow)
+    def _submit_chat_input():
+        input_text = st.session_state.get(f"chat_text_in_{key_prefix}", "").strip()
+        if input_text:
+            st.session_state["pending_chat_prompt"] = input_text
+            st.session_state[f"chat_text_in_{key_prefix}"] = ""
+
     st.markdown('<div class="aura-chatgpt-composer-wrapper">', unsafe_allow_html=True)
-    with st.form(f"aura_chatgpt_form_{key_prefix}", clear_on_submit=True):
-        col_c_plus, col_c_input, col_c_mic, col_c_send = st.columns([1, 14, 1, 1], vertical_alignment="center")
+    col_c_plus, col_c_input, col_c_mic, col_c_send = st.columns([1, 14, 1, 1], vertical_alignment="center")
 
-        with col_c_plus:
-            with st.popover("➕", help="Add attachments, files, or travel context"):
-                st.markdown("<div style='font-size: 0.78rem; font-weight: 800; color: #38bdf8; margin-bottom: 8px;'>ATTACH TO JOURNEY</div>", unsafe_allow_html=True)
-                tab_file, tab_geo, tab_pref = st.tabs(["📄 Upload", "📍 Route Data", "⚙️ Preferences"])
-                with tab_file:
-                    up_file = st.file_uploader(
-                        "Upload File / Image",
-                        type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "md", "csv", "json", "py"],
-                        key=f"chat_uploader_{key_prefix}"
-                    )
-                    if up_file is not None:
-                        f_bytes = up_file.getvalue()
-                        f_name = up_file.name
-                        f_mime = up_file.type or "application/octet-stream"
-                        if "pending_chat_attachments" not in st.session_state:
-                            st.session_state.pending_chat_attachments = []
-                        if not any(a.get("name") == f_name for a in st.session_state.pending_chat_attachments):
-                            if f_mime.startswith("image/"):
-                                import base64
-                                b64_str = base64.b64encode(f_bytes).decode("ascii")
-                                st.session_state.pending_chat_attachments.append({
-                                    "type": "image",
-                                    "name": f_name,
-                                    "mime_type": f_mime,
-                                    "data_base64": b64_str
-                                })
-                            else:
-                                txt_content, tag = DocumentParser.extract_text_from_bytes(f_bytes, f_name)
-                                st.session_state.pending_chat_attachments.append({
-                                    "type": "document",
-                                    "name": f_name,
-                                    "text": txt_content,
-                                    "summary": tag
-                                })
-                            st.success(f"Attached: {f_name}")
-                            st.rerun()
-
-                with tab_geo:
-                    orig_l = st.session_state.get("user_live_label") or "Live GPS"
-                    dest_l = st.session_state.get("selected_dest_label") or "Unset Destination"
-                    c_orig = st.session_state.get("user_live_coords")
-                    c_dest = st.session_state.get("selected_dest_coords")
-                    st.caption(f"**Origin:** {orig_l} `({c_orig})`\n\n**Destination:** {dest_l} `({c_dest})`")
-                    if st.button("📌 Attach Live Coordinates & Corridor", key=f"btn_att_geo_{key_prefix}", use_container_width=True):
-                        if "pending_chat_attachments" not in st.session_state:
-                            st.session_state.pending_chat_attachments = []
-                        geo_info = f"Current Location: {orig_l} ({c_orig}), Target Destination: {dest_l} ({c_dest})"
-                        st.session_state.pending_chat_attachments.append({
-                            "type": "document",
-                            "name": "Live_Journey_Context.txt",
-                            "text": geo_info,
-                            "summary": "Live Navigation & Corridor Telemetry"
-                        })
-                        st.success("Attached live route data!")
+    with col_c_plus:
+        with st.popover("➕", help="Add attachments, files, or travel context"):
+            st.markdown("<div style='font-size: 0.78rem; font-weight: 800; color: #38bdf8; margin-bottom: 8px;'>ATTACH TO JOURNEY</div>", unsafe_allow_html=True)
+            tab_file, tab_geo, tab_pref = st.tabs(["📄 Upload", "📍 Route Data", "⚙️ Preferences"])
+            with tab_file:
+                up_file = st.file_uploader(
+                    "Upload File / Image",
+                    type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "md", "csv", "json", "py"],
+                    key=f"chat_uploader_{key_prefix}"
+                )
+                if up_file is not None:
+                    f_bytes = up_file.getvalue()
+                    f_name = up_file.name
+                    f_mime = up_file.type or "application/octet-stream"
+                    if "pending_chat_attachments" not in st.session_state:
+                        st.session_state.pending_chat_attachments = []
+                    if not any(a.get("name") == f_name for a in st.session_state.pending_chat_attachments):
+                        if f_mime.startswith("image/"):
+                            import base64
+                            b64_str = base64.b64encode(f_bytes).decode("ascii")
+                            st.session_state.pending_chat_attachments.append({
+                                "type": "image",
+                                "name": f_name,
+                                "mime_type": f_mime,
+                                "data_base64": b64_str
+                            })
+                        else:
+                            txt_content, tag = DocumentParser.extract_text_from_bytes(f_bytes, f_name)
+                            st.session_state.pending_chat_attachments.append({
+                                "type": "document",
+                                "name": f_name,
+                                "text": txt_content,
+                                "summary": tag
+                            })
+                        st.success(f"Attached: {f_name}")
                         st.rerun()
 
-                with tab_pref:
-                    st.caption("Active Routing Engine Preferences:")
-                    pref_tolls = st.checkbox("Avoid Toll Roads", value=st.session_state.get("avoid_tolls", False), key=f"chk_pref_toll_{key_prefix}")
-                    pref_hw = st.checkbox("Avoid Highways", value=st.session_state.get("avoid_highways", False), key=f"chk_pref_hw_{key_prefix}")
-                    if st.button("Apply to Assistant Context", key=f"btn_apply_pref_{key_prefix}", use_container_width=True):
-                        st.session_state.avoid_tolls = pref_tolls
-                        st.session_state.avoid_highways = pref_hw
-                        if "pending_chat_attachments" not in st.session_state:
-                            st.session_state.pending_chat_attachments = []
-                        st.session_state.pending_chat_attachments.append({
-                            "type": "document",
-                            "name": "Preferences.txt",
-                            "text": f"User Preferences: avoid_tolls={pref_tolls}, avoid_highways={pref_hw}",
-                            "summary": "User Journey Preferences"
-                        })
-                        st.success("Preferences updated!")
-                        st.rerun()
+            with tab_geo:
+                orig_l = st.session_state.get("user_live_label") or "Live GPS"
+                dest_l = st.session_state.get("selected_dest_label") or "Unset Destination"
+                c_orig = st.session_state.get("user_live_coords")
+                c_dest = st.session_state.get("selected_dest_coords")
+                st.caption(f"**Origin:** {orig_l} `({c_orig})`\n\n**Destination:** {dest_l} `({c_dest})`")
+                if st.button("📌 Attach Live Coordinates & Corridor", key=f"btn_att_geo_{key_prefix}", use_container_width=True):
+                    if "pending_chat_attachments" not in st.session_state:
+                        st.session_state.pending_chat_attachments = []
+                    geo_info = f"Current Location: {orig_l} ({c_orig}), Target Destination: {dest_l} ({c_dest})"
+                    st.session_state.pending_chat_attachments.append({
+                        "type": "document",
+                        "name": "Live_Journey_Context.txt",
+                        "text": geo_info,
+                        "summary": "Live Navigation & Corridor Telemetry"
+                    })
+                    st.success("Attached live route data!")
+                    st.rerun()
 
-        with col_c_input:
-            user_text_val = st.text_input(
-                "Ask Aura",
-                placeholder="Ask Aura anything about your journey...",
-                label_visibility="collapsed",
-                key=f"chat_text_in_{key_prefix}"
-            )
+            with tab_pref:
+                st.caption("Active Routing Engine Preferences:")
+                pref_tolls = st.checkbox("Avoid Toll Roads", value=st.session_state.get("avoid_tolls", False), key=f"chk_pref_toll_{key_prefix}")
+                pref_hw = st.checkbox("Avoid Highways", value=st.session_state.get("avoid_highways", False), key=f"chk_pref_hw_{key_prefix}")
+                if st.button("Apply to Assistant Context", key=f"btn_apply_pref_{key_prefix}", use_container_width=True):
+                    st.session_state.avoid_tolls = pref_tolls
+                    st.session_state.avoid_highways = pref_hw
+                    if "pending_chat_attachments" not in st.session_state:
+                        st.session_state.pending_chat_attachments = []
+                    st.session_state.pending_chat_attachments.append({
+                        "type": "document",
+                        "name": "Preferences.txt",
+                        "text": f"User Preferences: avoid_tolls={pref_tolls}, avoid_highways={pref_hw}",
+                        "summary": "User Journey Preferences"
+                    })
+                    st.success("Preferences updated!")
+                    st.rerun()
 
-        with col_c_mic:
-            with st.popover("🎙️", help="Voice input / speech recognition"):
-                cur_lang = st.session_state.get("app_language", "en")
-                v_info = LANGUAGE_SPEECH_MAP.get(cur_lang, LANGUAGE_SPEECH_MAP["en"])
-                bcp47_lang = v_info.get("bcp47", "en-IN")
-                st.caption(f"Speech Language: **{v_info.get('name', 'English')}** (`{bcp47_lang}`)")
-                try:
-                    aud_data = st.audio_input("Record voice question", key=f"rec_mic_{key_prefix}")
-                    if aud_data is not None:
-                        import speech_recognition as sr
-                        r_engine = sr.Recognizer()
-                        from io import BytesIO
-                        with sr.AudioFile(BytesIO(aud_data.getvalue())) as s_src:
-                            a_recorded = r_engine.record(s_src)
-                            try:
-                                transcribed = r_engine.recognize_google(a_recorded, language=bcp47_lang)
-                                if transcribed:
-                                    st.session_state.pending_chat_prompt = transcribed
-                                    st.success(f"🎙️ \"{transcribed}\"")
-                                    st.rerun()
-                            except Exception as e_rec:
-                                st.info(f"Could not transcribe audio ({e_rec}). Type your query in the chat box.")
-                except Exception as e_mic:
-                    st.caption("Voice ready. Microphone permissions active.")
+    with col_c_input:
+        st.text_input(
+            "Ask Aura",
+            placeholder="Ask Aura anything about your journey...",
+            label_visibility="collapsed",
+            key=f"chat_text_in_{key_prefix}",
+            on_change=_submit_chat_input
+        )
 
-        with col_c_send:
-            submit_click = st.form_submit_button("↑", help="Send to Aura")
+    with col_c_mic:
+        with st.popover("🎙️", help="Voice input / speech recognition"):
+            cur_lang = st.session_state.get("app_language", "en")
+            v_info = LANGUAGE_SPEECH_MAP.get(cur_lang, LANGUAGE_SPEECH_MAP["en"])
+            bcp47_lang = v_info.get("bcp47", "en-IN")
+            st.caption(f"Speech Language: **{v_info.get('name', 'English')}** (`{bcp47_lang}`)")
+            try:
+                aud_data = st.audio_input("Record voice question", key=f"rec_mic_{key_prefix}")
+                if aud_data is not None:
+                    import speech_recognition as sr
+                    r_engine = sr.Recognizer()
+                    from io import BytesIO
+                    with sr.AudioFile(BytesIO(aud_data.getvalue())) as s_src:
+                        a_recorded = r_engine.record(s_src)
+                        try:
+                            transcribed = r_engine.recognize_google(a_recorded, language=bcp47_lang)
+                            if transcribed:
+                                st.session_state.pending_chat_prompt = transcribed
+                                st.success(f"🎙️ \"{transcribed}\"")
+                                st.rerun()
+                        except Exception as e_rec:
+                            st.info(f"Could not transcribe audio ({e_rec}). Type your query in the chat box.")
+            except Exception as e_mic:
+                st.caption("Voice ready. Microphone permissions active.")
+
+    with col_c_send:
+        st.button("↑", key=f"chat_send_btn_{key_prefix}", help="Send to Aura", on_click=_submit_chat_input)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-    if submit_click and user_text_val and user_text_val.strip():
-        with st.spinner("AURA is planning your journey..."):
-            _execute_chat_turn(user_text_val.strip())
-        st.rerun()
 
 # Initialize Default Multi-Objective Navigation & Facilities States (No Sidebar)
 

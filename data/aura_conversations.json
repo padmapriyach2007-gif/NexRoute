@@ -1,4 +1,59 @@
 {
-  "conversations": {},
-  "active_conv_id": null
+  "conversations": {
+    "conv_1794111730_fd4b10": {
+      "id": "conv_1794111730_fd4b10",
+      "title": "Trip to Hyderabad",
+      "created_at": "2026-11-08T09:52:10.281302",
+      "updated_at": "2026-11-08T09:52:10.281302",
+      "messages": []
+    },
+    "conv_1794111730_91a119": {
+      "id": "conv_1794111730_91a119",
+      "title": "Hyderabad for 3 days",
+      "created_at": "2026-11-08T09:52:10.330531",
+      "updated_at": "2026-11-08T09:52:10.375155",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "Welcome to AURA"
+        },
+        {
+          "role": "user",
+          "content": "Plan a trip to Hyderabad for 3 days"
+        },
+        {
+          "role": "assistant",
+          "content": "Here is your plan..."
+        }
+      ]
+    },
+    "conv_1794112882_84ea9d": {
+      "id": "conv_1794112882_84ea9d",
+      "title": "Trip to Hyderabad",
+      "created_at": "2026-11-08T10:11:22.113181",
+      "updated_at": "2026-11-08T10:11:22.113181",
+      "messages": []
+    },
+    "conv_1794112882_567b46": {
+      "id": "conv_1794112882_567b46",
+      "title": "Hyderabad for 3 days",
+      "created_at": "2026-11-08T10:11:22.142538",
+      "updated_at": "2026-11-08T10:11:22.173441",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "Welcome to AURA"
+        },
+        {
+          "role": "user",
+          "content": "Plan a trip to Hyderabad for 3 days"
+        },
+        {
+          "role": "assistant",
+          "content": "Here is your plan..."
+        }
+      ]
+    }
+  },
+  "active_conv_id": "conv_1794111730_fd4b10"
 }
