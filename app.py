@@ -5949,13 +5949,22 @@ if "pathfinder_bot" not in st.session_state:
 
 from src.aura_chat_store import AuraConversationStore
 
+def _sanitize_speech_text(raw_text: Any, max_len: int = 280) -> str:
+    """Safely sanitize text for speech synthesis without scoping or free variable issues."""
+    if not raw_text:
+        return ""
+    import re as _safe_regex
+    cleaned = _safe_regex.sub(r'[*#_`~>\[\]\(\)]', ' ', str(raw_text))[:max_len]
+    return cleaned.replace("'", "\\'").replace('"', '\\"').replace("\n", " ").strip()
+
 def get_aura_welcome_message(lang_code: str = "en"):
+    from src.aura_voice_hud import get_chatbot_copilot_greeting
+    greeting = get_chatbot_copilot_greeting(lang_code)
     badge = "✦ AURA • TRAVEL COPILOT"
-    msg = "Hi! I'm AURA ✨\n\nYour intelligent AI travel copilot. Where would you like to explore today?\n\nAsk me about route planning, shortest corridors, nearby attractions, halfway stops, road conditions, or fuel & toll costs."
     return {
         "role": "assistant",
         "badge": badge,
-        "content": msg
+        "content": f"**{greeting}**\n\nAsk me about route planning, shortest corridors, itineraries, travel budgets, hotels, or road conditions."
     }
 
 if "aura_active_conv_id" not in st.session_state:
@@ -6202,8 +6211,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
 
         # Set last response to speak aloud via SpeechSynthesis in Chatbot audio engine
         raw_to_speak = ans.get("spoken_response") or ans.get("response", "")
-        import re as _safe_re
-        clean_speech = _safe_re.sub(r'[*#_`~>\[\]\(\)]', ' ', str(raw_to_speak))[:280].replace("'", "\\'").replace('"', '\\"').replace("\n", " ").strip()
+        clean_speech = _sanitize_speech_text(raw_to_speak, 280)
         st.session_state.aura_last_response_to_speak = clean_speech
 
         st.session_state.pending_chat_attachments = []
@@ -6740,8 +6748,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                     """, unsafe_allow_html=True)
                 else:
                     b_badge = f"<span style='font-size: 0.64rem; font-weight: 800; color: #38bdf8; font-family: monospace; letter-spacing: 0.05em; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 2px 8px; border-radius: 6px; display: inline-block;'>✦ {msg.get('badge', 'AURA • TRAVEL COPILOT')}</span>"
-                    import re
-                    clean_text = re.sub(r'[*#_`~>\[\]\(\)]', ' ', msg.get('content', ''))[:280].replace("'", "\\'").replace('"', '\\"').replace("\n", " ")
+                    clean_text = _sanitize_speech_text(msg.get('content', ''), 280)
 
                     st.markdown(f"""
                     <div class="aura-msg-assistant" style="background: rgba(13, 20, 36, 0.85); border: 1px solid rgba(56, 189, 248, 0.26); border-radius: 16px 16px 16px 4px; padding: 13px 16px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.40);">

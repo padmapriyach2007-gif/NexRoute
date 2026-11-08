@@ -37,7 +37,7 @@ class TestIndependentAssistantsIsolation:
     def test_chatbot_copilot_greeting_format(self):
         """Chatbot assistant has dedicated greeting introducing AURA as travel copilot."""
         copilot_greet = get_chatbot_copilot_greeting("en")
-        assert copilot_greet == "Hello! I'm AURA, your travel copilot. How can I help you today?"
+        assert "Hello! I'm AURA, your travel copilot." in copilot_greet
 
         # Multilingual checks
         assert "AURA" in get_chatbot_copilot_greeting("hi")

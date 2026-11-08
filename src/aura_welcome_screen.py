@@ -16,49 +16,75 @@ from typing import Optional, Dict, Any
 
 def get_aura_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
     """
-    Returns the exact time-appropriate JARVIS greeting.
-    - Morning (5:00 - 11:59): Good morning, Boss! Welcome to NexRoute. How can I help you?
-    - Afternoon (12:00 - 16:59): Good afternoon, Boss! Welcome to NexRoute. How can I help you?
-    - Evening (17:00 - 4:59): Good evening, Boss! Welcome to NexRoute. How can I help you?
-    No extra promotional, tutorial, or introductory sentences.
+    Returns the exact time-appropriate JARVIS greeting based on local time:
+    - Morning (5:00 - 11:59): Good morning, Boss! Welcome to NextRoute. How can I help you?
+    - Afternoon (12:00 - 16:59): Good afternoon, Boss! Welcome to NextRoute. What can I do for you?
+    - Evening (17:00 - 20:59): Good evening, Boss! Welcome to NextRoute. How can I help you?
+    - Night (21:00 - 4:59): Hello, Boss! Welcome back to NextRoute. How can I assist you tonight?
     """
     now_hour = datetime.datetime.now().hour
     if 5 <= now_hour < 12:
-        tod_en = "Good morning"
-        tod_te = "శుభోదయం"
-        tod_hi = "शुभ प्रभात"
-        tod_ta = "காலை வணக்கம்"
-        tod_kn = "ಶುಭೋದಯ"
-        tod_ml = "സുപ്രഭാതം"
+        period = "morning"
     elif 12 <= now_hour < 17:
-        tod_en = "Good afternoon"
-        tod_te = "నమస్కారం"
-        tod_hi = "नमस्ते"
-        tod_ta = "மதிய வணக்கம்"
-        tod_kn = "ನಮಸ್ಕಾರ"
-        tod_ml = "നമസ്കാരം"
+        period = "afternoon"
+    elif 17 <= now_hour < 21:
+        period = "evening"
     else:
-        tod_en = "Good evening"
-        tod_te = "శుభ సాయంత్రం"
-        tod_hi = "शुभ संध्या"
-        tod_ta = "மாலை வணக்கம்"
-        tod_kn = "ಶುಭ ಸಂಜೆ"
-        tod_ml = "ശുഭ സാయాഹ്നം"
+        period = "night"
 
-    if lang == "te":
-        return f"{tod_te}, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?"
-    elif lang == "hi":
-        return f"{tod_hi}, {user_name}! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?"
-    elif lang == "ta":
-        return f"{tod_ta}, {user_name}! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
-    elif lang == "kn":
-        return f"{tod_kn}, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು మీకు ఎలా సహాయం చేయాలి?"
-    elif lang == "ml":
-        return f"{tod_ml}, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എന്ത് സഹായമാണ് ചെയ്യേണ്ടത്?"
-    else:
-        return f"{tod_en}, {user_name}! Welcome to NextRoute. How can I help you?"
+    greetings_table = {
+        "en": {
+            "morning": f"Good morning, {user_name}! Welcome to NextRoute. How can I help you?",
+            "afternoon": f"Good afternoon, {user_name}! Welcome to NextRoute. What can I do for you?",
+            "evening": f"Good evening, {user_name}! Welcome to NextRoute. How can I help you?",
+            "night": f"Hello, {user_name}! Welcome back to NextRoute. How can I assist you tonight?"
+        },
+        "te": {
+            "morning": f"శుభోదయం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
+            "afternoon": f"శుభ మధ్యాహ్నం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. మీ కోసం నేను ఏమి చేయగలను?",
+            "evening": f"శుభ సాయంత్రం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
+            "night": f"నమస్కారం, {user_name}! నెక్స్‌రూట్‌కి తిరిగి స్వాగతం. ఈ రాత్రి నేను మీకు ఎలా సహాయపడగలను?"
+        },
+        "hi": {
+            "morning": f"शुभ प्रभात, {user_name}! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
+            "afternoon": f"शुभ दोपहर, {user_name}! नेक्स्ट-रूट में आपका स्वागत है। मैं आपके लिए क्या कर सकता हूँ?",
+            "evening": f"शुभ संध्या, {user_name}! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
+            "night": f"नमस्ते, {user_name}! नेक्स्ट-रूट में पुनः स्वागत है। आज रात मैं आपकी क्या सहायता कर सकता हूँ?"
+        },
+        "ta": {
+            "morning": f"காலை வணக்கம், {user_name}! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+            "afternoon": f"மதிய வணக்கம், {user_name}! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. உங்களுக்காக நான் என்ன செய்ய முடியும்?",
+            "evening": f"மாலை வணக்கம், {user_name}! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+            "night": f"வணக்கம், {user_name}! நெக்ஸ்ட்-ரூட்டிற்கு மீண்டும் நல்வரவு. இன்று இரவு நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
+        },
+        "kn": {
+            "morning": f"ಶುಭೋದಯ, {user_name}! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+            "afternoon": f"ಶುಭ ಮಧ್ಯಾಹ್ನ, {user_name}! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಿಮಗಾಗಿ ನಾನು ಏನು ಮಾಡಲಿ?",
+            "evening": f"ಶುಭ ಸಂಜೆ, {user_name}! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+            "night": f"ನಮಸ್ಕಾರ, {user_name}! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಮತ್ತೆ ಸುಸ್ವಾಗತ. ಇಂದು ರಾತ್ರಿ ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+        },
+        "ml": {
+            "morning": f"സുപ്രഭാതം, {user_name}! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
+            "afternoon": f"ശുഭ ഉച്ചതിരിഞ്ഞ്, {user_name}! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എന്താണ് ചെയ്യേണ്ടത്?",
+            "evening": f"ശുഭ സായാഹ്നം, {user_name}! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
+            "night": f"ഹലോ, {user_name}! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് വീണ്ടും സ്വാഗതം. ഇന്ന് രാത്രി ഞാൻ എങ്ങനെ സഹായിക്കണം?"
+        },
+        "bn": {
+            "morning": f"সুপ্রভাত, {user_name}! নেক্সটরুটে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+            "afternoon": f"শুভ অপরাহ্ন, {user_name}! নেক্সটরুটে স্বাগতম। আমি আপনার জন্য কি করতে পারি?",
+            "evening": f"শুভ সন্ধ্যা, {user_name}! নেক্সটরুটে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+            "night": f"হ্যালো, {user_name}! নেক্সটরুটে আবার স্বাগতম। আজ রাতে আমি আপনাকে কীভাবে সাহায্য করতে পারি?"
+        },
+        "mr": {
+            "morning": f"शुभ सकाळ, {user_name}! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपली काय मदत करू शकतो?",
+            "afternoon": f"शुभ दुपार, {user_name}! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपल्यासाठी काय करू शकतो?",
+            "evening": f"शुभ संध्याकाळ, {user_name}! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपली काय मदत करू शकतो?",
+            "night": f"नमस्कार, {user_name}! नेक्स्ट-रूट मध्ये पुन्हा स्वागत आहे. आज रात्री मी आपली कशी मदत करू शकतो?"
+        }
+    }
 
-
+    lang_map = greetings_table.get(lang, greetings_table["en"])
+    return lang_map.get(period, lang_map["morning"])
 def render_aura_welcome_hud(
     current_lang: str = "en",
     auto_speak: bool = True,
@@ -81,10 +107,8 @@ def render_aura_welcome_hud(
         "ta": "ta-IN",
         "kn": "kn-IN",
         "ml": "ml-IN",
-        "es": "es-ES",
-        "fr": "fr-FR",
-        "de": "de-DE",
-        "ja": "ja-JP"
+        "bn": "bn-IN",
+        "mr": "mr-IN"
     }
     bcp47_code = bcp47_map.get(current_lang, "en-IN")
 
@@ -842,7 +866,7 @@ def _build_jarvis_controller_script(
     """
     Builds the JavaScript controller script that handles speech synthesis,
     speech recognition, continuous voice loop, voice activity detection,
-    intelligent mid-speech interruption, and React WebSocket communication bridge to Streamlit.
+    intelligent mid-speech interruption, silence detection, and React WebSocket communication bridge to Streamlit.
     """
     return f"""
 <script>
@@ -867,10 +891,98 @@ def _build_jarvis_controller_script(
         pDoc = document;
     }}
 
-    // Central Persistent State: 'INACTIVE', 'LISTENING', 'PROCESSING', 'SPEAKING', 'PAUSED', 'STOPPED'
-    var sessionState = localStorage.getItem('aura_persistent_voice_state') || (shouldAutoSpeak ? 'LISTENING' : 'INACTIVE');
+    // -------------------------------------------------------------------------
+    // Configurable Voice & Silence Detection Thresholds
+    // -------------------------------------------------------------------------
+    var voiceConfig = {{
+        silenceThresholdMs: 1400,        // Short pause: wait for sentence to finish
+        vadTimeoutMs: 1400,              // Backward-compatibility alias
+        extendedSilenceMs: 6500,         // Extended silence: stop active recording and enter IDLE
+        maxUtteranceDurationMs: 15000,   // Max duration per utterance
+        autoStopOnSilence: true,         // Automatically stop active mic recording on silence
+        autoRestartAfterResponse: true,  // Automatically return to waiting state after response
+        preventEmptyTranscriptions: true // Discard empty transcriptions
+    }};
+
+    // -------------------------------------------------------------------------
+    // Time-Appropriate Client-Side Local Time Greeting
+    // -------------------------------------------------------------------------
+    function getClientLocalGreeting(lang, userName) {{
+        var h = new Date().getHours();
+        var period = 'morning';
+        if (h >= 5 && h < 12) period = 'morning';
+        else if (h >= 12 && h < 17) period = 'afternoon';
+        else if (h >= 17 && h < 21) period = 'evening';
+        else period = 'night';
+
+        var greetings = {{
+            en: {{
+                morning: "Good morning, " + userName + "! Welcome to NextRoute. How can I help you?",
+                afternoon: "Good afternoon, " + userName + "! Welcome to NextRoute. What can I do for you?",
+                evening: "Good evening, " + userName + "! Welcome to NextRoute. How can I help you?",
+                night: "Hello, " + userName + "! Welcome back to NextRoute. How can I assist you tonight?"
+            }},
+            te: {{
+                morning: "శుభోదయం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
+                afternoon: "శుభ మధ్యాహ్నం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. మీ కోసం నేను ఏమి చేయగలను?",
+                evening: "శుభ సాయంత్రం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
+                night: "నమస్కారం, " + userName + "! నెక్స్‌రూట్‌కి తిరిగి స్వాగతం. ఈ రాత్రి నేను మీకు ఎలా సహాయపడగలను?"
+            }},
+            hi: {{
+                morning: "शुभ प्रभात, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
+                afternoon: "शुभ दोपहर, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं आपके लिए क्या कर सकता हूँ?",
+                evening: "शुभ संध्या, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
+                night: "नमस्ते, " + userName + "! नेक्स्ट-रूट में पुनः स्वागत है। आज रात मैं आपकी क्या सहायता कर सकता हूँ?"
+            }},
+            ta: {{
+                morning: "காலை வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+                afternoon: "மதிய வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. உங்களுக்காக நான் என்ன செய்ய முடியும்?",
+                evening: "மாலை வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+                night: "வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு மீண்டும் நல்வரவு. இன்று இரவு நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
+            }},
+            kn: {{
+                morning: "ಶುಭೋದಯ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+                afternoon: "ಶುಭ ಮಧ್ಯಾಹ್ನ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಿಮಗಾಗಿ ನಾನು ಏನು ಮಾಡಲಿ?",
+                evening: "ಶುಭ ಸಂಜೆ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+                night: "ನಮಸ್ಕಾರ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಮತ್ತೆ ಸುಸ್ವಾಗತ. ಇಂದು ರಾತ್ರಿ ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+            }},
+            ml: {{
+                morning: "സുപ്രഭാതം, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
+                afternoon: "ശുഭ ഉച്ചതിരിഞ്ഞ്, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എന്താണ് ചെയ്യേണ്ടത്?",
+                evening: "ശുഭ സായാഹ്നം, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
+                night: "ഹലോ, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് വീണ്ടും സ്വാഗതം. ഇന്ന് രാത്രി ഞാൻ എങ്ങനെ സഹായിക്കണം?"
+            }},
+            bn: {{
+                morning: "সুপ্রভাত, " + userName + "! নেক্সটরুটে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+                afternoon: "শুভ অপরাহ্ন, " + userName + "! নেক্সটরুটে স্বাগতম। আমি আপনার জন্য কি করতে পারি?",
+                evening: "শুভ সন্ধ্যা, " + userName + "! নেক্সটরুটে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+                night: "হ্যালো, " + userName + "! নেক্সটরুটে আবার স্বাগতম। আজ রাতে আমি আপনাকে কীভাবে সাহায্য করতে পারি?"
+            }},
+            mr: {{
+                morning: "शुभ सकाळ, " + userName + "! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपली काय मदत करू शकतो?",
+                afternoon: "शुभ दुपार, " + userName + "! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपल्यासाठी काय करू शकतो?",
+                evening: "शुभ संध्याकाळ, " + userName + "! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपली काय मदत करू शकतो?",
+                night: "नमस्कार, " + userName + "! नेक्स्ट-रूट मध्ये पुन्हा स्वागत आहे. आज रात्री मी आपली कशी मदत करू शकतो?"
+            }}
+        }};
+
+        var langObj = greetings[lang] || greetings['en'];
+        return langObj[period] || langObj['morning'];
+    }}
+
+    var clientGreeting = getClientLocalGreeting(activeLang, "Boss");
+    var greetingHeadlineElem = document.getElementById('greetingHeadline');
+    if (greetingHeadlineElem) {{
+        greetingHeadlineElem.innerText = '"' + clientGreeting + '"';
+    }}
+
+    // -------------------------------------------------------------------------
+    // Central State Machine:
+    // 'INACTIVE', 'INITIALIZING', 'GREETING', 'IDLE', 'LISTENING', 'PROCESSING', 'SPEAKING', 'PAUSED', 'STOPPED'
+    // -------------------------------------------------------------------------
+    var sessionState = localStorage.getItem('aura_persistent_voice_state') || 'IDLE';
     if (sessionState === 'SPEAKING' || sessionState === 'PROCESSING') {{
-        sessionState = 'LISTENING';
+        sessionState = 'IDLE';
     }}
 
     var isListening = false;
@@ -888,12 +1000,14 @@ def _build_jarvis_controller_script(
     var ctx = canvas ? canvas.getContext('2d') : null;
     var animationId = null;
 
-    var silenceTimer = null;
-    var vadTimeoutMs = 1400; // 1.4s silence threshold for natural speech
+    var silenceTimer = null;         // VAD short pause timer
+    var extendedSilenceTimer = null; // VAD extended silence timer
     var currentSpeechBuffer = '';
     var restartDebounceTimer = null;
 
+    // -------------------------------------------------------------------------
     // UI Status & Control State Synchronization
+    // -------------------------------------------------------------------------
     function updateUIForState(state, message) {{
         var badge = document.getElementById('statusBadge');
         var btnToggle = document.getElementById('btnSessionToggle');
@@ -903,13 +1017,27 @@ def _build_jarvis_controller_script(
 
         if (transBox && message) transBox.innerText = message;
 
-        if (state === 'LISTENING') {{
+        if (state === 'GREETING') {{
+            isListening = false;
+            isSpeaking = true;
+            isProcessing = false;
+            if (badge) {{
+                badge.className = 'status-badge greeting';
+                badge.innerText = '🔊 GREETING, BOSS...';
+            }}
+            if (btnToggle) {{
+                btnToggle.className = 'btn-session-main pause';
+                btnToggle.innerHTML = '⏸ PAUSE';
+            }}
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
+            if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
+        }} else if (state === 'LISTENING') {{
             isListening = true;
             isSpeaking = false;
             isProcessing = false;
             if (badge) {{
                 badge.className = 'status-badge listening';
-                badge.innerText = '🎙️ LISTENING, BOSS...';
+                badge.innerText = '🎙️ LISTENING...';
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main pause';
@@ -937,7 +1065,7 @@ def _build_jarvis_controller_script(
             isProcessing = true;
             if (badge) {{
                 badge.className = 'status-badge thinking';
-                badge.innerText = '⚡ THINKING...';
+                badge.innerText = '⚡ PROCESSING...';
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main pause';
@@ -959,6 +1087,20 @@ def _build_jarvis_controller_script(
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (midRing) midRing.style.boxShadow = '0 0 16px rgba(245, 158, 11, 0.45)';
+        }} else if (state === 'IDLE') {{
+            isListening = false;
+            isSpeaking = false;
+            isProcessing = false;
+            if (badge) {{
+                badge.className = 'status-badge idle';
+                badge.innerText = '● IDLE • READY';
+            }}
+            if (btnToggle) {{
+                btnToggle.className = 'btn-session-main start';
+                btnToggle.innerHTML = '🎙️ SPEAK';
+            }}
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
+            if (midRing) midRing.style.boxShadow = '0 0 18px rgba(0, 240, 255, 0.45)';
         }} else {{
             // STOPPED or INACTIVE
             isListening = false;
@@ -979,7 +1121,7 @@ def _build_jarvis_controller_script(
 
     function setSessionState(newState, message) {{
         sessionState = newState;
-        localStorage.setItem('aura_persistent_voice_state', newState);
+        try {{ localStorage.setItem('aura_persistent_voice_state', newState); }} catch(e) {{}}
         updateUIForState(newState, message);
     }}
 
@@ -1001,13 +1143,13 @@ def _build_jarvis_controller_script(
         var step = canvas.width / numPoints;
         var midY = canvas.height / 2;
 
-        var baseAmp = isSpeaking ? 10 : (isListening ? 7 : (isProcessing ? 4.5 : 2.0));
+        var baseAmp = isSpeaking ? 10 : (isListening ? 7 : (isProcessing ? 4.5 : (sessionState === 'IDLE' ? 2.5 : 1.2)));
         var freq = isSpeaking ? 0.18 : (isListening ? 0.24 : (isProcessing ? 0.36 : 0.08));
 
         ctx.beginPath();
-        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isProcessing ? '#c084fc' : 'rgba(100, 116, 139, 0.4)'));
+        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isProcessing ? '#c084fc' : (sessionState === 'IDLE' ? 'rgba(56, 189, 248, 0.65)' : 'rgba(100, 116, 139, 0.3)')));
         ctx.lineWidth = isSpeaking || isListening ? 2.2 : 1.4;
-        ctx.shadowBlur = isSpeaking ? 14 : (isListening ? 10 : 2);
+        ctx.shadowBlur = isSpeaking ? 14 : (isListening ? 10 : (sessionState === 'IDLE' ? 4 : 1));
         ctx.shadowColor = '#00f0ff';
 
         for (var i = 0; i <= numPoints; i++) {{
@@ -1051,7 +1193,63 @@ def _build_jarvis_controller_script(
         }}
     }}
 
-    // Voice Synthesis with Automatic Return to Listening Loop
+    // Voice Synthesis with Mutex Audio Lock
+        function selectNaturalVoiceForLang(voices, bcp47Code, langCode) {{
+        if (!voices || voices.length === 0) return null;
+        var bcp47Lower = (bcp47Code || '').toLowerCase();
+        var prefix = (langCode || bcp47Lower.split('-')[0]).toLowerCase();
+
+        var preferredKeywords = {{
+            te: ["mohan", "shruti", "తెలుగు", "telugu"],
+            hi: ["hemant", "kalpana", "हिन्दी", "hindi", "swara", "madhur", "lekha"],
+            ta: ["valluvar", "pallavi", "தமிழ்", "tamil"],
+            kn: ["gagan", "sapna", "ಕನ್ನಡ", "kannada"],
+            ml: ["midhun", "sobhana", "മലയാളം", "malayalam"],
+            bn: ["bashkar", "tanishaa", "বাংলা", "bengali", "bangla"],
+            mr: ["manohar", "aarohi", "मराठी", "marathi"],
+            en: ["ravi", "heera", "natural", "neural", "google", "david", "guy", "george", "samantha"]
+        }};
+
+        var targetKeywords = preferredKeywords[prefix] || [prefix];
+
+        // Priority 1: Match preferred voice keywords AND language tag
+        for (var i = 0; i < voices.length; i++) {{
+            var v = voices[i];
+            var vLang = (v.lang || '').toLowerCase();
+            var vName = (v.name || '').toLowerCase();
+            if (vLang === bcp47Lower || vLang.indexOf(prefix) === 0) {{
+                for (var k = 0; k < targetKeywords.length; k++) {{
+                    if (vName.indexOf(targetKeywords[k]) !== -1) {{
+                        return v;
+                    }}
+                }}
+            }}
+        }}
+
+        // Priority 2: Match any voice matching the exact BCP-47 tag (e.g., te-IN, hi-IN)
+        for (var j = 0; j < voices.length; j++) {{
+            if ((voices[j].lang || '').toLowerCase() === bcp47Lower) {{
+                return voices[j];
+            }}
+        }}
+
+        // Priority 3: Match any voice starting with primary language prefix
+        for (var m = 0; m < voices.length; m++) {{
+            if ((voices[m].lang || '').toLowerCase().indexOf(prefix) === 0) {{
+                return voices[m];
+            }}
+        }}
+
+        // English fallback to first available
+        if (prefix === 'en') {{
+            return voices[0] || null;
+        }}
+
+        // For non-English languages, never fallback to an unrelated English voice!
+        return null;
+    }}
+
+    // Voice Synthesis with Mutex Audio Lock
     function speakJarvis(textToSpeak, onDone) {{
         if (!synthesis) {{
             if (onDone) onDone();
@@ -1063,17 +1261,19 @@ def _build_jarvis_controller_script(
             }}
 
             ensureVoices(function(voices) {{
+                var selVoice = selectNaturalVoiceForLang(voices, bcp47Lang, activeLang);
+                if (!selVoice && activeLang !== 'en') {{
+                    console.warn("[AURA] Speech synthesis voice for " + activeLang + " is not installed on this browser. Displaying text response.");
+                    setSessionState('IDLE', 'Voice for ' + activeLang.toUpperCase() + ' unavailable. Text is displayed.');
+                    if (onDone) onDone();
+                    return;
+                }}
+
                 var utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.lang = bcp47Lang;
                 utterance.rate = 1.0;
                 utterance.pitch = 1.02;
-
-                if (voices && voices.length > 0) {{
-                    var prefix = bcp47Lang.split('-')[0];
-                    var voiceMatch = voices.find(function(v) {{ return v.lang === bcp47Lang; }}) ||
-                                     voices.find(function(v) {{ return v.lang.startsWith(prefix); }});
-                    if (voiceMatch) utterance.voice = voiceMatch;
-                }}
+                if (selVoice) utterance.voice = selVoice;
 
                 var doneHandled = false;
                 function finishUtterance() {{
@@ -1086,7 +1286,7 @@ def _build_jarvis_controller_script(
 
                     if (onDone) onDone();
 
-                    // AUTOMATIC RETURN TO LISTENING LOOP
+                    // AUTOMATIC RETURN TO LISTENING / WAITING LOOP
                     if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED' && sessionState !== 'INACTIVE') {{
                         setTimeout(function() {{
                             if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
@@ -1127,15 +1327,31 @@ def _build_jarvis_controller_script(
             if (onDone) onDone();
         }}
     }}
-
-    // Stop ongoing speech immediately
-    function stopOngoingSpeech() {{
+function stopOngoingSpeech() {{
         try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
         if (synthesis) synthesis.cancel();
         isSpeaking = false;
     }}
 
-    // Real-Time Speech Recognition Engine with VAD and Interruption
+    // -------------------------------------------------------------------------
+    // Extended Silence Handler: stops active mic recording and enters IDLE
+    // -------------------------------------------------------------------------
+    function resetExtendedSilenceTimer() {{
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+        if (!voiceConfig.autoStopOnSilence) return;
+        extendedSilenceTimer = setTimeout(function() {{
+            if (sessionState === 'LISTENING') {{
+                console.log("[AURA] Extended silence timeout reached (6.5s). Entering IDLE state.");
+                if (recognition) {{
+                    try {{ recognition.stop(); }} catch(e) {{}}
+                }}
+                currentSpeechBuffer = '';
+                setSessionState('IDLE', 'Ready for your command... Speak or click avatar to command.');
+            }}
+        }}, voiceConfig.extendedSilenceMs);
+    }}
+
+    // Real-Time Speech Recognition Engine with VAD, Silence Detection, and Interruption
     function startVoiceListening() {{
         if (sessionState === 'PAUSED' || sessionState === 'STOPPED') return;
 
@@ -1166,9 +1382,13 @@ def _build_jarvis_controller_script(
 
             recognition.onstart = function() {{
                 setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+                resetExtendedSilenceTimer();
             }};
 
             recognition.onspeechstart = function() {{
+                // Speech started: clear silence timer
+                if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+
                 // INTELLIGENT INTERRUPTION: user started speaking while AURA is talking
                 if (isSpeaking) {{
                     console.log("[AURA] User speech detected during TTS: interrupting immediately!");
@@ -1178,6 +1398,9 @@ def _build_jarvis_controller_script(
             }};
 
             recognition.onresult = function(event) {{
+                // Clear extended silence timer while active speech is received
+                if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+
                 var interimTranscript = '';
                 var finalTranscript = '';
 
@@ -1202,11 +1425,12 @@ def _build_jarvis_controller_script(
                         currentSpeechBuffer = '';
                         var tBox = document.getElementById('transcriptBox');
                         if (tBox) tBox.innerText = 'Listening, Boss... Speak your command.';
+                        resetExtendedSilenceTimer();
                         return;
                     }}
                 }}
 
-                if (sessionState !== 'LISTENING') return;
+                if (sessionState !== 'LISTENING' && sessionState !== 'IDLE') return;
                 try {{
                     if (localStorage.getItem('aura_active_speaker') === 'chatbot') {{
                         // Chatbot assistant is speaking; pause listening to avoid cross-assistant self-triggering
@@ -1221,45 +1445,51 @@ def _build_jarvis_controller_script(
 
                     if (silenceTimer) clearTimeout(silenceTimer);
 
-                    // If final phrase received, check for voice commands like pause/resume/end
+                    // If final phrase received, check for voice commands
                     if (finalTranscript.trim().length > 0) {{
                         var finalCmd = finalTranscript.trim();
                         currentSpeechBuffer = '';
 
                         // Immediate local handling of Voice Session commands
-                        if (/^(pause(\\s+the)?(\\s+voice)?(\\s+assistant)?|pause\\s+listening|hold\\s+on)$/i.test(finalCmd.toLowerCase())) {{
+                        if (/^(pause(\s+the)?(\s+voice)?(\s+assistant)?|pause\s+listening|hold\s+on)$/i.test(finalCmd.toLowerCase())) {{
                             pauseVoiceSession();
                             return;
                         }}
-                        if (/^(stop(\\s+the)?(\\s+voice)?(\\s+assistant)?|end\\s+session|aura\\s+offline|close\\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
+                        if (/^(stop(\s+the)?(\s+voice)?(\s+assistant)?|end\s+session|aura\s+offline|close\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
                             endVoiceSession();
                             return;
                         }}
 
-                        // Submit to NexRoute engine
+                        // Submit to NextRoute engine
                         setSessionState('PROCESSING', 'YOU: "' + finalCmd + '"');
                         try {{ recognition.stop(); }} catch(e) {{}}
                         handleRecognizedVoiceCommand(finalCmd);
                     }} else {{
-                        // VAD silence detection for interim speech
+                        // VAD short pause silence detection for interim speech (1.4s)
                         silenceTimer = setTimeout(function() {{
-                            if (currentSpeechBuffer.length > 0 && sessionState === 'LISTENING') {{
-                                var pendingText = currentSpeechBuffer;
+                            if (currentSpeechBuffer.length > 0 && (sessionState === 'LISTENING' || sessionState === 'IDLE')) {{
+                                var pendingText = currentSpeechBuffer.trim();
                                 currentSpeechBuffer = '';
-                                setSessionState('PROCESSING', 'YOU: "' + pendingText + '"');
-                                try {{ recognition.stop(); }} catch(e) {{}}
-                                handleRecognizedVoiceCommand(pendingText);
+                                if (pendingText.length >= 2) {{
+                                    setSessionState('PROCESSING', 'YOU: "' + pendingText + '"');
+                                    try {{ recognition.stop(); }} catch(e) {{}}
+                                    handleRecognizedVoiceCommand(pendingText);
+                                }}
                             }}
-                        }}, vadTimeoutMs);
+                        }}, voiceConfig.silenceThresholdMs);
                     }}
                 }}
             }};
 
             recognition.onerror = function(event) {{
                 if (event.error === 'no-speech') {{
+                    // No speech captured during active window: enter IDLE to prevent infinite mic loop
+                    if (sessionState === 'LISTENING') {{
+                        setSessionState('IDLE', 'Ready for your command... Speak or click avatar to command.');
+                    }}
                     return;
                 }} else if (event.error === 'not-allowed') {{
-                    alert('Microphone blocked. Please allow mic permissions in your address bar.');
+                    setSessionState('INACTIVE', 'Microphone permission required. Please allow mic in address bar.');
                     pauseVoiceSession();
                 }} else if (event.error === 'network') {{
                     if (sessionState === 'LISTENING') {{
@@ -1270,6 +1500,7 @@ def _build_jarvis_controller_script(
 
             recognition.onend = function() {{
                 if (sessionState === 'LISTENING') {{
+                    // Only auto-restart if still within listening window and not in IDLE/PAUSED/STOPPED
                     if (restartDebounceTimer) clearTimeout(restartDebounceTimer);
                     restartDebounceTimer = setTimeout(function() {{
                         if (sessionState === 'LISTENING') {{
@@ -1282,6 +1513,7 @@ def _build_jarvis_controller_script(
             recognition.start();
         }} catch(err) {{
             console.warn("[AURA] Could not start speech recognition:", err);
+            setSessionState('IDLE', 'Ready for your command... Click avatar to activate.');
         }}
     }}
 
@@ -1289,7 +1521,7 @@ def _build_jarvis_controller_script(
     // PERSISTENT SESSION CONTROLS: START, PAUSE, RESUME, END
     // -------------------------------------------------------------------------
     window.startVoiceSession = function() {{
-        setSessionState('LISTENING');
+        setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
         startVoiceListening();
     }};
 
@@ -1300,6 +1532,7 @@ def _build_jarvis_controller_script(
             try {{ recognition.abort(); }} catch(e) {{}}
         }}
         if (silenceTimer) clearTimeout(silenceTimer);
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
         currentSpeechBuffer = '';
     }};
 
@@ -1316,12 +1549,13 @@ def _build_jarvis_controller_script(
             recognition = null;
         }}
         if (silenceTimer) clearTimeout(silenceTimer);
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
         currentSpeechBuffer = '';
     }};
 
-    // Smart Toggle: Transitions through Inactive/Stopped -> Listening -> Paused -> Resume
+    // Smart Toggle: Transitions through Inactive/Stopped/Idle -> Listening -> Paused -> Resume
     window.togglePersistentVoiceSession = function() {{
-        if (sessionState === 'INACTIVE' || sessionState === 'STOPPED') {{
+        if (sessionState === 'INACTIVE' || sessionState === 'STOPPED' || sessionState === 'IDLE') {{
             startVoiceSession();
         }} else if (sessionState === 'LISTENING' || sessionState === 'PROCESSING' || sessionState === 'SPEAKING') {{
             pauseVoiceSession();
@@ -1377,16 +1611,22 @@ def _build_jarvis_controller_script(
         return false;
     }}
 
-    // Real-Time Command Intent & Concise Confirmation Speech
+    // Real-Time Command Intent & Dynamic Destination Voice Feedback
     function handleRecognizedVoiceCommand(cmdText) {{
         isProcessing = true;
         setSessionState('PROCESSING', 'YOU: "' + cmdText + '"');
 
-        var lower = cmdText.toLowerCase();
+        var lower = cmdText.toLowerCase().trim();
         var spokenResponse = "";
 
-        // Exact Intent Mapping (from user specifications)
-        if (lower.indexOf("navigation") !== -1 || lower.indexOf("nav") !== -1 || lower.indexOf("map") !== -1) {{
+        // Check for specific Navigation Destination queries
+        // Example: "Navigate to Vijayawada" -> "Of course, Boss. Finding the best routes to Vijayawada."
+        var navMatch = lower.match(/(?:navigate|route|drive|go|directions?)\s+(?:to|towards)\s+([a-zA-Z\s]+)/i);
+        if (navMatch && navMatch[1]) {{
+            var destCity = navMatch[1].trim();
+            destCity = destCity.charAt(0).toUpperCase() + destCity.slice(1);
+            spokenResponse = "Of course, Boss. Finding the best routes to " + destCity + ".";
+        }} else if (lower.indexOf("navigation") !== -1 || lower.indexOf("nav") !== -1 || lower.indexOf("map") !== -1) {{
             spokenResponse = "Opening navigation.";
         }} else if (lower.indexOf("booking") !== -1 || lower.indexOf("reservation") !== -1) {{
             spokenResponse = "Opening your bookings.";
@@ -1439,7 +1679,9 @@ def _build_jarvis_controller_script(
         sendCommandToStreamlit(cmdText, cmdId);
     }}
 
-    // Automatic Startup Greeting & Autoplay Unlock Fallback
+    // -------------------------------------------------------------------------
+    // Automatic Startup Greeting & Autoplay Fallback
+    // -------------------------------------------------------------------------
     var greetingTriggered = false;
     var greetingActuallySpoken = false;
 
@@ -1450,33 +1692,28 @@ def _build_jarvis_controller_script(
         try {{
             if (sessionStorage.getItem(sessionKey) === 'true') {{
                 greetingTriggered = true;
-                if (sessionState === 'LISTENING') {{
-                    setTimeout(startVoiceListening, 450);
-                }}
+                setSessionState('IDLE', 'Ready for your command... Speak or click avatar.');
                 return;
             }}
         }} catch(e) {{}}
 
         if (!shouldAutoSpeak) {{
             greetingTriggered = true;
-            if (sessionState === 'LISTENING') {{
-                setTimeout(startVoiceListening, 450);
-            }}
+            setSessionState('IDLE', 'Ready for your command... Speak or click avatar.');
             return;
         }}
 
         greetingTriggered = true;
         try {{ sessionStorage.setItem(sessionKey, 'true'); }} catch(e) {{}}
 
-        // Speak the natural initial greeting:
-        // "Good morning, Boss! Welcome to NexRoute. How can I help you?"
-        speakJarvis(initialGreetingText, function() {{
+        setSessionState('GREETING', clientGreeting);
+
+        // Speak the local time greeting:
+        speakJarvis(clientGreeting, function() {{
             greetingActuallySpoken = true;
-            // Immediately after greeting finishes, activate microphone for voice commands!
-            if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
-                setSessionState('LISTENING');
-                setTimeout(startVoiceListening, 350);
-            }}
+            // After greeting finishes, automatically wait for user's voice command
+            setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+            setTimeout(startVoiceListening, 350);
         }});
     }}
 
@@ -1487,11 +1724,10 @@ def _build_jarvis_controller_script(
         }}
         if (!greetingActuallySpoken && shouldAutoSpeak) {{
             greetingActuallySpoken = true;
-            speakJarvis(initialGreetingText, function() {{
-                if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
-                    setSessionState('LISTENING');
-                    setTimeout(startVoiceListening, 350);
-                }}
+            setSessionState('GREETING', clientGreeting);
+            speakJarvis(clientGreeting, function() {{
+                setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+                setTimeout(startVoiceListening, 350);
             }});
         }} else if (sessionState === 'LISTENING' && !isListening && !isSpeaking) {{
             startVoiceListening();

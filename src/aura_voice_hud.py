@@ -634,19 +634,21 @@ def get_chatbot_copilot_greeting(lang: str = "en") -> str:
     """
     Dedicated greeting for the AURA Travel Copilot Chatbot.
     Spoken automatically once when the chatbot interface opens.
-    "Hello! I'm AURA, your travel copilot. How can I help you today?"
+    "Hello! I'm AURA, your travel copilot. What would you like to know today?"
     """
     greetings = {
-        "en": "Hello! I'm AURA, your travel copilot. How can I help you today?",
-        "te": "హలో! నేను మీ ట్రావెల్ కోపైలట్ AURA. నేను మీకు ఎలా సహాయపడగలను?",
-        "hi": "नमस्ते! मैं ऑरा (AURA) हूँ, आपका ट्रैवल कोपायलट। आज मैं आपकी क्या मदद कर सकता हूँ?",
-        "ta": "வணக்கம்! நான் AURA, உங்கள் பயணக் கோபிலட். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
-        "kn": "ಹಲೋ! ನಾನು AURA, ನಿಮ್ಮ ಪ್ರಯಾಣ ಸಹಾಯಕ. ನಾನು ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
-        "ml": "ഹലോ! ഞാൻ നിങ്ങളുടെ ട്രാവൽ കോപൈലറ്റ് AURA ആണ്. ഇന്ന് ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കണം?",
-        "es": "¡Hola! Soy AURA, tu copiloto de viajes. ¿Cómo puedo ayudarte hoy?",
-        "fr": "Bonjour ! Je suis AURA, votre copilote de voyage. Comment puis-je vous aider aujourd'hui ?",
-        "de": "Hallo! Ich bin AURA, Ihr Reise-Copilot. Wie kann ich Ihnen heute helfen?",
-        "ja": "こんにちは！私は旅行コパイロットのAURAです。今日はどのようなご用件でしょうか？"
+        "en": "Hello! I'm AURA, your travel copilot. What would you like to know today?",
+        "te": "హలో! నేను AURA, మీ ట్రావెల్ కోపైలట్. ఈరోజు మీరు ఏమి తెలుసుకోవాలనుకుంటున్నారు?",
+        "hi": "नमस्ते! मैं ऑरा (AURA) हूँ, आपका ट्रैवल कोपायलट। आज आप क्या जानना चाहते हैं?",
+        "ta": "வணக்கம்! நான் AURA, உங்கள் பயணக் கோபிலட். இன்று நீங்கள் என்ன தெரிந்து கொள்ள விரும்புகிறீர்கள்?",
+        "kn": "ಹಲೋ! ನಾನು AURA, ನಿಮ್ಮ ಪ್ರಯಾಣ ಸಹಾಯಕ. ಇಂದು ನೀವು ಏನನ್ನು ತಿಳಿದುಕೊಳ್ಳಲು ಬಯಸುತ್ತೀರಿ?",
+        "ml": "ഹലോ! ഞാൻ നിങ്ങളുടെ ട്രാവൽ കോപൈലറ്റ് AURA ആണ്. ഇന്ന് നിങ്ങൾക്ക് എന്താണ് അറിയേണ്ടത്?",
+        "bn": "হ্যালো! আমি AURA, আপনার ভ্রমণ সহকারী। আজ আপনি কী জানতে চান?",
+        "mr": "नमस्कार! मी AURA, तुमचा ट्रॅव्हल को-पायलट. आज तुम्हाला काय जाणून घ्यायचे आहे?",
+        "es": "¡Hola! Soy AURA, tu copiloto de viajes. ¿Qué te gustaría saber hoy?",
+        "fr": "Bonjour ! Je suis AURA, votre copilote de voyage. Que souhaitez-vous savoir aujourd'hui ?",
+        "de": "Hallo! Ich bin AURA, Ihr Reise-Copilot. Was möchten Sie heute wissen?",
+        "ja": "こんにちは！私は旅行コパイロットのAURAです。今日は何について知りたいですか？"
     }
     return greetings.get(lang, greetings["en"])
 
@@ -658,19 +660,19 @@ def render_jarvis_chatbot_hud_html(
     last_response_text: str = "",
     key_prefix: str = "main",
     voice_enabled: bool = True,
-    continuous_mode: bool = True,
+    continuous_mode: bool = False,
     *args,
     **kwargs
 ) -> str:
     """
-    Renders the futuristic AURA - JARVIS AI Copilot Persistent Voice Assistant interface.
+    Renders the dedicated AURA Travel Copilot Chatbot voice HUD and audio engine.
+    Completely isolated from the Main Dashboard JARVIS assistant.
     Features:
-    - Persistent voice session: activate once, interact continuously with auto return-to-listening.
-    - Smart Session Toggle: single glowing cyan control transitioning between START AURA, PAUSE, RESUME, and END SESSION.
-    - Intelligent Voice Interruption: speaks while listening; user speech instantly cancels ongoing TTS and prioritizes new command.
-    - Voice Activity Detection (VAD): configurable silence threshold prevents early submission while supporting natural pauses.
-    - Session State Machine: INACTIVE, LISTENING, PROCESSING, SPEAKING, PAUSED, STOPPED with localStorage persistence.
-    - Zero-reload bridge to NextRoute application engine and live animated audio waveform.
+    - Dedicated greeting: "Hello! I'm AURA, your travel copilot. What would you like to know today?"
+    - Automatic speech reading of generated chatbot answers.
+    - Automatic Voice Activity Detection (VAD) with configurable silence stopping.
+    - State machine: INACTIVE, INITIALIZING, GREETING, IDLE, LISTENING, PROCESSING, SPEAKING, PAUSED, STOPPED.
+    - Zero interference audio mutex lock with dashboard assistant.
     """
     bcp47_map = {
         "en": "en-IN",
@@ -679,6 +681,8 @@ def render_jarvis_chatbot_hud_html(
         "ta": "ta-IN",
         "kn": "kn-IN",
         "ml": "ml-IN",
+        "bn": "bn-IN",
+        "mr": "mr-IN",
         "es": "es-ES",
         "fr": "fr-FR",
         "de": "de-DE",
@@ -756,16 +760,16 @@ def render_jarvis_chatbot_hud_html(
     }}
 
     .avatar-circle {{
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: radial-gradient(circle, #0284c7 0%, #030712 90%);
+        background: radial-gradient(circle, #0284c7 0%, #030712 100%);
         border: 1.5px solid #00f0ff;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.55);
         overflow: hidden;
-        box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
     }}
 
     .jarvis-avatar-img {{
@@ -774,34 +778,33 @@ def render_jarvis_chatbot_hud_html(
         object-fit: cover;
     }}
 
-    /* Title & Status Area */
+    /* Title & Live Status */
     .info-center {{
-        flex: 1 1 auto;
-        min-width: 0;
         display: flex;
         flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 140px;
         gap: 2px;
     }}
 
     .brand-title-line {{
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }}
 
     .brand-name {{
-        font-family: 'Inter', sans-serif;
+        font-size: 0.76rem;
         font-weight: 800;
-        font-size: 0.86rem;
-        color: #ffffff;
+        color: #f8fafc;
         letter-spacing: 0.04em;
     }}
 
     .brand-subtitle {{
-        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.58rem;
         font-weight: 700;
-        font-size: 0.60rem;
         color: #38bdf8;
+        font-family: 'JetBrains Mono', monospace;
         letter-spacing: 0.06em;
     }}
 
@@ -809,21 +812,24 @@ def render_jarvis_chatbot_hud_html(
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-top: 1px;
     }}
 
     .status-badge {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.63rem;
-        font-weight: 700;
-        padding: 2px 8px;
+        font-size: 0.60rem;
+        font-weight: 800;
+        padding: 2px 7px;
         border-radius: 6px;
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid #475569;
-        color: #94a3b8;
+        border: 1px solid;
         letter-spacing: 0.04em;
         white-space: nowrap;
         transition: all 0.25s ease;
+    }}
+
+    .status-badge.idle {{
+        background: rgba(56, 189, 248, 0.15);
+        border-color: rgba(56, 189, 248, 0.45);
+        color: #38bdf8;
     }}
 
     .status-badge.listening {{
@@ -984,7 +990,7 @@ def render_jarvis_chatbot_hud_html(
 
 <div class="jarvis-hud-card">
     <!-- Circular Avatar with Orbiting Ring -->
-    <div class="avatar-pod" onclick="togglePersistentVoiceSession()" title="Click to Start / Pause AURA Voice Session">
+    <div class="avatar-pod" onclick="togglePersistentVoiceSession()" title="Click to Speak or Pause AURA Chatbot Voice">
         <div class="arc-spin-ring" id="avatarArcRing"></div>
         <div class="avatar-circle">
             {avatar_markup}
@@ -994,11 +1000,11 @@ def render_jarvis_chatbot_hud_html(
     <!-- Center Info + Status + Waveform -->
     <div class="info-center">
         <div class="brand-title-line">
-            <span class="brand-name">AURA • AI Guide</span>
-            <span class="brand-subtitle">JARVIS VOICE COPILOT</span>
+            <span class="brand-name">AURA • AI Guide • Travel Copilot</span>
+            <span class="brand-subtitle">INTELLIGENT CHATBOT VOICE</span>
         </div>
         <div class="status-and-wave-row">
-            <span class="status-badge offline" id="jarvisStatusBadge">● AURA OFFLINE</span>
+            <span class="status-badge idle" id="jarvisStatusBadge">● IDLE • READY</span>
             <div class="waveform-canvas-box">
                 <canvas id="auraJarvisWaveform"></canvas>
             </div>
@@ -1008,8 +1014,8 @@ def render_jarvis_chatbot_hud_html(
     <!-- Right Controls: Smart Session Toggle, End Session, Voice Audio Toggle -->
     <div class="controls-right">
         <!-- Smart Persistent Session Toggle: START AURA / PAUSE / RESUME -->
-        <button class="btn-session-main" id="btnSessionToggle" onclick="togglePersistentVoiceSession()" title="Start / Pause Continuous Voice Session">
-            ▶ START AURA
+        <button class="btn-session-main" id="btnSessionToggle" onclick="togglePersistentVoiceSession()" title="Click to Speak to AURA Chatbot">
+            🎙️ START AURA
         </button>
         <!-- End Session Button -->
         <button class="btn-session-end" id="btnEndSession" onclick="endVoiceSession()" title="End Voice Session (Offline)">
@@ -1019,10 +1025,10 @@ def render_jarvis_chatbot_hud_html(
         <button class="btn-pill-toggle active" id="btnVoiceToggle" onclick="toggleVoiceEnabled()" title="Toggle Spoken Speech Output">
             🔊 Voice
         </button>
-        <!-- Backward-compatibility hooks -->
-        <button id="btnJarvisMic" onclick="togglePersistentVoiceSession()" style="display:none;"></button>
-        <button id="btnJarvisSilence" onclick="endVoiceSession()" style="display:none;"></button>
-        <button id="btnContinuousToggle" onclick="toggleContinuousMode()" style="display:none;"></button>
+        <!-- Replay Last Response -->
+        <button class="btn-pill-toggle" id="btnReplayAudio" onclick="replayLastResponse()" title="Replay Last Answer Aloud">
+            🔄 Replay
+        </button>
     </div>
 </div>
 
@@ -1034,14 +1040,23 @@ def render_jarvis_chatbot_hud_html(
     var lastResponse = {json.dumps(last_response_text)};
 
     var voiceEnabled = {initial_voice_state};
-    var continuousMode = true;
 
-    // Central Persistent State: 'INACTIVE', 'LISTENING', 'PROCESSING', 'SPEAKING', 'PAUSED', 'STOPPED'
-    var sessionState = localStorage.getItem('aura_persistent_voice_state') || 'INACTIVE';
-    // If refreshed mid-turn, restore to active listening state
-    if (sessionState === 'SPEAKING' || sessionState === 'PROCESSING') {{
-        sessionState = 'LISTENING';
-    }}
+    // -------------------------------------------------------------------------
+    // Configurable Voice & Silence Detection Thresholds
+    // -------------------------------------------------------------------------
+    var voiceConfig = {{
+        silenceThresholdMs: 1400,        // Short pause: wait for sentence to finish
+        vadTimeoutMs: 1400,              // Backward-compatibility alias
+        extendedSilenceMs: 6000,         // Extended silence: stop active recording, enter IDLE
+        maxUtteranceDurationMs: 15000,   // Max duration per utterance
+        autoStopOnSilence: true,         // Automatically stop active mic recording on silence
+        autoRestartAfterResponse: true,  // Automatically return to waiting state after response
+        preventEmptyTranscriptions: true // Discard empty transcriptions
+    }};
+
+    // Central State Machine:
+    // 'INACTIVE', 'INITIALIZING', 'GREETING', 'IDLE', 'LISTENING', 'PROCESSING', 'SPEAKING', 'PAUSED', 'STOPPED'
+    var sessionState = 'IDLE';
 
     var isListening = false;
     var isSpeaking = false;
@@ -1052,9 +1067,10 @@ def render_jarvis_chatbot_hud_html(
     var ctx = canvas ? canvas.getContext('2d') : null;
 
     var silenceTimer = null;
-    var vadTimeoutMs = 1400; // 1.4s silence threshold for VAD
+    var extendedSilenceTimer = null;
     var currentSpeechBuffer = '';
     var restartDebounceTimer = null;
+    var cachedLastSpokenResponse = lastResponse || '';
 
     // Safe Cross-Origin Parent References
     var pWin = null;
@@ -1091,9 +1107,10 @@ def render_jarvis_chatbot_hud_html(
         }}
     }};
 
-    window.toggleContinuousMode = function() {{
-        continuousMode = !continuousMode;
-        window.togglePersistentVoiceSession();
+    window.replayLastResponse = function() {{
+        if (cachedLastSpokenResponse && cachedLastSpokenResponse.trim()) {{
+            window.speakJarvis(cachedLastSpokenResponse.trim());
+        }}
     }};
 
     // Update UI Elements matching the central State Machine
@@ -1105,12 +1122,22 @@ def render_jarvis_chatbot_hud_html(
 
         if (!badge || !btnToggle) return;
 
-        if (state === 'LISTENING') {{
+        if (state === 'GREETING') {{
+            isListening = false;
+            isSpeaking = true;
+            isThinking = false;
+            badge.className = 'status-badge speaking';
+            badge.innerText = '🔊 GREETING...';
+            btnToggle.className = 'btn-session-main pause';
+            btnToggle.innerHTML = '⏸ PAUSE';
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
+            if (arcRing) arcRing.style.borderColor = '#38bdf8';
+        }} else if (state === 'LISTENING') {{
             isListening = true;
             isSpeaking = false;
             isThinking = false;
             badge.className = 'status-badge listening';
-            badge.innerText = '🎙️ LISTENING, BOSS...';
+            badge.innerText = '🎙️ LISTENING...';
             btnToggle.className = 'btn-session-main pause';
             btnToggle.innerHTML = '⏸ PAUSE';
             if (btnEnd) btnEnd.style.display = 'inline-flex';
@@ -1145,6 +1172,16 @@ def render_jarvis_chatbot_hud_html(
             btnToggle.innerHTML = '▶ RESUME';
             if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (arcRing) arcRing.style.borderColor = '#f59e0b';
+        }} else if (state === 'IDLE') {{
+            isListening = false;
+            isSpeaking = false;
+            isThinking = false;
+            badge.className = 'status-badge idle';
+            badge.innerText = '● IDLE • READY';
+            btnToggle.className = 'btn-session-main start';
+            btnToggle.innerHTML = '🎙️ SPEAK';
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
+            if (arcRing) arcRing.style.borderColor = '#38bdf8';
         }} else {{
             // STOPPED or INACTIVE
             isListening = false;
@@ -1153,7 +1190,7 @@ def render_jarvis_chatbot_hud_html(
             badge.className = 'status-badge offline';
             badge.innerText = '● AURA OFFLINE';
             btnToggle.className = 'btn-session-main start';
-            btnToggle.innerHTML = '▶ START AURA';
+            btnToggle.innerHTML = '🎙️ SPEAK';
             if (btnEnd) btnEnd.style.display = 'none';
             if (arcRing) arcRing.style.borderColor = '#475569';
         }}
@@ -1161,7 +1198,7 @@ def render_jarvis_chatbot_hud_html(
 
     function setSessionState(newState, message) {{
         sessionState = newState;
-        localStorage.setItem('aura_persistent_voice_state', newState);
+        try {{ sessionStorage.setItem('aura_persistent_voice_state', newState); }} catch(e) {{}}
         updateUIForState(newState, message);
     }}
 
@@ -1179,7 +1216,7 @@ def render_jarvis_chatbot_hud_html(
         var freq = isSpeaking ? 0.24 : (isListening ? 0.28 : (isThinking ? 0.38 : 0.08));
 
         ctx.beginPath();
-        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isThinking ? '#c084fc' : 'rgba(100, 116, 139, 0.4)'));
+        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isThinking ? '#c084fc' : (sessionState === 'IDLE' ? 'rgba(56, 189, 248, 0.55)' : 'rgba(100, 116, 139, 0.3)')));
         ctx.lineWidth = isSpeaking || isListening ? 2 : 1.2;
         ctx.shadowBlur = isSpeaking ? 10 : (isListening ? 6 : 0);
         ctx.shadowColor = '#00f0ff';
@@ -1198,56 +1235,87 @@ def render_jarvis_chatbot_hud_html(
     }}
     drawWave();
 
-    // Natural Voice Selection
-    function getNaturalVoice(lang) {{
+    // Multilingual Natural Voice Selection for All 8 NextRoute Languages
+    function getNaturalVoice(bcp47Code, langCode) {{
         if (!synthesis) return null;
         var voices = synthesis.getVoices();
         if (!voices || voices.length === 0) return null;
-        var langLower = (lang || '').toLowerCase();
-        var primaryLang = langLower.split('-')[0];
+        var bcp47Lower = (bcp47Code || '').toLowerCase();
+        var prefix = (langCode || bcp47Lower.split('-')[0]).toLowerCase();
 
+        var preferredKeywords = {{
+            te: ["mohan", "shruti", "తెలుగు", "telugu"],
+            hi: ["hemant", "kalpana", "हिन्दी", "hindi", "swara", "madhur", "lekha"],
+            ta: ["valluvar", "pallavi", "தமிழ்", "tamil"],
+            kn: ["gagan", "sapna", "ಕನ್ನಡ", "kannada"],
+            ml: ["midhun", "sobhana", "മലയാളം", "malayalam"],
+            bn: ["bashkar", "tanishaa", "বাংলা", "bengali", "bangla"],
+            mr: ["manohar", "aarohi", "मराठी", "marathi"],
+            en: ["ravi", "heera", "natural", "neural", "google", "david", "guy", "george", "samantha"]
+        }};
+
+        var targetKeywords = preferredKeywords[prefix] || [prefix];
+
+        // Priority 1: Match preferred voice keywords AND language tag
         for (var i = 0; i < voices.length; i++) {{
             var v = voices[i];
             var vLang = (v.lang || '').toLowerCase();
             var vName = (v.name || '').toLowerCase();
-            if ((vLang === langLower || vLang.indexOf(primaryLang) === 0) &&
-                (vName.indexOf('natural') !== -1 || vName.indexOf('neural') !== -1 || vName.indexOf('google') !== -1 || vName.indexOf('guy') !== -1 || vName.indexOf('george') !== -1)) {{
-                return v;
+            if (vLang === bcp47Lower || vLang.indexOf(prefix) === 0) {{
+                for (var k = 0; k < targetKeywords.length; k++) {{
+                    if (vName.indexOf(targetKeywords[k]) !== -1) {{
+                        return v;
+                    }}
+                }}
             }}
         }}
 
+        // Priority 2: Match any voice matching the exact BCP-47 tag (e.g., te-IN, hi-IN)
         for (var j = 0; j < voices.length; j++) {{
-            if ((voices[j].lang || '').toLowerCase() === langLower) {{
+            if ((voices[j].lang || '').toLowerCase() === bcp47Lower) {{
                 return voices[j];
             }}
         }}
 
-        for (var k = 0; k < voices.length; k++) {{
-            if ((voices[k].lang || '').toLowerCase().indexOf(primaryLang) === 0) {{
-                return voices[k];
+        // Priority 3: Match any voice starting with primary language prefix
+        for (var m = 0; m < voices.length; m++) {{
+            if ((voices[m].lang || '').toLowerCase().indexOf(prefix) === 0) {{
+                return voices[m];
             }}
         }}
-        return voices[0] || null;
+
+        // English fallback
+        if (prefix === 'en') {{
+            return voices[0] || null;
+        }}
+
+        // For non-English languages, do NOT fallback to an unrelated English voice
+        return null;
     }}
 
-    // Voice Synthesis with Automatic Return to Listening Loop
+    // Voice Synthesis with Automatic Return to Waiting State
     window.speakJarvis = function(text) {{
         if (!text || !voiceEnabled) {{
-            if (sessionState === 'LISTENING' || sessionState === 'SPEAKING' || sessionState === 'PROCESSING') {{
-                startListening();
-            }}
+            setSessionState('IDLE');
             return;
         }}
         if (!synthesis) return;
 
         try {{
             synthesis.cancel();
+            cachedLastSpokenResponse = text;
+
+            var selVoice = getNaturalVoice(bcp47Lang, activeLang);
+            if (!selVoice && activeLang !== 'en') {{
+                console.warn("[AURA Chatbot] Speech synthesis voice for " + activeLang + " is not installed on this browser. Displaying text response.");
+                setSessionState('IDLE');
+                return;
+            }}
+
             var utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = bcp47Lang;
             utterance.rate = 1.02;
             utterance.pitch = 1.0;
-
-            var selVoice = getNaturalVoice(bcp47Lang);
             if (selVoice) utterance.voice = selVoice;
 
             var speechWatchdog = null;
@@ -1261,52 +1329,54 @@ def render_jarvis_chatbot_hud_html(
             utterance.onend = function() {{
                 try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
                 if (speechWatchdog) clearTimeout(speechWatchdog);
-                // AUTOMATIC RETURN TO LISTENING LOOP
-                if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED' && sessionState !== 'INACTIVE') {{
-                    setTimeout(function() {{
-                        if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
-                            startListening();
-                        }}
-                    }}, 350); // 350ms delay to clear acoustic feedback
-                }}
+                // Return to IDLE / WAITING state when finished speaking
+                setSessionState('IDLE');
             }};
 
             utterance.onerror = function(err) {{
                 try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
                 if (speechWatchdog) clearTimeout(speechWatchdog);
-                if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
-                    startListening();
-                }}
+                setSessionState('IDLE');
             }};
 
             // Watchdog fallback
             speechWatchdog = setTimeout(function() {{
-                if (isSpeaking && sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
-                    startListening();
-                }}
+                try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
+                setSessionState('IDLE');
             }}, Math.max(3500, text.length * 90));
 
             synthesis.speak(utterance);
         }} catch(e) {{
-            if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
-                startListening();
-            }}
+            setSessionState('IDLE');
         }}
     }};
-
-    window.toggleContinuousMode = function() {{
-        continuousMode = !continuousMode;
-        window.togglePersistentVoiceSession();
-    }};
-
     // Stop ongoing speech immediately
     window.stopJarvisSpeech = function() {{
         try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
         if (synthesis) synthesis.cancel();
         isSpeaking = false;
+        setSessionState('IDLE');
     }};
 
-    // Continuous Speech Recognition Engine with VAD and Interruption
+    // -------------------------------------------------------------------------
+    // Extended Silence Handler: stops active mic recording and enters IDLE
+    // -------------------------------------------------------------------------
+    function resetExtendedSilenceTimer() {{
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+        if (!voiceConfig.autoStopOnSilence) return;
+        extendedSilenceTimer = setTimeout(function() {{
+            if (sessionState === 'LISTENING') {{
+                console.log("[AURA Chatbot] Extended silence timeout reached (6s). Entering IDLE.");
+                if (recognition) {{
+                    try {{ recognition.stop(); }} catch(e) {{}}
+                }}
+                currentSpeechBuffer = '';
+                setSessionState('IDLE');
+            }}
+        }}, voiceConfig.extendedSilenceMs);
+    }}
+
+    // Continuous Speech Recognition Engine with VAD, Silence Detection, and Interruption
     function startListening() {{
         if (sessionState === 'PAUSED' || sessionState === 'STOPPED') return;
 
@@ -1331,19 +1401,24 @@ def render_jarvis_chatbot_hud_html(
             recognition.maxAlternatives = 1;
 
             recognition.onstart = function() {{
-                setSessionState('LISTENING', '🎙️ LISTENING, BOSS...');
+                setSessionState('LISTENING');
+                resetExtendedSilenceTimer();
             }};
 
             recognition.onspeechstart = function() {{
-                // INTELLIGENT INTERRUPTION: user started speaking while AURA is talking
+                if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+
+                // INTELLIGENT INTERRUPTION: user started speaking while chatbot is talking
                 if (isSpeaking) {{
-                    console.log("[AURA] User speech detected during TTS: interrupting immediately!");
-                    stopJarvisSpeech();
-                    setSessionState('LISTENING', '🎙️ LISTENING, BOSS...');
+                    console.log("[AURA Chatbot] User speech detected during TTS: interrupting immediately!");
+                    window.stopJarvisSpeech();
+                    setSessionState('LISTENING');
                 }}
             }};
 
             recognition.onresult = function(event) {{
+                if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+
                 var interimTranscript = '';
                 var finalTranscript = '';
 
@@ -1360,18 +1435,18 @@ def render_jarvis_chatbot_hud_html(
 
                 // INTELLIGENT INTERRUPTION CHECK: cancel ongoing audio immediately
                 if (isSpeaking && rawText.length > 0) {{
-                    console.log("[AURA] Voice interruption triggered:", rawText);
-                    stopJarvisSpeech();
-                    setSessionState('LISTENING', '🎙️ LISTENING, BOSS...');
+                    console.log("[AURA Chatbot] Voice interruption triggered:", rawText);
+                    window.stopJarvisSpeech();
+                    setSessionState('LISTENING');
 
-                    // Check for standalone interrupt phrases
                     if (/^(wait|stop talking|hold on|listen to me|cancel that|be quiet|silence|pause)$/i.test(lowerText)) {{
                         currentSpeechBuffer = '';
+                        resetExtendedSilenceTimer();
                         return;
                     }}
                 }}
 
-                if (sessionState !== 'LISTENING') return;
+                if (sessionState !== 'LISTENING' && sessionState !== 'IDLE') return;
                 try {{
                     if (localStorage.getItem('aura_active_speaker') === 'dashboard') {{
                         // Main dashboard assistant is actively speaking; ignore input to prevent cross-assistant audio interference
@@ -1383,53 +1458,53 @@ def render_jarvis_chatbot_hud_html(
                     currentSpeechBuffer = rawText;
                     if (silenceTimer) clearTimeout(silenceTimer);
 
-                    // If final phrase received, check for voice commands like pause/resume/end
+                    // If final phrase received, submit to chatbot agent
                     if (finalTranscript.trim().length > 0) {{
                         var finalCmd = finalTranscript.trim();
                         currentSpeechBuffer = '';
 
-                        // Immediate local handling of Voice Session commands
-                        if (/^(pause(\\s+the)?(\\s+voice)?(\\s+assistant)?|pause\\s+listening|hold\\s+on)$/i.test(finalCmd.toLowerCase())) {{
+                        if (/^(pause(\s+the)?(\s+voice)?(\s+assistant)?|pause\s+listening|hold\s+on)$/i.test(finalCmd.toLowerCase())) {{
                             pauseVoiceSession();
                             return;
                         }}
-                        if (/^(stop(\\s+the)?(\\s+voice)?(\\s+assistant)?|end\\s+session|aura\\s+offline|close\\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
+                        if (/^(stop(\s+the)?(\s+voice)?(\s+assistant)?|end\s+session|aura\s+offline|close\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
                             endVoiceSession();
                             return;
                         }}
 
-                        // Submit to NextRoute engine
-                        setSessionState('PROCESSING', '⚡ THINKING...');
+                        setSessionState('PROCESSING');
                         try {{ recognition.stop(); }} catch(e) {{}}
                         window.submitVoiceToExistingAgent(finalCmd);
                     }} else {{
-                        // VAD silence detection for interim speech
+                        // VAD short pause silence detection (1.4s)
                         silenceTimer = setTimeout(function() {{
-                            if (currentSpeechBuffer.length > 0 && sessionState === 'LISTENING') {{
-                                var pendingText = currentSpeechBuffer;
+                            if (currentSpeechBuffer.length > 0 && (sessionState === 'LISTENING' || sessionState === 'IDLE')) {{
+                                var pendingText = currentSpeechBuffer.trim();
                                 currentSpeechBuffer = '';
-                                setSessionState('PROCESSING', '⚡ THINKING...');
-                                try {{ recognition.stop(); }} catch(e) {{}}
-                                window.submitVoiceToExistingAgent(pendingText);
+                                if (pendingText.length >= 2) {{
+                                    setSessionState('PROCESSING');
+                                    try {{ recognition.stop(); }} catch(e) {{}}
+                                    window.submitVoiceToExistingAgent(pendingText);
+                                }}
                             }}
-                        }}, vadTimeoutMs);
+                        }}, voiceConfig.silenceThresholdMs);
                     }}
                 }}
             }};
 
             recognition.onerror = function(err) {{
                 if (err && err.error === 'not-allowed') {{
-                    alert('Microphone access was denied. Please allow microphone permissions to chat with AURA.');
+                    alert('Microphone access was denied. Please allow microphone permissions in address bar.');
                     pauseVoiceSession();
                     return;
                 }}
-                if (err && err.error !== 'no-speech' && sessionState === 'LISTENING') {{
-                    console.warn("[AURA] Speech recognition notice:", err.error);
+                if (err && err.error === 'no-speech') {{
+                    setSessionState('IDLE');
+                    return;
                 }}
             }};
 
             recognition.onend = function() {{
-                // If still in LISTENING state, automatically reconnect recognition after brief debounce
                 if (sessionState === 'LISTENING') {{
                     if (restartDebounceTimer) clearTimeout(restartDebounceTimer);
                     restartDebounceTimer = setTimeout(function() {{
@@ -1442,7 +1517,8 @@ def render_jarvis_chatbot_hud_html(
 
             recognition.start();
         }} catch(e) {{
-            console.warn("[AURA] Could not start speech recognition:", e);
+            console.warn("[AURA Chatbot] Could not start speech recognition:", e);
+            setSessionState('IDLE');
         }}
     }}
 
@@ -1456,11 +1532,12 @@ def render_jarvis_chatbot_hud_html(
 
     window.pauseVoiceSession = function() {{
         setSessionState('PAUSED');
-        stopJarvisSpeech();
+        window.stopJarvisSpeech();
         if (recognition) {{
             try {{ recognition.abort(); }} catch(e) {{}}
         }}
         if (silenceTimer) clearTimeout(silenceTimer);
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
         currentSpeechBuffer = '';
     }};
 
@@ -1471,18 +1548,18 @@ def render_jarvis_chatbot_hud_html(
 
     window.endVoiceSession = function() {{
         setSessionState('STOPPED');
-        stopJarvisSpeech();
+        window.stopJarvisSpeech();
         if (recognition) {{
             try {{ recognition.abort(); }} catch(e) {{}}
             recognition = null;
         }}
         if (silenceTimer) clearTimeout(silenceTimer);
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
         currentSpeechBuffer = '';
     }};
 
-    // Smart Toggle: Switches between Inactive/Stopped -> Listening -> Paused -> Resume
     window.togglePersistentVoiceSession = function() {{
-        if (sessionState === 'INACTIVE' || sessionState === 'STOPPED') {{
+        if (sessionState === 'INACTIVE' || sessionState === 'STOPPED' || sessionState === 'IDLE') {{
             startVoiceSession();
         }} else if (sessionState === 'LISTENING' || sessionState === 'PROCESSING' || sessionState === 'SPEAKING') {{
             pauseVoiceSession();
@@ -1491,15 +1568,10 @@ def render_jarvis_chatbot_hud_html(
         }}
     }};
 
-    window.toggleContinuousMode = function() {{
-        continuousMode = !continuousMode;
-        window.togglePersistentVoiceSession();
-    }};
-
-    // Backward-compatibility alias for avatar click
+    // Backward-compatibility alias
     window.toggleJarvisVoiceRecognition = window.togglePersistentVoiceSession;
 
-    // Zero-Reload WebSocket Bridge to NextRoute Agent
+    // Zero-Reload WebSocket Bridge to NextRoute Chatbot Agent
     window.submitVoiceToExistingAgent = function(transcript) {{
         var cleanTranscript = (transcript || '').trim();
         if (!cleanTranscript) return;
@@ -1530,19 +1602,7 @@ def render_jarvis_chatbot_hud_html(
             console.warn("[AURA Bridge] Zero-reload bridge notice:", eBridge);
         }}
 
-        // 2. Populate visible composer input if found
-        try {{
-            if (pDoc) {{
-                var inputElements = pDoc.querySelectorAll('input[aria-label="Ask Aura"], input[placeholder*="Ask Aura"], .aura-chatgpt-composer-wrapper input');
-                for (var i = 0; i < inputElements.length; i++) {{
-                    inputElements[i].value = cleanTranscript;
-                    inputElements[i].dispatchEvent(new Event('input', {{ bubbles: true }}));
-                    inputElements[i].dispatchEvent(new Event('change', {{ bubbles: true }}));
-                }}
-            }}
-        }} catch(eDom) {{}}
-
-        // 3. Fallback via URL searchParams navigation
+        // 2. Fallback via URL searchParams navigation
         try {{
             var targetWin = pWin || window.top || window;
             var currentHref = '';
@@ -1575,14 +1635,13 @@ def render_jarvis_chatbot_hud_html(
     // Initialize UI on load
     updateUIForState(sessionState);
 
-    // Initial load: Play latest response or startup greeting, and restore continuous session loop if active
+    // Initial load: Play latest response or startup greeting automatically
     setTimeout(function() {{
         if (lastResponse && lastResponse.trim()) {{
             window.speakJarvis(lastResponse.trim());
         }} else if (autoGreeting && autoGreeting.trim()) {{
+            setSessionState('GREETING');
             window.speakJarvis(autoGreeting.trim());
-        }} else if (sessionState === 'LISTENING') {{
-            startListening();
         }}
     }}, 400);
 
