@@ -599,12 +599,12 @@ def get_jarvis_startup_greeting(lang: str = "en", user_name: str = "Boss") -> st
         tod_kn = "ಶುಭ ಸಂಜೆ"
         tod_ml = "ശുഭ സായാഹ്നം"
     else:
-        tod_en = "Hello"
-        tod_te = "నమస్కారం"
-        tod_hi = "नमस्ते"
-        tod_ta = "வணக்கம்"
-        tod_kn = "ನಮಸ್ಕಾರ"
-        tod_ml = "നമസ്കാരം"
+        tod_en = "Good evening"
+        tod_te = "శుభ సాయంత్రం"
+        tod_hi = "शुभ संध्या"
+        tod_ta = "மாலை வணக்கம்"
+        tod_kn = "ಶುಭ ಸಂಜೆ"
+        tod_ml = "ശുഭ സായാഹ്നം"
 
     if lang == "te":
         return f"{tod_te}, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?"

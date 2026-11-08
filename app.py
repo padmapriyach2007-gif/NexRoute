@@ -7095,6 +7095,41 @@ if "lang" in st.query_params:
 
 
 
+# =========================================================================
+# GLOBAL JARVIS-STYLE AURA VOICE COMMAND DISPATCHER (PRE-VIEW ROUTING)
+# =========================================================================
+if "aura_cmd" in st.query_params:
+    try:
+        raw_cmd = str(st.query_params["aura_cmd"]).strip()
+        if raw_cmd:
+            from src.aura_command_dispatcher import AuraGlobalCommandDispatcher
+            active_ctx = {
+                "active_tab": st.session_state.get("target_tab", "nav"),
+                "map_style": st.session_state.get("map_style", "satellite_hybrid"),
+                "user_coords": st.session_state.get("user_live_coords"),
+                "dest_coords": st.session_state.get("selected_dest_coords"),
+                "start_label": st.session_state.get("user_live_label", ""),
+                "dest_label": st.session_state.get("selected_dest_label", ""),
+                "stops": st.session_state.get("intermediate_stops", []),
+                "avoid_tolls": st.session_state.get("avoid_tolls", False),
+                "avoid_highways": st.session_state.get("avoid_highways", False)
+            }
+            c_lang = st.session_state.get("app_language", "en")
+            cmd_result = AuraGlobalCommandDispatcher.parse_and_dispatch(raw_cmd, context=active_ctx, lang=c_lang)
+            AuraGlobalCommandDispatcher.apply_execution_result(cmd_result, st.session_state)
+            st.session_state.aura_last_command_result = cmd_result.to_dict()
+            st.toast(cmd_result.text_response, icon="⚡")
+        try:
+            del st.query_params["aura_cmd"]
+        except Exception:
+            pass
+    except Exception as e_cmd:
+        logger.warning("Error processing global AURA voice command: %s", e_cmd)
+        try:
+            del st.query_params["aura_cmd"]
+        except Exception:
+            pass
+
 if "view" in st.query_params:
 
 
@@ -7192,8 +7227,20 @@ if st.session_state.get("switch_to_nav_tab", False):
 
 
 if st.session_state.current_view == "dashboard":
+    # AURA JARVIS AI VOICE ASSISTANT HUD (AUTOMATIC GREETING ON LAUNCH & CONTINUOUS VOICE COMMANDS)
+    if st.session_state.get("show_aura_welcome", True):
+        from src.aura_welcome_screen import render_aura_welcome_hud
+        cur_app_lang = st.session_state.get("app_language", "en")
+        should_auto_speak = not st.session_state.get("aura_welcome_greeted", False)
+        st.session_state.aura_welcome_greeted = True
 
-
+        welcome_hud_html = render_aura_welcome_hud(
+            current_lang=cur_app_lang,
+            auto_speak=should_auto_speak,
+            bot_logo_uri=aura_logo_uri,
+            user_name="Boss"
+        )
+        components.html(welcome_hud_html, height=215, scrolling=False)
 
     render_quantum_hero_section()
 
@@ -8234,40 +8281,7 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
         pass
 
 
-# =========================================================================
-# GLOBAL JARVIS-STYLE AURA VOICE COMMAND DISPATCHER
-# =========================================================================
-if "aura_cmd" in st.query_params:
-    try:
-        raw_cmd = str(st.query_params["aura_cmd"]).strip()
-        if raw_cmd:
-            from src.aura_command_dispatcher import AuraGlobalCommandDispatcher
-            active_ctx = {
-                "active_tab": st.session_state.get("target_tab", "nav"),
-                "map_style": st.session_state.get("map_style", "satellite_hybrid"),
-                "user_coords": st.session_state.get("user_live_coords"),
-                "dest_coords": st.session_state.get("selected_dest_coords"),
-                "start_label": st.session_state.get("user_live_label", ""),
-                "dest_label": st.session_state.get("selected_dest_label", ""),
-                "stops": st.session_state.get("intermediate_stops", []),
-                "avoid_tolls": st.session_state.get("avoid_tolls", False),
-                "avoid_highways": st.session_state.get("avoid_highways", False)
-            }
-            c_lang = st.session_state.get("app_language", "en")
-            cmd_result = AuraGlobalCommandDispatcher.parse_and_dispatch(raw_cmd, context=active_ctx, lang=c_lang)
-            AuraGlobalCommandDispatcher.apply_execution_result(cmd_result, st.session_state)
-            st.session_state.aura_last_command_result = cmd_result.to_dict()
-            st.toast(cmd_result.text_response, icon="⚡")
-        try:
-            del st.query_params["aura_cmd"]
-        except Exception:
-            pass
-    except Exception as e_cmd:
-        logger.warning("Error processing global AURA voice command: %s", e_cmd)
-        try:
-            del st.query_params["aura_cmd"]
-        except Exception:
-            pass
+# Global AURA voice commands are now processed in pre-view routing above
 
 if "pending_chat_prompt" in st.query_params:
     try:

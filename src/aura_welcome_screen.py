@@ -1,9 +1,8 @@
 """
-NexRoute — AURA JARVIS-Style Welcome Screen & Autonomous Voice Assistant Activation
-Provides a futuristic startup welcome experience with animated circular AURA avatar,
-ambient cyan/electric-blue particle aura, real-time waveform visualizer,
-Web Speech API speech synthesis & recognition, multilingual time-aware greetings,
-autoplay restriction resilience, and instant command dispatching to the application.
+NexRoute — AURA JARVIS-Style AI Voice Assistant & Autonomous Controller
+Fully integrated, automatic Jarvis-style AI voice copilot that greets on application launch,
+continuously listens for natural voice commands, and navigates internal NextRoute sections
+within the single main application without launching duplicate instances.
 """
 
 import json
@@ -13,59 +12,47 @@ from typing import Optional, Dict, Any
 
 def get_aura_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
     """
-    Returns a contextual, time-aware welcoming greeting in the chosen language.
+    Returns the exact time-appropriate JARVIS greeting.
+    - Good morning (5:00 - 11:59)
+    - Good afternoon (12:00 - 16:59)
+    - Good evening (17:00 - 4:59)
+    No extra promotional or introductory sentences.
     """
     now_hour = datetime.datetime.now().hour
     if 5 <= now_hour < 12:
-        tod = "morning"
+        tod_en = "Good morning"
+        tod_te = "శుభోదయం"
+        tod_hi = "शुभ प्रभात"
+        tod_ta = "காலை வணக்கம்"
+        tod_kn = "ಶುಭೋದಯ"
+        tod_ml = "സുപ്രഭാതം"
     elif 12 <= now_hour < 17:
-        tod = "afternoon"
-    elif 17 <= now_hour < 22:
-        tod = "evening"
+        tod_en = "Good afternoon"
+        tod_te = "నమస్కారం"
+        tod_hi = "नमस्ते"
+        tod_ta = "மதிய வணக்கம்"
+        tod_kn = "ನಮಸ್ಕಾರ"
+        tod_ml = "നമസ്കാരം"
     else:
-        tod = "night"
+        tod_en = "Good evening"
+        tod_te = "శుభ సాయంత్రం"
+        tod_hi = "शुभ संध्या"
+        tod_ta = "மாலை வணக்கம்"
+        tod_kn = "ಶುಭ ಸಂಜೆ"
+        tod_ml = "ശുഭ സായാഹ്നം"
 
-    greetings_map = {
-        "en": {
-            "morning": f"Good morning, {user_name}! Welcome to NexRoute. I'm AURA, your intelligent travel assistant. Where shall we explore today?",
-            "afternoon": f"Good afternoon, {user_name}! Welcome back to NexRoute. I'm AURA, your personal route copilot. Ready for your next journey?",
-            "evening": f"Good evening, {user_name}! Welcome to NexRoute. I'm AURA, your intelligent travel assistant. What should I do for you today?",
-            "night": f"Hello, {user_name}! Welcome to NexRoute. I'm AURA, your intelligent travel assistant. What should I do for you tonight?"
-        },
-        "te": {
-            "morning": f"శుభోదయం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను AURA, మీ ఇంటెలిజెంట్ ట్రావెల్ అసిస్టెంట్. ఈరోజు మనం ఎక్కడికి వెళ్దాం?",
-            "afternoon": f"నమస్కారం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను AURA, మీ ప్రయాణ సహచరిని. మీ తదుపరి ప్రయాణానికి సిద్ధమా?",
-            "evening": f"శుభ సాయంత్రం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను AURA, మీ స్మార్ట్ గైడ్. ఈరోజు నేను మీకు ఎలా సహాయపడగలను?",
-            "night": f"నమస్కారం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను AURA. మీ రాత్రి ప్రయాణానికి రూట్ సిద్ధం చేయమంటారా?"
-        },
-        "hi": {
-            "morning": f"सुप्रभात, {user_name}! नेक्स-रूट में आपका स्वागत है। मैं AURA हूँ, आपका स्मार्ट यात्रा सहायक। आज हम कहाँ चलें?",
-            "afternoon": f"नमस्ते, {user_name}! नेक्स-रूट में आपका स्वागत है। मैं AURA हूँ। क्या आप अपनी अगली यात्रा के लिए तैयार हैं?",
-            "evening": f"शुभ संध्या, {user_name}! नेक्स-रूट में आपका स्वागत है। मैं AURA हूँ। आज मैं आपके लिए क्या कर सकता हूँ?",
-            "night": f"नमस्ते, {user_name}! नेक्स-रूट में आपका स्वागत है। मैं AURA हूँ। आपकी यात्रा को सुरक्षित और तेज़ बनाने के लिए तैयार हूँ।"
-        },
-        "ta": {
-            "morning": f"காலை வணக்கம், {user_name}! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் AURA, உங்கள் பயண வழிகாட்டி. இன்று எங்கு செல்லலாம்?",
-            "afternoon": f"வணக்கம், {user_name}! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் AURA. உங்கள் அடுத்த பயணத்திற்கு தயாரா?",
-            "evening": f"மாலை வணக்கம், {user_name}! நெக்స్-ரூட்டிற்கு நல்வரவு. நான் AURA. இன்று நான் என்ன செய்ய வேண்டும்?",
-            "night": f"வணக்கம், {user_name}! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் AURA. உங்கள் பயணத்திற்கு உதவ காத்திருக்கிறேன்."
-        },
-        "kn": {
-            "morning": f"ಶುಭೋದಯ, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು AURA, ನಿಮ್ಮ ಸ್ಮಾರ್ಟ್ ಪ್ರಯಾಣ ಸಹಾಯಕ.",
-            "afternoon": f"ನಮಸ್ಕಾರ, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು AURA, ನಿಮ್ಮ ಮುಂದಿನ ಪ್ರಯಾಣಕ್ಕೆ ಸಿದ್ಧರಿದ್ದೀರಾ?",
-            "evening": f"ಶುಭ ಸಂಜೆ, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು AURA. ಇಂದು ನಾನು ನಿಮಗಾಗಿ ಏನು ಮಾಡಬೇಕು?",
-            "night": f"ನಮಸ್ಕಾರ, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು AURA, ನಿಮ್ಮ ಪ್ರಯಾಣ ಸುಖಕರವಾಗಿರಲಿ."
-        },
-        "ml": {
-            "morning": f"സുപ്രഭാതം, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ AURA, നിങ്ങളുടെ സ്മാർട്ട് യാത്രാ സഹായി.",
-            "afternoon": f"നമസ്കാരം, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ AURA, യാത്രാവിവരങ്ങൾ പങ്കുവെക്കാം.",
-            "evening": f"ശുഭ സായാഹ്നം, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ AURA. എന്ത് സഹായമാണ് വേണ്ടത്?",
-            "night": f"നമസ്കാരം, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ AURA, രാത്രിയാത്രകൾ സുരക്ഷിതമാക്കാം."
-        }
-    }
-
-    lang_bundle = greetings_map.get(lang, greetings_map["en"])
-    return lang_bundle.get(tod, greetings_map["en"]["morning"])
+    if lang == "te":
+        return f"{tod_te}, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?"
+    elif lang == "hi":
+        return f"{tod_hi}, {user_name}! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?"
+    elif lang == "ta":
+        return f"{tod_ta}, {user_name}! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
+    elif lang == "kn":
+        return f"{tod_kn}, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+    elif lang == "ml":
+        return f"{tod_ml}, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എന്ത് സഹായമാണ് ചെയ്യേണ്ടത്?"
+    else:
+        return f"{tod_en}, {user_name}! Welcome to NextRoute. How can I help you?"
 
 
 def render_aura_welcome_hud(
@@ -75,9 +62,9 @@ def render_aura_welcome_hud(
     user_name: str = "Boss"
 ) -> str:
     """
-    Renders the futuristic JARVIS-style welcome screen HTML component with
-    interactive particle canvas, audio waveform visualizer, responsive speech engine,
-    and instantaneous Streamlit application command routing.
+    Renders the streamlined futuristic JARVIS-style voice assistant HUD for NextRoute.
+    Features the circular robot avatar, live waveform canvas, status pill, transcript box,
+    automatic startup greeting, continuous speech recognition, and instant section navigation.
     """
     greeting_text = get_aura_startup_greeting(current_lang, user_name)
 
@@ -98,7 +85,7 @@ def render_aura_welcome_hud(
     avatar_markup = (
         f'<img src="{bot_logo_uri}" class="avatar-core-img" alt="AURA Mascot" />'
         if bot_logo_uri
-        else '<div class="avatar-core-disc">⚡</div>'
+        else '<span style="color: #00f0ff; font-size: 26px; font-weight: 900;">⚡</span>'
     )
 
     return f"""<!DOCTYPE html>
@@ -123,21 +110,20 @@ def render_aura_welcome_hud(
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 10px;
-        min-height: 440px;
+        padding: 6px;
         overflow: hidden;
     }}
 
-    /* Futuristic HUD Glassmorphism Card */
+    /* Futuristic HUD Glassmorphism Card (Streamlined & Clean) */
     .aura-welcome-panel {{
         position: relative;
         width: 100%;
-        max-width: 820px;
-        background: radial-gradient(circle at 50% 15%, rgba(14, 28, 54, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%);
+        max-width: 840px;
+        background: radial-gradient(circle at 50% 20%, rgba(14, 28, 54, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
         border: 1.5px solid rgba(0, 240, 255, 0.38);
-        border-radius: 22px;
-        padding: 24px 28px;
-        box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8), 0 0 32px rgba(0, 240, 255, 0.18);
+        border-radius: 20px;
+        padding: 16px 24px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 28px rgba(0, 240, 255, 0.16);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -146,7 +132,6 @@ def render_aura_welcome_hud(
         overflow: hidden;
     }}
 
-    /* Top Corner Holographic Accents */
     .aura-welcome-panel::before {{
         content: '';
         position: absolute;
@@ -155,16 +140,16 @@ def render_aura_welcome_hud(
         right: 0;
         height: 2px;
         background: linear-gradient(90deg, transparent 0%, #00f0ff 50%, transparent 100%);
-        opacity: 0.85;
+        opacity: 0.9;
     }}
 
-    /* Header Bar: Brand + Quick Dismiss */
+    /* Header Bar: Brand + Live Status Badge */
     .welcome-top-row {{
         width: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 8px;
     }}
 
     .brand-pill {{
@@ -174,7 +159,7 @@ def render_aura_welcome_hud(
         background: rgba(0, 240, 255, 0.10);
         border: 1px solid rgba(0, 240, 255, 0.35);
         border-radius: 9999px;
-        padding: 4px 14px;
+        padding: 3px 12px;
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.72rem;
         font-weight: 800;
@@ -198,9 +183,9 @@ def render_aura_welcome_hud(
 
     .status-badge {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.70rem;
+        font-size: 0.68rem;
         font-weight: 700;
-        padding: 4px 12px;
+        padding: 3px 11px;
         border-radius: 9999px;
         background: rgba(16, 185, 129, 0.15);
         border: 1px solid #10b981;
@@ -212,17 +197,18 @@ def render_aura_welcome_hud(
     /* Arc Reactor Circular Assistant Avatar */
     .avatar-wrapper {{
         position: relative;
-        width: 96px;
-        height: 96px;
-        margin: 4px 0 14px 0;
+        width: 68px;
+        height: 68px;
+        margin: 2px 0 8px 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
     }}
 
     .arc-reactor-ring-outer {{
         position: absolute;
-        inset: -6px;
+        inset: -5px;
         border-radius: 50%;
         border: 1.5px dashed rgba(0, 240, 255, 0.45);
         animation: spinClockwise 14s linear infinite;
@@ -233,20 +219,21 @@ def render_aura_welcome_hud(
         inset: -1px;
         border-radius: 50%;
         border: 2px solid rgba(56, 189, 248, 0.6);
-        box-shadow: 0 0 24px rgba(0, 240, 255, 0.35);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
         animation: ringPulse 2.4s infinite ease-in-out;
+        transition: box-shadow 0.3s ease;
     }}
 
     .avatar-core-circle {{
-        width: 76px;
-        height: 76px;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
         background: radial-gradient(circle, #0284c7 0%, #030712 90%);
         border: 2px solid #00f0ff;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+        box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
         z-index: 2;
         overflow: hidden;
     }}
@@ -257,207 +244,61 @@ def render_aura_welcome_hud(
         object-fit: cover;
     }}
 
-    .avatar-core-disc {{
-        font-size: 32px;
-        color: #00f0ff;
-        filter: drop-shadow(0 0 8px #00f0ff);
-    }}
-
     @keyframes spinClockwise {{
         from {{ transform: rotate(0deg); }}
         to {{ transform: rotate(360deg); }}
     }}
 
     @keyframes ringPulse {{
-        0%, 100% {{ transform: scale(0.98); opacity: 0.7; }}
+        0%, 100% {{ transform: scale(1); opacity: 0.8; }}
         50% {{ transform: scale(1.05); opacity: 1; }}
     }}
 
-    /* Title & Spoken Greeting Headline */
+    /* Spoken Greeting Headline */
     .greeting-headline {{
-        font-size: 1.25rem;
+        font-size: 1.05rem;
         font-weight: 800;
-        color: #ffffff;
+        color: #f8fafc;
+        margin: 2px 0 4px 0;
+        line-height: 1.3;
         letter-spacing: -0.01em;
-        line-height: 1.45;
-        max-width: 680px;
-        margin-bottom: 12px;
-        text-shadow: 0 2px 14px rgba(0, 240, 255, 0.25);
+        background: linear-gradient(135deg, #ffffff 0%, #38bdf8 60%, #818cf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }}
 
-    .greeting-subtext {{
-        font-size: 0.82rem;
-        color: #94a3b8;
-        margin-bottom: 16px;
-        max-width: 600px;
-        line-height: 1.5;
-    }}
-
-    /* Audio Waveform Canvas */
+    /* Synchronized Audio Waveform Visualizer */
     .waveform-container {{
         width: 100%;
-        max-width: 480px;
-        height: 38px;
-        background: rgba(3, 7, 18, 0.6);
-        border: 1px solid rgba(0, 240, 255, 0.22);
-        border-radius: 12px;
-        margin-bottom: 18px;
+        max-width: 520px;
+        height: 26px;
+        margin: 4px 0 6px 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
     }}
 
     #auraWaveCanvas {{
         width: 100%;
         height: 100%;
+        display: block;
     }}
 
-    /* Primary Action Buttons */
-    .action-buttons-row {{
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-bottom: 18px;
-    }}
-
-    .btn-aura-primary {{
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
-        color: #030712;
-        font-weight: 800;
-        font-size: 0.88rem;
-        padding: 10px 22px;
-        border-radius: 9999px;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 0 20px rgba(0, 240, 255, 0.45);
-        transition: all 0.25s ease;
-    }}
-
-    .btn-aura-primary:hover {{
-        transform: translateY(-2px) scale(1.03);
-        box-shadow: 0 0 30px rgba(0, 240, 255, 0.75);
-    }}
-
-    .btn-aura-secondary {{
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(15, 23, 42, 0.85);
-        color: #38bdf8;
-        font-weight: 700;
-        font-size: 0.86rem;
-        padding: 10px 20px;
-        border-radius: 9999px;
-        border: 1px solid rgba(56, 189, 248, 0.4);
-        cursor: pointer;
-        transition: all 0.25s ease;
-    }}
-
-    .btn-aura-secondary:hover {{
-        background: rgba(56, 189, 248, 0.16);
-        border-color: #00f0ff;
-        color: #ffffff;
-        transform: translateY(-2px);
-    }}
-
-    .btn-aura-skip {{
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: transparent;
-        color: #94a3b8;
-        font-weight: 600;
-        font-size: 0.84rem;
-        padding: 10px 18px;
-        border-radius: 9999px;
-        border: 1px solid rgba(148, 163, 184, 0.25);
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }}
-
-    .btn-aura-skip:hover {{
-        background: rgba(255, 255, 255, 0.08);
-        color: #f1f5f9;
-        border-color: rgba(255, 255, 255, 0.4);
-    }}
-
-    /* Quick Voice Chips Row */
-    .quick-chips-grid {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        justify-content: center;
-        max-width: 740px;
-        margin-top: 4px;
-    }}
-
-    .chip-item {{
-        background: rgba(15, 23, 42, 0.80);
-        border: 1px solid rgba(56, 189, 248, 0.28);
-        border-radius: 8px;
-        padding: 5px 12px;
-        font-size: 0.74rem;
-        font-weight: 600;
-        color: #cbd5e1;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }}
-
-    .chip-item:hover {{
-        background: rgba(0, 240, 255, 0.16);
-        border-color: #00f0ff;
-        color: #ffffff;
-        transform: translateY(-1px);
-    }}
-
-    /* Control Toolbar (Auto-greeting switch + Mute) */
-    .controls-toolbar {{
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 18px;
-        padding-top: 14px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        font-size: 0.74rem;
-        color: #64748b;
-    }}
-
-    .switch-label {{
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        color: #94a3b8;
-    }}
-
-    .switch-label input {{
-        cursor: pointer;
-        accent-color: #00f0ff;
-    }}
-
+    /* Minimal Voice Transcript Display */
     .live-transcript-box {{
-        margin-top: 10px;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.76rem;
+        font-size: 0.74rem;
         color: #38bdf8;
-        min-height: 20px;
-        line-height: 1.4;
+        min-height: 18px;
+        line-height: 1.35;
+        letter-spacing: 0.02em;
     }}
 </style>
 </head>
 <body>
 
 <div class="aura-welcome-panel" id="welcomePanel">
-    <!-- Top Row -->
+    <!-- Top Row: Brand & Live Status Indicator -->
     <div class="welcome-top-row">
         <div class="brand-pill">
             <span class="brand-pulse-dot"></span>
@@ -468,8 +309,8 @@ def render_aura_welcome_hud(
         </div>
     </div>
 
-    <!-- Animated Arc Reactor Avatar -->
-    <div class="avatar-wrapper" onclick="startVoiceRecognition()">
+    <!-- Animated Arc Reactor Avatar (Click to Toggle Mic) -->
+    <div class="avatar-wrapper" onclick="toggleVoiceListening()" title="Click to speak with AURA">
         <div class="arc-reactor-ring-outer"></div>
         <div class="arc-reactor-ring-mid" id="avatarMidRing"></div>
         <div class="avatar-core-circle">
@@ -481,60 +322,15 @@ def render_aura_welcome_hud(
     <h1 class="greeting-headline" id="greetingHeadline">
         "{greeting_text}"
     </h1>
-    <p class="greeting-subtext">
-        Natural voice-controlled travel platform. Say a command or select an option below to begin your journey.
-    </p>
 
     <!-- Synchronized Audio Waveform Visualizer -->
     <div class="waveform-container">
         <canvas id="auraWaveCanvas"></canvas>
     </div>
 
-    <!-- Live Transcript / Assistant Speech Box -->
+    <!-- Minimal Voice Transcript Display -->
     <div class="live-transcript-box" id="transcriptBox">
-        Ready for voice interaction, Boss.
-    </div>
-
-    <!-- Primary Action Buttons -->
-    <div class="action-buttons-row">
-        <button class="btn-aura-primary" id="btnVoiceMic" onclick="startVoiceRecognition()">
-            🎙️ Start Voice Command
-        </button>
-        <button class="btn-aura-secondary" id="btnPlayGreeting" onclick="playVoiceGreeting(true)">
-            🔊 Play Greeting
-        </button>
-        <button class="btn-aura-skip" onclick="dismissWelcomeScreen()">
-            🚀 Enter NexRoute
-        </button>
-    </div>
-
-    <!-- Quick Voice Chips -->
-    <div class="quick-chips-grid">
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Open navigation')">🧭 Open Navigation</span>
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Switch to satellite view')">🛰️ Satellite View</span>
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Show my current location')">📍 Current Location</span>
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Find hospitals nearby')">🏥 Find Hospitals</span>
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Find petrol stations nearby')">⛽ Fuel Stations</span>
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Fit route')">🔍 Fit Route</span>
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Calculate fuel expenses')">⛽ Calculate Fuel</span>
-        <span class="chip-item" onclick="dispatchWelcomeCommand('Open chatbot')">💬 Open Chatbot</span>
-    </div>
-
-    <!-- Bottom Controls Toolbar -->
-    <div class="controls-toolbar">
-        <label class="switch-label">
-            <input type="checkbox" id="chkAutoGreeting" onchange="toggleAutoGreetingPref(this.checked)" checked />
-            Enable Automatic Voice Greeting on Startup
-        </label>
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <button onclick="stopAssistantSpeech()" style="background:transparent; border:none; color:#64748b; cursor:pointer; font-size:0.74rem;">
-                🔇 Mute
-            </button>
-            <span style="color: #475569;">|</span>
-            <button onclick="dismissWelcomeScreen()" style="background:transparent; border:none; color:#38bdf8; cursor:pointer; font-weight:700; font-size:0.74rem;">
-                Skip to Dashboard →
-            </button>
-        </div>
+        Ready for voice command, Boss.
     </div>
 </div>
 
@@ -547,32 +343,13 @@ def render_aura_welcome_hud(
 
     var isListening = false;
     var isSpeaking = false;
+    var isProcessing = false;
     var recognition = null;
     var synthesis = window.speechSynthesis;
     var currentUtterance = null;
     var canvas = document.getElementById('auraWaveCanvas');
     var ctx = canvas ? canvas.getContext('2d') : null;
     var animationId = null;
-
-    // Load auto-greeting preference
-    var savedAutoPref = localStorage.getItem('aura_auto_greeting_enabled');
-    var autoPrefCheckbox = document.getElementById('chkAutoGreeting');
-    if (savedAutoPref !== null && autoPrefCheckbox) {{
-        autoPrefCheckbox.checked = (savedAutoPref === 'true');
-    }}
-
-    window.toggleAutoGreetingPref = function(enabled) {{
-        localStorage.setItem('aura_auto_greeting_enabled', String(enabled));
-        try {{
-            var pWin = window.parent || window.top;
-            if (pWin && pWin !== window) {{
-                pWin.postMessage({{
-                    type: 'AURA_AUTO_GREETING_PREF',
-                    enabled: enabled
-                }}, '*');
-            }}
-        }} catch(e) {{}}
-    }};
 
     // UI Status Helpers
     function setAssistantState(state, message) {{
@@ -588,7 +365,7 @@ def render_aura_welcome_hud(
                 badge.style.borderColor = '#00f0ff';
                 badge.style.color = '#00f0ff';
             }}
-            if (midRing) midRing.style.boxShadow = '0 0 35px #00f0ff';
+            if (midRing) midRing.style.boxShadow = '0 0 32px #00f0ff';
         }} else if (state === 'speaking') {{
             if (badge) {{
                 badge.innerText = '🔊 SPEAKING...';
@@ -596,7 +373,7 @@ def render_aura_welcome_hud(
                 badge.style.borderColor = '#38bdf8';
                 badge.style.color = '#38bdf8';
             }}
-            if (midRing) midRing.style.boxShadow = '0 0 30px #38bdf8';
+            if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
         }} else if (state === 'processing') {{
             if (badge) {{
                 badge.innerText = '⚡ EXECUTING COMMAND...';
@@ -604,14 +381,7 @@ def render_aura_welcome_hud(
                 badge.style.borderColor = '#a855f7';
                 badge.style.color = '#c084fc';
             }}
-            if (midRing) midRing.style.boxShadow = '0 0 30px #a855f7';
-        }} else if (state === 'error') {{
-            if (badge) {{
-                badge.innerText = '⚠️ NOTICE';
-                badge.style.background = 'rgba(239, 68, 68, 0.22)';
-                badge.style.borderColor = '#ef4444';
-                badge.style.color = '#f87171';
-            }}
+            if (midRing) midRing.style.boxShadow = '0 0 28px #a855f7';
         }} else {{
             if (badge) {{
                 badge.innerText = '● IDLE • READY';
@@ -619,7 +389,7 @@ def render_aura_welcome_hud(
                 badge.style.borderColor = '#10b981';
                 badge.style.color = '#34d399';
             }}
-            if (midRing) midRing.style.boxShadow = '0 0 20px rgba(0, 240, 255, 0.35)';
+            if (midRing) midRing.style.boxShadow = '0 0 16px rgba(0, 240, 255, 0.35)';
         }}
     }}
 
@@ -627,7 +397,7 @@ def render_aura_welcome_hud(
     function resizeCanvas() {{
         if (!canvas) return;
         canvas.width = canvas.parentElement.clientWidth || 400;
-        canvas.height = canvas.parentElement.clientHeight || 38;
+        canvas.height = canvas.parentElement.clientHeight || 26;
     }}
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -637,17 +407,17 @@ def render_aura_welcome_hud(
         if (!ctx || !canvas) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        var numPoints = 64;
+        var numPoints = 50;
         var step = canvas.width / numPoints;
         var midY = canvas.height / 2;
 
-        var baseAmp = isSpeaking ? 14 : (isListening ? 10 : 3.5);
-        var freq = isSpeaking ? 0.16 : (isListening ? 0.22 : 0.08);
+        var baseAmp = isSpeaking ? 11 : (isListening ? 8 : 2.5);
+        var freq = isSpeaking ? 0.18 : (isListening ? 0.24 : 0.08);
 
         ctx.beginPath();
         ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : 'rgba(56, 189, 248, 0.45)');
-        ctx.lineWidth = isSpeaking || isListening ? 2.5 : 1.5;
-        ctx.shadowBlur = isSpeaking ? 16 : (isListening ? 12 : 4);
+        ctx.lineWidth = isSpeaking || isListening ? 2.2 : 1.4;
+        ctx.shadowBlur = isSpeaking ? 14 : (isListening ? 10 : 3);
         ctx.shadowColor = '#00f0ff';
 
         for (var i = 0; i <= numPoints; i++) {{
@@ -664,12 +434,14 @@ def render_aura_welcome_hud(
     }}
     drawWave();
 
-    // Text-to-Speech Engine
-    window.playVoiceGreeting = function(forced) {{
-        if (!synthesis) return;
+    // Universal Speech Synthesis Function
+    function speakText(textToSpeak, onCompleteCallback) {{
+        if (!synthesis) {{
+            if (onCompleteCallback) onCompleteCallback();
+            return;
+        }}
         try {{
             synthesis.cancel();
-            var textToSpeak = spokenGreeting;
             currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
             currentUtterance.lang = bcp47Lang;
             currentUtterance.rate = 1.0;
@@ -682,99 +454,33 @@ def render_aura_welcome_hud(
 
             currentUtterance.onend = function() {{
                 isSpeaking = false;
-                setAssistantState('idle', 'Awaiting your command, Boss.');
+                if (onCompleteCallback) onCompleteCallback();
             }};
 
-            currentUtterance.onerror = function(err) {{
+            currentUtterance.onerror = function() {{
                 isSpeaking = false;
-                setAssistantState('idle', 'Click "Play Greeting" or start voice command.');
+                if (onCompleteCallback) onCompleteCallback();
             }};
 
             synthesis.speak(currentUtterance);
         }} catch(e) {{
             isSpeaking = false;
-            setAssistantState('idle');
+            if (onCompleteCallback) onCompleteCallback();
         }}
-    }};
+    }}
 
-    window.stopAssistantSpeech = function() {{
-        if (synthesis) synthesis.cancel();
-        isSpeaking = false;
-        setAssistantState('idle', 'Audio muted.');
-    }};
-
-    // Voice Command Dispatching (Executes Real Streamlit Application Actions)
-    window.dispatchWelcomeCommand = function(cmdText) {{
-        if (!cmdText || !cmdText.trim()) return;
-        setAssistantState('processing', 'Executing command: "' + cmdText + '"');
-
-        // 1. PostMessage to Parent Application
-        try {{
-            var pWin = window.parent || window.top;
-            if (pWin && pWin !== window) {{
-                pWin.postMessage({{
-                    type: 'AURA_GLOBAL_VOICE_COMMAND',
-                    command: cmdText.trim(),
-                    lang: activeLang
-                }}, '*');
-            }}
-        }} catch(ePost) {{}}
-
-        // 2. Safely sync Streamlit Query Params to trigger backend action and close welcome HUD
-        try {{
-            var targetWin = window.parent || window.top || window;
-            var currentHref = '';
-            try {{ currentHref = targetWin.location.href; }} catch(e) {{ currentHref = window.location.href; }}
-            var url = new URL(currentHref);
-            url.searchParams.set('aura_cmd', cmdText.trim());
-            url.searchParams.set('close_welcome', 'true');
-            try {{
-                targetWin.location.href = url.toString();
-            }} catch(eNav) {{
-                window.location.href = url.toString();
-            }}
-        }} catch(eParam) {{}}
-    }};
-
-    // Dismiss Welcome Screen without executing any command
-    window.dismissWelcomeScreen = function() {{
-        stopAssistantSpeech();
-        try {{
-            var pWin = window.parent || window.top;
-            if (pWin && pWin !== window) {{
-                pWin.postMessage({{ type: 'CLOSE_AURA_WELCOME' }}, '*');
-            }}
-        }} catch(e) {{}}
-
-        try {{
-            var targetWin = window.parent || window.top || window;
-            var currentHref = '';
-            try {{ currentHref = targetWin.location.href; }} catch(e) {{ currentHref = window.location.href; }}
-            var url = new URL(currentHref);
-            url.searchParams.set('close_welcome', 'true');
-            try {{
-                targetWin.location.href = url.toString();
-            }} catch(eNav) {{
-                window.location.href = url.toString();
-            }}
-        }} catch(eParam) {{}}
-    }};
-
-    // Voice Recognition (Speech-to-Text)
-    window.startVoiceRecognition = function() {{
-        stopAssistantSpeech();
+    // Continuous Speech Recognition (Speech-to-Text)
+    function startVoiceListening() {{
+        if (isSpeaking || isProcessing) return;
 
         var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {{
-            setAssistantState('error', 'Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+            setAssistantState('idle', 'Ready for voice commands.');
             return;
         }}
 
-        if (isListening && recognition) {{
-            try {{ recognition.stop(); }} catch(e) {{}}
-            isListening = false;
-            setAssistantState('idle', 'Listening cancelled.');
-            return;
+        if (recognition) {{
+            try {{ recognition.abort(); }} catch(e) {{}}
         }}
 
         try {{
@@ -791,38 +497,167 @@ def render_aura_welcome_hud(
             recognition.onresult = function(event) {{
                 isListening = false;
                 var transcript = event.results[0][0].transcript;
-                if (transcript) {{
-                    setAssistantState('processing', 'Heard: "' + transcript + '"');
-                    dispatchWelcomeCommand(transcript);
+                if (transcript && transcript.trim()) {{
+                    handleVoiceCommand(transcript.trim());
                 }}
             }};
 
             recognition.onerror = function(err) {{
                 isListening = false;
-                setAssistantState('error', 'Microphone error or permission denied. Please allow microphone access.');
+                setAssistantState('idle', 'Ready for voice commands.');
             }};
 
             recognition.onend = function() {{
                 isListening = false;
-                if (!isSpeaking) setAssistantState('idle');
+                if (!isSpeaking && !isProcessing) {{
+                    setAssistantState('idle', 'Ready for voice commands.');
+                }}
             }};
 
             recognition.start();
-        }} catch(eStart) {{
+        }} catch(e) {{
             isListening = false;
-            setAssistantState('error', 'Could not access microphone: ' + eStart.message);
+            setAssistantState('idle', 'Ready for voice commands.');
+        }}
+    }}
+
+    window.toggleVoiceListening = function() {{
+        if (isListening && recognition) {{
+            try {{ recognition.stop(); }} catch(e) {{}}
+            isListening = false;
+            setAssistantState('idle', 'Listening paused.');
+        }} else {{
+            startVoiceListening();
         }}
     }};
 
-    // Initial Startup Welcome Greeting Trigger (Autoplay safe)
-    if (autoSpeak) {{
-        setTimeout(function() {{
-            var isPrefEnabled = (localStorage.getItem('aura_auto_greeting_enabled') !== 'false');
-            if (isPrefEnabled) {{
-                window.playVoiceGreeting(false);
+    // Process Voice Command & Navigate Within Single NextRoute Application
+    function handleVoiceCommand(cmdText) {{
+        isProcessing = true;
+        setAssistantState('processing', 'YOU: "' + cmdText + '"');
+
+        var lower = cmdText.toLowerCase();
+        var spokenResponse = "";
+
+        if (lower.indexOf("navigation") !== -1 || lower.indexOf("nav") !== -1 || lower.indexOf("map") !== -1) {{
+            spokenResponse = "Opening navigation.";
+        }} else if (lower.indexOf("trip") !== -1 || lower.indexOf("copilot") !== -1 || lower.indexOf("itinerar") !== -1) {{
+            spokenResponse = "Here are your trips.";
+        }} else if (lower.indexOf("hotel") !== -1 || lower.indexOf("lodg") !== -1) {{
+            spokenResponse = "Let's find hotels.";
+        }} else if (lower.indexOf("flight") !== -1 || lower.indexOf("airplane") !== -1) {{
+            spokenResponse = "Opening flight planner.";
+        }} else if (lower.indexOf("restaurant") !== -1 || lower.indexOf("food") !== -1 || lower.indexOf("cafe") !== -1) {{
+            spokenResponse = "Finding nearby restaurants.";
+        }} else if (lower.indexOf("profile") !== -1 || lower.indexOf("account") !== -1) {{
+            spokenResponse = "Opening your profile.";
+        }} else if (lower.indexOf("place") !== -1 || lower.indexOf("saved") !== -1 || lower.indexOf("sight") !== -1) {{
+            spokenResponse = "Opening saved places.";
+        }} else if (lower.indexOf("guide") !== -1) {{
+            spokenResponse = "Opening virtual guide.";
+        }} else if (lower.indexOf("chat") !== -1 || lower.indexOf("aura") !== -1) {{
+            spokenResponse = "AURA chatbot is ready.";
+        }} else if (lower.indexOf("satellite") !== -1) {{
+            spokenResponse = "Switched to satellite view.";
+        }} else if (lower.indexOf("hospital") !== -1) {{
+            spokenResponse = "Locating hospitals and medical centers.";
+        }} else if (lower.indexOf("petrol") !== -1 || lower.indexOf("fuel") !== -1) {{
+            spokenResponse = "Locating fuel stations.";
+        }} else if (lower.indexOf("where am i") !== -1 || lower.indexOf("location") !== -1) {{
+            spokenResponse = "Locating your current coordinates.";
+        }} else {{
+            spokenResponse = "Processing: " + cmdText.substring(0, 30);
+        }}
+
+        // Speak the concise response immediately
+        speakText(spokenResponse, function() {{
+            isProcessing = false;
+            // Continuous Voice Command Interaction: automatically resume listening
+            setTimeout(function() {{
+                startVoiceListening();
+            }}, 600);
+        }});
+
+        // Dispatch command to parent NextRoute Streamlit application
+        try {{
+            var targetWin = window.parent || window.top || window;
+            var currentHref = '';
+            try {{ currentHref = targetWin.location.href; }} catch(e) {{ currentHref = window.location.href; }}
+            var url = new URL(currentHref);
+            url.searchParams.set('aura_cmd', cmdText.trim());
+            try {{
+                targetWin.location.href = url.toString();
+            }} catch(eNav) {{
+                window.location.href = url.toString();
             }}
-        }}, 400);
+        }} catch(eParam) {{}}
     }}
+
+    // Automatic Voice Greeting on Application Launch & Autoplay Fallback
+    var greetingSpoken = false;
+
+    function attemptStartupGreeting() {{
+        if (greetingSpoken) return;
+        var sessionGreetedKey = 'aura_session_greeted_' + activeLang;
+        try {{
+            if (sessionStorage.getItem(sessionGreetedKey) === 'true') {{
+                greetingSpoken = true;
+                setAssistantState('idle', 'Ready for voice commands.');
+                return;
+            }}
+        }} catch(e) {{}}
+
+        if (!autoSpeak) {{
+            setAssistantState('idle', 'Ready for voice commands.');
+            return;
+        }}
+
+        greetingSpoken = true;
+        try {{ sessionStorage.setItem(sessionGreetedKey, 'true'); }} catch(e) {{}}
+
+        // Speak initial greeting: "Good morning, Boss! Welcome to NextRoute. How can I help you?"
+        speakText(spokenGreeting, function() {{
+            // Immediately after greeting finishes, activate microphone for continuous commands!
+            setTimeout(function() {{
+                startVoiceListening();
+            }}, 400);
+        }});
+    }}
+
+    // Minimal First-Interaction Fallback (if browser blocks audible autoplay without user gesture)
+    function onFirstUserInteraction() {{
+        if (!greetingSpoken && autoSpeak) {{
+            attemptStartupGreeting();
+        }}
+        window.removeEventListener('click', onFirstUserInteraction);
+        window.removeEventListener('keydown', onFirstUserInteraction);
+        window.removeEventListener('touchstart', onFirstUserInteraction);
+        try {{
+            var pWin = window.parent || window.top;
+            if (pWin && pWin !== window) {{
+                pWin.removeEventListener('click', onFirstUserInteraction);
+                pWin.removeEventListener('keydown', onFirstUserInteraction);
+                pWin.removeEventListener('touchstart', onFirstUserInteraction);
+            }}
+        }} catch(e) {{}}
+    }}
+
+    window.addEventListener('click', onFirstUserInteraction);
+    window.addEventListener('keydown', onFirstUserInteraction);
+    window.addEventListener('touchstart', onFirstUserInteraction);
+    try {{
+        var pWin = window.parent || window.top;
+        if (pWin && pWin !== window) {{
+            pWin.addEventListener('click', onFirstUserInteraction);
+            pWin.addEventListener('keydown', onFirstUserInteraction);
+            pWin.addEventListener('touchstart', onFirstUserInteraction);
+        }}
+    }} catch(e) {{}}
+
+    // Automatic trigger on launch
+    setTimeout(function() {{
+        attemptStartupGreeting();
+    }}, 400);
 
 }})();
 </script>

@@ -65,33 +65,45 @@ class AuraGlobalCommandDispatcher:
     Processes natural voice commands, determines intent, and executes real application changes.
     """
 
-    # Multilingual response templates
+    # Multilingual response templates (short, concise, natural Jarvis responses)
     RESPONSES = {
         "en": {
-            "welcome": "Hello, Boss! I'm AURA, your personal NexRoute assistant. What would you like me to do?",
-            "nav_opened": "Opening navigation dashboard.",
-            "chat_opened": "AURA AI Chatbot is ready for you, Boss.",
+            "welcome": "Good morning, Boss! Welcome to NextRoute. How can I help you?",
+            "nav_opened": "Opening navigation.",
+            "trips_opened": "Here are your trips.",
+            "hotels_opened": "Let's find hotels.",
+            "flights_opened": "Opening flight planner.",
+            "restaurants_opened": "Finding nearby restaurants.",
+            "profile_opened": "Opening your profile.",
+            "chat_opened": "AURA chatbot is ready.",
             "facilities_opened": "Showing nearby emergency and travel amenities.",
-            "places_opened": "Displaying saved and bookmark locations.",
-            "satellite_switched": "Switched map view to satellite hybrid imagery.",
-            "roadmap_switched": "Switched to high-contrast road vector map.",
-            "terrain_switched": "Switched to elevation terrain map.",
-            "gps_centered": "Locating your live coordinates and centering the map.",
-            "route_fitted": "Adjusting map camera to frame the full route corridor.",
+            "places_opened": "Opening saved places.",
+            "guide_opened": "Opening virtual guide.",
+            "satellite_switched": "Switched to satellite view.",
+            "roadmap_switched": "Switched to roadmap view.",
+            "terrain_switched": "Switched to terrain view.",
+            "gps_centered": "Locating your current coordinates.",
+            "route_fitted": "Adjusting camera to frame route.",
             "dest_cleared": "Destination has been cleared.",
-            "orig_cleared": "Starting location reset to device live GPS.",
-            "swapped": "Start and destination have been reversed.",
+            "orig_cleared": "Starting point reset to live GPS.",
+            "swapped": "Start and destination reversed.",
             "facility_found": "Locating {category} around your route corridor.",
-            "fuel_tool": "Opening fuel economy and toll expense calculations.",
+            "fuel_tool": "Opening fuel calculations.",
             "confirm_clear_route": "Boss, are you sure you want to clear your active route?",
-            "unrecognized": "I heard: \"{query}\". How can I assist with your journey?",
+            "unrecognized": "Processing your query: \"{query}\".",
         },
         "te": {
-            "welcome": "నమస్కారం, బాస్! నేను AURA, మీ వ్యక్తిగత నెక్స్‌రూట్ అసిస్టెంట్. నేను మీకు ఎలా సహాయపడగలను?",
-            "nav_opened": "నావిగేషన్ విభాగం తెరవబడింది.",
+            "welcome": "నమస్కారం, బాస్! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
+            "nav_opened": "నావిగేషన్ తెరవబడింది.",
+            "trips_opened": "మీ ట్రిప్స్ ఇక్కడ ఉన్నాయి.",
+            "hotels_opened": "హోటళ్లు వెతుకుతున్నాను.",
+            "flights_opened": "ఫ్లైట్ ప్లానర్ తెరుస్తున్నాను.",
+            "restaurants_opened": "రెస్టారెంట్లు వెతుకుతున్నాను.",
+            "profile_opened": "మీ ప్రొఫైల్ తెరవబడింది.",
             "chat_opened": "AURA AI చాట్‌బాట్ సిద్ధంగా ఉంది, బాస్.",
             "facilities_opened": "సమీప అత్యవసర మరియు ప్రయాణ సౌకర్యాలు చూపిస్తున్నాను.",
             "places_opened": "సేవ్ చేసిన ప్రదేశాలు తెరవబడ్డాయి.",
+            "guide_opened": "వర్చువల్ గైడ్ తెరవబడింది.",
             "satellite_switched": "శాటిలైట్ హైబ్రిడ్ వీక్షణకు మార్చబడింది.",
             "roadmap_switched": "రోడ్‌మ్యాప్ వీక్షణకు మార్చబడింది.",
             "terrain_switched": "టెర్రైన్ వీక్షణకు మార్చబడింది.",
@@ -103,40 +115,52 @@ class AuraGlobalCommandDispatcher:
             "facility_found": "సమీపంలోని {category} వెతుకుతున్నాను.",
             "fuel_tool": "ఇంధనం మరియు టోల్ ఖర్చుల కాలిక్యులేటర్ తెరుస్తున్నాను.",
             "confirm_clear_route": "బాస్, మీరు నిజంగానే ఈ రూట్ క్లియర్ చేయాలనుకుంటున్నారా?",
-            "unrecognized": "నేను విన్నాను: \"{query}\". మీ ప్రయాణంలో నేను ఎలా సహాయపడగలను?",
+            "unrecognized": "నేను విన్నాను: \"{query}\".",
         },
         "hi": {
-            "welcome": "नमस्ते, बॉस! मैं AURA हूँ, आपका व्यक्तिगत नेक्स-रूट सहायक। मैं आपके लिए क्या कर सकता हूँ?",
-            "nav_opened": "नेविगेशन डैशबोर्ड खोला जा रहा है।",
+            "welcome": "नमस्ते, बॉस! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
+            "nav_opened": "नेविगेशन खोला जा रहा है।",
+            "trips_opened": "ये रही आपकी यात्राएं।",
+            "hotels_opened": "होटल ढूंढे जा रहे हैं।",
+            "flights_opened": "फ्लाइट प्लानर खोला जा रहा है।",
+            "restaurants_opened": "रेस्टोरेंट ढूंढे जा रहे हैं।",
+            "profile_opened": "आपकी प्रोफाइल खोली जा रही है।",
             "chat_opened": "AURA AI चैटबॉट तैयार है, बॉस।",
-            "facilities_opened": "आस-पास की आपातकालीन और यात्रा सुविधाएं दिखाई जा रही हैं।",
+            "facilities_opened": "आस-पास की सुविधाएं दिखाई जा रही हैं।",
             "places_opened": "सहेजे गए स्थान खोले जा रहे हैं।",
-            "satellite_switched": "सैटेलाइट हाइब्रिड दृश्य सक्रिय कर दिया गया है।",
+            "guide_opened": "वर्चुअल गाइड खोला जा रहा है।",
+            "satellite_switched": "सैटेलाइट दृश्य पर स्विच कर दिया गया है।",
             "roadmap_switched": "रोडमैप दृश्य पर स्विच कर दिया गया है।",
             "terrain_switched": "टेरेन दृश्य पर स्विच किया गया है।",
-            "gps_centered": "आपकी वर्तमान लाइव लोकेशन पर मैप केंद्रित किया जा रहा है।",
-            "route_fitted": "पूरे मार्ग को मैप पर फ़िट कर दिया गया है।",
+            "gps_centered": "आपकी वर्तमान लोकेशन पर मैप केंद्रित किया जा रहा है।",
+            "route_fitted": "मार्ग मैप पर फ़िट कर दिया गया है।",
             "dest_cleared": "गंतव्य स्थान हटा दिया गया है।",
             "orig_cleared": "शुरुआती बिंदु लाइव GPS पर रीसेट किया गया है।",
             "swapped": "शुरुआत और गंतव्य स्थान आपस में बदल दिए गए हैं।",
             "facility_found": "निकटवर्ती {category} खोजे जा रहे हैं।",
             "fuel_tool": "ईंधन और टोल खर्च की गणना खोली जा रही है।",
             "confirm_clear_route": "बॉस, क्या आप वाकई सक्रिय मार्ग को हटाना चाहते हैं?",
-            "unrecognized": "मैंने सुना: \"{query}\"। मैं आपकी यात्रा में क्या मदद करूँ?",
+            "unrecognized": "मैंने सुना: \"{query}\"।",
         },
         "ta": {
-            "welcome": "வணக்கம், பாஸ்! நான் AURA, உங்கள் தனிப்பட்ட NexRoute உதவியாளர். நான் உங்களுக்கு என்ன செய்ய வேண்டும்?",
+            "welcome": "வணக்கம், பாஸ்! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எப்படி உதவ முடியும்?",
             "nav_opened": "வழிசெலுத்தல் திறக்கப்படுகிறது.",
+            "trips_opened": "உங்கள் பயணங்கள் இங்கே உள்ளன.",
+            "hotels_opened": "விடுதிகள் தேடப்படுகின்றன.",
+            "flights_opened": "விமான திட்டமிடுபவர் திறக்கப்படுகிறது.",
+            "restaurants_opened": "உணவகங்கள் தேடப்படுகின்றன.",
+            "profile_opened": "உங்கள் சுயவிவரம் திறக்கப்படுகிறது.",
             "chat_opened": "AURA AI சாட்பாட் தயாராக உள்ளது, பாஸ்.",
             "facilities_opened": "அருகிலுள்ள அவசர வசதிகள் காட்டப்படுகின்றன.",
             "places_opened": "சேமிக்கப்பட்ட இடங்கள் காட்டப்படுகின்றன.",
+            "guide_opened": "வழிகாட்டி திறக்கப்படுகிறது.",
             "satellite_switched": "செயற்கைக்கோள் பார்வைக்கு மாற்றப்பட்டது.",
             "roadmap_switched": "சாலை வரைபட பார்வைக்கு மாற்றப்பட்டது.",
             "gps_centered": "உங்கள் நேரலை இருப்பிடம் கண்டறியப்படுகிறது.",
-            "route_fitted": "முழு பாதையையும் காட்டும் வகையில் வரைபடம் அமைக்கப்பட்டது.",
+            "route_fitted": "முழு பாதை அமைக்கப்பட்டது.",
             "dest_cleared": "இலக்கு அழிக்கப்பட்டது.",
             "facility_found": "அருகிலுள்ள {category} தேடப்படுகிறது.",
-            "unrecognized": "நான் கேட்டது: \"{query}\". உங்களுக்கு என்ன உதவி வேண்டும்?",
+            "unrecognized": "நான் கேட்டது: \"{query}\".",
         }
     }
 
@@ -170,42 +194,144 @@ class AuraGlobalCommandDispatcher:
             )
 
         # ---------------------------------------------------------------------
-        # 1. NAVIGATION TAB & APP SECTION CONTROLS
+        # 1. NAVIGATION TAB & APP SECTION CONTROLS (SINGLE MAIN APPLICATION)
         # ---------------------------------------------------------------------
-        if any(k in q for k in ["నావిగేషన్", "నేవిగేషన్", "नेविगेशन", "வழிசெலுத்தல்"]) or re.search(r"\b(open\s+(navigation|nav|dashboard|map|route\s+planner)|go\s+to\s+navigation|start\s+nav|route\s+planner|plan\s+route)\b", q):
+        # 1.1 Navigation Tab / Map Section
+        if (not re.search(r"\bmap\s+details\b", q)) and (
+            any(k in q for k in ["నావిగేషన్", "నేవిగేషన్", "नेविगेशन", "வழிசெலுத்தல்"]) or (
+                re.search(r"\b(open|let's\s+open|show|go\s+to|switch\s+to)\s+(the\s+)?(navigation(\s+tab)?|nav(\s+tab)?|map(\s+view|\s+tab)?|route\s+planner)\b", q)
+                or re.search(r"^(navigation|nav|route\s+planner|open\s+map|show\s+map)$", q)
+            )
+        ):
             return AuraExecutionResult(
                 command_type=AuraCommandType.NAVIGATE_TAB,
-                spoken_response=resp_bundle["nav_opened"],
-                text_response=f"🧭 {resp_bundle['nav_opened']}",
+                spoken_response=resp_bundle.get("nav_opened", "Opening navigation."),
+                text_response=f"🧭 {resp_bundle.get('nav_opened', 'Opening navigation.')}",
                 action_name="switch_tab_nav",
-                ui_updates={"target_tab": "nav", "scroll_to_app_map": True}
+                ui_updates={"current_view": "map_nav", "target_tab": "nav", "switch_to_nav_tab": True, "scroll_to_app_map": True}
             )
 
-        if any(k in q for k in ["చాట్‌బాట్", "చాట్", "चैटबॉट", "சாட்பாட்"]) or re.search(r"\b(open\s+chat|open\s+chatbot|open\s+aura|talk\s+to\s+aura|ask\s+aura|assistant\s+chat)\b", q):
+        # 1.2 My Trips / AI Travel Copilot Studio (Excludes "trip to [destination]")
+        if not re.search(r"\b(trip\s+to|travel\s+to)\s+\w+", q) and (
+            any(k in q for k in ["ట్రిప్స్", "యాత్రలు", "ट्रिप्स", "பயணங்கள்"]) or
+            re.search(r"\b(open|show|go\s+to|view)\s+(my\s+)?(trips?|itinerar(y|ies)|travel\s+studio|copilot\s+studio)\b", q) or
+            re.search(r"^(my\s+trips?|trips?|travel\s+studio|copilot\s+studio)$", q)
+        ):
             return AuraExecutionResult(
                 command_type=AuraCommandType.NAVIGATE_TAB,
-                spoken_response=resp_bundle["chat_opened"],
-                text_response=f"💬 {resp_bundle['chat_opened']}",
+                spoken_response=resp_bundle.get("trips_opened", "Here are your trips."),
+                text_response=f"✨ {resp_bundle.get('trips_opened', 'Here are your trips.')}",
+                action_name="switch_view_copilot_studio",
+                ui_updates={"current_view": "copilot_studio"}
+            )
+
+        # 1.3 Hotels / Lodging
+        if any(k in q for k in ["హోటల్", "లాడ్జి", "होटल", "தங்கும்"]) or re.search(
+            r"\b(find|show|open|search\s+for)?\s*(nearby\s+)?(hotels?|lodges?|resorts?|stay|hotel)\b", q
+        ):
+            h_resp = resp_bundle.get("hotels_opened", "Let's find hotels.")
+            return AuraExecutionResult(
+                command_type=AuraCommandType.FACILITY_SEARCH,
+                spoken_response=h_resp,
+                text_response=f"🏨 {h_resp}",
+                action_name="filter_facility_hotel",
+                ui_updates={
+                    "current_view": "map_nav",
+                    "target_tab": "facilities",
+                    "facility_filter": "hotel",
+                    "show_emergency_amenities_on_map": True,
+                    "scroll_to_app_map": True
+                }
+            )
+
+        # 1.4 Flights / Aviation Transit
+        if any(k in q for k in ["ఫ్లైట్స్", "విమానం", "उडान", "விமானம்"]) or re.search(
+            r"\b(open|show|find|book)?\s*(the\s+)?(flights?|flight\s+planner|aviation|airplanes?|air\s+travel)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("flights_opened", "Opening flight planner."),
+                text_response=f"✈️ {resp_bundle.get('flights_opened', 'Opening flight planner.')}",
+                action_name="switch_travel_flights",
+                ui_updates={"current_view": "copilot_studio", "selected_travel_mode": "FLIGHT", "transit_mode": "FLIGHT"}
+            )
+
+        # 1.5 Restaurants & Food
+        if any(k in q for k in ["రెస్టారెంట్", "భోజనం", "भोजन", "உணவகம்"]) or re.search(
+            r"\b(show|find|open|search\s+for)?\s*(nearby\s+)?(restaurants?|food|cafes?|dining)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.FACILITY_SEARCH,
+                spoken_response=resp_bundle.get("restaurants_opened", "Finding nearby restaurants."),
+                text_response=f"🍽️ {resp_bundle.get('restaurants_opened', 'Finding nearby restaurants.')}",
+                action_name="filter_facility_food",
+                ui_updates={
+                    "current_view": "map_nav",
+                    "target_tab": "facilities",
+                    "facility_filter": "food",
+                    "show_emergency_amenities_on_map": True,
+                    "scroll_to_app_map": True
+                }
+            )
+
+        # 1.6 Profile & User Account
+        if any(k in q for k in ["ప్రొఫైల్", "ఖాతా", "प्रोफाइल", "சுயவிவரம்"]) or re.search(
+            r"\b(go\s+to|open|show|view)?\s*(my\s+)?(profile|account|preferences|settings)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("profile_opened", "Opening your profile."),
+                text_response=f"👤 {resp_bundle.get('profile_opened', 'Opening your profile.')}",
+                action_name="open_user_profile",
+                ui_updates={"current_view": "dashboard", "show_user_profile_modal": True, "scroll_to_profile": True}
+            )
+
+        # 1.7 Chatbot / AURA Assistant
+        if any(k in q for k in ["చాట్‌బాట్", "చాట్", "चैटबॉट", "சாட்பாட்"]) or re.search(
+            r"\b(open\s+chat|open\s+chatbot|open\s+aura|talk\s+to\s+aura|ask\s+aura|assistant\s+chat)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("chat_opened", "AURA chatbot is ready."),
+                text_response=f"💬 {resp_bundle.get('chat_opened', 'AURA chatbot is ready.')}",
                 action_name="open_chatbot_drawer",
                 ui_updates={"trigger_open_copilot": True, "aura_drawer_open": True, "target_tab": "chat"}
             )
 
-        if any(k in q for k in ["సౌకర్యాలు", "సువిధా", "வசதிகள்"]) or re.search(r"\b(open\s+facilities|show\s+facilities|nearby\s+amenities|emergency\s+services)\b", q):
+        # 1.8 Nearby Facilities
+        if any(k in q for k in ["సౌకర్యాలు", "సువిధా", "வசதிகள்"]) or re.search(
+            r"\b(open\s+facilities|show\s+facilities|nearby\s+amenities|emergency\s+services)\b", q
+        ):
             return AuraExecutionResult(
                 command_type=AuraCommandType.NAVIGATE_TAB,
                 spoken_response=resp_bundle["facilities_opened"],
                 text_response=f"🏥 {resp_bundle['facilities_opened']}",
                 action_name="switch_tab_facilities",
-                ui_updates={"target_tab": "facilities"}
+                ui_updates={"current_view": "map_nav", "target_tab": "facilities", "switch_to_nav_tab": True}
             )
 
-        if any(k in q for k in ["సేవ్ చేసిన", "సహేజే", "சேமிக்கப்பட்ட"]) or re.search(r"\b(open\s+saved\s+places|saved\s+locations|my\s+bookmarks|show\s+saved)\b", q):
+        # 1.9 Saved Places / Sights
+        if any(k in q for k in ["సేవ్ చేసిన", "సహేజే", "சேமிக்கப்பட்ட"]) or re.search(
+            r"\b(open\s+saved\s+places|saved\s+locations|my\s+bookmarks|show\s+saved|open\s+places|show\s+places)\b", q
+        ):
             return AuraExecutionResult(
                 command_type=AuraCommandType.NAVIGATE_TAB,
-                spoken_response=resp_bundle["places_opened"],
-                text_response=f"⭐ {resp_bundle['places_opened']}",
-                action_name="switch_tab_saved",
-                ui_updates={"target_tab": "places"}
+                spoken_response=resp_bundle.get("places_opened", "Opening saved places."),
+                text_response=f"⭐ {resp_bundle.get('places_opened', 'Opening saved places.')}",
+                action_name="switch_view_places",
+                ui_updates={"current_view": "places", "target_tab": "places"}
+            )
+
+        # 1.10 Virtual Guide
+        if any(k in q for k in ["వర్చువల్ గైడ్", "गाइड", "வழிகாட்டி"]) or re.search(
+            r"\b(open\s+virtual\s+guide|virtual\s+guide|3d\s+guide|companion\s+hud|guide\s+mode)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("guide_opened", "Opening virtual guide."),
+                text_response=f"🚗 {resp_bundle.get('guide_opened', 'Opening virtual guide.')}",
+                action_name="switch_view_guide",
+                ui_updates={"current_view": "virtual_guide"}
             )
 
         # ---------------------------------------------------------------------
@@ -472,11 +598,16 @@ class AuraGlobalCommandDispatcher:
     def apply_execution_result(cls, result: AuraExecutionResult, session_state: Any) -> None:
         """
         Safely applies the resulting UI state mutations directly to streamlit's session_state.
+        Ensures section switches occur within the single existing NextRoute application.
         """
         for k, v in result.ui_updates.items():
             if k in ["txt_orig", "txt_dest"]:
                 continue
             session_state[k] = v
+
+        if result.ui_updates.get("target_tab") in ["nav", "facilities"]:
+            session_state["current_view"] = "map_nav"
+            session_state["switch_to_nav_tab"] = True
 
         if result.ui_updates.get("trigger_swap_endpoints"):
             old_orig_coords = session_state.get("user_live_coords")
