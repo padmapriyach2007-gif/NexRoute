@@ -568,3 +568,573 @@ canvas#auraWaveformCanvas {{
 </body>
 </html>
 """
+
+
+def get_jarvis_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
+    """
+    Returns the time-appropriate startup greeting matching:
+    'Good morning, Boss! Welcome to NextRoute. How can I help you?'
+    """
+    import datetime
+    now_hour = datetime.datetime.now().hour
+    if 5 <= now_hour < 12:
+        tod_en = "Good morning"
+        tod_te = "శుభోదయం"
+        tod_hi = "सुप्रभात"
+        tod_ta = "காலை வணக்கம்"
+        tod_kn = "ಶುಭೋದಯ"
+        tod_ml = "സുപ്രഭാതം"
+    elif 12 <= now_hour < 17:
+        tod_en = "Good afternoon"
+        tod_te = "నమస్కారం"
+        tod_hi = "नमस्ते"
+        tod_ta = "வணக்கம்"
+        tod_kn = "ನಮಸ್ಕಾರ"
+        tod_ml = "നമസ്കാരം"
+    elif 17 <= now_hour < 22:
+        tod_en = "Good evening"
+        tod_te = "శుభ సాయంత్రం"
+        tod_hi = "शुभ संध्या"
+        tod_ta = "மாலை வணக்கம்"
+        tod_kn = "ಶುಭ ಸಂಜೆ"
+        tod_ml = "ശുഭ സായാഹ്നം"
+    else:
+        tod_en = "Hello"
+        tod_te = "నమస్కారం"
+        tod_hi = "नमस्ते"
+        tod_ta = "வணக்கம்"
+        tod_kn = "ನಮಸ್ಕಾರ"
+        tod_ml = "നമസ്കാരം"
+
+    if lang == "te":
+        return f"{tod_te}, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?"
+    elif lang == "hi":
+        return f"{tod_hi}, {user_name}! नेक्स-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?"
+    elif lang == "ta":
+        return f"{tod_ta}, {user_name}! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
+    elif lang == "kn":
+        return f"{tod_kn}, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+    elif lang == "ml":
+        return f"{tod_ml}, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എങ്ങനെ സഹായിക്കണം?"
+    else:
+        return f"{tod_en}, {user_name}! Welcome to NextRoute. How can I help you?"
+
+
+def render_jarvis_chatbot_hud_html(
+    current_lang: str = "en",
+    bot_logo_uri: Optional[str] = None,
+    auto_greeting_text: str = "",
+    last_response_text: str = "",
+    key_prefix: str = "main"
+) -> str:
+    """
+    Renders the unified Jarvis Voice Assistant interface header for the AURA Chatbot.
+    Features the circular robot avatar, live status indicators (LISTENING, THINKING, SPEAKING, IDLE),
+    real-time canvas waveform, microphone voice input that automatically fills the chatbot prompt
+    and submits to the agent, and audible Text-to-Speech playback.
+    """
+    bcp47_map = {
+        "en": "en-IN",
+        "te": "te-IN",
+        "hi": "hi-IN",
+        "ta": "ta-IN",
+        "kn": "kn-IN",
+        "ml": "ml-IN",
+        "es": "es-ES",
+        "fr": "fr-FR",
+        "de": "de-DE",
+        "ja": "ja-JP"
+    }
+    bcp47_code = bcp47_map.get(current_lang, "en-IN")
+
+    avatar_markup = (
+        f'<img src="{bot_logo_uri}" class="jarvis-avatar-img" alt="AURA Mascot" />'
+        if bot_logo_uri
+        else '<span style="color: #00f0ff; font-size: 20px; font-weight: 900;">⚡</span>'
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="{current_lang}">
+<head>
+<meta charset="utf-8">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap');
+
+    * {{
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+    }}
+
+    body {{
+        background: transparent;
+        font-family: 'Inter', -apple-system, sans-serif;
+        color: #f8fafc;
+        padding: 4px;
+        overflow: hidden;
+    }}
+
+    .jarvis-hud-card {{
+        background: radial-gradient(circle at 20% 50%, rgba(14, 28, 54, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
+        border: 1.5px solid rgba(0, 240, 255, 0.35);
+        border-radius: 16px;
+        padding: 8px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 240, 255, 0.12);
+        backdrop-filter: blur(12px);
+    }}
+
+    /* Circular Avatar with Glowing Orbital Ring */
+    .avatar-pod {{
+        position: relative;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }}
+
+    .arc-spin-ring {{
+        position: absolute;
+        inset: -2px;
+        border-radius: 50%;
+        border: 1.5px dashed #00f0ff;
+        animation: spinArc 10s linear infinite;
+    }}
+
+    @keyframes spinArc {{
+        from {{ transform: rotate(0deg); }}
+        to {{ transform: rotate(360deg); }}
+    }}
+
+    .avatar-circle {{
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #0284c7 0%, #030712 90%);
+        border: 1.5px solid #00f0ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+    }}
+
+    .jarvis-avatar-img {{
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }}
+
+    /* Title & Status Area */
+    .info-center {{
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }}
+
+    .brand-title-line {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }}
+
+    .brand-name {{
+        font-family: 'Inter', sans-serif;
+        font-weight: 800;
+        font-size: 0.86rem;
+        color: #ffffff;
+        letter-spacing: 0.04em;
+    }}
+
+    .brand-subtitle {{
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        font-size: 0.62rem;
+        color: #38bdf8;
+        letter-spacing: 0.06em;
+    }}
+
+    .status-and-wave-row {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 1px;
+    }}
+
+    .status-badge {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 6px;
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid #10b981;
+        color: #34d399;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        transition: all 0.25s ease;
+    }}
+
+    .waveform-canvas-box {{
+        flex: 1 1 auto;
+        height: 20px;
+        min-width: 60px;
+        background: rgba(3, 7, 18, 0.45);
+        border-radius: 6px;
+        border: 1px solid rgba(56, 189, 248, 0.20);
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+    }}
+
+    #auraJarvisWaveform {{
+        width: 100%;
+        height: 100%;
+    }}
+
+    /* Action Buttons */
+    .controls-right {{
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+    }}
+
+    .btn-hud-mic {{
+        background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
+        border: none;
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        color: #030712;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+        transition: all 0.2s ease;
+    }}
+
+    .btn-hud-mic:hover {{
+        transform: scale(1.08);
+        box-shadow: 0 0 22px rgba(0, 240, 255, 0.85);
+    }}
+
+    .btn-hud-silence {{
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        border-radius: 8px;
+        padding: 5px 8px;
+        color: #94a3b8;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+    }}
+
+    .btn-hud-silence:hover {{
+        color: #f1f5f9;
+        border-color: #00f0ff;
+        background: rgba(0, 240, 255, 0.12);
+    }}
+</style>
+</head>
+<body>
+
+<div class="jarvis-hud-card">
+    <!-- Circular Avatar with Orbiting Ring -->
+    <div class="avatar-pod" onclick="toggleJarvisVoiceRecognition()" title="Click to speak">
+        <div class="arc-spin-ring" id="avatarArcRing"></div>
+        <div class="avatar-circle">
+            {avatar_markup}
+        </div>
+    </div>
+
+    <!-- Center Info + Status + Waveform -->
+    <div class="info-center">
+        <div class="brand-title-line">
+            <span class="brand-name">AURA • AI Guide</span>
+            <span class="brand-subtitle">JARVIS VOICE COPILOT</span>
+        </div>
+        <div class="status-and-wave-row">
+            <span class="status-badge" id="jarvisStatusBadge">● IDLE • READY</span>
+            <div class="waveform-canvas-box">
+                <canvas id="auraJarvisWaveform"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Controls: Mic & Silence -->
+    <div class="controls-right">
+        <button class="btn-hud-mic" id="btnJarvisMic" onclick="toggleJarvisVoiceRecognition()" title="Start Voice Input (Speak to AURA)">
+            🎙️
+        </button>
+        <button class="btn-hud-silence" id="btnJarvisSilence" onclick="stopJarvisSpeech()" title="Stop Assistant Speech (Silence)">
+            🔇 Silence
+        </button>
+    </div>
+</div>
+
+<script>
+(function() {{
+    var activeLang = {json.dumps(current_lang)};
+    var bcp47Lang = {json.dumps(bcp47_code)};
+    var autoGreeting = {json.dumps(auto_greeting_text)};
+    var lastResponse = {json.dumps(last_response_text)};
+
+    var isListening = false;
+    var isSpeaking = false;
+    var isThinking = false;
+    var recognition = null;
+    var synthesis = window.speechSynthesis;
+    var canvas = document.getElementById('auraJarvisWaveform');
+    var ctx = canvas ? canvas.getContext('2d') : null;
+
+    function resizeCanvas() {{
+        if (!canvas) return;
+        canvas.width = canvas.parentElement.clientWidth || 240;
+        canvas.height = canvas.parentElement.clientHeight || 20;
+    }}
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function setHudState(state, message) {{
+        var badge = document.getElementById('jarvisStatusBadge');
+        var micBtn = document.getElementById('btnJarvisMic');
+        var arcRing = document.getElementById('avatarArcRing');
+
+        if (state === 'listening') {{
+            isListening = true;
+            isSpeaking = false;
+            isThinking = false;
+            if (badge) {{
+                badge.innerText = '🎙️ LISTENING, BOSS...';
+                badge.style.background = 'rgba(0, 240, 255, 0.22)';
+                badge.style.borderColor = '#00f0ff';
+                badge.style.color = '#00f0ff';
+            }}
+            if (micBtn) micBtn.style.boxShadow = '0 0 25px #00f0ff';
+            if (arcRing) arcRing.style.borderColor = '#00f0ff';
+        }} else if (state === 'thinking') {{
+            isListening = false;
+            isSpeaking = false;
+            isThinking = true;
+            if (badge) {{
+                badge.innerText = '⚡ THINKING, BOSS...';
+                badge.style.background = 'rgba(168, 85, 247, 0.22)';
+                badge.style.borderColor = '#a855f7';
+                badge.style.color = '#c084fc';
+            }}
+            if (micBtn) micBtn.style.boxShadow = '0 0 15px #a855f7';
+            if (arcRing) arcRing.style.borderColor = '#a855f7';
+        }} else if (state === 'speaking') {{
+            isListening = false;
+            isSpeaking = true;
+            isThinking = false;
+            if (badge) {{
+                badge.innerText = '🔊 SPEAKING...';
+                badge.style.background = 'rgba(56, 189, 248, 0.22)';
+                badge.style.borderColor = '#38bdf8';
+                badge.style.color = '#38bdf8';
+            }}
+            if (micBtn) micBtn.style.boxShadow = '0 0 14px rgba(0, 240, 255, 0.5)';
+            if (arcRing) arcRing.style.borderColor = '#38bdf8';
+        }} else {{
+            isListening = false;
+            isSpeaking = false;
+            isThinking = false;
+            if (badge) {{
+                badge.innerText = '● IDLE • READY';
+                badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                badge.style.borderColor = '#10b981';
+                badge.style.color = '#34d399';
+            }}
+            if (micBtn) micBtn.style.boxShadow = '0 0 14px rgba(0, 240, 255, 0.5)';
+            if (arcRing) arcRing.style.borderColor = '#00f0ff';
+        }}
+    }}
+
+    // Waveform Animation Loop
+    var wavePhase = 0;
+    function drawWave() {{
+        if (!ctx || !canvas) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        var numPoints = 48;
+        var step = canvas.width / numPoints;
+        var midY = canvas.height / 2;
+
+        var baseAmp = isSpeaking ? 8 : (isListening ? 6 : (isThinking ? 4 : 2));
+        var freq = isSpeaking ? 0.22 : (isListening ? 0.30 : (isThinking ? 0.40 : 0.10));
+
+        ctx.beginPath();
+        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isThinking ? '#c084fc' : 'rgba(56, 189, 248, 0.35)'));
+        ctx.lineWidth = isSpeaking || isListening ? 2 : 1.2;
+        ctx.shadowBlur = isSpeaking ? 10 : 2;
+        ctx.shadowColor = '#00f0ff';
+
+        for (var i = 0; i <= numPoints; i++) {{
+            var x = i * step;
+            var envelope = Math.sin((i / numPoints) * Math.PI);
+            var y = midY + Math.sin(i * freq + wavePhase) * (baseAmp * envelope);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }}
+        ctx.stroke();
+
+        wavePhase += isSpeaking ? 0.24 : (isListening ? 0.18 : (isThinking ? 0.30 : 0.05));
+        requestAnimationFrame(drawWave);
+    }}
+    drawWave();
+
+    // Voice Synthesis
+    window.speakJarvis = function(text) {{
+        if (!synthesis || !text) return;
+        try {{
+            synthesis.cancel();
+            var utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = bcp47Lang;
+            utterance.rate = 1.02;
+            utterance.pitch = 1.0;
+
+            utterance.onstart = function() {{
+                setHudState('speaking');
+            }};
+
+            utterance.onend = function() {{
+                setHudState('idle');
+            }};
+
+            utterance.onerror = function() {{
+                setHudState('idle');
+            }};
+
+            synthesis.speak(utterance);
+        }} catch(e) {{
+            setHudState('idle');
+        }}
+    }};
+
+    window.stopJarvisSpeech = function() {{
+        if (synthesis) synthesis.cancel();
+        if (recognition && isListening) {{
+            try {{ recognition.stop(); }} catch(e) {{}}
+        }}
+        setHudState('idle');
+    }};
+
+    // Speech-to-Text Recognition and Automatic Submission
+    window.toggleJarvisVoiceRecognition = function() {{
+        if (isListening) {{
+            if (recognition) try {{ recognition.stop(); }} catch(e) {{}}
+            setHudState('idle');
+            return;
+        }}
+
+        stopJarvisSpeech();
+
+        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {{
+            alert('Speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
+            return;
+        }}
+
+        try {{
+            recognition = new SpeechRec();
+            recognition.lang = bcp47Lang;
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = function() {{
+                setHudState('listening');
+            }};
+
+            recognition.onresult = function(event) {{
+                var transcript = event.results[0][0].transcript;
+                if (transcript && transcript.trim()) {{
+                    setHudState('thinking');
+                    window.submitVoiceToExistingAgent(transcript.trim());
+                }}
+            }};
+
+            recognition.onerror = function() {{
+                setHudState('idle');
+            }};
+
+            recognition.onend = function() {{
+                if (!isThinking && !isSpeaking) setHudState('idle');
+            }};
+
+            recognition.start();
+        }} catch(e) {{
+            setHudState('idle');
+        }}
+    }};
+
+    // Populate existing input and automatically submit to existing AI agent
+    window.submitVoiceToExistingAgent = function(transcript) {{
+        // 1. Populate visible Streamlit text input box in the parent document
+        try {{
+            var pDoc = window.parent.document;
+            var inputElements = pDoc.querySelectorAll('input[aria-label="Ask Aura"], input[placeholder*="Ask Aura"], .aura-chatgpt-composer-wrapper input');
+            for (var i = 0; i < inputElements.length; i++) {{
+                inputElements[i].value = transcript;
+                inputElements[i].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                inputElements[i].dispatchEvent(new Event('change', {{ bubbles: true }}));
+            }}
+        }} catch(eDom) {{}}
+
+        // 2. PostMessage to Parent Window
+        try {{
+            var pWin = window.parent || window.top;
+            if (pWin && pWin !== window) {{
+                pWin.postMessage({{
+                    type: 'AURA_CHAT_SPEECH_SUBMIT',
+                    prompt: transcript
+                }}, '*');
+            }}
+        }} catch(ePost) {{}}
+
+        // 3. Trigger immediate rerun with pending_chat_prompt
+        try {{
+            var targetWin = window.parent || window.top || window;
+            var currentHref = '';
+            try {{ currentHref = targetWin.location.href; }} catch(e) {{ currentHref = window.location.href; }}
+            var url = new URL(currentHref);
+            url.searchParams.set('pending_chat_prompt', transcript);
+            try {{
+                targetWin.location.href = url.toString();
+            }} catch(eNav) {{
+                window.location.href = url.toString();
+            }}
+        }} catch(eParam) {{}}
+    }};
+
+    // Initial load: Play startup greeting or latest response
+    setTimeout(function() {{
+        if (lastResponse && lastResponse.trim()) {{
+            window.speakJarvis(lastResponse.trim());
+        }} else if (autoGreeting && autoGreeting.trim()) {{
+            window.speakJarvis(autoGreeting.trim());
+        }}
+    }}, 400);
+
+}})();
+</script>
+</body>
+</html>
+"""

@@ -134,6 +134,33 @@
           "content": "Here is your plan..."
         }
       ]
+    },
+    "conv_1794119034_21122d": {
+      "id": "conv_1794119034_21122d",
+      "title": "Trip to Hyderabad",
+      "created_at": "2026-11-08T11:53:54.442853",
+      "updated_at": "2026-11-08T11:53:54.442853",
+      "messages": []
+    },
+    "conv_1794119034_777933": {
+      "id": "conv_1794119034_777933",
+      "title": "Hyderabad for 3 days",
+      "created_at": "2026-11-08T11:53:54.497796",
+      "updated_at": "2026-11-08T11:53:54.544443",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "Welcome to AURA"
+        },
+        {
+          "role": "user",
+          "content": "Plan a trip to Hyderabad for 3 days"
+        },
+        {
+          "role": "assistant",
+          "content": "Here is your plan..."
+        }
+      ]
     }
   },
   "active_conv_id": "conv_1794111730_fd4b10"

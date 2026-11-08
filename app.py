@@ -6172,21 +6172,41 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             "language": st.session_state.get("app_language", "en")
         }
 
-        try:
-            ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx, attachments=att_list)
-        except Exception as chat_err:
-            logger = logging.getLogger("nexroute")
-            logger.exception("PathfinderChatbot execution error: %s", chat_err)
+        # 1. Check central command dispatcher for application-wide voice/text actions
+        from src.aura_command_dispatcher import AuraGlobalCommandDispatcher, AuraCommandType
+        cmd_res = AuraGlobalCommandDispatcher.parse_and_dispatch(
+            query_text,
+            context=chat_ctx,
+            lang=chat_ctx.get("language", "en")
+        )
+        if cmd_res and cmd_res.command_type not in (AuraCommandType.GENERAL_CHAT, AuraCommandType.UNKNOWN):
+            AuraGlobalCommandDispatcher.apply_execution_result(cmd_res, st.session_state)
             ans = {
-                "response": f"I encountered an issue processing your query through external services, but your live route and navigation tools remain fully operational!\n\n*(Error details: {chat_err})*",
-                "badge": "🤖 AURA TRAVEL COPILOT"
+                "response": cmd_res.text_response,
+                "spoken_response": cmd_res.spoken_response,
+                "badge": "AURA • AI GUIDE"
             }
+        else:
+            try:
+                ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx, attachments=att_list)
+            except Exception as chat_err:
+                logger = logging.getLogger("nexroute")
+                logger.exception("PathfinderChatbot execution error: %s", chat_err)
+                ans = {
+                    "response": f"I encountered an issue processing your query through external services, but your live route and navigation tools remain fully operational!\n\n*(Error details: {chat_err})*",
+                    "badge": "🤖 AURA TRAVEL COPILOT"
+                }
 
         st.session_state.aura_chat_history.append({
             "role": "assistant",
             "content": ans.get("response", "Response unavailable."),
             "badge": ans.get("badge", "NEXROUTE AI")
         })
+
+        # Set last response to speak aloud via SpeechSynthesis
+        raw_to_speak = ans.get("spoken_response") or ans.get("response", "")
+        clean_speech = re.sub(r'[*#_`~>\[\]\(\)]', ' ', str(raw_to_speak))[:280].replace("'", "\\'").replace('"', '\\"').replace("\n", " ").strip()
+        st.session_state.aura_last_response_to_speak = clean_speech
 
         st.session_state.pending_chat_attachments = []
 
@@ -6491,31 +6511,34 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     active_title = active_conv.get("title", "New Journey") if active_conv else "New Journey"
 
     # =========================================================================
-    # MINIMAL CHATGPT-STYLE HEADER WITH HISTORY TOGGLE & NEW CHAT
+    # 2. JARVIS AI VOICE ASSISTANT HUD & STATUS CONTROLLER (INSIDE CHATBOT)
     # =========================================================================
-    h_col1, h_col2, h_col3 = st.columns([1.1, 2.2, 1.1], vertical_alignment="center")
+    auto_greet_to_play = ""
+    if not st.session_state.get("aura_startup_greeted", False):
+        from src.aura_voice_hud import get_jarvis_startup_greeting
+        auto_greet_to_play = get_jarvis_startup_greeting(cur_chat_l, user_name="Boss")
+        st.session_state.aura_startup_greeted = True
+
+    speech_to_play = st.session_state.pop("aura_last_response_to_speak", "")
+
+    from src.aura_voice_hud import render_jarvis_chatbot_hud_html
+    jarvis_hud_code = render_jarvis_chatbot_hud_html(
+        current_lang=cur_chat_l,
+        bot_logo_uri=aura_logo_uri,
+        auto_greeting_text=auto_greet_to_play,
+        last_response_text=speech_to_play,
+        key_prefix=key_prefix
+    )
+    components.html(jarvis_hud_code, height=66, scrolling=False)
+
+    # Top Toolbar: History Drawer Toggle + New Chat
+    h_col1, h_col2 = st.columns([1, 1], vertical_alignment="center")
     with h_col1:
-        hist_btn_label = "✕ Close" if st.session_state.aura_show_history else "☰ History"
-        if st.button(hist_btn_label, key=f"btn_hist_toggle_{key_prefix}", help="Toggle chat history drawer", use_container_width=True):
+        hist_btn_label = "✕ Close History" if st.session_state.aura_show_history else "☰ Previous Chats"
+        if st.button(hist_btn_label, key=f"btn_hist_toggle_{key_prefix}", help="Toggle conversation history", use_container_width=True):
             st.session_state.aura_show_history = not st.session_state.aura_show_history
             st.rerun()
     with h_col2:
-        st.markdown("""
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <div style="width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);">
-                <span style="color: #030712; font-size: 0.80rem; font-weight: 900;">✦</span>
-            </div>
-            <div style="text-align: left; line-height: 1.15;">
-                <div style="font-weight: 800; font-size: 0.88rem; color: #f8fafc; letter-spacing: 0.03em;">
-                    AURA <span style="font-size: 0.68rem; color: #38bdf8; font-weight: 600;">• AI Travel Copilot</span>
-                </div>
-                <div style="font-size: 0.62rem; color: #10b981; display: flex; align-items: center; gap: 4px; font-weight: 600;">
-                    <span class="aura-online-pulse"></span> Online
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with h_col3:
         if st.button("➕ New Chat", key=f"btn_new_chat_top_{key_prefix}", help="Start a new conversation", use_container_width=True):
             new_cid = AuraConversationStore.create_conversation()
             st.session_state.aura_active_conv_id = new_cid
@@ -8246,27 +8269,22 @@ if "aura_cmd" in st.query_params:
         except Exception:
             pass
 
-if "close_welcome" in st.query_params:
-    st.session_state.show_aura_welcome = False
-    st.session_state.aura_welcome_greeted = True
+if "pending_chat_prompt" in st.query_params:
     try:
-        del st.query_params["close_welcome"]
+        p_prompt = str(st.query_params["pending_chat_prompt"]).strip()
+        if p_prompt:
+            st.session_state.pending_chat_prompt = p_prompt
+        try:
+            del st.query_params["pending_chat_prompt"]
+        except Exception:
+            pass
     except Exception:
         pass
 
-if "open_welcome" in st.query_params:
-    st.session_state.show_aura_welcome = True
-    try:
-        del st.query_params["open_welcome"]
-    except Exception:
-        pass
-
-if "aura_welcome_greeted" not in st.session_state:
-    st.session_state.aura_welcome_greeted = False
+if "aura_startup_greeted" not in st.session_state:
+    st.session_state.aura_startup_greeted = False
 if "aura_auto_greeting_enabled" not in st.session_state:
     st.session_state.aura_auto_greeting_enabled = True
-if "show_aura_welcome" not in st.session_state:
-    st.session_state.show_aura_welcome = True
 
 
 
@@ -9893,31 +9911,6 @@ components.html(f"""
 
 
 """, height=0, width=0)
-
-# =========================================================================
-# AURA JARVIS-STYLE WELCOME SCREEN & AUTOMATIC VOICE ASSISTANT ACTIVATION
-# =========================================================================
-if st.session_state.get("show_aura_welcome", True):
-    from src.aura_welcome_screen import render_aura_welcome_hud
-    cur_app_lang = st.session_state.get("app_language", "en")
-    should_auto_speak = st.session_state.get("aura_auto_greeting_enabled", True) and not st.session_state.get("aura_welcome_greeted", False)
-    # Mark greeted so repeated Streamlit reruns NEVER trigger duplicate greetings
-    st.session_state.aura_welcome_greeted = True
-
-    welcome_hud_html = render_aura_welcome_hud(
-        current_lang=cur_app_lang,
-        auto_speak=should_auto_speak,
-        bot_logo_uri=aura_logo_uri,
-        user_name="Boss"
-    )
-    components.html(welcome_hud_html, height=480, scrolling=False)
-else:
-    # Quick Re-open Button for AURA Voice Assistant HUD
-    col_w_btn, _ = st.columns([0.35, 0.65])
-    with col_w_btn:
-        if st.button("🎙️ AURA Voice Assistant", key="btn_open_aura_welcome", help="Launch AURA JARVIS-Style Voice Assistant Screen"):
-            st.session_state.show_aura_welcome = True
-            st.rerun()
 
 # Coordinate, telemetry, and text anchors available globally across views
 
@@ -30044,18 +30037,7 @@ st.markdown('<div id="floating-copilot-trigger-anchor"></div>', unsafe_allow_htm
 
 
 with st.popover(" ", help="Open AURA • Intelligent AI Travel Companion"):
-    tab_hud, tab_chat = st.tabs(["🎙️ JARVIS Voice HUD", "💬 AURA Chatbot"])
-    with tab_hud:
-        from src.aura_voice_hud import render_aura_jarvis_hud_html
-        cur_lang = st.session_state.get("app_language", "en")
-        hud_html = render_aura_jarvis_hud_html(
-            current_lang=cur_lang,
-            voice_enabled=True,
-            bot_logo_uri=aura_logo_uri
-        )
-        components.html(hud_html, height=440, scrolling=True)
-    with tab_chat:
-        render_aura_chat_box(key_prefix="popover_window", height=440)
+    render_aura_chat_box(key_prefix="popover_window", height=440)
 
 
 

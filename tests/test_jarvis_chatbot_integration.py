@@ -1,0 +1,114 @@
+"""
+Unit tests for Jarvis Voice Assistant Integration Inside AURA Chatbot.
+Verifies unified single-interface architecture, time-aware startup greetings,
+single-playback session state enforcement, shared AI agent processing for both
+text and voice, and automatic speech recognition prompt population & submission.
+"""
+
+import pytest
+import re
+from src.aura_voice_hud import (
+    get_jarvis_startup_greeting,
+    render_jarvis_chatbot_hud_html,
+)
+from src.aura_command_dispatcher import (
+    AuraGlobalCommandDispatcher,
+    AuraCommandType,
+)
+
+
+class TestJarvisChatbotIntegration:
+    def test_jarvis_startup_greeting_exact_format(self):
+        # English: "Good morning, Boss! Welcome to NextRoute. How can I help you?"
+        greet_en = get_jarvis_startup_greeting("en", user_name="Boss")
+        assert "Boss" in greet_en
+        assert "Welcome to NextRoute" in greet_en
+        assert "How can I help you?" in greet_en
+        assert any(greet_en.startswith(tod) for tod in ["Good morning", "Good afternoon", "Good evening", "Hello"])
+
+        # Telugu
+        greet_te = get_jarvis_startup_greeting("te", user_name="బాస్")
+        assert "బాస్" in greet_te
+        assert "నెక్స్‌రూట్‌కి స్వాగతం" in greet_te
+
+        # Hindi
+        greet_hi = get_jarvis_startup_greeting("hi", user_name="बॉस")
+        assert "बॉस" in greet_hi
+        assert "नेक्स-रूट में आपका स्वागत है" in greet_hi
+
+        # Tamil
+        greet_ta = get_jarvis_startup_greeting("ta", user_name="பாஸ்")
+        assert "பாஸ்" in greet_ta
+        assert "நெக்ஸ்-ரூட்டிற்கு நல்வரவு" in greet_ta
+
+    def test_single_greeting_per_session(self):
+        # Simulation of Streamlit session state
+        session = {
+            "aura_startup_greeted": False,
+            "app_language": "en"
+        }
+
+        # First run (Startup)
+        greeting_run_1 = ""
+        if not session["aura_startup_greeted"]:
+            greeting_run_1 = get_jarvis_startup_greeting(session["app_language"])
+            session["aura_startup_greeted"] = True
+
+        assert greeting_run_1 != "", "Greeting should be generated on first startup"
+        assert session["aura_startup_greeted"] is True
+
+        # Second run (Rerun e.g. clicking widget, map click, or typing)
+        greeting_run_2 = ""
+        if not session["aura_startup_greeted"]:
+            greeting_run_2 = get_jarvis_startup_greeting(session["app_language"])
+            session["aura_startup_greeted"] = True
+
+        assert greeting_run_2 == "", "Greeting must NOT repeat on subsequent Streamlit reruns"
+
+    def test_jarvis_chatbot_hud_html_components(self):
+        html = render_jarvis_chatbot_hud_html(
+            current_lang="en",
+            bot_logo_uri="https://example.com/logo.png",
+            auto_greeting_text="Good morning, Boss! Welcome to NextRoute. How can I help you?",
+            last_response_text="Opening navigation.",
+            key_prefix="popover_window"
+        )
+        assert "<!DOCTYPE html>" in html
+        assert "AURA • AI Guide" in html
+        assert "JARVIS VOICE COPILOT" in html
+        assert "jarvisStatusBadge" in html
+        assert "auraJarvisWaveform" in html
+        assert "btnJarvisMic" in html
+        assert "btnJarvisSilence" in html
+        assert "SpeechRecognition" in html
+        assert "SpeechSynthesisUtterance" in html
+        assert "submitVoiceToExistingAgent" in html
+        assert "pending_chat_prompt" in html
+
+    def test_voice_and_text_use_same_agent_dispatching(self):
+        ctx = {"active_tab": "chat", "language": "en"}
+
+        # Voice input: "Open navigation."
+        res_nav = AuraGlobalCommandDispatcher.parse_and_dispatch("Open navigation.", ctx)
+        assert res_nav.command_type == AuraCommandType.NAVIGATE_TAB
+        assert res_nav.ui_updates.get("target_tab") == "nav"
+        assert "navigation" in res_nav.spoken_response.lower()
+
+        # Voice input: "Find nearby hospitals."
+        res_hosp = AuraGlobalCommandDispatcher.parse_and_dispatch("Find nearby hospitals.", ctx)
+        assert res_hosp.command_type == AuraCommandType.FACILITY_SEARCH
+        assert res_hosp.ui_updates.get("facility_filter") == "health"
+
+        # Voice input: "Switch to satellite view."
+        res_sat = AuraGlobalCommandDispatcher.parse_and_dispatch("Switch to satellite view.", ctx)
+        assert res_sat.command_type == AuraCommandType.MAP_STYLE
+        assert res_sat.ui_updates.get("map_style") == "satellite_hybrid"
+
+        # Voice input: "Calculate fuel expenses."
+        res_fuel = AuraGlobalCommandDispatcher.parse_and_dispatch("Calculate fuel expenses.", ctx)
+        assert res_fuel.command_type == AuraCommandType.TRAVEL_TOOL
+
+        # Voice input: "Plan a trip to Hyderabad."
+        res_trip = AuraGlobalCommandDispatcher.parse_and_dispatch("Plan a trip to Hyderabad.", ctx)
+        assert res_trip.command_type == AuraCommandType.ROUTE_ACTION
+        assert "hyderabad" in res_trip.ui_updates.get("pending_dest", "").lower()
