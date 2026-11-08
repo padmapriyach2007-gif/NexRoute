@@ -3653,18 +3653,16 @@ def build_google_maps_javascript_html(
             var isOrig = (target === 'orig');
             var isStop = (target === 'stop');
             var card = document.getElementById('map-picking-card');
+            var hud = document.getElementById('map-picking-hud');
             var badgeEl = document.getElementById('map-pick-confirm-badge');
             var coordsEl = document.getElementById('map-pick-coords-text');
             var nameEl = document.getElementById('map-pick-name-text');
             var addrEl = document.getElementById('map-pick-addr-text');
             var btnEl = document.getElementById('map-pick-confirm-btn');
 
-            if (badgeEl) badgeEl.innerHTML = isOrig ? "🟢 CONFIRM STARTING POINT" : (isStop ? "🟣 CONFIRM INTERMEDIATE STOP" : "🏁 CONFIRM DESTINATION");
-            if (coordsEl) coordsEl.innerText = Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
-            if (btnEl) btnEl.innerText = isOrig ? "✅ Confirm Starting Point" : (isStop ? "✅ Confirm Intermediate Stop" : "✅ Confirm Destination");
-            if (nameEl) nameEl.innerText = "Detecting Location Details...";
-            if (addrEl) addrEl.innerText = "Querying multi-provider geographic database...";
-            if (card) card.style.display = 'block';
+            // Ensure manual confirmation modal NEVER blocks the user
+            if (card) card.style.display = 'none';
+            if (hud) hud.style.display = 'none';
 
             var pinColor = isOrig ? '#10b981' : (isStop ? '#8b5cf6' : '#f43f5e');
             var pinIconSymbol = isOrig ? '🟢' : (isStop ? '🟣' : '🏁');
@@ -3705,7 +3703,9 @@ def build_google_maps_javascript_html(
             }};
 
             try {{
-                var info = await window.reverseGeocodeMultiProvider(lat, lng);
+                var geoPromise = window.reverseGeocodeMultiProvider(lat, lng);
+                var timeoutPromise = new Promise(function(resolve) {{ setTimeout(function() {{ resolve(null); }}, 900); }});
+                var info = await Promise.race([geoPromise, timeoutPromise]);
                 if (info && info.name) {{
                     if (nameEl) nameEl.innerText = info.name;
                     if (addrEl) addrEl.innerText = info.address;

@@ -4195,23 +4195,23 @@ st.markdown("""
         gap: 6px !important;
         width: 100% !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(1) {
         width: 38px !important;
         min-width: 38px !important;
         max-width: 38px !important;
         flex: 0 0 38px !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(2) {
         flex: 1 1 auto !important;
         min-width: 120px !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3) {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(3) {
         width: 38px !important;
         min-width: 38px !important;
         max-width: 38px !important;
         flex: 0 0 38px !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(4) {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(4) {
         width: 42px !important;
         min-width: 42px !important;
         max-width: 42px !important;
@@ -4224,13 +4224,13 @@ st.markdown("""
             flex-direction: row !important;
             flex-wrap: nowrap !important;
         }
-        .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+        .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div {
             min-width: 0 !important;
         }
     }
 
     /* Plus Button inside Capsule (Left) */
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(1) button {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(1) button {
         background: transparent !important;
         border: none !important;
         color: #94a3b8 !important;
@@ -4247,16 +4247,16 @@ st.markdown("""
         transition: all 0.2s ease !important;
         box-shadow: none !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(1) button:hover {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(1) button:hover {
         color: #00f0ff !important;
         background: rgba(0, 240, 255, 0.15) !important;
     }
 
     /* Input Field inside Capsule (Center) */
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(2) div[data-testid="stTextInput"] {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stTextInput"] {
         margin-bottom: 0 !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(2) input {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(2) input {
         background: transparent !important;
         border: none !important;
         outline: none !important;
@@ -4265,14 +4265,14 @@ st.markdown("""
         font-size: 0.90rem !important;
         padding: 8px 4px !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(2) input:focus {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(2) input:focus {
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
     }
 
     /* Microphone Button inside Capsule (Right) */
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(3) button {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(3) button {
         background: transparent !important;
         border: none !important;
         color: #94a3b8 !important;
@@ -4289,13 +4289,13 @@ st.markdown("""
         transition: all 0.2s ease !important;
         box-shadow: none !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(3) button:hover {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(3) button:hover {
         color: #00f0ff !important;
         background: rgba(0, 240, 255, 0.15) !important;
     }
 
     /* Circular Arrow-Up Send Button inside Capsule (Far Right) */
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(4) button {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(4) button {
         background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%) !important;
         border: none !important;
         border-radius: 50% !important;
@@ -4313,7 +4313,7 @@ st.markdown("""
         transition: all 0.2s ease !important;
         padding: 0 !important;
     }
-    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(4) button:hover {
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div:nth-child(4) button:hover {
         transform: scale(1.08) !important;
         box-shadow: 0 0 22px rgba(0, 240, 255, 0.85) !important;
     }
@@ -6760,7 +6760,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     col_c_plus, col_c_input, col_c_mic, col_c_send = st.columns([1, 14, 1, 1], vertical_alignment="center")
 
     with col_c_plus:
-        with st.popover("➕", help="Add attachments, files, or travel context"):
+        with st.popover("➕", help="Add attachments, files, or travel context", key=f"popover_composer_plus_{key_prefix}"):
             st.markdown("<div style='font-size: 0.78rem; font-weight: 800; color: #38bdf8; margin-bottom: 8px;'>ATTACH TO JOURNEY</div>", unsafe_allow_html=True)
             tab_file, tab_geo, tab_pref = st.tabs(["📄 Upload", "📍 Route Data", "⚙️ Preferences"])
             with tab_file:
@@ -6843,7 +6843,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         )
 
     with col_c_mic:
-        with st.popover("🎙️", help="Voice input / speech recognition"):
+        with st.popover("🎙️", help="Voice input / speech recognition", key=f"popover_composer_mic_{key_prefix}"):
             cur_lang = st.session_state.get("app_language", "en")
             v_info = LANGUAGE_SPEECH_MAP.get(cur_lang, LANGUAGE_SPEECH_MAP["en"])
             bcp47_lang = v_info.get("bcp47", "en-IN")
@@ -8209,6 +8209,42 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
 
 
         pass
+
+
+# =========================================================================
+# GLOBAL JARVIS-STYLE AURA VOICE COMMAND DISPATCHER
+# =========================================================================
+if "aura_cmd" in st.query_params:
+    try:
+        raw_cmd = str(st.query_params["aura_cmd"]).strip()
+        if raw_cmd:
+            from src.aura_command_dispatcher import AuraGlobalCommandDispatcher
+            active_ctx = {
+                "active_tab": st.session_state.get("target_tab", "nav"),
+                "map_style": st.session_state.get("map_style", "satellite_hybrid"),
+                "user_coords": st.session_state.get("user_live_coords"),
+                "dest_coords": st.session_state.get("selected_dest_coords"),
+                "start_label": st.session_state.get("user_live_label", ""),
+                "dest_label": st.session_state.get("selected_dest_label", ""),
+                "stops": st.session_state.get("intermediate_stops", []),
+                "avoid_tolls": st.session_state.get("avoid_tolls", False),
+                "avoid_highways": st.session_state.get("avoid_highways", False)
+            }
+            c_lang = st.session_state.get("app_language", "en")
+            cmd_result = AuraGlobalCommandDispatcher.parse_and_dispatch(raw_cmd, context=active_ctx, lang=c_lang)
+            AuraGlobalCommandDispatcher.apply_execution_result(cmd_result, st.session_state)
+            st.session_state.aura_last_command_result = cmd_result.to_dict()
+            st.toast(cmd_result.text_response, icon="⚡")
+        try:
+            del st.query_params["aura_cmd"]
+        except Exception:
+            pass
+    except Exception as e_cmd:
+        logger.warning("Error processing global AURA voice command: %s", e_cmd)
+        try:
+            del st.query_params["aura_cmd"]
+        except Exception:
+            pass
 
 
 
@@ -29967,7 +30003,18 @@ st.markdown('<div id="floating-copilot-trigger-anchor"></div>', unsafe_allow_htm
 
 
 with st.popover(" ", help="Open AURA • Intelligent AI Travel Companion"):
-    render_aura_chat_box(key_prefix="popover_window", height=440)
+    tab_hud, tab_chat = st.tabs(["🎙️ JARVIS Voice HUD", "💬 AURA Chatbot"])
+    with tab_hud:
+        from src.aura_voice_hud import render_aura_jarvis_hud_html
+        cur_lang = st.session_state.get("app_language", "en")
+        hud_html = render_aura_jarvis_hud_html(
+            current_lang=cur_lang,
+            voice_enabled=True,
+            bot_logo_uri=aura_logo_uri
+        )
+        components.html(hud_html, height=440, scrolling=True)
+    with tab_chat:
+        render_aura_chat_box(key_prefix="popover_window", height=440)
 
 
 
