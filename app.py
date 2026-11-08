@@ -16778,6 +16778,7 @@ if st.session_state.get("current_view") == "map_nav":
 
 
         unit_str = vehicle_limits["unit"]
+        pct = max(0.0, min(1.0, (display_speed - v_min) / v_span))
 
 
 
@@ -18929,17 +18930,26 @@ body {{
 
 
 
-            if "route_request_seq" not in st.session_state:
-                st.session_state.route_request_seq = 0
-
             if "cached_candidate_routes" not in st.session_state or st.session_state.get("_prev_endpoint_sig") != endpoint_sig:
+
+
+
                 st.session_state._prev_endpoint_sig = endpoint_sig
-                st.session_state.route_request_seq += 1
-                active_req_id = st.session_state.route_request_seq
-                st.session_state.route_calculation_status = "CALCULATING"
+
+
+
                 st.session_state.focused_route_id = "ALL"
+
+
+
                 st.session_state.selected_route_id = None
+
+
+
                 st.session_state.selected_route_object = None
+
+
+
                 st.session_state.auto_fit_bounds = True
 
 
@@ -18984,26 +18994,37 @@ body {{
                         else:
                             raise
 
-                # Verify this response matches the latest active request (prevents race condition)
-                if active_req_id == st.session_state.route_request_seq:
-                    if candidate_routes:
-                        st.session_state.cached_candidate_routes = candidate_routes
-                        st.session_state.route_alternatives = candidate_routes
-                        st.session_state.route_calculation_status = "SUCCESS"
-                        st.session_state.route_calculation_error = None
-                    else:
-                        st.session_state.cached_candidate_routes = []
-                        st.session_state.route_calculation_status = "ERROR"
-                        st.session_state.route_calculation_error = getattr(st.session_state.real_route_engine, "last_failure_reason", None) or "Unable to calculate route. Please try again."
+
+
+                st.session_state.cached_candidate_routes = candidate_routes
+
+
+
             else:
+
+
+
                 candidate_routes = st.session_state.cached_candidate_routes
 
+
+
+
+
+
+
             if not candidate_routes:
+
+
+
                 fail_msg = getattr(st.session_state.real_route_engine, "last_failure_reason", None) or (
+
+
+
                     "No verified route is available for these locations. Please try again or select different endpoints."
+
+
+
                 )
-                st.session_state.route_calculation_status = "ERROR"
-                st.session_state.route_calculation_error = fail_msg
 
 
 
@@ -19791,7 +19812,31 @@ body {{
 
 
 
-        # Selected route polyline strictly follows authentic road network coordinates (no straight-line fallbacks)
+        if not primary_route_poly and coords_orig and coords_dest:
+
+
+
+            primary_route_poly = [coords_orig, coords_dest]
+
+
+
+        elif primary_route_poly:
+
+
+
+            if coords_orig and (abs(primary_route_poly[0][0] - coords_orig[0]) > 0.00001 or abs(primary_route_poly[0][1] - coords_orig[1]) > 0.00001):
+
+
+
+                primary_route_poly.insert(0, coords_orig)
+
+
+
+            if coords_dest and (abs(primary_route_poly[-1][0] - coords_dest[0]) > 0.00001 or abs(primary_route_poly[-1][1] - coords_dest[1]) > 0.00001):
+
+
+
+                primary_route_poly.append(coords_dest)
 
 
 
@@ -22195,50 +22240,61 @@ body {{
 
 
 
-            elif coords_orig and coords_dest:
+            elif primary_route_poly and len(primary_route_poly) >= 2 and coords_orig and coords_dest:
+
+
+
                 chosen_item = None
+
+
+
                 if ranked_routes:
+
+
+
                     chosen_item = next((r for r in ranked_routes if r.route.route_id == cur_focus), ranked_routes[0])
 
-                dist_val = float(chosen_item.effective_distance_km) if chosen_item else 0.0
-                dur_val = float(chosen_item.effective_duration_minutes) if chosen_item else 0.0
 
-                if chosen_item and dist_val > 0.0 and primary_route_poly and len(primary_route_poly) >= 2:
-                    c_lang = st.session_state.get("app_language", "en")
-                    lbl_rc = t("nav.route_corridor", default="Route Corridor", lang=c_lang)
-                    lbl_ap = t("nav.active_path", default="Active Path", lang=c_lang)
-                    lbl_dst = t("nav.distance", default="Distance", lang=c_lang)
-                    lbl_time = t("nav.est_time", default="Est. Time", lang=c_lang)
-                    lbl_mode = t("nav.mode", default="Mode", lang=c_lang)
-                    val_dist = format_distance(dist_val, unit=st.session_state.get("distance_unit", "km"), lang=c_lang)
-                    val_dur = format_duration(dur_val, lang=c_lang)
 
-                    st.markdown(f"""
-                    <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 10px 12px; margin: 10px 0 8px 0;'>
-                        <div style='display: flex; justify-content: space-between; align-items: center;'>
-                            <span style='font-size: 0.76rem; font-weight: 800; color: #38bdf8;'>{lbl_rc}</span>
-                            <span style='font-size: 0.65rem; color: #94a3b8;'>{lbl_ap}</span>
+                dist_val = chosen_item.effective_distance_km if chosen_item else 0
+
+
+
+                dur_val = chosen_item.effective_duration_minutes if chosen_item else 0
+
+
+
+                c_lang = st.session_state.get("app_language", "en")
+                lbl_rc = t("nav.route_corridor", default="Route Corridor", lang=c_lang)
+                lbl_ap = t("nav.active_path", default="Active Path", lang=c_lang)
+                lbl_dst = t("nav.distance", default="Distance", lang=c_lang)
+                lbl_time = t("nav.est_time", default="Est. Time", lang=c_lang)
+                lbl_mode = t("nav.mode", default="Mode", lang=c_lang)
+                val_dist = format_distance(dist_val, unit=st.session_state.get("distance_unit", "km"), lang=c_lang)
+                val_dur = format_duration(dur_val, lang=c_lang)
+
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 10px 12px; margin: 10px 0 8px 0;'>
+                    <div style='display: flex; justify-content: space-between; align-items: center;'>
+                        <span style='font-size: 0.76rem; font-weight: 800; color: #38bdf8;'>{lbl_rc}</span>
+                        <span style='font-size: 0.65rem; color: #94a3b8;'>{lbl_ap}</span>
+                    </div>
+                    <div style='display: flex; justify-content: space-between; margin-top: 6px;'>
+                        <div>
+                            <span style='font-size: 0.65rem; color: #94a3b8; display: block;'>{lbl_dst}</span>
+                            <span style='font-size: 0.95rem; font-weight: 800; color: #f8fafc;'>{val_dist}</span>
                         </div>
-                        <div style='display: flex; justify-content: space-between; margin-top: 6px;'>
-                            <div>
-                                <span style='font-size: 0.65rem; color: #94a3b8; display: block;'>{lbl_dst}</span>
-                                <span style='font-size: 0.95rem; font-weight: 800; color: #f8fafc;'>{val_dist}</span>
-                            </div>
-                            <div>
-                                <span style='font-size: 0.65rem; color: #94a3b8; display: block;'>{lbl_time}</span>
-                                <span style='font-size: 0.95rem; font-weight: 800; color: #38bdf8;'>{val_dur}</span>
-                            </div>
-                            <div>
-                                <span style='font-size: 0.65rem; color: #94a3b8; display: block;'>{lbl_mode}</span>
-                                <span style='font-size: 0.82rem; font-weight: 800; color: #4ade80;'>🚗 Drive</span>
-                            </div>
+                        <div>
+                            <span style='font-size: 0.65rem; color: #94a3b8; display: block;'>{lbl_time}</span>
+                            <span style='font-size: 0.95rem; font-weight: 800; color: #38bdf8;'>{val_dur}</span>
+                        </div>
+                        <div>
+                            <span style='font-size: 0.65rem; color: #94a3b8; display: block;'>{lbl_mode}</span>
+                            <span style='font-size: 0.82rem; font-weight: 800; color: #4ade80;'>🚗 Drive</span>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
-                elif st.session_state.get("route_calculation_status") == "CALCULATING":
-                    st.info("⚡ Calculating route...")
-                elif st.session_state.get("route_calculation_status") == "ERROR" or not ranked_routes:
-                    st.warning("⚠️ Unable to calculate route. Please try again.")
+                </div>
+                """, unsafe_allow_html=True)
 
 
 
