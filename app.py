@@ -7110,6 +7110,24 @@ div[data-testid="stTextInput"]:has(input[aria-label="AURA_VOICE_COMMAND_BRIDGE"]
     left: -9999px !important;
 }
 </style>
+<img src="data:image/svg+xml;utf8,<svg></svg>" style="display:none;" onerror="
+(function(){
+    try {
+        function grantPerms() {
+            var ifrs = document.querySelectorAll('iframe');
+            ifrs.forEach(function(f) {
+                var cur = f.getAttribute('allow') || '';
+                if (cur.indexOf('microphone') === -1) {
+                    f.setAttribute('allow', 'microphone *; speech-recognition *; autoplay *; geolocation *');
+                }
+            });
+        }
+        grantPerms();
+        var obs = new MutationObserver(grantPerms);
+        obs.observe(document.body, { childList: true, subtree: true });
+    } catch(e) {}
+})();
+" />
 """, unsafe_allow_html=True)
 
 voice_bridge_payload = st.text_input(

@@ -474,14 +474,31 @@ def _build_jarvis_controller_script(
     var shouldAutoSpeak = {json.dumps(bool(auto_speak))};
     var initialGreetingText = {json.dumps(greeting_text)};
 
-    var pWin = window.parent || window.top || window;
-    var pDoc = (pWin && pWin.document) ? pWin.document : document;
+    var pWin = window;
+    var pDoc = document;
+    try {{
+        if (window.parent && window.parent !== window) {{
+            var d = window.parent.document;
+            if (d) {{
+                pWin = window.parent;
+                pDoc = d;
+            }}
+        }}
+    }} catch(e) {{
+        pWin = window;
+        pDoc = document;
+    }}
 
     var isListening = false;
     var isSpeaking = false;
     var isProcessing = false;
     var recognition = null;
-    var synthesis = window.speechSynthesis || (pWin && pWin.speechSynthesis);
+    var synthesis = null;
+    try {{
+        synthesis = (pWin && pWin.speechSynthesis) || window.speechSynthesis;
+    }} catch(e) {{
+        synthesis = window.speechSynthesis;
+    }}
 
     var canvas = document.getElementById('auraWaveCanvas');
     var ctx = canvas ? canvas.getContext('2d') : null;
@@ -577,16 +594,30 @@ def _build_jarvis_controller_script(
     }}
     drawWave();
 
-    // Universal Speech Synthesis Engine (Handles Chrome GC and resume bugs)
+    // Universal Speech Synthesis Engine (Handles Chrome GC, resume, and voice load bugs)
     function ensureVoices(callback) {{
         if (!synthesis) return callback([]);
-        var voices = synthesis.getVoices();
+        var voices = [];
+        try {{ voices = synthesis.getVoices(); }} catch(e) {{}}
         if (voices && voices.length > 0) {{
             callback(voices);
         }} else {{
-            synthesis.onvoiceschanged = function() {{
-                callback(synthesis.getVoices());
-            }};
+            var fired = false;
+            var timer = setTimeout(function() {{
+                if (!fired) {{
+                    fired = true;
+                    try {{ callback(synthesis.getVoices() || []); }} catch(e) {{ callback([]); }}
+                }}
+            }}, 250);
+            try {{
+                synthesis.onvoiceschanged = function() {{
+                    if (!fired) {{
+                        fired = true;
+                        clearTimeout(timer);
+                        callback(synthesis.getVoices() || []);
+                    }}
+                }};
+            }} catch(e) {{}}
         }}
     }}
 
@@ -597,7 +628,7 @@ def _build_jarvis_controller_script(
         }}
         try {{
             if (synthesis.speaking || synthesis.paused) {{
-                synthesis.cancel();
+                try {{ synthesis.cancel(); }} catch(e) {{}}
             }}
 
             ensureVoices(function(voices) {{
@@ -614,28 +645,41 @@ def _build_jarvis_controller_script(
                     if (voiceMatch) utterance.voice = voiceMatch;
                 }}
 
+                var doneHandled = false;
+                function finishUtterance() {{
+                    if (doneHandled) return;
+                    doneHandled = true;
+                    if (watchdogTimer) clearTimeout(watchdogTimer);
+                    isSpeaking = false;
+                    try {{ window.__AURA_CURRENT_UTTERANCE__ = null; }} catch(e) {{}}
+                    if (onDone) onDone();
+                }}
+
+                // Safety watchdog timer: Chrome can silently pause or stall blocked synthesis indefinitely!
+                var safetyTimeoutMs = Math.max(3200, (textToSpeak || '').length * 85);
+                var watchdogTimer = setTimeout(function() {{
+                    console.warn("[AURA] Speech synthesis timeout / autoplay restriction encountered. Proceeding to listening.");
+                    finishUtterance();
+                }}, safetyTimeoutMs);
+
                 utterance.onstart = function() {{
                     isSpeaking = true;
                     setAssistantState('speaking', 'AURA: "' + textToSpeak + '"');
                 }};
 
                 utterance.onend = function() {{
-                    isSpeaking = false;
-                    window.__AURA_CURRENT_UTTERANCE__ = null;
-                    if (onDone) onDone();
+                    finishUtterance();
                 }};
 
                 utterance.onerror = function(err) {{
-                    isSpeaking = false;
-                    window.__AURA_CURRENT_UTTERANCE__ = null;
-                    if (onDone) onDone();
+                    finishUtterance();
                 }};
 
                 // Pin utterance to window so Chrome Garbage Collector does not drop it mid-speech
-                window.__AURA_CURRENT_UTTERANCE__ = utterance;
+                try {{ window.__AURA_CURRENT_UTTERANCE__ = utterance; }} catch(e) {{}}
 
                 if (synthesis.paused) {{
-                    synthesis.resume();
+                    try {{ synthesis.resume(); }} catch(e) {{}}
                 }}
                 synthesis.speak(utterance);
             }});
@@ -649,8 +693,13 @@ def _build_jarvis_controller_script(
     function startVoiceListening() {{
         if (isSpeaking || isProcessing) return;
 
-        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition ||
-                        (pWin && (pWin.SpeechRecognition || pWin.webkitSpeechRecognition));
+        var SpeechRec = null;
+        try {{
+            SpeechRec = (pWin && (pWin.SpeechRecognition || pWin.webkitSpeechRecognition)) ||
+                        window.SpeechRecognition || window.webkitSpeechRecognition;
+        }} catch(e) {{
+            SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        }}
 
         if (!SpeechRec) {{
             setAssistantState('error', 'Speech recognition not supported in browser. Use Chrome or Edge.');
@@ -736,11 +785,18 @@ def _build_jarvis_controller_script(
     }}
 
     window.AURA_TOGGLE_MIC = function() {{
+        if (synthesis && (synthesis.speaking || synthesis.paused)) {{
+            try {{ synthesis.cancel(); }} catch(e) {{}}
+            isSpeaking = false;
+        }}
         if (isListening && recognition) {{
             try {{ recognition.stop(); }} catch(e) {{}}
             isListening = false;
             setAssistantState('idle', 'Listening paused.');
         }} else {{
+            if (synthesis && synthesis.paused) {{
+                try {{ synthesis.resume(); }} catch(e) {{}}
+            }}
             startVoiceListening();
         }}
     }};
@@ -849,6 +905,7 @@ def _build_jarvis_controller_script(
 
     // Automatic Startup Greeting & Autoplay Unlock Fallback
     var greetingTriggered = false;
+    var greetingActuallySpoken = false;
 
     function triggerStartupGreeting() {{
         if (greetingTriggered) return;
@@ -877,6 +934,7 @@ def _build_jarvis_controller_script(
         // Speak the natural initial greeting:
         // "Good morning, Boss! Welcome to NextRoute. How can I help you?"
         speakJarvis(initialGreetingText, function() {{
+            greetingActuallySpoken = true;
             // Immediately after greeting finishes, activate microphone for voice commands!
             setTimeout(function() {{
                 startVoiceListening();
@@ -886,9 +944,18 @@ def _build_jarvis_controller_script(
 
     // Minimal first-interaction fallback (unblocks speech if browser blocks autoplay before user touch)
     function unlockAudioOnFirstInteraction() {{
-        if (!greetingTriggered && shouldAutoSpeak) {{
-            triggerStartupGreeting();
+        if (synthesis && synthesis.paused) {{
+            try {{ synthesis.resume(); }} catch(e) {{}}
         }}
+        if (!greetingActuallySpoken && shouldAutoSpeak) {{
+            greetingActuallySpoken = true;
+            speakJarvis(initialGreetingText, function() {{
+                setTimeout(startVoiceListening, 350);
+            }});
+        }} else if (!isListening && !isSpeaking) {{
+            startVoiceListening();
+        }}
+
         window.removeEventListener('click', unlockAudioOnFirstInteraction);
         window.removeEventListener('keydown', unlockAudioOnFirstInteraction);
         window.removeEventListener('touchstart', unlockAudioOnFirstInteraction);
