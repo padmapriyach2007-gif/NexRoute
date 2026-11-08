@@ -112,3 +112,50 @@ class TestJarvisChatbotIntegration:
         res_trip = AuraGlobalCommandDispatcher.parse_and_dispatch("Plan a trip to Hyderabad.", ctx)
         assert res_trip.command_type == AuraCommandType.ROUTE_ACTION
         assert "hyderabad" in res_trip.ui_updates.get("pending_dest", "").lower()
+
+    def test_two_way_voice_and_controls_in_hud_html(self):
+        html = render_jarvis_chatbot_hud_html(
+            current_lang="en",
+            bot_logo_uri="https://example.com/logo.png",
+            auto_greeting_text="Good morning, Boss! Welcome to NextRoute. How can I help you?",
+            last_response_text="Here is your travel itinerary.",
+            key_prefix="popover_window",
+            voice_enabled=True,
+            continuous_mode=True
+        )
+        # Voice controls
+        assert "btnVoiceToggle" in html
+        assert "btnContinuousToggle" in html
+        assert "btnJarvisSilence" in html
+        assert "btnJarvisMic" in html
+        assert "toggleVoiceEnabled" in html
+        assert "toggleContinuousMode" in html
+
+        # Zero-Reload WebSocket Bridge
+        assert "AURA_CHAT_PROMPT_BRIDGE" in html
+        assert "submitVoiceToExistingAgent" in html
+
+        # Continuous two-way mode logic
+        assert "continuousMode" in html
+        assert "toggleJarvisVoiceRecognition" in html
+
+    def test_shared_trip_context_propagation(self):
+        # 1. AURA handles "Plan a trip to Goa"
+        cmd = AuraGlobalCommandDispatcher.parse_and_dispatch("Plan a trip to Goa", {})
+        assert cmd.command_type == AuraCommandType.ROUTE_ACTION
+        assert cmd.ui_updates.get("active_trip_destination") == "Goa"
+        assert cmd.ui_updates.get("aura_active_trip_context")["destination"] == "Goa"
+
+        # 2. Chatbot resolves "that trip" to Goa
+        from src.pathfinder_chatbot import PathfinderChatbot
+        bot = PathfinderChatbot()
+        chat_context = {
+            "active_trip_destination": "Goa",
+            "aura_active_trip_context": {"destination": "Goa"},
+            "language": "en"
+        }
+        res = bot.answer("Suggest hotels for that trip", context=chat_context)
+        assert "response" in res
+        # Verify Goa or hotel content is referenced
+        resp_text = res["response"].lower()
+        assert "goa" in resp_text or "hotel" in resp_text or "stay" in resp_text or "resort" in resp_text

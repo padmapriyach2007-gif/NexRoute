@@ -6153,6 +6153,15 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     """Renders the upgraded interactive Pathfinder conversational travel assistant interface."""
     logger = logging.getLogger("nexroute")
 
+    def _safe_chat_btn(label: str, key: Optional[str] = None, use_container_width: bool = True, help: Optional[str] = None, **kwargs):
+        try:
+            return st.button(label, key=key, use_container_width=use_container_width, help=help, **kwargs)
+        except Exception as exc:
+            if "form" in str(exc).lower():
+                kwargs.pop("type", None)
+                return st.form_submit_button(label, use_container_width=use_container_width, help=help)
+            raise exc
+
     def _execute_chat_turn(query_text: str, attachments: Optional[List[Dict[str, Any]]] = None):
         att_list = attachments if attachments is not None else st.session_state.get("pending_chat_attachments", [])
         user_msg = {"role": "user", "content": query_text}
@@ -6527,19 +6536,21 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         bot_logo_uri=aura_logo_uri,
         auto_greeting_text=auto_greet_to_play,
         last_response_text=speech_to_play,
-        key_prefix=key_prefix
+        key_prefix=key_prefix,
+        voice_enabled=st.session_state.get("aura_chatbot_voice_enabled", True),
+        continuous_mode=st.session_state.get("aura_chatbot_continuous_mode", False)
     )
-    components.html(jarvis_hud_code, height=66, scrolling=False)
+    components.html(jarvis_hud_code, height=72, scrolling=False)
 
     # Top Toolbar: History Drawer Toggle + New Chat
     h_col1, h_col2 = st.columns([1, 1], vertical_alignment="center")
     with h_col1:
         hist_btn_label = "✕ Close History" if st.session_state.aura_show_history else "☰ Previous Chats"
-        if st.button(hist_btn_label, key=f"btn_hist_toggle_{key_prefix}", help="Toggle conversation history", use_container_width=True):
+        if _safe_chat_btn(hist_btn_label, key=f"btn_hist_toggle_{key_prefix}", help="Toggle conversation history", use_container_width=True):
             st.session_state.aura_show_history = not st.session_state.aura_show_history
             st.rerun()
     with h_col2:
-        if st.button("➕ New Chat", key=f"btn_new_chat_top_{key_prefix}", help="Start a new conversation", use_container_width=True):
+        if _safe_chat_btn("➕ New Chat", key=f"btn_new_chat_top_{key_prefix}", help="Start a new conversation", use_container_width=True):
             new_cid = AuraConversationStore.create_conversation()
             st.session_state.aura_active_conv_id = new_cid
             st.session_state.aura_chat_history = [get_aura_welcome_message(cur_chat_l)]
@@ -6603,7 +6614,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                     b_col1, b_col2, b_col3 = st.columns([1.5, 0.8, 0.8])
                     with b_col1:
                         if not is_active:
-                            if st.button("📂 Open", key=f"btn_open_conv_{cid}_{key_prefix}", use_container_width=True):
+                            if _safe_chat_btn("📂 Open", key=f"btn_open_conv_{cid}_{key_prefix}", use_container_width=True):
                                 st.session_state.aura_active_conv_id = cid
                                 st.session_state.aura_chat_history = c.get("messages", [])
                                 st.session_state.aura_show_history = False
@@ -6611,12 +6622,12 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                         else:
                             st.caption("✨ Current Chat")
                     with b_col2:
-                        if st.button("✏️", key=f"btn_ren_conv_{cid}_{key_prefix}", help="Rename conversation", use_container_width=True):
+                        if _safe_chat_btn("✏️", key=f"btn_ren_conv_{cid}_{key_prefix}", help="Rename conversation", use_container_width=True):
                             st.session_state.aura_renaming_id = cid
                             st.session_state.aura_confirm_delete_id = None
                             st.rerun()
                     with b_col3:
-                        if st.button("🗑️", key=f"btn_del_conv_{cid}_{key_prefix}", help="Delete conversation", use_container_width=True):
+                        if _safe_chat_btn("🗑️", key=f"btn_del_conv_{cid}_{key_prefix}", help="Delete conversation", use_container_width=True):
                             st.session_state.aura_confirm_delete_id = cid
                             st.session_state.aura_renaming_id = None
                             st.rerun()
@@ -6627,13 +6638,13 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                         with r_col_in:
                             new_t = st.text_input("New title", value=title, key=f"in_ren_{cid}_{key_prefix}", label_visibility="collapsed")
                         with r_col_save:
-                            if st.button("Save", key=f"btn_save_ren_{cid}_{key_prefix}", use_container_width=True):
+                            if _safe_chat_btn("Save", key=f"btn_save_ren_{cid}_{key_prefix}", use_container_width=True):
                                 if new_t and new_t.strip():
                                     AuraConversationStore.rename_conversation(cid, new_t.strip())
                                 st.session_state.aura_renaming_id = None
                                 st.rerun()
                         with r_col_cancel:
-                            if st.button("✕", key=f"btn_cancel_ren_{cid}_{key_prefix}", use_container_width=True):
+                            if _safe_chat_btn("✕", key=f"btn_cancel_ren_{cid}_{key_prefix}", use_container_width=True):
                                 st.session_state.aura_renaming_id = None
                                 st.rerun()
 
@@ -6646,7 +6657,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                         """, unsafe_allow_html=True)
                         d_col_yes, d_col_no = st.columns([1, 1])
                         with d_col_yes:
-                            if st.button("Yes, Delete", key=f"btn_yes_del_{cid}_{key_prefix}", type="primary", use_container_width=True):
+                            if _safe_chat_btn("Yes, Delete", key=f"btn_yes_del_{cid}_{key_prefix}", type="primary", use_container_width=True):
                                 AuraConversationStore.delete_conversation(cid)
                                 st.session_state.aura_confirm_delete_id = None
                                 if st.session_state.aura_active_conv_id == cid:
@@ -6655,11 +6666,11 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                                     st.session_state.aura_chat_history = cur_conv.get("messages", [get_aura_welcome_message(cur_chat_l)]) if cur_conv else [get_aura_welcome_message(cur_chat_l)]
                                 st.rerun()
                         with d_col_no:
-                            if st.button("Cancel", key=f"btn_no_del_{cid}_{key_prefix}", use_container_width=True):
+                            if _safe_chat_btn("Cancel", key=f"btn_no_del_{cid}_{key_prefix}", use_container_width=True):
                                 st.session_state.aura_confirm_delete_id = None
                                 st.rerun()
 
-        if st.button("← Back to Conversation", key=f"btn_back_to_chat_{key_prefix}", use_container_width=True):
+        if _safe_chat_btn("← Back to Conversation", key=f"btn_back_to_chat_{key_prefix}", use_container_width=True):
             st.session_state.aura_show_history = False
             st.rerun()
         return
@@ -6697,7 +6708,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         ]
 
         for s_idx, (s_label, s_query) in enumerate(sug_prompts):
-            if st.button(s_label, key=f"btn_welcome_sug_{s_idx}_{key_prefix}", use_container_width=True):
+            if _safe_chat_btn(s_label, key=f"btn_welcome_sug_{s_idx}_{key_prefix}", use_container_width=True):
                 _execute_chat_turn(s_query)
                 st.rerun()
 
@@ -6768,7 +6779,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             pills = "".join([f"<span style='background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; margin-right: 5px; display: inline-flex; align-items: center;'>📎 {a.get('name')}</span>" for a in st.session_state.pending_chat_attachments])
             st.markdown(f"<div style='margin-bottom: 6px;'>{pills}</div>", unsafe_allow_html=True)
         with p_col2:
-            if st.button("✖", key=f"btn_rm_att_{key_prefix}", use_container_width=True, help="Remove pending attachments"):
+            if _safe_chat_btn("✖", key=f"btn_rm_att_{key_prefix}", use_container_width=True, help="Remove pending attachments"):
                 st.session_state.pending_chat_attachments = []
                 st.rerun()
 
@@ -6825,7 +6836,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 c_orig = st.session_state.get("user_live_coords")
                 c_dest = st.session_state.get("selected_dest_coords")
                 st.caption(f"**Origin:** {orig_l} `({c_orig})`\n\n**Destination:** {dest_l} `({c_dest})`")
-                if st.button("📌 Attach Live Coordinates & Corridor", key=f"btn_att_geo_{key_prefix}", use_container_width=True):
+                if _safe_chat_btn("📌 Attach Live Coordinates & Corridor", key=f"btn_att_geo_{key_prefix}", use_container_width=True):
                     if "pending_chat_attachments" not in st.session_state:
                         st.session_state.pending_chat_attachments = []
                     geo_info = f"Current Location: {orig_l} ({c_orig}), Target Destination: {dest_l} ({c_dest})"
@@ -6842,7 +6853,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 st.caption("Active Routing Engine Preferences:")
                 pref_tolls = st.checkbox("Avoid Toll Roads", value=st.session_state.get("avoid_tolls", False), key=f"chk_pref_toll_{key_prefix}")
                 pref_hw = st.checkbox("Avoid Highways", value=st.session_state.get("avoid_highways", False), key=f"chk_pref_hw_{key_prefix}")
-                if st.button("Apply to Assistant Context", key=f"btn_apply_pref_{key_prefix}", use_container_width=True):
+                if _safe_chat_btn("Apply to Assistant Context", key=f"btn_apply_pref_{key_prefix}", use_container_width=True):
                     st.session_state.avoid_tolls = pref_tolls
                     st.session_state.avoid_highways = pref_hw
                     if "pending_chat_attachments" not in st.session_state:
@@ -6891,7 +6902,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 st.caption("Voice ready. Microphone permissions active.")
 
     with col_c_send:
-        st.button("↑", key=f"chat_send_btn_{key_prefix}", help="Send to Aura", on_click=_submit_chat_input)
+        _safe_chat_btn("↑", key=f"chat_send_btn_{key_prefix}", help="Send to Aura", on_click=_submit_chat_input)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -7100,7 +7111,8 @@ if "lang" in st.query_params:
 # =========================================================================
 st.markdown("""
 <style>
-div[data-testid="stTextInput"]:has(input[aria-label="AURA_VOICE_COMMAND_BRIDGE"]) {
+div[data-testid="stTextInput"]:has(input[aria-label="AURA_VOICE_COMMAND_BRIDGE"]),
+div[data-testid="stTextInput"]:has(input[aria-label="AURA_CHAT_PROMPT_BRIDGE"]) {
     display: none !important;
     height: 0 !important;
     margin: 0 !important;
@@ -7136,6 +7148,40 @@ voice_bridge_payload = st.text_input(
     key="aura_voice_cmd_sink",
     label_visibility="collapsed"
 )
+
+chat_bridge_payload = st.text_input(
+    "AURA_CHAT_PROMPT_BRIDGE",
+    value="",
+    key="aura_chat_prompt_sink",
+    label_visibility="collapsed"
+)
+
+raw_chat_prompt = ""
+chat_prompt_id = None
+
+if chat_bridge_payload and chat_bridge_payload.strip():
+    try:
+        c_payload_data = json.loads(chat_bridge_payload.strip())
+        chat_prompt_id = c_payload_data.get("id")
+        raw_chat_prompt = c_payload_data.get("prompt", "").strip()
+    except Exception:
+        raw_chat_prompt = chat_bridge_payload.strip()
+
+if not raw_chat_prompt and "pending_chat_prompt" in st.query_params:
+    try:
+        raw_chat_prompt = str(st.query_params["pending_chat_prompt"]).strip()
+        try:
+            del st.query_params["pending_chat_prompt"]
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+if raw_chat_prompt:
+    last_chat_id = st.session_state.get("aura_last_processed_chat_id")
+    if not chat_prompt_id or chat_prompt_id != last_chat_id:
+        st.session_state.aura_last_processed_chat_id = chat_prompt_id or raw_chat_prompt
+        st.session_state.pending_chat_prompt = raw_chat_prompt
 
 raw_voice_cmd = ""
 voice_cmd_id = None

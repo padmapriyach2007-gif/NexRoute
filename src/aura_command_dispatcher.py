@@ -635,14 +635,17 @@ class AuraGlobalCommandDispatcher:
             dest_query = nav_dest_match.group(2).strip()
             # Exclude app tab names
             if dest_query not in ["navigation", "chatbot", "chat", "facilities", "map", "tools", "saved"]:
+                clean_dest = dest_query.title()
                 return AuraExecutionResult(
                     command_type=AuraCommandType.ROUTE_ACTION,
-                    spoken_response=f"Setting destination to {dest_query.title()} and finding routes.",
-                    text_response=f"🏁 Navigating to **{dest_query.title()}**...",
+                    spoken_response=f"Setting destination to {clean_dest} and finding routes.",
+                    text_response=f"🏁 Navigating to **{clean_dest}**...",
                     action_name="voice_set_destination",
                     ui_updates={
                         "pending_dest": dest_query,
                         "target_tab": "nav",
+                        "active_trip_destination": clean_dest,
+                        "aura_active_trip_context": {"destination": clean_dest, "query": raw_query},
                         "scroll_to_app_map": True
                     }
                 )

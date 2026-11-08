@@ -625,13 +625,15 @@ def render_jarvis_chatbot_hud_html(
     bot_logo_uri: Optional[str] = None,
     auto_greeting_text: str = "",
     last_response_text: str = "",
-    key_prefix: str = "main"
+    key_prefix: str = "main",
+    voice_enabled: bool = True,
+    continuous_mode: bool = False
 ) -> str:
     """
     Renders the unified Jarvis Voice Assistant interface header for the AURA Chatbot.
     Features the circular robot avatar, live status indicators (LISTENING, THINKING, SPEAKING, IDLE),
-    real-time canvas waveform, microphone voice input that automatically fills the chatbot prompt
-    and submits to the agent, and audible Text-to-Speech playback.
+    real-time canvas waveform, microphone voice input with zero-reload WebSocket bridge,
+    intelligent Text-to-Speech output, Voice ON/OFF switch, Stop/Silence button, and continuous two-way conversation mode.
     """
     bcp47_map = {
         "en": "en-IN",
@@ -652,6 +654,9 @@ def render_jarvis_chatbot_hud_html(
         if bot_logo_uri
         else '<span style="color: #00f0ff; font-size: 20px; font-weight: 900;">⚡</span>'
     )
+
+    initial_voice_state = "true" if voice_enabled else "false"
+    initial_cont_state = "true" if continuous_mode else "false"
 
     return f"""<!DOCTYPE html>
 <html lang="{current_lang}">
@@ -683,7 +688,7 @@ def render_jarvis_chatbot_hud_html(
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 240, 255, 0.12);
         backdrop-filter: blur(12px);
     }}
@@ -758,7 +763,7 @@ def render_jarvis_chatbot_hud_html(
     .brand-subtitle {{
         font-family: 'JetBrains Mono', monospace;
         font-weight: 700;
-        font-size: 0.62rem;
+        font-size: 0.60rem;
         color: #38bdf8;
         letter-spacing: 0.06em;
     }}
@@ -772,7 +777,7 @@ def render_jarvis_chatbot_hud_html(
 
     .status-badge {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
+        font-size: 0.63rem;
         font-weight: 700;
         padding: 1px 7px;
         border-radius: 6px;
@@ -787,7 +792,7 @@ def render_jarvis_chatbot_hud_html(
     .waveform-canvas-box {{
         flex: 1 1 auto;
         height: 20px;
-        min-width: 60px;
+        min-width: 50px;
         background: rgba(3, 7, 18, 0.45);
         border-radius: 6px;
         border: 1px solid rgba(56, 189, 248, 0.20);
@@ -831,25 +836,55 @@ def render_jarvis_chatbot_hud_html(
         box-shadow: 0 0 22px rgba(0, 240, 255, 0.85);
     }}
 
-    .btn-hud-silence {{
+    .btn-pill-toggle {{
         background: rgba(15, 23, 42, 0.85);
         border: 1px solid rgba(56, 189, 248, 0.35);
         border-radius: 8px;
         padding: 5px 8px;
-        color: #94a3b8;
-        font-size: 0.72rem;
+        color: #cbd5e1;
+        font-size: 0.68rem;
         font-weight: 700;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+    }}
+
+    .btn-pill-toggle:hover {{
+        color: #f1f5f9;
+        border-color: #00f0ff;
+        background: rgba(0, 240, 255, 0.12);
+    }}
+
+    .btn-pill-toggle.active {{
+        background: rgba(0, 240, 255, 0.18);
+        border-color: #00f0ff;
+        color: #00f0ff;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+    }}
+
+    .btn-hud-silence {{
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        border-radius: 8px;
+        padding: 5px 8px;
+        color: #fca5a5;
+        font-size: 0.68rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
         transition: all 0.2s ease;
     }}
 
     .btn-hud-silence:hover {{
-        color: #f1f5f9;
-        border-color: #00f0ff;
-        background: rgba(0, 240, 255, 0.12);
+        color: #ffffff;
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.25);
     }}
 </style>
 </head>
@@ -857,7 +892,7 @@ def render_jarvis_chatbot_hud_html(
 
 <div class="jarvis-hud-card">
     <!-- Circular Avatar with Orbiting Ring -->
-    <div class="avatar-pod" onclick="toggleJarvisVoiceRecognition()" title="Click to speak">
+    <div class="avatar-pod" onclick="toggleJarvisVoiceRecognition()" title="Click to speak with AURA">
         <div class="arc-spin-ring" id="avatarArcRing"></div>
         <div class="avatar-circle">
             {avatar_markup}
@@ -878,13 +913,19 @@ def render_jarvis_chatbot_hud_html(
         </div>
     </div>
 
-    <!-- Right Controls: Mic & Silence -->
+    <!-- Right Controls: Mic, Voice Toggle, 2-Way Continuous, Silence -->
     <div class="controls-right">
         <button class="btn-hud-mic" id="btnJarvisMic" onclick="toggleJarvisVoiceRecognition()" title="Start Voice Input (Speak to AURA)">
             🎙️
         </button>
+        <button class="btn-pill-toggle active" id="btnVoiceToggle" onclick="toggleVoiceEnabled()" title="Toggle Voice Output (Spoken Audio)">
+            🔊 Voice ON
+        </button>
+        <button class="btn-pill-toggle" id="btnContinuousToggle" onclick="toggleContinuousMode()" title="Toggle Continuous 2-Way Conversational Mode">
+            🔄 2-Way
+        </button>
         <button class="btn-hud-silence" id="btnJarvisSilence" onclick="stopJarvisSpeech()" title="Stop Assistant Speech (Silence)">
-            🔇 Silence
+            ⏹ Silence
         </button>
     </div>
 </div>
@@ -896,6 +937,9 @@ def render_jarvis_chatbot_hud_html(
     var autoGreeting = {json.dumps(auto_greeting_text)};
     var lastResponse = {json.dumps(last_response_text)};
 
+    var voiceEnabled = {initial_voice_state};
+    var continuousMode = {initial_cont_state};
+
     var isListening = false;
     var isSpeaking = false;
     var isThinking = false;
@@ -904,6 +948,17 @@ def render_jarvis_chatbot_hud_html(
     var canvas = document.getElementById('auraJarvisWaveform');
     var ctx = canvas ? canvas.getContext('2d') : null;
 
+    // Safe Cross-Origin Parent References
+    var pWin = null;
+    var pDoc = null;
+    try {{
+        pWin = window.parent || window.top;
+        if (pWin) pDoc = pWin.document;
+    }} catch(eSec) {{
+        pWin = null;
+        pDoc = null;
+    }}
+
     function resizeCanvas() {{
         if (!canvas) return;
         canvas.width = canvas.parentElement.clientWidth || 240;
@@ -911,6 +966,37 @@ def render_jarvis_chatbot_hud_html(
     }}
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
+    // Toggle Voice Output (TTS)
+    window.toggleVoiceEnabled = function() {{
+        voiceEnabled = !voiceEnabled;
+        var btn = document.getElementById('btnVoiceToggle');
+        if (btn) {{
+            if (voiceEnabled) {{
+                btn.className = 'btn-pill-toggle active';
+                btn.innerHTML = '🔊 Voice ON';
+            }} else {{
+                btn.className = 'btn-pill-toggle';
+                btn.innerHTML = '🔇 Voice OFF';
+                stopJarvisSpeech();
+            }}
+        }}
+    }};
+
+    // Toggle Continuous 2-Way Conversational Mode
+    window.toggleContinuousMode = function() {{
+        continuousMode = !continuousMode;
+        var btn = document.getElementById('btnContinuousToggle');
+        if (btn) {{
+            if (continuousMode) {{
+                btn.className = 'btn-pill-toggle active';
+                btn.innerHTML = '🔄 2-Way ON';
+            }} else {{
+                btn.className = 'btn-pill-toggle';
+                btn.innerHTML = '🔄 2-Way';
+            }}
+        }}
+    }};
 
     function setHudState(state, message) {{
         var badge = document.getElementById('jarvisStatusBadge');
@@ -968,7 +1054,7 @@ def render_jarvis_chatbot_hud_html(
         }}
     }}
 
-    // Waveform Animation Loop
+    // Real-Time Waveform Animation
     var wavePhase = 0;
     function drawWave() {{
         if (!ctx || !canvas) return;
@@ -1001,9 +1087,49 @@ def render_jarvis_chatbot_hud_html(
     }}
     drawWave();
 
+    // Natural Voice Selection
+    function getNaturalVoice(lang) {{
+        if (!synthesis) return null;
+        var voices = synthesis.getVoices();
+        if (!voices || voices.length === 0) return null;
+        var langLower = (lang || '').toLowerCase();
+        var primaryLang = langLower.split('-')[0];
+
+        // 1. Natural / Neural Jarvis matches
+        for (var i = 0; i < voices.length; i++) {{
+            var v = voices[i];
+            var vLang = (v.lang || '').toLowerCase();
+            var vName = (v.name || '').toLowerCase();
+            if ((vLang === langLower || vLang.indexOf(primaryLang) === 0) &&
+                (vName.indexOf('natural') !== -1 || vName.indexOf('neural') !== -1 || vName.indexOf('google') !== -1 || vName.indexOf('guy') !== -1 || vName.indexOf('george') !== -1)) {{
+                return v;
+            }}
+        }}
+
+        // 2. Exact language match
+        for (var j = 0; j < voices.length; j++) {{
+            if ((voices[j].lang || '').toLowerCase() === langLower) {{
+                return voices[j];
+            }}
+        }}
+
+        // 3. Prefix match
+        for (var k = 0; k < voices.length; k++) {{
+            if ((voices[k].lang || '').toLowerCase().indexOf(primaryLang) === 0) {{
+                return voices[k];
+            }}
+        }}
+        return voices[0] || null;
+    }}
+
     // Voice Synthesis
     window.speakJarvis = function(text) {{
-        if (!synthesis || !text) return;
+        if (!text || !voiceEnabled) {{
+            setHudState('idle');
+            return;
+        }}
+        if (!synthesis) return;
+
         try {{
             synthesis.cancel();
             var utterance = new SpeechSynthesisUtterance(text);
@@ -1011,17 +1137,41 @@ def render_jarvis_chatbot_hud_html(
             utterance.rate = 1.02;
             utterance.pitch = 1.0;
 
+            var selVoice = getNaturalVoice(bcp47Lang);
+            if (selVoice) utterance.voice = selVoice;
+
+            var speechWatchdog = null;
+
             utterance.onstart = function() {{
                 setHudState('speaking');
+                if (speechWatchdog) clearTimeout(speechWatchdog);
             }};
 
             utterance.onend = function() {{
+                if (speechWatchdog) clearTimeout(speechWatchdog);
+                setHudState('idle');
+
+                // If continuous two-way mode is active, automatically start listening for user's next spoken input
+                if (continuousMode) {{
+                    setTimeout(function() {{
+                        if (!isListening && !isSpeaking) {{
+                            toggleJarvisVoiceRecognition();
+                        }}
+                    }}, 450);
+                }}
+            }};
+
+            utterance.onerror = function(err) {{
+                if (speechWatchdog) clearTimeout(speechWatchdog);
                 setHudState('idle');
             }};
 
-            utterance.onerror = function() {{
-                setHudState('idle');
-            }};
+            // Watchdog fallback (in case browser audio policy silently drops onend)
+            speechWatchdog = setTimeout(function() {{
+                if (isSpeaking) {{
+                    setHudState('idle');
+                }}
+            }}, Math.max(3500, text.length * 100));
 
             synthesis.speak(utterance);
         }} catch(e) {{
@@ -1085,37 +1235,56 @@ def render_jarvis_chatbot_hud_html(
         }}
     }};
 
-    // Populate existing input and automatically submit to existing AI agent
+    // Zero-Reload WebSocket Bridge Submission to Existing AI Agent
     window.submitVoiceToExistingAgent = function(transcript) {{
-        // 1. Populate visible Streamlit text input box in the parent document
+        var cleanTranscript = (transcript || '').trim();
+        if (!cleanTranscript) return;
+
+        // 1. Direct WebSocket transmission through Streamlit hidden React input
         try {{
-            var pDoc = window.parent.document;
-            var inputElements = pDoc.querySelectorAll('input[aria-label="Ask Aura"], input[placeholder*="Ask Aura"], .aura-chatgpt-composer-wrapper input');
-            for (var i = 0; i < inputElements.length; i++) {{
-                inputElements[i].value = transcript;
-                inputElements[i].dispatchEvent(new Event('input', {{ bubbles: true }}));
-                inputElements[i].dispatchEvent(new Event('change', {{ bubbles: true }}));
+            if (pDoc && pWin) {{
+                var chatBridgeInput = pDoc.querySelector('input[aria-label="AURA_CHAT_PROMPT_BRIDGE"]') ||
+                                     pDoc.querySelector('input[data-testid*="aura_chat_prompt_sink"]');
+
+                if (chatBridgeInput) {{
+                    var cmdId = 'chat_' + Date.now();
+                    var payload = JSON.stringify({{ id: cmdId, prompt: cleanTranscript }});
+                    var nativeSetter = Object.getOwnPropertyDescriptor(pWin.HTMLInputElement.prototype, 'value')?.set ||
+                                       Object.getOwnPropertyDescriptor(chatBridgeInput.__proto__, 'value')?.set;
+                    if (nativeSetter) {{
+                        nativeSetter.call(chatBridgeInput, payload);
+                    }} else {{
+                        chatBridgeInput.value = payload;
+                    }}
+                    chatBridgeInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    chatBridgeInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    chatBridgeInput.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
+                    return true;
+                }}
+            }}
+        }} catch(eBridge) {{
+            console.warn("[AURA Bridge] Zero-reload bridge notice:", eBridge);
+        }}
+
+        // 2. Also populate visible Streamlit text input box if found
+        try {{
+            if (pDoc) {{
+                var inputElements = pDoc.querySelectorAll('input[aria-label="Ask Aura"], input[placeholder*="Ask Aura"], .aura-chatgpt-composer-wrapper input');
+                for (var i = 0; i < inputElements.length; i++) {{
+                    inputElements[i].value = cleanTranscript;
+                    inputElements[i].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    inputElements[i].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                }}
             }}
         }} catch(eDom) {{}}
 
-        // 2. PostMessage to Parent Window
+        // 3. Fallback via URL searchParams navigation
         try {{
-            var pWin = window.parent || window.top;
-            if (pWin && pWin !== window) {{
-                pWin.postMessage({{
-                    type: 'AURA_CHAT_SPEECH_SUBMIT',
-                    prompt: transcript
-                }}, '*');
-            }}
-        }} catch(ePost) {{}}
-
-        // 3. Trigger immediate rerun with pending_chat_prompt
-        try {{
-            var targetWin = window.parent || window.top || window;
+            var targetWin = pWin || window.top || window;
             var currentHref = '';
             try {{ currentHref = targetWin.location.href; }} catch(e) {{ currentHref = window.location.href; }}
             var url = new URL(currentHref);
-            url.searchParams.set('pending_chat_prompt', transcript);
+            url.searchParams.set('pending_chat_prompt', cleanTranscript);
             try {{
                 targetWin.location.href = url.toString();
             }} catch(eNav) {{
@@ -1123,6 +1292,21 @@ def render_jarvis_chatbot_hud_html(
             }}
         }} catch(eParam) {{}}
     }};
+
+    // Unlock speech on first user gesture if browser blocked audible autoplay
+    var unlockAudioOnGesture = function() {{
+        try {{
+            if (synthesis && synthesis.paused) {{
+                synthesis.resume();
+            }}
+        }} catch(e) {{}}
+        window.removeEventListener('click', unlockAudioOnGesture);
+        window.removeEventListener('keydown', unlockAudioOnGesture);
+        window.removeEventListener('touchstart', unlockAudioOnGesture);
+    }};
+    window.addEventListener('click', unlockAudioOnGesture, {{ passive: true }});
+    window.addEventListener('keydown', unlockAudioOnGesture, {{ passive: true }});
+    window.addEventListener('touchstart', unlockAudioOnGesture, {{ passive: true }});
 
     // Initial load: Play startup greeting or latest response
     setTimeout(function() {{

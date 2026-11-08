@@ -444,7 +444,61 @@ class AuraAssistantMixin:
 
     def _handle_itinerary_planning(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Dict[str, Any]:
         """Provides rich, structured multi-day itineraries with follow-up clarifying questions."""
+        if "goa" in q:
+            self.last_destination = "Goa"
+            if hasattr(self, "conv_manager"):
+                self.conv_manager.last_destination = "Goa"
+            return {
+                "badge": "🏖️ AURA • 3-DAY GOA ITINERARY",
+                "response": (
+                    "### 🏖️ 3-Day Coastal Exploration Itinerary: Goa\n\n"
+                    "**Best Travel Time:** October to March | **Recommended Transport:** Self-drive car or scooter rental\n\n"
+                    "#### 🗓️ Day 1: North Goa Beaches & Portuguese Forts\n"
+                    "• **Morning:** Arrive in Goa, check in to your beach resort, and head to **Fort Aguada** for sweeping views of the Arabian Sea.\n"
+                    "• **Afternoon:** Relax at **Candolim & Calangute Beach**. Water sports (parasailing, jet-skiing) available at Baga.\n"
+                    "• **Evening:** Sunset walk along **Anjuna Beach** cliffside shacks, followed by dinner with fresh seafood and live Goan music.\n\n"
+                    "#### 🗓️ Day 2: Heritage, Spices & Cultural Old Goa\n"
+                    "• **Morning:** Visit UNESCO World Heritage sites: **Basilica of Bom Jesus** and **Sé Cathedral** in Old Goa.\n"
+                    "• **Afternoon:** Tour the Sahakari Spice Farm in Ponda with a traditional Goan buffet lunch served on banana leaves.\n"
+                    "• **Evening:** 1-hour Mandovi River sunset cruise with Goan folk dance performances and views of Panaji city lights.\n\n"
+                    "#### 🗓️ Day 3: South Goa Tranquility & Hidden Coves\n"
+                    "• **Morning:** Drive down to the pristine white sands of **Palolem & Agonda Beach** in South Goa.\n"
+                    "• **Afternoon:** Kayaking at Cola Beach lagoon, surrounded by lush coconut groves.\n"
+                    "• **Evening:** Farewell beachside dinner at Cabo de Rama overlooking the cliff sunset.\n\n"
+                    "❓ **Next Steps:** Would you like me to suggest verified beach resorts and hotels, or help you check route navigation options?"
+                ),
+                "spoken_response": "Here is your 3-day Goa travel itinerary, Boss. I can also help you find verified beach resorts or navigation routes."
+            }
+
+        if "hyderabad" in q:
+            self.last_destination = "Hyderabad"
+            if hasattr(self, "conv_manager"):
+                self.conv_manager.last_destination = "Hyderabad"
+            return {
+                "badge": "🏰 AURA • 3-DAY HYDERABAD ITINERARY",
+                "response": (
+                    "### 🏰 3-Day Heritage & Culinary Itinerary: Hyderabad\n\n"
+                    "**Theme:** Historic Forts, Nizami Palaces & Authentic Biryani\n\n"
+                    "#### 🗓️ Day 1: The Old City & Royal Heritage\n"
+                    "• **Morning:** Explore the iconic **Charminar** and shop for pearls and bangles along vibrant **Laad Bazaar**.\n"
+                    "• **Afternoon:** Discover the opulence of **Chowmahalla Palace**, seat of the Asaf Jahi dynasty. Lunch at Shadab for authentic Dum Biryani.\n"
+                    "• **Evening:** Walk along the Salar Jung Museum, one of the world's greatest one-man antique collections.\n\n"
+                    "#### 🗓️ Day 2: Fortresses & Cinematic Magic\n"
+                    "• **Morning & Afternoon:** Full-day excursion to **Ramoji Film City**, the world's largest film studio complex with stunt shows, themed sets, and gardens.\n"
+                    "• **Evening:** Sound & Light Show at majestic **Golconda Fort**, recounting the diamond trade and Nizami history.\n\n"
+                    "#### 🗓️ Day 3: Modern Tech City & Lake Sunsets\n"
+                    "• **Morning:** Visit the tranquil Birla Mandir carved from white Rajasthani marble overlooking the city.\n"
+                    "• **Afternoon:** Leisure stroll and boat ride at **Hussain Sagar Lake** to the giant monolith Buddha statue.\n"
+                    "• **Evening:** Fine dining along Jubilee Hills or Durgam Cheruvu cable-stayed bridge view.\n\n"
+                    "❓ **Next Steps:** Would you like me to suggest top-rated hotels in Hyderabad or map the best driving routes?"
+                ),
+                "spoken_response": "Here is your 3-day Hyderabad travel itinerary, Boss. Would you like hotel recommendations or route options?"
+            }
+
         if "araku" in q:
+            self.last_destination = "Araku"
+            if hasattr(self, "conv_manager"):
+                self.conv_manager.last_destination = "Araku"
             return {
                 "badge": "🌄 AURA • 2-DAY ARAKU VALLEY ITINERARY",
                 "response": (

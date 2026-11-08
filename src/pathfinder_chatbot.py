@@ -885,13 +885,27 @@ class PathfinderChatbot(AuraAssistantMixin):
             dest_coords = ctx.get("dest_coords") or ctx.get("current_coords") or (16.2335, 80.5505)
             dest_label = ctx.get("dest_label", "Local Area")
 
-            # Reference resolution: "there" / "that place"
-            if any(w in q for w in ["there", "that destination", "that place"]):
-                resolved_place = ctx.get("dest_label") or getattr(self.conv_manager, "last_destination", None) or self.last_destination
+            # Reference resolution: "there" / "that place" / "that trip" / "the trip" / "for that trip"
+            if any(w in q for w in ["there", "that destination", "that place", "that trip", "the trip", "for that trip", "my trip", "this trip"]):
+                trip_ctx = ctx.get("aura_active_trip_context") or {}
+                trip_dest = trip_ctx.get("destination") or ctx.get("active_trip_destination")
+                resolved_place = trip_dest or ctx.get("dest_label") or getattr(self.conv_manager, "last_destination", None) or self.last_destination
                 if resolved_place and resolved_place.lower() not in ["live location", "local area", "unknown", "destination", ""]:
                     dest_label = resolved_place
                     if self.map_service:
                         geo = self.map_service.geocode(resolved_place)
+                        coords = self._extract_lat_lon(geo)
+                        if coords:
+                            dest_coords = coords
+
+            # Fallback contextual destination if generic request like "Find hotels" or "Show restaurants"
+            if dest_label in ["Local Area", "Destination", "Live Location", ""]:
+                trip_ctx = ctx.get("aura_active_trip_context") or {}
+                trip_dest = trip_ctx.get("destination") or ctx.get("active_trip_destination") or getattr(self.conv_manager, "last_destination", None) or self.last_destination
+                if trip_dest and trip_dest.lower() not in ["live location", "local area", "unknown", "destination", ""]:
+                    dest_label = trip_dest
+                    if self.map_service:
+                        geo = self.map_service.geocode(trip_dest)
                         coords = self._extract_lat_lon(geo)
                         if coords:
                             dest_coords = coords
