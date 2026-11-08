@@ -25,6 +25,13 @@ from src.backend.ai.ai_service import AIService, DocumentParser, LANGUAGE_SPEECH
 from src.pathfinder_tools import PathfinderToolExecutor, TOOL_SCHEMAS
 from src.aura_assistant_handlers import AuraAssistantMixin, AuraIntentType, AuraIntentClassifier
 from src.route_engine import OSRMGlobalRoutingProvider
+from src.nextroute_knowledge_rag import (
+    NextRouteRAGRetriever,
+    GeneralTravelPlanningEngine,
+    TravelDurationEstimator,
+    GeneralTravelQAEngine,
+    resolve_target_language
+)
 
 logger = logging.getLogger("pathfinder.aura")
 
@@ -51,6 +58,10 @@ class PathfinderChatbot(AuraAssistantMixin):
         self.conv_manager = ConversationManager()
         self.routing_provider = OSRMGlobalRoutingProvider()
         self.ai_service = AIService()
+        self.rag_retriever = NextRouteRAGRetriever()
+        self.travel_engine = GeneralTravelPlanningEngine()
+        self.duration_estimator = TravelDurationEstimator()
+        self.travel_qa = GeneralTravelQAEngine()
         self.tool_executor = PathfinderToolExecutor(
             pipeline=pipeline,
             map_service=map_service,
@@ -120,6 +131,169 @@ class PathfinderChatbot(AuraAssistantMixin):
             return (float(resolved[0]), float(resolved[1]))
         return None
 
+    def _check_travel_duration(self, raw_query: str, q: str, lang: str = "en") -> Optional[Dict[str, Any]]:
+        """Accurately calculates travel distance and duration between cities."""
+        if not any(w in q for w in ["how long", "how much time", "duration", "how far", "travel time", "distance between", "time does it take"]):
+            return None
+        cities = []
+        for city_key in TravelDurationEstimator.KNOWN_CITY_COORDINATES:
+            if re.search(r'\b' + city_key + r'\b', q):
+                if city_key not in cities:
+                    cities.append(city_key)
+        if len(cities) >= 2:
+            res_text = TravelDurationEstimator.estimate_journey(cities[0], cities[1], lang=lang)
+            if res_text:
+                return {
+                    "badge": "⏱️ AURA • TRAVEL DURATION",
+                    "response": res_text
+                }
+        return None
+
+    def _extract_days_from_query(self, query: str) -> int:
+        match = re.search(r'(\d+)\s*(?:-|–|\s*)?(?:day|days)', query.lower())
+        if match:
+            try:
+                d = int(match.group(1))
+                return max(1, min(d, 14))
+            except Exception:
+                pass
+        if "weekend" in query.lower():
+            return 2
+        return 3
+
+    def _extract_budget_constraint(self, query: str) -> Optional[float]:
+        m_k = re.search(r'(\d+(?:\.\d+)?)\s*k\b', query.lower())
+        if m_k:
+            return float(m_k.group(1)) * 1000.0
+        m = re.search(r'(?:₹|rs\.?|inr|\$)?\s*(\d{1,3}(?:,\d{3})+|\d{4,6})', query.lower())
+        if m:
+            clean_num = m.group(1).replace(",", "")
+            return float(clean_num)
+        return None
+
+    def _check_travel_planning(self, raw_query: str, q: str, lang: str = "en") -> Optional[Dict[str, Any]]:
+        is_planning = any(w in q for w in [
+            "plan a", "plan trip", "plan my trip", "itinerary", "suggest a trip", "suggest trip",
+            "trip to", "tour to", "vacation to", "visit to", "how much does a", "trip cost",
+            "places to visit in", "best places to visit in", "weekend trip from", "days are enough to visit",
+            "days enough for", "low-budget", "low budget"
+        ])
+        dest = GeneralTravelPlanningEngine.identify_destination(raw_query)
+        if not is_planning and not dest:
+            return None
+
+        if dest:
+            self.last_destination = dest.title()
+            self.conv_manager.last_destination = dest.title()
+            days = self._extract_days_from_query(raw_query)
+            target_budget = self._extract_budget_constraint(raw_query)
+
+            if any(w in q for w in ["how much does", "cost", "budget", "expenses"]) and not any(w in q for w in ["plan a", "itinerary"]):
+                b_est = GeneralTravelPlanningEngine.estimate_budget(dest, days=days, target_budget=target_budget)
+                if lang == "te":
+                    resp = (
+                        f"### 💰 {dest.title()} {days}-రోజుల ప్రయాణ బడ్జెట్ అంచనా\n\n"
+                        f"• **మొత్తం సుమారు బడ్జెట్ (ఒక్కరికి):** ~₹{b_est['total_estimated']:,}\n"
+                        f"  - బస (హోటల్/హోమ్‌స్టే): ~₹{b_est['accommodation']:,}\n"
+                        f"  - ఆహారం & భోజనం: ~₹{b_est['food']:,}\n"
+                        f"  - స్థానిక రవాణా (స్కూటర్/క్యాబ్): ~₹{b_est['transport']:,}\n"
+                        f"  - ఎంట్రీ టికెట్లు & దర్శనాలు: ~₹{b_est['sightseeing']:,}\n\n"
+                        f"💡 *గమనిక: సీజన్ మరియు ఎంచుకునే హోటల్ కేటగిరీని బట్టి ఖర్చులు మారవచ్చు.*"
+                    )
+                elif lang == "hi":
+                    resp = (
+                        f"### 💰 {dest.title()} {days}-दिवसीय यात्रा बजट अनुमान\n\n"
+                        f"• **कुल अनुमानित बजट (प्रति व्यक्ति):** ~₹{b_est['total_estimated']:,}\n"
+                        f"  - आवास (होटल/होमस्टे): ~₹{b_est['accommodation']:,}\n"
+                        f"  - भोजन व डाइनिंग: ~₹{b_est['food']:,}\n"
+                        f"  - स्थानीय परिवहन (स्कूटर/टैक्सी): ~₹{b_est['transport']:,}\n"
+                        f"  - दर्शनीय स्थल व टिकट: ~₹{b_est['sightseeing']:,}\n\n"
+                        f"💡 *नोट: मौसम और होटल श्रेणी के अनुसार खर्च भिन्न हो सकते हैं।*"
+                    )
+                else:
+                    resp = (
+                        f"### 💰 Estimated {days}-Day Travel Budget for {dest.title()}\n\n"
+                        f"• **Total Estimated Budget:** **~₹{b_est['total_estimated']:,}** per person\n"
+                        f"  - **Accommodation (Stay):** ~₹{b_est['accommodation']:,} (budget/mid-tier)\n"
+                        f"  - **Food & Dining:** ~₹{b_est['food']:,}\n"
+                        f"  - **Local Transit (Rental/Cabs):** ~₹{b_est['transport']:,}\n"
+                        f"  - **Sightseeing & Entry Fees:** ~₹{b_est['sightseeing']:,}\n\n"
+                        f"💡 *Tip: Booking stays in advance saves up to 25% on peak rates.*"
+                    )
+                return {
+                    "badge": f"💰 AURA • {dest.upper()} BUDGET",
+                    "response": resp
+                }
+
+            itinerary_text = GeneralTravelPlanningEngine.generate_concise_itinerary(
+                dest,
+                days=days,
+                lang=lang,
+                target_budget=target_budget
+            )
+            return {
+                "badge": f"🌴 AURA • {dest.upper()} TRAVEL PLAN",
+                "response": itinerary_text
+            }
+        return None
+
+    def _handle_intelligent_follow_up(self, raw_query: str, q: str, ctx: Dict[str, Any], lang: str = "en") -> Optional[Dict[str, Any]]:
+        last_dest = getattr(self.conv_manager, "last_destination", None) or self.last_destination
+
+        # 1. Cost follow-up ("What will it cost?", "How much will it cost?", "Cost?")
+        if any(w in q for w in ["what will it cost", "how much will it cost", "what is the budget", "how much does it cost", "what would it cost", "how much money"]):
+            if last_dest:
+                b_est = GeneralTravelPlanningEngine.estimate_budget(last_dest, days=3)
+                if lang == "te":
+                    resp = (
+                        f"**{last_dest} ట్రిప్ బడ్జెట్ అంచనా (3 రోజులు):**\n"
+                        f"• మొత్తం సుమారు బడ్జెట్: **~₹{b_est['total_estimated']:,}** ఒక్కరికి\n"
+                        f"• బస: ~₹{b_est['accommodation']:,} | ఆహారం: ~₹{b_est['food']:,} | రవాణా: ~₹{b_est['transport']:,}\n"
+                        f"*(ఇది సాధారణ హోటల్ మరియు స్థానిక రవాణా ఖర్చుల ఆధారంగా అంచనా వేయబడింది.)*"
+                    )
+                else:
+                    resp = (
+                        f"**Estimated Budget for your {last_dest} trip (3 Days):**\n"
+                        f"• **Total Estimated Budget:** **~₹{b_est['total_estimated']:,}** per person\n"
+                        f"• Stay: ~₹{b_est['accommodation']:,} | Food: ~₹{b_est['food']:,} | Local Transit: ~₹{b_est['transport']:,}\n"
+                        f"*(Budget reflects standard guesthouses and local dining.)*"
+                    )
+                return {
+                    "badge": f"💰 AURA • {last_dest.upper()} BUDGET",
+                    "response": resp
+                }
+
+        # 2. Cheaper modification ("Make it cheaper", "reduce budget", "cheaper option")
+        if any(w in q for w in ["make it cheaper", "cheaper", "reduce cost", "reduce budget", "low budget", "more affordable"]):
+            if last_dest:
+                b_est = GeneralTravelPlanningEngine.estimate_budget(last_dest, days=3, tier="budget", target_budget=6000)
+                if lang == "te":
+                    resp = (
+                        f"**{last_dest} తక్కువ బడ్జెట్ (Low-Budget) ప్రణాళిక:**\n"
+                        f"• **సవరించిన బడ్జెట్:** **~₹{b_est['total_estimated']:,}** ఒక్కరికి\n"
+                        f"• **పొదుపు సూచనలు:** హోటళ్లకు బదులుగా హాస్టల్స్/హోమ్‌స్టేలు ఎంచుకోండి, ప్రైవేట్ క్యాబ్‌లకు బదులుగా స్కూటర్ రెంటల్ లేదా స్థానిక బస్సులు వాడండి."
+                    )
+                else:
+                    resp = (
+                        f"**Budget-Optimized Plan for {last_dest}:**\n"
+                        f"• **Reduced Total Budget:** **~₹{b_est['total_estimated']:,}** per person\n"
+                        f"• **Money-Saving Strategy:** Stay in youth hostels/homestays (~₹800–₹1,000/night), rent a scooter or use state buses for travel, and enjoy regional market thalis."
+                    )
+                return {
+                    "badge": f"💡 AURA • BUDGET OPTIMIZED",
+                    "response": resp
+                }
+
+        # 3. Language switch follow-up ("Answer in Telugu", "in Hindi", "English lo")
+        if any(w in q for w in ["in telugu", "తెలుగులో", "in hindi", "हिंदी में", "in english"]):
+            if last_dest:
+                return {
+                    "badge": f"🌴 AURA • {last_dest.upper()} ({lang.upper()})",
+                    "response": GeneralTravelPlanningEngine.generate_concise_itinerary(last_dest, days=3, lang=lang)
+                }
+
+        return None
+
     def _compute_answer(self, raw_query: str, q: str, ctx: Dict[str, Any], attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """Core internal processing separating navigation actions from general conversation."""
 
@@ -149,32 +323,16 @@ class PathfinderChatbot(AuraAssistantMixin):
         # 3. LANGUAGE DETECTION & MULTILINGUAL SUPPORT
         # ---------------------------------------------------------------------
         app_lang = (ctx.get("language") or "en").lower().strip()
+        active_lang = resolve_target_language(raw_query, app_lang)
+        self._active_lang = active_lang
 
-        is_telugu = (app_lang == "te") or bool(re.search(r"[\u0c00-\u0c7f]", raw_query)) or any(w in q for w in ["ela unnav", "dharilo", "margam", "telugu lo"])
-        is_hindi = (app_lang == "hi") or bool(re.search(r"[\u0900-\u097f]", raw_query) and not any(w in q for w in ["marathi", "marathit"])) or any(w in q for w in ["kaise ho", "rasta", "hindi me"])
-        is_tamil = (app_lang == "ta") or bool(re.search(r"[\u0b80-\u0bff]", raw_query)) or any(w in q for w in ["eppadi irukinga", "vazhi", "tamilil", "tamil"])
-        is_kannada = (app_lang == "kn") or bool(re.search(r"[\u0c80-\u0cff]", raw_query)) or any(w in q for w in ["hegidira", "daari", "kannadadalli", "kannada"])
-        is_malayalam = (app_lang == "ml") or bool(re.search(r"[\u0d00-\u0d7f]", raw_query)) or any(w in q for w in ["sugamano", "vazhi", "malayalam"])
-        is_bengali = (app_lang == "bn") or bool(re.search(r"[\u0980-\u09ff]", raw_query)) or any(w in q for w in ["kemon acho", "rasta", "banglay", "bengali"])
-        is_marathi = (app_lang == "mr") or any(w in q for w in ["kasa kay", "rasta", "marathit", "marathi"])
-
-        active_lang = "en"
-        if is_telugu:
-            active_lang = "te"
-        elif is_hindi:
-            active_lang = "hi"
-        elif is_tamil:
-            active_lang = "ta"
-        elif is_kannada:
-            active_lang = "kn"
-        elif is_malayalam:
-            active_lang = "ml"
-        elif is_bengali:
-            active_lang = "bn"
-        elif is_marathi:
-            active_lang = "mr"
-        elif app_lang in ("te", "hi", "ta", "kn", "ml", "bn", "mr"):
-            active_lang = app_lang
+        is_telugu = (active_lang == "te")
+        is_hindi = (active_lang == "hi")
+        is_tamil = (active_lang == "ta")
+        is_kannada = (active_lang == "kn")
+        is_malayalam = (active_lang == "ml")
+        is_bengali = (active_lang == "bn")
+        is_marathi = (active_lang == "mr")
 
         if "translate" in q:
             return self._handle_aura_translation(raw_query, q)
@@ -187,7 +345,42 @@ class PathfinderChatbot(AuraAssistantMixin):
             return em_res
 
         # ---------------------------------------------------------------------
-        # 4B. AURA INTENT CLASSIFICATION & DISPATCH
+        # 4A. INTELLIGENT MULTI-TURN FOLLOW-UP (BUDGET, CHEAPER, LANGUAGE)
+        # ---------------------------------------------------------------------
+        fu_res = self._handle_intelligent_follow_up(raw_query, q, ctx, lang=active_lang)
+        if fu_res is not None:
+            return fu_res
+
+        # ---------------------------------------------------------------------
+        # 4B. ACCURATE TRAVEL DURATION & DISTANCE (ROAD, TRAIN, FLIGHT)
+        # ---------------------------------------------------------------------
+        dur_res = self._check_travel_duration(raw_query, q, lang=active_lang)
+        if dur_res is not None:
+            return dur_res
+
+        # ---------------------------------------------------------------------
+        # 4C. GENERAL TRAVEL PLANNING & BUDGET ESTIMATION (HYDERABAD, GOA, ETC.)
+        # ---------------------------------------------------------------------
+        plan_res = self._check_travel_planning(raw_query, q, lang=active_lang)
+        if plan_res is not None:
+            return plan_res
+
+        # ---------------------------------------------------------------------
+        # 4D. GENERAL TRAVEL QA (PACKING, DOCUMENTS, SAVING MONEY, TRANSIT)
+        # ---------------------------------------------------------------------
+        tqa_res = self.travel_qa.answer_travel_question(raw_query, lang=active_lang)
+        if tqa_res is not None:
+            return tqa_res
+
+        # ---------------------------------------------------------------------
+        # 4E. GROUND-TRUTH NEXTROUTE APPLICATION KNOWLEDGE RAG RETRIEVAL
+        # ---------------------------------------------------------------------
+        app_rag_res = self.rag_retriever.answer_from_knowledge(raw_query, lang=active_lang)
+        if app_rag_res is not None:
+            return app_rag_res
+
+        # ---------------------------------------------------------------------
+        # 4F. AURA INTENT CLASSIFICATION & DISPATCH
         # ---------------------------------------------------------------------
         intent = AuraIntentClassifier.classify(raw_query, q, self.conv_manager)
 
@@ -394,7 +587,7 @@ class PathfinderChatbot(AuraAssistantMixin):
 
         # Step 1: External LLM attempt if configured via LLMClient
         if self.llm_client.active_provider_name != "builtin":
-            lang_code = (ctx.get("language") or "en").lower().strip()
+            lang_code = active_lang
             lang_prompts = {
                 "te": "The user's preferred language is Telugu (తెలుగు). Please reply naturally and fluently in Telugu script.",
                 "hi": "The user's preferred language is Hindi (हिन्दी). Please reply naturally and fluently in Devanagari Hindi script.",
@@ -404,9 +597,18 @@ class PathfinderChatbot(AuraAssistantMixin):
                 "bn": "The user's preferred language is Bengali (বাংলা). Please reply naturally and fluently in Bengali script.",
                 "mr": "The user's preferred language is Marathi (मराठी). Please reply naturally and fluently in Marathi script."
             }
+            retrieved_rag = self.rag_retriever.retrieve(raw_query, lang=active_lang)
+            rag_injection = self.rag_retriever.format_knowledge_for_prompt(retrieved_rag, lang=active_lang)
             system_prompt = PATHFINDER_TRAVEL_SYSTEM_PROMPT
+            if rag_injection:
+                system_prompt += f"\n\n{rag_injection}"
             if lang_code in lang_prompts:
                 system_prompt += f"\n\nLANGUAGE INSTRUCTION: {lang_prompts[lang_code]}"
+            system_prompt += (
+                "\n\nSTYLE & CONCISENESS INSTRUCTION: Keep answers simple, short, clear, friendly, and understandable. "
+                "For simple queries, answer in 1-3 sentences. For travel itineraries, provide concise day-wise bullet points with estimated budget breakdowns in ₹ (INR). "
+                "Ground all NextRoute instructions in actual features and do not hallucinate non-existent tools."
+            )
             llm_msgs = self.conv_manager.get_messages_for_llm() + [{"role": "user", "content": raw_query}]
             llm_out, provider_label = self.llm_client.generate(llm_msgs, system_prompt=system_prompt)
             if llm_out:
@@ -1587,6 +1789,11 @@ class PathfinderChatbot(AuraAssistantMixin):
 
     def _handle_app_knowledge(self, raw_query: str, q: str, ctx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Answers comprehensive questions about NexRoute features with clarity and precision."""
+        target_lang = getattr(self, "_active_lang", "en")
+        rag_ans = self.rag_retriever.answer_from_knowledge(raw_query, lang=target_lang)
+        if rag_ans is not None:
+            return rag_ans
+
         # Avoid Tolls
         if any(w in q for w in ["avoid toll", "avoid tolls", "toll road", "tolls work", "how do tolls work", "what is avoid tolls", "why avoid tolls"]):
             return {
