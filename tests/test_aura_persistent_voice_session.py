@@ -100,3 +100,4 @@ def test_voice_command_stop_navigation():
     assert cmd.command_type == AuraCommandType.ROUTE_ACTION
     assert cmd.action_name == "confirm_clear_trip"
     assert cmd.requires_confirmation is True
+

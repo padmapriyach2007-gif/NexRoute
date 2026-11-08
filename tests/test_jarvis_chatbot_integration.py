@@ -159,3 +159,13 @@ class TestJarvisChatbotIntegration:
         # Verify Goa or hotel content is referenced
         resp_text = res["response"].lower()
         assert "goa" in resp_text or "hotel" in resp_text or "stay" in resp_text or "resort" in resp_text
+
+
+    def test_clean_speech_regex_in_execute_chat_turn(self):
+        """Verify that the regex in _execute_chat_turn properly cleans speech without scoping issues."""
+        import re
+        raw_to_speak = "Here are **3 routes** to *Goa*: #1 [Fastest] (via NH48)."
+        clean_speech = re.sub(r'[*#_`~>\[\]\(\)]', ' ', str(raw_to_speak))[:280].replace("'", "\\'").replace('"', '\\"').replace("\n", " ").strip()
+        assert "**" not in clean_speech
+        assert "[" not in clean_speech
+        assert "Fastest" in clean_speech

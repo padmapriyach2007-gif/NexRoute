@@ -6151,6 +6151,7 @@ if st.session_state.get("show_info_modal", False):
 
 def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     """Renders the upgraded interactive Pathfinder conversational travel assistant interface."""
+    import re
     logger = logging.getLogger("nexroute")
 
     def _safe_chat_btn(label: str, key: Optional[str] = None, use_container_width: bool = True, help: Optional[str] = None, **kwargs):
@@ -6163,6 +6164,7 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             raise exc
 
     def _execute_chat_turn(query_text: str, attachments: Optional[List[Dict[str, Any]]] = None):
+        import re
         att_list = attachments if attachments is not None else st.session_state.get("pending_chat_attachments", [])
         user_msg = {"role": "user", "content": query_text}
         if att_list:
