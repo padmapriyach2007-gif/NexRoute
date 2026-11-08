@@ -7775,14 +7775,13 @@ if "dest_lat" in st.query_params and "dest_lon" in st.query_params:
 
 
             raw_dest_name = st.query_params.get("dest_name", f"Destination ({q_dest_lat:.5f}, {q_dest_lon:.5f})")
-            coord_str_d = f"({q_dest_lat:.5f}, {q_dest_lon:.5f})"
-            if coord_str_d in raw_dest_name:
-                q_dest_name = raw_dest_name
-            else:
-                base_clean_d = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_dest_name).strip()
-                q_dest_name = f"{base_clean_d} {coord_str_d}" if base_clean_d else coord_str_d
-
-
+            clean_d = raw_dest_name
+            while True:
+                stripped_d = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", clean_d).strip()
+                if stripped_d == clean_d:
+                    break
+                clean_d = stripped_d
+            q_dest_name = f"{clean_d} ({q_dest_lat:.5f}, {q_dest_lon:.5f})" if clean_d else f"Destination ({q_dest_lat:.5f}, {q_dest_lon:.5f})"
 
             st.session_state.selected_dest_coords = (q_dest_lat, q_dest_lon)
             st.session_state.selected_dest_label = q_dest_name
@@ -7791,10 +7790,14 @@ if "dest_lat" in st.query_params and "dest_lon" in st.query_params:
             st.session_state._prev_route_sig = None
             st.session_state.cached_candidate_routes = None
             st.session_state.auto_fit_bounds = True
+            st.session_state.focused_route_id = "ALL"
+            st.session_state.selected_route_id = None
             st.session_state.movement_index = 0
             st.session_state.is_in_transit = False
             st.session_state.scroll_to_app_map = True
             st.session_state.target_tab = "nav"
+            if st.session_state.get("user_live_coords"):
+                st.session_state.routes_generated = True
 
 
 
@@ -7867,14 +7870,13 @@ if "orig_lat" in st.query_params and "orig_lon" in st.query_params:
 
 
             raw_orig_name = st.query_params.get("orig_name", f"Start Point ({q_orig_lat:.5f}, {q_orig_lon:.5f})")
-            coord_str_o = f"({q_orig_lat:.5f}, {q_orig_lon:.5f})"
-            if coord_str_o in raw_orig_name:
-                q_orig_name = raw_orig_name
-            else:
-                base_clean_o = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_orig_name).strip()
-                q_orig_name = f"{base_clean_o} {coord_str_o}" if base_clean_o else coord_str_o
-
-
+            clean_o = raw_orig_name
+            while True:
+                stripped_o = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", clean_o).strip()
+                if stripped_o == clean_o:
+                    break
+                clean_o = stripped_o
+            q_orig_name = f"{clean_o} ({q_orig_lat:.5f}, {q_orig_lon:.5f})" if clean_o else f"Starting Point ({q_orig_lat:.5f}, {q_orig_lon:.5f})"
 
             st.session_state.user_live_coords = (q_orig_lat, q_orig_lon)
             st.session_state.user_live_label = q_orig_name
@@ -7892,6 +7894,8 @@ if "orig_lat" in st.query_params and "orig_lon" in st.query_params:
             st.session_state.scroll_to_app_map = True
             st.session_state.target_tab = "nav"
             st.session_state.real_location_service.set_manual_location(q_orig_lat, q_orig_lon, q_orig_name)
+            if st.session_state.get("selected_dest_coords"):
+                st.session_state.routes_generated = True
 
 
 
@@ -8104,14 +8108,13 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
 
 
         raw_p_name = st.query_params.get("picked_name", f"Location ({p_lat:.5f}, {p_lon:.5f})")
-        coord_str_p = f"({p_lat:.5f}, {p_lon:.5f})"
-        if coord_str_p in raw_p_name:
-            p_name = raw_p_name
-        else:
-            base_clean_p = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_p_name).strip()
-            p_name = f"{base_clean_p} {coord_str_p}" if base_clean_p else coord_str_p
-
-
+        clean_p = raw_p_name
+        while True:
+            stripped_p = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", clean_p).strip()
+            if stripped_p == clean_p:
+                break
+            clean_p = stripped_p
+        p_name = f"{clean_p} ({p_lat:.5f}, {p_lon:.5f})" if clean_p else f"Location ({p_lat:.5f}, {p_lon:.5f})"
 
         if -90.0 <= p_lat <= 90.0 and -180.0 <= p_lon <= 180.0:
             if p_target == "orig":
@@ -8131,7 +8134,7 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                     st.session_state.intermediate_stops = []
                 is_dup = any(abs(float(s.get("lat", 0)) - p_lat) < 0.0005 and abs(float(s.get("lon", 0)) - p_lon) < 0.0005 for s in st.session_state.intermediate_stops)
                 if not is_dup:
-                    stop_clean_name = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", p_name).strip() or f"Stop ({p_lat:.4f}, {p_lon:.4f})"
+                    stop_clean_name = clean_p or f"Stop ({p_lat:.4f}, {p_lon:.4f})"
                     st.session_state.intermediate_stops.append({
                         "name": stop_clean_name,
                         "address": p_name,
@@ -8159,18 +8162,13 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.toast(f"🏁 Destination set to: {p_name}", icon="🏁")
 
             st.session_state.map_picking_mode = None
-
-
-
             st.session_state._prev_route_sig = None
-
-
-
             st.session_state.cached_candidate_routes = None
-
-
-
+            st.session_state.focused_route_id = "ALL"
+            st.session_state.selected_route_id = None
             st.session_state.auto_fit_bounds = True
+            st.session_state.scroll_to_app_map = True
+            st.session_state.target_tab = "nav"
 
 
 
@@ -8478,10 +8476,13 @@ if "pending_dest" in st.session_state:
 
 
     st.session_state.txt_dest = st.session_state.pop("pending_dest")
-
-
-
     st.session_state.last_synced_dest = st.session_state.txt_dest
+
+if st.session_state.get("user_live_coords") and st.session_state.get("selected_dest_coords"):
+    _c_o = st.session_state.user_live_coords
+    _c_d = st.session_state.selected_dest_coords
+    if _c_o and _c_d and _c_o != _c_d:
+        st.session_state.routes_generated = True
 
 
 
@@ -9876,12 +9877,22 @@ if c_raw_d:
             if coords_dest != (d_lat, d_lon):
                 coords_dest = (d_lat, d_lon)
                 st.session_state.selected_dest_coords = coords_dest
-                place_lbl_d = c_raw_d[:c_match_d.start()].strip(" (,-") or f"Destination ({d_lat:.4f}, {d_lon:.4f})"
+                raw_d_lbl = c_raw_d[:c_match_d.start()]
+                while True:
+                    s_d_lbl = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_d_lbl).strip()
+                    if s_d_lbl == raw_d_lbl:
+                        break
+                    raw_d_lbl = s_d_lbl
+                place_lbl_d = raw_d_lbl.strip(" (,-") or f"Destination ({d_lat:.4f}, {d_lon:.4f})"
                 st.session_state.selected_dest_label = place_lbl_d
                 st.session_state.selected_dest_id = f"coord_{d_lat:.4f}_{d_lon:.4f}"
                 st.session_state.last_synced_dest = c_raw_d
                 st.session_state._prev_route_sig = None
                 st.session_state.cached_candidate_routes = None
+                if st.session_state.get("user_live_coords"):
+                    st.session_state.routes_generated = True
+                    st.session_state.auto_fit_bounds = True
+                    st.session_state.focused_route_id = "ALL"
     elif not coords_dest or c_raw_d != st.session_state.get("last_synced_dest", ""):
         try:
             cands_auto_d = st.session_state.real_map_service.get_disambiguation_candidates(c_raw_d, limit=3)
@@ -9897,6 +9908,10 @@ if c_raw_d:
                 st.session_state.last_synced_dest = c_raw_d
                 st.session_state._prev_route_sig = None
                 st.session_state.cached_candidate_routes = None
+                if st.session_state.get("user_live_coords"):
+                    st.session_state.routes_generated = True
+                    st.session_state.auto_fit_bounds = True
+                    st.session_state.focused_route_id = "ALL"
         except Exception:
             pass
 
@@ -9910,6 +9925,10 @@ if raw_o:
         CURRENT_BASE = st.session_state.get("hardware_gps_coords") or detected_coords
         st.session_state.user_live_coords = CURRENT_BASE
         coords_orig = CURRENT_BASE
+        if st.session_state.get("selected_dest_coords"):
+            st.session_state.routes_generated = True
+            st.session_state.auto_fit_bounds = True
+            st.session_state.focused_route_id = "ALL"
     else:
         c_match = re.search(r"\(?\s*([+-]?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*([+-]?\d{1,3}(?:\.\d+)?)\s*\)?\s*$", raw_o)
         if c_match:
@@ -9919,7 +9938,13 @@ if raw_o:
                 if coords_orig != (c_lat, c_lon):
                     coords_orig = (c_lat, c_lon)
                     st.session_state.user_live_coords = coords_orig
-                place_lbl = raw_o[:c_match.start()].strip(" (,-") or f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
+                raw_o_lbl = raw_o[:c_match.start()]
+                while True:
+                    s_o_lbl = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_o_lbl).strip()
+                    if s_o_lbl == raw_o_lbl:
+                        break
+                    raw_o_lbl = s_o_lbl
+                place_lbl = raw_o_lbl.strip(" (,-") or f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
                 st.session_state.user_live_label = place_lbl
                 st.session_state.is_custom_start_place = True
                 st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
@@ -9928,6 +9953,10 @@ if raw_o:
                 st.session_state.cached_candidate_routes = None
                 if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
                     st.session_state.real_location_service.set_manual_location(c_lat, c_lon, place_lbl)
+                if st.session_state.get("selected_dest_coords"):
+                    st.session_state.routes_generated = True
+                    st.session_state.auto_fit_bounds = True
+                    st.session_state.focused_route_id = "ALL"
         elif not coords_orig or raw_o != st.session_state.get("last_synced_orig", ""):
             st.session_state.is_custom_start_place = True
             try:
@@ -9945,6 +9974,10 @@ if raw_o:
                     st.session_state.cached_candidate_routes = None
                     if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
                         st.session_state.real_location_service.set_manual_location(coords_orig[0], coords_orig[1], raw_o)
+                    if st.session_state.get("selected_dest_coords"):
+                        st.session_state.routes_generated = True
+                        st.session_state.auto_fit_bounds = True
+                        st.session_state.focused_route_id = "ALL"
             except Exception:
                 pass
 
@@ -20803,62 +20836,27 @@ body {{
 
 
 
-                            place_lbl = orig_text[:coord_match.start()].strip(" (,-")
-
-
-
-                            if not place_lbl:
-
-
-
-                                place_lbl = f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
-
-
+                            raw_place_o = orig_text[:coord_match.start()]
+                            while True:
+                                s_o = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_place_o).strip()
+                                if s_o == raw_place_o:
+                                    break
+                                raw_place_o = s_o
+                            place_lbl = raw_place_o.strip(" (,-") or f"Custom Start ({c_lat:.4f}, {c_lon:.4f})"
 
                             st.session_state.user_live_coords = (c_lat, c_lon)
-
-
-
                             st.session_state.user_live_label = place_lbl
-
-
-
                             st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
-
-
-
                             st.session_state.orig_candidates = []
-
-
-
                             st.session_state.orig_candidates_query = ""
-
-
-
                             st.session_state._prev_route_sig = None
-
-
-
                             st.session_state.focused_route_id = "ALL"
-
-
-
                             st.session_state.selected_route_id = None
-
-
-
                             st.session_state.auto_fit_bounds = True
-
-
-
                             st.session_state.real_location_service.set_manual_location(c_lat, c_lon, orig_text)
-
-
-
+                            if st.session_state.get("selected_dest_coords"):
+                                st.session_state.routes_generated = True
                             st.toast(f"📍 Start Point → {place_lbl}", icon="📍")
-
-
-
                             st.rerun()
 
 
@@ -20960,13 +20958,9 @@ body {{
 
 
                         st.session_state.auto_fit_bounds = True
-
-
-
+                        if st.session_state.get("selected_dest_coords"):
+                            st.session_state.routes_generated = True
                         st.toast(f"📍 Start → {best.get('name') or orig_text}", icon="📍")
-
-
-
                         st.rerun()
 
 
@@ -21056,17 +21050,10 @@ body {{
 
 
                         st.session_state.auto_fit_bounds = True
-
-
-
+                        if st.session_state.get("selected_dest_coords"):
+                            st.session_state.routes_generated = True
                         st.session_state.real_location_service.set_manual_location(cand["lat"], cand["lon"], cand["display_name"])
-
-
-
                         st.toast(f"✅ Confirmed start: {c_name}", icon="✅")
-
-
-
                         st.rerun()
 
 
@@ -21529,58 +21516,26 @@ body {{
 
 
 
-                        place_lbl_d = dest_text[:coord_match_d.start()].strip(" (,-")
-
-
-
-                        if not place_lbl_d:
-
-
-
-                            place_lbl_d = f"Destination ({d_lat:.4f}, {d_lon:.4f})"
-
-
+                        raw_place_d = dest_text[:coord_match_d.start()]
+                        while True:
+                            s_d = re.sub(r"\s*\([+-]?\d{1,2}(?:\.\d+)?[,\s]+[+-]?\d{1,3}(?:\.\d+)?\)\s*$", "", raw_place_d).strip()
+                            if s_d == raw_place_d:
+                                break
+                            raw_place_d = s_d
+                        place_lbl_d = raw_place_d.strip(" (,-") or f"Destination ({d_lat:.4f}, {d_lon:.4f})"
 
                         st.session_state.selected_dest_coords = (d_lat, d_lon)
-
-
-
                         st.session_state.selected_dest_label = place_lbl_d
-
-
-
                         st.session_state.selected_dest_id = f"coord_{d_lat:.4f}_{d_lon:.4f}"
-
-
-
                         st.session_state.dest_candidates = []
-
-
-
                         st.session_state.dest_candidates_query = ""
-
-
-
                         st.session_state._prev_route_sig = None
-
-
-
                         st.session_state.focused_route_id = "ALL"
-
-
-
                         st.session_state.selected_route_id = None
-
-
-
                         st.session_state.auto_fit_bounds = True
-
-
-
+                        if st.session_state.get("user_live_coords"):
+                            st.session_state.routes_generated = True
                         st.toast(f"🏁 Destination → {place_lbl_d}", icon="🏁")
-
-
-
                         st.rerun()
 
 
@@ -21662,13 +21617,9 @@ body {{
 
 
                     st.session_state.auto_fit_bounds = True
-
-
-
+                    if st.session_state.get("user_live_coords"):
+                        st.session_state.routes_generated = True
                     st.toast(f"🏁 Destination → {best_d.get('name') or dest_text}", icon="🏁")
-
-
-
                     st.rerun()
 
 
@@ -21754,13 +21705,9 @@ body {{
 
 
                         st.session_state.auto_fit_bounds = True
-
-
-
+                        if st.session_state.get("user_live_coords"):
+                            st.session_state.routes_generated = True
                         st.toast(f"✅ Confirmed destination: {c_name}", icon="✅")
-
-
-
                         st.rerun()
 
 

@@ -3518,31 +3518,43 @@ def build_google_maps_javascript_html(
                     var lat = paramsObj.orig_lat || paramsObj.picked_lat;
                     var lon = paramsObj.orig_lon || paramsObj.picked_lon;
                     var name = paramsObj.orig_name || paramsObj.picked_name || "Selected Location";
-                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '');
+                    while (/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/.test(cleanName)) {{
+                        cleanName = cleanName.replace(/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/, '').trim();
+                    }}
+                    cleanName = cleanName.trim() || "Selected Starting Point";
                     var valToSet = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
 
                     var input = pDoc.querySelector('input[aria-label*="Starting Point"]')
+                        || pDoc.querySelector('input[placeholder*="starting location"]')
                         || pDoc.querySelector('input[placeholder*="Search Location — My Location"]')
                         || pDoc.querySelector('input[placeholder*="Search location"]')
                         || pDoc.querySelector('input[data-testid*="txt_orig"]');
                     if (input) {{
                         setReactInput(input, valToSet);
                         input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                        input.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
                     }}
                     window.showMapToast('🟢 Starting Point set to: ' + cleanName, '🟢');
                 }} else if (pDoc && (paramsObj.dest_lat || paramsObj.picked_target === 'dest')) {{
                     var lat = paramsObj.dest_lat || paramsObj.picked_lat;
                     var lon = paramsObj.dest_lon || paramsObj.picked_lon;
                     var name = paramsObj.dest_name || paramsObj.picked_name || "Destination";
-                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+                    var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '');
+                    while (/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/.test(cleanName)) {{
+                        cleanName = cleanName.replace(/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/, '').trim();
+                    }}
+                    cleanName = cleanName.trim() || "Selected Destination";
                     var valToSet = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
 
                     var input = pDoc.querySelector('input[aria-label*="Destination"]')
+                        || pDoc.querySelector('input[placeholder*="Enter your destination"]')
                         || pDoc.querySelector('input[placeholder*="Search Destination"]')
                         || pDoc.querySelector('input[data-testid*="txt_dest"]');
                     if (input) {{
                         setReactInput(input, valToSet);
                         input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                        input.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
                     }}
                     window.showMapToast('🏁 Destination set to: ' + cleanName, '🏁');
 
@@ -3551,9 +3563,9 @@ def build_google_maps_javascript_html(
                     try {{
                         var btns = Array.from(pDoc.querySelectorAll('button'));
                         var findBtn = btns.find(function(b) {{
-                            return b.innerText && (b.innerText.indexOf('Find Routes') !== -1 || b.innerText.indexOf('🚀') !== -1);
+                            return b.innerText && (b.innerText.indexOf('Find Routes') !== -1 || b.innerText.indexOf('🚀') !== -1 || b.innerText.indexOf('RECALCULATE') !== -1);
                         }});
-                        if (findBtn) {{
+                        if (findBtn && !findBtn.disabled) {{
                             findBtn.click();
                         }}
                     }} catch(eFind) {{}}
@@ -3567,17 +3579,26 @@ def build_google_maps_javascript_html(
 
                 // 2. Synchronize URL searchParams and notify parent Streamlit runtime
                 try {{
-                    if (pWin && pWin.location) {{
-                        var url = new URL(pWin.location.href);
+                    var targetWin = pWin || window.top || window;
+                    var currentHref = '';
+                    try {{ currentHref = targetWin.location.href; }} catch(eHref) {{
+                        try {{ currentHref = window.top.location.href; }} catch(eTop) {{ currentHref = window.location.href; }}
+                    }}
+                    if (currentHref) {{
+                        var url = new URL(currentHref);
                         for (var k in paramsObj) {{
                             if (paramsObj.hasOwnProperty(k) && paramsObj[k] !== undefined && paramsObj[k] !== null) {{
                                 url.searchParams.set(k, paramsObj[k]);
                             }}
                         }}
                         if (paramsObj.picked_target || paramsObj.detect_gps || paramsObj.orig_lat || paramsObj.dest_lat) {{
-                            pWin.location.href = url.toString();
-                        }} else if (pWin.history && pWin.history.replaceState) {{
-                            pWin.history.replaceState(null, '', url.toString());
+                            try {{
+                                targetWin.location.href = url.toString();
+                            }} catch(eNav) {{
+                                window.top.location.href = url.toString();
+                            }}
+                        }} else if (targetWin.history && targetWin.history.replaceState) {{
+                            targetWin.history.replaceState(null, '', url.toString());
                         }}
                     }}
                 }} catch(eHist) {{
@@ -3593,7 +3614,11 @@ def build_google_maps_javascript_html(
             var lat = window.inspectedLocation.lat;
             var lng = window.inspectedLocation.lng;
             var name = window.inspectedLocation.name || "Selected Starting Point";
-            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '');
+            while (/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/.test(cleanName)) {{
+                cleanName = cleanName.replace(/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/, '').trim();
+            }}
+            cleanName = cleanName.trim() || "Selected Starting Point";
             var nameWithCoords = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + ")";
             window.safeNavigateParent({{
                 "orig_lat": Number(lat).toFixed(6),
@@ -3607,7 +3632,11 @@ def build_google_maps_javascript_html(
             var lat = window.inspectedLocation.lat;
             var lng = window.inspectedLocation.lng;
             var name = window.inspectedLocation.name || "Selected Destination";
-            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '');
+            while (/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/.test(cleanName)) {{
+                cleanName = cleanName.replace(/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/, '').trim();
+            }}
+            cleanName = cleanName.trim() || "Selected Destination";
             var nameWithCoords = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + ")";
             window.safeNavigateParent({{
                 "dest_lat": Number(lat).toFixed(6),
@@ -3687,6 +3716,11 @@ def build_google_maps_javascript_html(
                 if (nameEl) nameEl.innerText = (isOrig ? "Selected Start Point" : "Selected Destination");
                 if (addrEl) addrEl.innerText = "Coordinates: " + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5);
             }}
+
+            // Automatically apply and confirm picked location immediately so map routes appear with zero extra clicks
+            if (typeof window.confirmPickedLocation === 'function') {{
+                window.confirmPickedLocation();
+            }}
         }};
 
         window.confirmPickedLocation = function() {{
@@ -3695,8 +3729,21 @@ def build_google_maps_javascript_html(
             var lat = pendingMapPickData.lat;
             var lon = pendingMapPickData.lon;
             var name = pendingMapPickData.name;
-            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
+            var cleanName = String(name || '').replace(/^[📍🏁🛰️🚶]+\\s*/, '');
+            // Strip any previously appended coordinates so duplicates like (16.23, 80.55) (16.23, 80.55) never appear
+            while (/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/.test(cleanName)) {{
+                cleanName = cleanName.replace(/\\s*\\([+-]?\\d{{1,2}}(?:\\.\\d+)?[,\\s]+[+-]?\\d{{1,3}}(?:\\.\\d+)?\\)\\s*$/, '').trim();
+            }}
+            cleanName = cleanName.trim() || (target === 'orig' ? "Selected Start" : (target === 'stop' ? "Intermediate Stop" : "Selected Destination"));
             var nameWithCoords = cleanName + " (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
+
+            // Immediately hide picking HUD and modal card
+            var hud = document.getElementById('map-picking-hud');
+            var card = document.getElementById('map-picking-card');
+            if (hud) hud.style.display = 'none';
+            if (card) card.style.display = 'none';
+            window.activeMapPickingTarget = null;
+
             window.safeNavigateParent({{
                 "picked_target": target,
                 "picked_lat": Number(lat).toFixed(6),
