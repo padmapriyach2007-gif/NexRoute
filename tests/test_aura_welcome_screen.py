@@ -73,16 +73,29 @@ class TestAuraWelcomeScreen:
 
     def test_continuous_speech_and_instant_responses_in_js(self):
         html = render_aura_welcome_hud(current_lang="en", auto_speak=True)
-        # JavaScript includes speech handlers and auto listening start
+        # JavaScript includes speech handlers, websocket bridge, and auto listening start
         assert "startVoiceListening" in html
-        assert "handleVoiceCommand" in html
-        assert "attemptStartupGreeting" in html
+        assert "handleRecognizedVoiceCommand" in html
+        assert "triggerStartupGreeting" in html
+        assert "sendCommandToStreamlit" in html
+        assert "AURA_VOICE_COMMAND_BRIDGE" in html
         assert "Opening navigation." in html
         assert "Here are your trips." in html
         assert "Let's find hotels." in html
         assert "Opening flight planner." in html
         assert "Finding nearby restaurants." in html
         assert "Opening your profile." in html
+        assert "Opening your bookings." in html
+        assert "Going back." in html
+        assert "Returning to home dashboard." in html
+
+    def test_compact_mode_rendering(self):
+        html_compact = render_aura_welcome_hud(current_lang="en", auto_speak=False, compact=True)
+        assert "aura-compact-panel" in html_compact
+        assert "AURA • JARVIS COPILOT" in html_compact
+        assert "auraWaveCanvas" in html_compact
+        assert "startVoiceListening" in html_compact
+        assert "sendCommandToStreamlit" in html_compact
 
     def test_single_nextroute_navigation_sections(self):
         ctx = {"active_tab": "nav", "language": "en"}
@@ -128,6 +141,31 @@ class TestAuraWelcomeScreen:
         assert res_profile.ui_updates.get("show_user_profile_modal") is True
         assert res_profile.spoken_response == "Opening your profile."
 
+        # 7. Open my bookings
+        res_bookings = AuraGlobalCommandDispatcher.parse_and_dispatch("Open my bookings", ctx)
+        assert res_bookings.command_type == AuraCommandType.NAVIGATE_TAB
+        assert res_bookings.ui_updates.get("current_view") == "copilot_studio"
+        assert res_bookings.ui_updates.get("target_tab") == "bookings"
+        assert res_bookings.spoken_response == "Opening your bookings."
+
+        # 8. Go back
+        res_back = AuraGlobalCommandDispatcher.parse_and_dispatch("Go back", ctx)
+        assert res_back.command_type == AuraCommandType.NAVIGATE_TAB
+        assert res_back.ui_updates.get("trigger_go_back") is True
+        assert res_back.spoken_response == "Going back."
+
+        # 9. Go home
+        res_home = AuraGlobalCommandDispatcher.parse_and_dispatch("Go home", ctx)
+        assert res_home.command_type == AuraCommandType.NAVIGATE_TAB
+        assert res_home.ui_updates.get("current_view") == "dashboard"
+        assert res_home.spoken_response == "Returning to home dashboard."
+
+        # 10. Open settings
+        res_settings = AuraGlobalCommandDispatcher.parse_and_dispatch("Open settings", ctx)
+        assert res_settings.command_type == AuraCommandType.NAVIGATE_TAB
+        assert res_settings.ui_updates.get("show_user_profile_modal") is True
+        assert res_settings.spoken_response == "Opening settings."
+
     def test_session_state_single_greeting_simulation(self):
         # Simulating Streamlit session state lifecycle:
         # Initial launch: aura_welcome_greeted is False -> auto_speak is True
@@ -145,3 +183,34 @@ class TestAuraWelcomeScreen:
         # 2nd Run (Streamlit rerun after state change / interaction)
         auto_speak_2 = not fake_session["aura_welcome_greeted"]
         assert auto_speak_2 is False, "Greeting must NOT play repeatedly on Streamlit reruns"
+
+    def test_apply_execution_result_go_back_history(self):
+        fake_session = {
+            "current_view": "dashboard",
+            "view_history": []
+        }
+        ctx = {}
+
+        # 1. Navigate to map_nav
+        cmd1 = AuraGlobalCommandDispatcher.parse_and_dispatch("Open navigation", ctx)
+        AuraGlobalCommandDispatcher.apply_execution_result(cmd1, fake_session)
+        assert fake_session["current_view"] == "map_nav"
+        assert fake_session["view_history"] == ["dashboard", "map_nav"]
+
+        # 2. Navigate to copilot_studio
+        cmd2 = AuraGlobalCommandDispatcher.parse_and_dispatch("Show my trips", ctx)
+        AuraGlobalCommandDispatcher.apply_execution_result(cmd2, fake_session)
+        assert fake_session["current_view"] == "copilot_studio"
+        assert fake_session["view_history"] == ["dashboard", "map_nav", "copilot_studio"]
+
+        # 3. Say "Go back"
+        cmd_back = AuraGlobalCommandDispatcher.parse_and_dispatch("Go back", ctx)
+        AuraGlobalCommandDispatcher.apply_execution_result(cmd_back, fake_session)
+        assert fake_session["current_view"] == "map_nav"
+        assert fake_session["view_history"] == ["dashboard", "map_nav"]
+
+        # 4. Say "Go back" again
+        cmd_back2 = AuraGlobalCommandDispatcher.parse_and_dispatch("Go back", ctx)
+        AuraGlobalCommandDispatcher.apply_execution_result(cmd_back2, fake_session)
+        assert fake_session["current_view"] == "dashboard"
+        assert fake_session["view_history"] == ["dashboard"]

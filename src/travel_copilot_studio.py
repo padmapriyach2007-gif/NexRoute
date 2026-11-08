@@ -2036,6 +2036,19 @@ def render_view_navigation_header(title: str, subtitle: str, current_key: str = 
                 st.session_state.launch_quick_tour = True
                 st.rerun()
 
+    try:
+        from src.aura_welcome_screen import render_aura_welcome_hud
+        import streamlit.components.v1 as components
+        c_hud = render_aura_welcome_hud(
+            current_lang=cur_lang,
+            auto_speak=False,
+            user_name="Boss",
+            compact=True
+        )
+        components.html(c_hud, height=52, scrolling=False)
+    except Exception:
+        pass
+
 
 
 COPILOT_I18N = {

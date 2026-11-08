@@ -1,8 +1,12 @@
 """
-NexRoute — AURA JARVIS-Style AI Voice Assistant & Autonomous Controller
-Fully integrated, automatic Jarvis-style AI voice copilot that greets on application launch,
-continuously listens for natural voice commands, and navigates internal NextRoute sections
-within the single main application without launching duplicate instances.
+NexRoute — AURA Autonomous JARVIS-Style Voice Assistant & Controller
+Full real-time voice assistant engine providing:
+1. Automatic time-appropriate greeting on launch with autoplay fallback.
+2. Real-time microphone listening via Web Speech API (webkitSpeechRecognition) with continuous listening.
+3. Audible SpeechSynthesis output with natural Jarvis pitch/rate and Chrome GC bug prevention.
+4. Seamless React WebSocket communication bridge to Streamlit without disruptive browser page reloads.
+5. Internal section navigation across Navigation, My Trips, Hotels, Flights, Restaurants, Profile, Settings, and Home.
+6. Unified state management across both Main Dashboard and sub-navigation views.
 """
 
 import json
@@ -13,10 +17,10 @@ from typing import Optional, Dict, Any
 def get_aura_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
     """
     Returns the exact time-appropriate JARVIS greeting.
-    - Good morning (5:00 - 11:59)
-    - Good afternoon (12:00 - 16:59)
-    - Good evening (17:00 - 4:59)
-    No extra promotional or introductory sentences.
+    - Morning (5:00 - 11:59): Good morning, Boss! Welcome to NextRoute. How can I help you?
+    - Afternoon (12:00 - 16:59): Good afternoon, Boss! Welcome to NextRoute. How can I help you?
+    - Evening (17:00 - 4:59): Good evening, Boss! Welcome to NextRoute. How can I help you?
+    No extra promotional, tutorial, or introductory sentences.
     """
     now_hour = datetime.datetime.now().hour
     if 5 <= now_hour < 12:
@@ -39,7 +43,7 @@ def get_aura_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
         tod_hi = "शुभ संध्या"
         tod_ta = "மாலை வணக்கம்"
         tod_kn = "ಶುಭ ಸಂಜೆ"
-        tod_ml = "ശുഭ സായാഹ്നം"
+        tod_ml = "ശുഭ സാయాഹ്നം"
 
     if lang == "te":
         return f"{tod_te}, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?"
@@ -48,7 +52,7 @@ def get_aura_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
     elif lang == "ta":
         return f"{tod_ta}, {user_name}! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
     elif lang == "kn":
-        return f"{tod_kn}, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+        return f"{tod_kn}, {user_name}! ನೆಕ್ಸ್-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು మీకు ఎలా సహాయం చేయాలి?"
     elif lang == "ml":
         return f"{tod_ml}, {user_name}! നെക്സ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എന്ത് സഹായമാണ് ചെയ്യേണ്ടത്?"
     else:
@@ -59,12 +63,14 @@ def render_aura_welcome_hud(
     current_lang: str = "en",
     auto_speak: bool = True,
     bot_logo_uri: Optional[str] = None,
-    user_name: str = "Boss"
+    user_name: str = "Boss",
+    compact: bool = False
 ) -> str:
     """
-    Renders the streamlined futuristic JARVIS-style voice assistant HUD for NextRoute.
-    Features the circular robot avatar, live waveform canvas, status pill, transcript box,
-    automatic startup greeting, continuous speech recognition, and instant section navigation.
+    Renders the autonomous JARVIS-style voice assistant HUD for NextRoute.
+    Supports full mode (Main Dashboard hero panel) and compact mode (persistent navigation bar).
+    Features real Web Speech API speech-to-text, SpeechSynthesis audio output, real-time waveform canvas,
+    permission handling, zero-reload WebSocket command execution, and continuous conversational listening.
     """
     greeting_text = get_aura_startup_greeting(current_lang, user_name)
 
@@ -85,9 +91,130 @@ def render_aura_welcome_hud(
     avatar_markup = (
         f'<img src="{bot_logo_uri}" class="avatar-core-img" alt="AURA Mascot" />'
         if bot_logo_uri
-        else '<span style="color: #00f0ff; font-size: 26px; font-weight: 900;">⚡</span>'
+        else '<span style="color: #00f0ff; font-size: 24px; font-weight: 900;">⚡</span>'
     )
 
+    if compact:
+        # Sleek compact HUD for persistent voice control in sub-navigation views
+        return f"""<!DOCTYPE html>
+<html lang="{current_lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
+    * {{ box-sizing: border-box; margin: 0; padding: 0; user-select: none; }}
+    body {{
+        background: transparent;
+        font-family: 'Inter', sans-serif;
+        color: #f8fafc;
+        padding: 2px 4px;
+        overflow: hidden;
+    }}
+    .aura-compact-panel {{
+        background: radial-gradient(circle at 15% 50%, rgba(14, 28, 54, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
+        border: 1.5px solid rgba(0, 240, 255, 0.35);
+        border-radius: 14px;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 240, 255, 0.12);
+        backdrop-filter: blur(12px);
+    }}
+    .avatar-pod {{
+        position: relative;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }}
+    .arc-spin-ring {{
+        position: absolute;
+        inset: -2px;
+        border-radius: 50%;
+        border: 1.5px dashed #00f0ff;
+        animation: spinArc 10s linear infinite;
+    }}
+    @keyframes spinArc {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+    .avatar-inner-circle {{
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #0284c7 0%, #030712 100%);
+        border: 1.5px solid #00f0ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }}
+    .avatar-inner-circle img {{ width: 100%; height: 100%; object-fit: cover; }}
+    .hud-center {{
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+    }}
+    .hud-status-row {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }}
+    .hud-status-badge {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.64rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        background: rgba(16, 185, 129, 0.18);
+        border: 1px solid #10b981;
+        color: #34d399;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }}
+    .hud-transcript-text {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.70rem;
+        color: #38bdf8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    .hud-waveform {{
+        width: 140px;
+        height: 18px;
+        min-width: 100px;
+    }}
+    #auraWaveCanvas {{ width: 100%; height: 100%; display: block; }}
+</style>
+</head>
+<body>
+<div class="aura-compact-panel">
+    <div class="avatar-pod" onclick="window.AURA_TOGGLE_MIC()" title="Click to speak with AURA">
+        <div class="arc-spin-ring"></div>
+        <div class="avatar-inner-circle">{avatar_markup}</div>
+    </div>
+    <div class="hud-center">
+        <div class="hud-status-row">
+            <span style="font-weight: 800; font-size: 0.76rem; color: #f8fafc; letter-spacing: 0.04em;">AURA • JARVIS COPILOT</span>
+            <span class="hud-status-badge" id="statusBadge">● IDLE • READY</span>
+        </div>
+        <div class="hud-transcript-text" id="transcriptBox">Voice navigation active. Speak anytime, Boss.</div>
+    </div>
+    <div class="hud-waveform">
+        <canvas id="auraWaveCanvas"></canvas>
+    </div>
+</div>
+{_build_jarvis_controller_script(current_lang, bcp47_code, auto_speak, greeting_text)}
+</body>
+</html>"""
+
+    # Full Futuristic JARVIS Welcome HUD for Main Dashboard
     return f"""<!DOCTYPE html>
 <html lang="{current_lang}">
 <head>
@@ -110,15 +237,14 @@ def render_aura_welcome_hud(
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 6px;
+        padding: 4px;
         overflow: hidden;
     }}
 
-    /* Futuristic HUD Glassmorphism Card (Streamlined & Clean) */
     .aura-welcome-panel {{
         position: relative;
         width: 100%;
-        max-width: 840px;
+        max-width: 860px;
         background: radial-gradient(circle at 50% 20%, rgba(14, 28, 54, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
         border: 1.5px solid rgba(0, 240, 255, 0.38);
         border-radius: 20px;
@@ -143,13 +269,12 @@ def render_aura_welcome_hud(
         opacity: 0.9;
     }}
 
-    /* Header Bar: Brand + Live Status Badge */
     .welcome-top-row {{
         width: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }}
 
     .brand-pill {{
@@ -194,12 +319,11 @@ def render_aura_welcome_hud(
         transition: all 0.3s ease;
     }}
 
-    /* Arc Reactor Circular Assistant Avatar */
     .avatar-wrapper {{
         position: relative;
-        width: 68px;
-        height: 68px;
-        margin: 2px 0 8px 0;
+        width: 66px;
+        height: 66px;
+        margin: 2px 0 6px 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -225,8 +349,8 @@ def render_aura_welcome_hud(
     }}
 
     .avatar-core-circle {{
-        width: 56px;
-        height: 56px;
+        width: 54px;
+        height: 54px;
         border-radius: 50%;
         background: radial-gradient(circle, #0284c7 0%, #030712 90%);
         border: 2px solid #00f0ff;
@@ -254,7 +378,6 @@ def render_aura_welcome_hud(
         50% {{ transform: scale(1.05); opacity: 1; }}
     }}
 
-    /* Spoken Greeting Headline */
     .greeting-headline {{
         font-size: 1.05rem;
         font-weight: 800;
@@ -267,12 +390,11 @@ def render_aura_welcome_hud(
         -webkit-text-fill-color: transparent;
     }}
 
-    /* Synchronized Audio Waveform Visualizer */
     .waveform-container {{
         width: 100%;
         max-width: 520px;
-        height: 26px;
-        margin: 4px 0 6px 0;
+        height: 24px;
+        margin: 3px 0 5px 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -284,7 +406,6 @@ def render_aura_welcome_hud(
         display: block;
     }}
 
-    /* Minimal Voice Transcript Display */
     .live-transcript-box {{
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.74rem;
@@ -298,7 +419,6 @@ def render_aura_welcome_hud(
 <body>
 
 <div class="aura-welcome-panel" id="welcomePanel">
-    <!-- Top Row: Brand & Live Status Indicator -->
     <div class="welcome-top-row">
         <div class="brand-pill">
             <span class="brand-pulse-dot"></span>
@@ -309,8 +429,7 @@ def render_aura_welcome_hud(
         </div>
     </div>
 
-    <!-- Animated Arc Reactor Avatar (Click to Toggle Mic) -->
-    <div class="avatar-wrapper" onclick="toggleVoiceListening()" title="Click to speak with AURA">
+    <div class="avatar-wrapper" onclick="window.AURA_TOGGLE_MIC()" title="Click to speak with AURA">
         <div class="arc-reactor-ring-outer"></div>
         <div class="arc-reactor-ring-mid" id="avatarMidRing"></div>
         <div class="avatar-core-circle">
@@ -318,35 +437,52 @@ def render_aura_welcome_hud(
         </div>
     </div>
 
-    <!-- Spoken Greeting Headline -->
     <h1 class="greeting-headline" id="greetingHeadline">
         "{greeting_text}"
     </h1>
 
-    <!-- Synchronized Audio Waveform Visualizer -->
     <div class="waveform-container">
         <canvas id="auraWaveCanvas"></canvas>
     </div>
 
-    <!-- Minimal Voice Transcript Display -->
     <div class="live-transcript-box" id="transcriptBox">
         Ready for voice command, Boss.
     </div>
 </div>
 
+{_build_jarvis_controller_script(current_lang, bcp47_code, auto_speak, greeting_text)}
+</body>
+</html>
+"""
+
+
+def _build_jarvis_controller_script(
+    current_lang: str,
+    bcp47_code: str,
+    auto_speak: bool,
+    greeting_text: str
+) -> str:
+    """
+    Builds the JavaScript controller script that handles speech synthesis,
+    speech recognition, and React WebSocket communication bridge to Streamlit.
+    """
+    return f"""
 <script>
 (function() {{
     var activeLang = {json.dumps(current_lang)};
     var bcp47Lang = {json.dumps(bcp47_code)};
-    var autoSpeak = {json.dumps(bool(auto_speak))};
-    var spokenGreeting = {json.dumps(greeting_text)};
+    var shouldAutoSpeak = {json.dumps(bool(auto_speak))};
+    var initialGreetingText = {json.dumps(greeting_text)};
+
+    var pWin = window.parent || window.top || window;
+    var pDoc = (pWin && pWin.document) ? pWin.document : document;
 
     var isListening = false;
     var isSpeaking = false;
     var isProcessing = false;
     var recognition = null;
-    var synthesis = window.speechSynthesis;
-    var currentUtterance = null;
+    var synthesis = window.speechSynthesis || (pWin && pWin.speechSynthesis);
+
     var canvas = document.getElementById('auraWaveCanvas');
     var ctx = canvas ? canvas.getContext('2d') : null;
     var animationId = null;
@@ -376,12 +512,19 @@ def render_aura_welcome_hud(
             if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
         }} else if (state === 'processing') {{
             if (badge) {{
-                badge.innerText = '⚡ EXECUTING COMMAND...';
+                badge.innerText = '⚡ EXECUTING...';
                 badge.style.background = 'rgba(168, 85, 247, 0.22)';
                 badge.style.borderColor = '#a855f7';
                 badge.style.color = '#c084fc';
             }}
             if (midRing) midRing.style.boxShadow = '0 0 28px #a855f7';
+        }} else if (state === 'error') {{
+            if (badge) {{
+                badge.innerText = '⚠️ NOTICE';
+                badge.style.background = 'rgba(239, 68, 68, 0.22)';
+                badge.style.borderColor = '#ef4444';
+                badge.style.color = '#f87171';
+            }}
         }} else {{
             if (badge) {{
                 badge.innerText = '● IDLE • READY';
@@ -393,11 +536,11 @@ def render_aura_welcome_hud(
         }}
     }}
 
-    // Waveform Animation Loop
+    // Real-Time Canvas Waveform Animation
     function resizeCanvas() {{
         if (!canvas) return;
-        canvas.width = canvas.parentElement.clientWidth || 400;
-        canvas.height = canvas.parentElement.clientHeight || 26;
+        canvas.width = canvas.parentElement.clientWidth || 360;
+        canvas.height = canvas.parentElement.clientHeight || 24;
     }}
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -407,11 +550,11 @@ def render_aura_welcome_hud(
         if (!ctx || !canvas) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        var numPoints = 50;
+        var numPoints = 48;
         var step = canvas.width / numPoints;
         var midY = canvas.height / 2;
 
-        var baseAmp = isSpeaking ? 11 : (isListening ? 8 : 2.5);
+        var baseAmp = isSpeaking ? 10 : (isListening ? 7 : 2.2);
         var freq = isSpeaking ? 0.18 : (isListening ? 0.24 : 0.08);
 
         ctx.beginPath();
@@ -434,94 +577,165 @@ def render_aura_welcome_hud(
     }}
     drawWave();
 
-    // Universal Speech Synthesis Function
-    function speakText(textToSpeak, onCompleteCallback) {{
-        if (!synthesis) {{
-            if (onCompleteCallback) onCompleteCallback();
-            return;
-        }}
-        try {{
-            synthesis.cancel();
-            currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
-            currentUtterance.lang = bcp47Lang;
-            currentUtterance.rate = 1.0;
-            currentUtterance.pitch = 1.02;
-
-            currentUtterance.onstart = function() {{
-                isSpeaking = true;
-                setAssistantState('speaking', 'AURA: "' + textToSpeak + '"');
+    // Universal Speech Synthesis Engine (Handles Chrome GC and resume bugs)
+    function ensureVoices(callback) {{
+        if (!synthesis) return callback([]);
+        var voices = synthesis.getVoices();
+        if (voices && voices.length > 0) {{
+            callback(voices);
+        }} else {{
+            synthesis.onvoiceschanged = function() {{
+                callback(synthesis.getVoices());
             }};
-
-            currentUtterance.onend = function() {{
-                isSpeaking = false;
-                if (onCompleteCallback) onCompleteCallback();
-            }};
-
-            currentUtterance.onerror = function() {{
-                isSpeaking = false;
-                if (onCompleteCallback) onCompleteCallback();
-            }};
-
-            synthesis.speak(currentUtterance);
-        }} catch(e) {{
-            isSpeaking = false;
-            if (onCompleteCallback) onCompleteCallback();
         }}
     }}
 
-    // Continuous Speech Recognition (Speech-to-Text)
+    function speakJarvis(textToSpeak, onDone) {{
+        if (!synthesis) {{
+            if (onDone) onDone();
+            return;
+        }}
+        try {{
+            if (synthesis.speaking || synthesis.paused) {{
+                synthesis.cancel();
+            }}
+
+            ensureVoices(function(voices) {{
+                var utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = bcp47Lang;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.02;
+
+                // Select preferred natural voice if available
+                if (voices && voices.length > 0) {{
+                    var prefix = bcp47Lang.split('-')[0];
+                    var voiceMatch = voices.find(function(v) {{ return v.lang === bcp47Lang; }}) ||
+                                     voices.find(function(v) {{ return v.lang.startsWith(prefix); }});
+                    if (voiceMatch) utterance.voice = voiceMatch;
+                }}
+
+                utterance.onstart = function() {{
+                    isSpeaking = true;
+                    setAssistantState('speaking', 'AURA: "' + textToSpeak + '"');
+                }};
+
+                utterance.onend = function() {{
+                    isSpeaking = false;
+                    window.__AURA_CURRENT_UTTERANCE__ = null;
+                    if (onDone) onDone();
+                }};
+
+                utterance.onerror = function(err) {{
+                    isSpeaking = false;
+                    window.__AURA_CURRENT_UTTERANCE__ = null;
+                    if (onDone) onDone();
+                }};
+
+                // Pin utterance to window so Chrome Garbage Collector does not drop it mid-speech
+                window.__AURA_CURRENT_UTTERANCE__ = utterance;
+
+                if (synthesis.paused) {{
+                    synthesis.resume();
+                }}
+                synthesis.speak(utterance);
+            }});
+        }} catch(e) {{
+            isSpeaking = false;
+            if (onDone) onDone();
+        }}
+    }}
+
+    // Real-Time Speech Recognition Engine (Speech-to-Text)
     function startVoiceListening() {{
         if (isSpeaking || isProcessing) return;
 
-        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {{
-            setAssistantState('idle', 'Ready for voice commands.');
+        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition ||
+                        (pWin && (pWin.SpeechRecognition || pWin.webkitSpeechRecognition));
+
+        if (!SpeechRec) {{
+            setAssistantState('error', 'Speech recognition not supported in browser. Use Chrome or Edge.');
             return;
         }}
 
+        // Stop any previous active recognition instance
         if (recognition) {{
             try {{ recognition.abort(); }} catch(e) {{}}
+            recognition = null;
         }}
 
         try {{
-            recognition = new SpeechRecognition();
+            recognition = new SpeechRec();
             recognition.lang = bcp47Lang;
-            recognition.continuous = false;
-            recognition.interimResults = false;
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
 
             recognition.onstart = function() {{
                 isListening = true;
-                setAssistantState('listening', 'Listening, Boss... Speak your command now.');
+                setAssistantState('listening', 'Listening, Boss... Speak your command.');
             }};
 
             recognition.onresult = function(event) {{
-                isListening = false;
-                var transcript = event.results[0][0].transcript;
-                if (transcript && transcript.trim()) {{
-                    handleVoiceCommand(transcript.trim());
+                var interimTranscript = '';
+                var finalTranscript = '';
+
+                for (var i = event.resultIndex; i < event.results.length; ++i) {{
+                    if (event.results[i].isFinal) {{
+                        finalTranscript += event.results[i][0].transcript;
+                    }} else {{
+                        interimTranscript += event.results[i][0].transcript;
+                    }}
+                }}
+
+                if (interimTranscript && !finalTranscript) {{
+                    var tBox = document.getElementById('transcriptBox');
+                    if (tBox) tBox.innerText = '🎙️ "' + interimTranscript.trim() + '"';
+                }}
+
+                if (finalTranscript && finalTranscript.trim()) {{
+                    var cleanFinal = finalTranscript.trim();
+                    try {{ recognition.stop(); }} catch(e) {{}}
+                    isListening = false;
+                    handleRecognizedVoiceCommand(cleanFinal);
                 }}
             }};
 
-            recognition.onerror = function(err) {{
-                isListening = false;
-                setAssistantState('idle', 'Ready for voice commands.');
+            recognition.onerror = function(event) {{
+                if (event.error === 'no-speech') {{
+                    // No speech within silence window is normal; keep listening
+                    return;
+                }} else if (event.error === 'not-allowed') {{
+                    isListening = false;
+                    setAssistantState('error', 'Microphone blocked. Please allow mic permissions in your address bar.');
+                }} else if (event.error === 'network') {{
+                    isListening = false;
+                    setAssistantState('error', 'Speech recognition network error. Reconnecting...');
+                    setTimeout(startVoiceListening, 1500);
+                }} else {{
+                    isListening = false;
+                }}
             }};
 
             recognition.onend = function() {{
                 isListening = false;
+                // Auto-restart listening if not currently speaking or executing command
                 if (!isSpeaking && !isProcessing) {{
-                    setAssistantState('idle', 'Ready for voice commands.');
+                    setTimeout(function() {{
+                        if (!isSpeaking && !isProcessing) {{
+                            startVoiceListening();
+                        }}
+                    }}, 350);
                 }}
             }};
 
             recognition.start();
-        }} catch(e) {{
+        }} catch(err) {{
             isListening = false;
-            setAssistantState('idle', 'Ready for voice commands.');
+            setAssistantState('error', 'Microphone error: ' + (err.message || 'Check browser permissions'));
         }}
     }}
 
-    window.toggleVoiceListening = function() {{
+    window.AURA_TOGGLE_MIC = function() {{
         if (isListening && recognition) {{
             try {{ recognition.stop(); }} catch(e) {{}}
             isListening = false;
@@ -531,16 +745,59 @@ def render_aura_welcome_hud(
         }}
     }};
 
-    // Process Voice Command & Navigate Within Single NextRoute Application
-    function handleVoiceCommand(cmdText) {{
+    // Zero-Reload WebSocket Command Execution Bridge to Streamlit
+    function sendCommandToStreamlit(cmdText, cmdId) {{
+        try {{
+            // 1. Direct WebSocket transmission through Streamlit hidden React input
+            var bridgeInput = pDoc.querySelector('input[aria-label="AURA_VOICE_COMMAND_BRIDGE"]') ||
+                              pDoc.querySelector('input[data-testid*="aura_voice_cmd_sink"]');
+
+            if (bridgeInput) {{
+                var payload = JSON.stringify({{ id: cmdId, cmd: cmdText }});
+                var nativeSetter = Object.getOwnPropertyDescriptor(pWin.HTMLInputElement.prototype, 'value')?.set ||
+                                   Object.getOwnPropertyDescriptor(bridgeInput.__proto__, 'value')?.set;
+                if (nativeSetter) {{
+                    nativeSetter.call(bridgeInput, payload);
+                }} else {{
+                    bridgeInput.value = payload;
+                }}
+                bridgeInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                bridgeInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                bridgeInput.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }}));
+                return true;
+            }}
+        }} catch(eBridge) {{
+            console.warn("[AURA Bridge] React dispatch fallback:", eBridge);
+        }}
+
+        // 2. Fallback to URL searchParams navigation if bridge not mounted
+        try {{
+            var currentHref = '';
+            try {{ currentHref = pWin.location.href; }} catch(e) {{ currentHref = window.location.href; }}
+            var url = new URL(currentHref);
+            url.searchParams.set('aura_cmd', cmdText);
+            try {{
+                pWin.location.href = url.toString();
+            }} catch(eNav) {{
+                window.location.href = url.toString();
+            }}
+        }} catch(eUrl) {{}}
+        return false;
+    }}
+
+    // Real-Time Command Intent & Concise Confirmation Speech
+    function handleRecognizedVoiceCommand(cmdText) {{
         isProcessing = true;
         setAssistantState('processing', 'YOU: "' + cmdText + '"');
 
         var lower = cmdText.toLowerCase();
         var spokenResponse = "";
 
+        // Exact Intent Mapping (from user specifications)
         if (lower.indexOf("navigation") !== -1 || lower.indexOf("nav") !== -1 || lower.indexOf("map") !== -1) {{
             spokenResponse = "Opening navigation.";
+        }} else if (lower.indexOf("booking") !== -1 || lower.indexOf("reservation") !== -1) {{
+            spokenResponse = "Opening your bookings.";
         }} else if (lower.indexOf("trip") !== -1 || lower.indexOf("copilot") !== -1 || lower.indexOf("itinerar") !== -1) {{
             spokenResponse = "Here are your trips.";
         }} else if (lower.indexOf("hotel") !== -1 || lower.indexOf("lodg") !== -1) {{
@@ -549,8 +806,14 @@ def render_aura_welcome_hud(
             spokenResponse = "Opening flight planner.";
         }} else if (lower.indexOf("restaurant") !== -1 || lower.indexOf("food") !== -1 || lower.indexOf("cafe") !== -1) {{
             spokenResponse = "Finding nearby restaurants.";
+        }} else if (lower.indexOf("setting") !== -1 || lower.indexOf("preference") !== -1) {{
+            spokenResponse = "Opening settings.";
         }} else if (lower.indexOf("profile") !== -1 || lower.indexOf("account") !== -1) {{
             spokenResponse = "Opening your profile.";
+        }} else if (lower.indexOf("back") !== -1 || lower.indexOf("previous") !== -1) {{
+            spokenResponse = "Going back.";
+        }} else if (lower.indexOf("home") !== -1 || lower.indexOf("dashboard") !== -1) {{
+            spokenResponse = "Returning to home dashboard.";
         }} else if (lower.indexOf("place") !== -1 || lower.indexOf("saved") !== -1 || lower.indexOf("sight") !== -1) {{
             spokenResponse = "Opening saved places.";
         }} else if (lower.indexOf("guide") !== -1) {{
@@ -566,101 +829,103 @@ def render_aura_welcome_hud(
         }} else if (lower.indexOf("where am i") !== -1 || lower.indexOf("location") !== -1) {{
             spokenResponse = "Locating your current coordinates.";
         }} else {{
-            spokenResponse = "Processing: " + cmdText.substring(0, 30);
+            spokenResponse = "Processing: " + cmdText.substring(0, 28);
         }}
 
-        // Speak the concise response immediately
-        speakText(spokenResponse, function() {{
+        var cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+        // 1. Speak response aloud immediately
+        speakJarvis(spokenResponse, function() {{
             isProcessing = false;
-            // Continuous Voice Command Interaction: automatically resume listening
-            setTimeout(function() {{
-                startVoiceListening();
-            }}, 600);
-        }});
-
-        // Dispatch command to parent NextRoute Streamlit application
-        try {{
-            var targetWin = window.parent || window.top || window;
-            var currentHref = '';
-            try {{ currentHref = targetWin.location.href; }} catch(e) {{ currentHref = window.location.href; }}
-            var url = new URL(currentHref);
-            url.searchParams.set('aura_cmd', cmdText.trim());
-            try {{
-                targetWin.location.href = url.toString();
-            }} catch(eNav) {{
-                window.location.href = url.toString();
-            }}
-        }} catch(eParam) {{}}
-    }}
-
-    // Automatic Voice Greeting on Application Launch & Autoplay Fallback
-    var greetingSpoken = false;
-
-    function attemptStartupGreeting() {{
-        if (greetingSpoken) return;
-        var sessionGreetedKey = 'aura_session_greeted_' + activeLang;
-        try {{
-            if (sessionStorage.getItem(sessionGreetedKey) === 'true') {{
-                greetingSpoken = true;
-                setAssistantState('idle', 'Ready for voice commands.');
-                return;
-            }}
-        }} catch(e) {{}}
-
-        if (!autoSpeak) {{
-            setAssistantState('idle', 'Ready for voice commands.');
-            return;
-        }}
-
-        greetingSpoken = true;
-        try {{ sessionStorage.setItem(sessionGreetedKey, 'true'); }} catch(e) {{}}
-
-        // Speak initial greeting: "Good morning, Boss! Welcome to NextRoute. How can I help you?"
-        speakText(spokenGreeting, function() {{
-            // Immediately after greeting finishes, activate microphone for continuous commands!
+            // 2. Automatically resume listening for the next voice command
             setTimeout(function() {{
                 startVoiceListening();
             }}, 400);
         }});
+
+        // 3. Simultaneously dispatch to Streamlit without reloading the page
+        sendCommandToStreamlit(cmdText, cmdId);
     }}
 
-    // Minimal First-Interaction Fallback (if browser blocks audible autoplay without user gesture)
-    function onFirstUserInteraction() {{
-        if (!greetingSpoken && autoSpeak) {{
-            attemptStartupGreeting();
-        }}
-        window.removeEventListener('click', onFirstUserInteraction);
-        window.removeEventListener('keydown', onFirstUserInteraction);
-        window.removeEventListener('touchstart', onFirstUserInteraction);
+    // Automatic Startup Greeting & Autoplay Unlock Fallback
+    var greetingTriggered = false;
+
+    function triggerStartupGreeting() {{
+        if (greetingTriggered) return;
+
+        var sessionKey = 'aura_session_greeted_' + activeLang;
         try {{
-            var pWin = window.parent || window.top;
-            if (pWin && pWin !== window) {{
-                pWin.removeEventListener('click', onFirstUserInteraction);
-                pWin.removeEventListener('keydown', onFirstUserInteraction);
-                pWin.removeEventListener('touchstart', onFirstUserInteraction);
+            if (sessionStorage.getItem(sessionKey) === 'true') {{
+                greetingTriggered = true;
+                setAssistantState('idle', 'Ready for voice commands.');
+                // Even if already greeted in previous tab run, start listening immediately!
+                setTimeout(startVoiceListening, 500);
+                return;
             }}
+        }} catch(e) {{}}
+
+        if (!shouldAutoSpeak) {{
+            greetingTriggered = true;
+            setAssistantState('idle', 'Ready for voice commands.');
+            setTimeout(startVoiceListening, 500);
+            return;
+        }}
+
+        greetingTriggered = true;
+        try {{ sessionStorage.setItem(sessionKey, 'true'); }} catch(e) {{}}
+
+        // Speak the natural initial greeting:
+        // "Good morning, Boss! Welcome to NextRoute. How can I help you?"
+        speakJarvis(initialGreetingText, function() {{
+            // Immediately after greeting finishes, activate microphone for voice commands!
+            setTimeout(function() {{
+                startVoiceListening();
+            }}, 350);
+        }});
+    }}
+
+    // Minimal first-interaction fallback (unblocks speech if browser blocks autoplay before user touch)
+    function unlockAudioOnFirstInteraction() {{
+        if (!greetingTriggered && shouldAutoSpeak) {{
+            triggerStartupGreeting();
+        }}
+        window.removeEventListener('click', unlockAudioOnFirstInteraction);
+        window.removeEventListener('keydown', unlockAudioOnFirstInteraction);
+        window.removeEventListener('touchstart', unlockAudioOnFirstInteraction);
+        try {{
+            pDoc.removeEventListener('click', unlockAudioOnFirstInteraction);
+            pDoc.removeEventListener('keydown', unlockAudioOnFirstInteraction);
+            pDoc.removeEventListener('touchstart', unlockAudioOnFirstInteraction);
         }} catch(e) {{}}
     }}
 
-    window.addEventListener('click', onFirstUserInteraction);
-    window.addEventListener('keydown', onFirstUserInteraction);
-    window.addEventListener('touchstart', onFirstUserInteraction);
+    window.addEventListener('click', unlockAudioOnFirstInteraction);
+    window.addEventListener('keydown', unlockAudioOnFirstInteraction);
+    window.addEventListener('touchstart', unlockAudioOnFirstInteraction);
     try {{
-        var pWin = window.parent || window.top;
-        if (pWin && pWin !== window) {{
-            pWin.addEventListener('click', onFirstUserInteraction);
-            pWin.addEventListener('keydown', onFirstUserInteraction);
-            pWin.addEventListener('touchstart', onFirstUserInteraction);
-        }}
+        pDoc.addEventListener('click', unlockAudioOnFirstInteraction);
+        pDoc.addEventListener('keydown', unlockAudioOnFirstInteraction);
+        pDoc.addEventListener('touchstart', unlockAudioOnFirstInteraction);
     }} catch(e) {{}}
 
-    // Automatic trigger on launch
-    setTimeout(function() {{
-        attemptStartupGreeting();
-    }}, 400);
+    // Prompt microphone permissions explicitly on startup
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {{
+        navigator.mediaDevices.getUserMedia({{ audio: true }})
+            .then(function(stream) {{
+                // Close the temporary test stream immediately
+                stream.getTracks().forEach(function(track) {{ track.stop(); }});
+                // Launch greeting
+                setTimeout(triggerStartupGreeting, 300);
+            }})
+            .catch(function(err) {{
+                console.warn("[AURA] Mic permission notice:", err);
+                // Still attempt greeting even if mic is denied initially
+                setTimeout(triggerStartupGreeting, 300);
+            }});
+    }} else {{
+        setTimeout(triggerStartupGreeting, 300);
+    }}
 
 }})();
 </script>
-</body>
-</html>
 """

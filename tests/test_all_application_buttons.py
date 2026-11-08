@@ -52,7 +52,7 @@ def test_start_and_destination_buttons_presence_and_attributes():
     assert 'key="btn_side_swap_endpoints"' in code
     assert '"⇅ Swap Locations"' in code
     assert 'key="btn_side_calc_routes_action"' in code
-    assert 'nav.find_best_route' in code or '"🚀 Find Routes"' in code
+    assert 'nav.find_best_route' in code or '"🚀 Find Routes"' in code or 'GENERATE ROUTES' in code
     assert 'key="btn_side_fit_route_bounds_act"' in code
     assert 'nav.fit_route' in code or '"🔍 Fit Route"' in code
 

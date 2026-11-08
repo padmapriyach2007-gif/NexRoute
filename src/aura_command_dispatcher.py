@@ -71,10 +71,14 @@ class AuraGlobalCommandDispatcher:
             "welcome": "Good morning, Boss! Welcome to NextRoute. How can I help you?",
             "nav_opened": "Opening navigation.",
             "trips_opened": "Here are your trips.",
+            "bookings_opened": "Opening your bookings.",
             "hotels_opened": "Let's find hotels.",
             "flights_opened": "Opening flight planner.",
             "restaurants_opened": "Finding nearby restaurants.",
             "profile_opened": "Opening your profile.",
+            "settings_opened": "Opening settings.",
+            "back_opened": "Going back.",
+            "home_opened": "Returning to home dashboard.",
             "chat_opened": "AURA chatbot is ready.",
             "facilities_opened": "Showing nearby emergency and travel amenities.",
             "places_opened": "Opening saved places.",
@@ -96,10 +100,14 @@ class AuraGlobalCommandDispatcher:
             "welcome": "నమస్కారం, బాస్! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
             "nav_opened": "నావిగేషన్ తెరవబడింది.",
             "trips_opened": "మీ ట్రిప్స్ ఇక్కడ ఉన్నాయి.",
+            "bookings_opened": "మీ బుకింగ్స్ తెరవబడ్డాయి.",
             "hotels_opened": "హోటళ్లు వెతుకుతున్నాను.",
             "flights_opened": "ఫ్లైట్ ప్లానర్ తెరుస్తున్నాను.",
             "restaurants_opened": "రెస్టారెంట్లు వెతుకుతున్నాను.",
             "profile_opened": "మీ ప్రొఫైల్ తెరవబడింది.",
+            "settings_opened": "సెట్టింగ్స్ తెరవబడ్డాయి.",
+            "back_opened": "వెనుకకు వెళ్తున్నాను.",
+            "home_opened": "హోమ్ డ్యాష్‌బోర్డ్‌కి తిరిగి వెళ్తున్నాను.",
             "chat_opened": "AURA AI చాట్‌బాట్ సిద్ధంగా ఉంది, బాస్.",
             "facilities_opened": "సమీప అత్యవసర మరియు ప్రయాణ సౌకర్యాలు చూపిస్తున్నాను.",
             "places_opened": "సేవ్ చేసిన ప్రదేశాలు తెరవబడ్డాయి.",
@@ -121,10 +129,14 @@ class AuraGlobalCommandDispatcher:
             "welcome": "नमस्ते, बॉस! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
             "nav_opened": "नेविगेशन खोला जा रहा है।",
             "trips_opened": "ये रही आपकी यात्राएं।",
+            "bookings_opened": "आपकी बुकिंग्स खोली जा रही हैं।",
             "hotels_opened": "होटल ढूंढे जा रहे हैं।",
             "flights_opened": "फ्लाइट प्लानर खोला जा रहा है।",
             "restaurants_opened": "रेस्टोरेंट ढूंढे जा रहे हैं।",
             "profile_opened": "आपकी प्रोफाइल खोली जा रही है।",
+            "settings_opened": "सेटिंग्स खोली जा रही हैं।",
+            "back_opened": "पीछे जा रहे हैं।",
+            "home_opened": "होम डैशबोर्ड पर लौट रहे हैं।",
             "chat_opened": "AURA AI चैटबॉट तैयार है, बॉस।",
             "facilities_opened": "आस-पास की सुविधाएं दिखाई जा रही हैं।",
             "places_opened": "सहेजे गए स्थान खोले जा रहे हैं।",
@@ -146,10 +158,14 @@ class AuraGlobalCommandDispatcher:
             "welcome": "வணக்கம், பாஸ்! நெக்ஸ்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எப்படி உதவ முடியும்?",
             "nav_opened": "வழிசெலுத்தல் திறக்கப்படுகிறது.",
             "trips_opened": "உங்கள் பயணங்கள் இங்கே உள்ளன.",
+            "bookings_opened": "உங்கள் முன்பதிவுகள் திறக்கப்படுகின்றன.",
             "hotels_opened": "விடுதிகள் தேடப்படுகின்றன.",
             "flights_opened": "விமான திட்டமிடுபவர் திறக்கப்படுகிறது.",
             "restaurants_opened": "உணவகங்கள் தேடப்படுகின்றன.",
             "profile_opened": "உங்கள் சுயவிவரம் திறக்கப்படுகிறது.",
+            "settings_opened": "அமைப்புகள் திறக்கப்படுகின்றன.",
+            "back_opened": "பின்செல்கிறது.",
+            "home_opened": "முகப்புத் திரைக்கு திரும்புகிறது.",
             "chat_opened": "AURA AI சாட்பாட் தயாராக உள்ளது, பாஸ்.",
             "facilities_opened": "அருகிலுள்ள அவசர வசதிகள் காட்டப்படுகின்றன.",
             "places_opened": "சேமிக்கப்பட்ட இடங்கள் காட்டப்படுகின்றன.",
@@ -276,7 +292,7 @@ class AuraGlobalCommandDispatcher:
 
         # 1.6 Profile & User Account
         if any(k in q for k in ["ప్రొఫైల్", "ఖాతా", "प्रोफाइल", "சுயவிவரம்"]) or re.search(
-            r"\b(go\s+to|open|show|view)?\s*(my\s+)?(profile|account|preferences|settings)\b", q
+            r"\b(go\s+to|open|show|view)?\s*(my\s+)?(profile|account|user\s+profile)\b", q
         ):
             return AuraExecutionResult(
                 command_type=AuraCommandType.NAVIGATE_TAB,
@@ -332,6 +348,54 @@ class AuraGlobalCommandDispatcher:
                 text_response=f"🚗 {resp_bundle.get('guide_opened', 'Opening virtual guide.')}",
                 action_name="switch_view_guide",
                 ui_updates={"current_view": "virtual_guide"}
+            )
+
+        # 1.11 Bookings / Reservations
+        if any(k in q for k in ["బుకింగ్", "बुकिंग", "முன்பதிவு"]) or re.search(
+            r"\b(open|show|view)?\s*(my\s+)?(bookings?|reservations?)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("bookings_opened", "Opening your bookings."),
+                text_response=f"🎫 {resp_bundle.get('bookings_opened', 'Opening your bookings.')}",
+                action_name="open_bookings",
+                ui_updates={"current_view": "copilot_studio", "target_tab": "bookings"}
+            )
+
+        # 1.12 Go Back / Previous View
+        if any(k in q for k in ["వెనుకకు", "పీచే", "பின்செல்"]) or re.search(
+            r"\b(go\s+back|back|previous\s+(view|page|section)?)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("back_opened", "Going back."),
+                text_response=f"↩️ {resp_bundle.get('back_opened', 'Going back.')}",
+                action_name="navigate_go_back",
+                ui_updates={"trigger_go_back": True}
+            )
+
+        # 1.13 Go Home / Main Dashboard
+        if any(k in q for k in ["హోమ్", "డ్యాష్‌బోర్డ్", "होम", "முகப்பு"]) or re.search(
+            r"\b(go\s+home|home|return\s+home|main\s+dashboard|dashboard)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("home_opened", "Returning to home dashboard."),
+                text_response=f"🏠 {resp_bundle.get('home_opened', 'Returning to home dashboard.')}",
+                action_name="navigate_home",
+                ui_updates={"current_view": "dashboard", "target_tab": "nav"}
+            )
+
+        # 1.14 Settings / Preferences
+        if any(k in q for k in ["సెట్టింగ్స్", "सेटिंग्स", "அமைப்புகள்"]) or re.search(
+            r"\b(open\s+settings|settings|app\s+settings|preferences)\b", q
+        ):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.NAVIGATE_TAB,
+                spoken_response=resp_bundle.get("settings_opened", "Opening settings."),
+                text_response=f"⚙️ {resp_bundle.get('settings_opened', 'Opening settings.')}",
+                action_name="open_settings",
+                ui_updates={"current_view": "dashboard", "show_user_profile_modal": True, "scroll_to_profile": True}
             )
 
         # ---------------------------------------------------------------------
@@ -600,10 +664,32 @@ class AuraGlobalCommandDispatcher:
         Safely applies the resulting UI state mutations directly to streamlit's session_state.
         Ensures section switches occur within the single existing NextRoute application.
         """
+        # Maintain navigation view history for "Go back"
+        if "view_history" not in session_state:
+            session_state["view_history"] = ["dashboard"]
+
+        cur_view = session_state.get("current_view", "dashboard")
+        if not session_state["view_history"] or session_state["view_history"][-1] != cur_view:
+            session_state["view_history"].append(cur_view)
+
+        if result.ui_updates.get("trigger_go_back"):
+            history = session_state.get("view_history", [])
+            if len(history) > 1:
+                history.pop()  # Pop current
+                session_state["current_view"] = history[-1]
+            else:
+                session_state["current_view"] = "dashboard"
+            return
+
         for k, v in result.ui_updates.items():
             if k in ["txt_orig", "txt_dest"]:
                 continue
             session_state[k] = v
+
+        if result.ui_updates.get("current_view"):
+            new_v = result.ui_updates["current_view"]
+            if not session_state["view_history"] or session_state["view_history"][-1] != new_v:
+                session_state["view_history"].append(new_v)
 
         if result.ui_updates.get("target_tab") in ["nav", "facilities"]:
             session_state["current_view"] = "map_nav"
