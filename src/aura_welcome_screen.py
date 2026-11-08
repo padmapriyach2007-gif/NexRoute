@@ -922,9 +922,41 @@ def render_aura_welcome_hud(
     }}
 
     /* =========================================================================
-       RESPONSIVE DESIGN (TABLET & MOBILE)
+       COMPREHENSIVE RESPONSIVE DESIGN (ALL MOBILES, TABLETS & FOLDABLES)
+       Supports: Ultra-compact (320px–375px), Standard (376px–480px),
+       Phablets/Foldables (481px–768px), and Tablets (769px–820px)
        ========================================================================= */
     @media (max-width: 820px) {{
+        .aura-command-center {{
+            padding: 12px 14px 16px 14px;
+            border-radius: 18px;
+        }}
+
+        .command-top-row {{
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+        }}
+
+        .brand-cluster {{
+            flex: 0 1 auto;
+        }}
+
+        .top-right-controls {{
+            flex: 0 0 auto;
+            gap: 6px;
+        }}
+
+        .brand-pill {{
+            order: 3;
+            width: 100%;
+            justify-content: center;
+            margin-top: 4px;
+            font-size: 0.64rem;
+            padding: 3px 8px;
+        }}
+
         .holo-orbital-stage {{
             height: auto;
             min-height: unset;
@@ -943,15 +975,15 @@ def render_aura_welcome_hud(
             left: unset;
             top: unset;
             transform: none;
-            margin-bottom: 4px;
+            margin: 0 auto 6px auto;
         }}
 
         .holo-modules-container {{
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 8px;
             width: 100%;
+            box-sizing: border-box;
         }}
 
         .holo-module-node {{
@@ -961,37 +993,112 @@ def render_aura_welcome_hud(
             top: unset !important;
             bottom: unset !important;
             transform: none !important;
-            flex: 1 1 calc(33% - 12px);
-            min-width: 140px;
-            max-width: 220px;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            padding: 8px 10px !important;
+            gap: 8px !important;
+            border-radius: 14px !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }}
+
+        .btn-session-main {{
+            min-height: 38px;
+            padding: 4px 11px;
+            font-size: 0.65rem;
+            touch-action: manipulation;
+        }}
+
+        .btn-session-end {{
+            min-height: 38px;
+            padding: 4px 9px;
+            font-size: 0.64rem;
+            touch-action: manipulation;
         }}
     }}
 
     @media (max-width: 540px) {{
-        .holo-module-node {{
-            flex: 1 1 calc(50% - 10px);
-            min-width: 125px;
-            padding: 6px 10px;
-            gap: 6px;
+        .aura-command-center {{
+            padding: 10px 10px 14px 10px;
+            border-radius: 16px;
         }}
-        .holo-glyph-disc {{
-            width: 30px;
-            height: 30px;
+        .brand-compass-icon {{
+            width: 26px;
+            height: 26px;
         }}
-        .holo-node-title {{
-            font-size: 0.74rem;
-        }}
-        .holo-node-sub {{
-            font-size: 0.52rem;
+        .brand-compass-icon svg {{
+            width: 26px;
+            height: 26px;
         }}
         .brand-nexroute-title {{
             font-size: 0.82rem;
+            letter-spacing: 0.12em;
         }}
         .brand-nexroute-sub {{
             display: none;
         }}
         .greeting-headline {{
-            font-size: 0.95rem;
+            font-size: 0.88rem;
+            line-height: 1.35;
+        }}
+        .live-transcript-box {{
+            font-size: 0.72rem;
+            padding: 6px 10px;
+            max-width: 100%;
+        }}
+        .holo-module-node {{
+            padding: 6px 8px !important;
+            gap: 6px !important;
+            border-radius: 12px !important;
+        }}
+        .holo-glyph-disc {{
+            width: 28px !important;
+            height: 28px !important;
+            min-width: 28px !important;
+        }}
+        .holo-glyph-disc svg {{
+            width: 16px !important;
+            height: 16px !important;
+        }}
+        .holo-node-title {{
+            font-size: 0.74rem !important;
+        }}
+        .holo-node-sub {{
+            font-size: 0.50rem !important;
+        }}
+    }}
+
+    @media (max-width: 375px) {{
+        .aura-command-center {{
+            padding: 8px 8px 12px 8px !important;
+            border-radius: 14px !important;
+        }}
+        .brand-nexroute-title {{
+            font-size: 0.75rem !important;
+            letter-spacing: 0.08em !important;
+        }}
+        .status-badge {{
+            font-size: 0.56rem !important;
+            padding: 2px 6px !important;
+        }}
+        .btn-session-main {{
+            font-size: 0.58rem !important;
+            padding: 2px 7px !important;
+        }}
+        .avatar-stage {{
+            width: 84px !important;
+            height: 84px !important;
+        }}
+        .holo-modules-container {{
+            gap: 5px !important;
+        }}
+        .holo-node-title {{
+            font-size: 0.68rem !important;
+        }}
+        .holo-node-sub {{
+            font-size: 0.46rem !important;
         }}
     }}
 </style>

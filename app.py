@@ -844,34 +844,27 @@ components.html(f"""
 
 
         if (existingMeta) {{
-
-
-
-            existingMeta.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
-
-
-
+            existingMeta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover');
         }} else {{
-
-
-
             var newMeta = pDoc.createElement('meta');
-
-
-
             newMeta.name = 'viewport';
-
-
-
-            newMeta.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
-
-
-
+            newMeta.content = 'width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover';
             pDoc.head.appendChild(newMeta);
-
-
-
         }}
+        var mobileMetas = [
+            {{ name: 'theme-color', content: '#030712' }},
+            {{ name: 'apple-mobile-web-app-capable', content: 'yes' }},
+            {{ name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }},
+            {{ name: 'mobile-web-app-capable', content: 'yes' }}
+        ];
+        mobileMetas.forEach(function(m) {{
+            if (!pDoc.querySelector('meta[name="' + m.name + '"]')) {{
+                var el = pDoc.createElement('meta');
+                el.name = m.name;
+                el.content = m.content;
+                pDoc.head.appendChild(el);
+            }}
+        }});
 
 
 
@@ -4613,6 +4606,51 @@ st.markdown("""
     @media (max-width: 992px) {
         .mobile-bottom-sheet-handle-bar {
             display: block !important;
+        }
+
+        /* Prevent iOS Safari auto-zoom on input focus */
+        input, textarea, select, .stTextInput input, .stSelectbox div {
+            font-size: 16px !important;
+        }
+
+        /* Universal mobile touch optimization */
+        button, a, [role="button"], .stButton > button {
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        /* Side-by-side action buttons in mobile drawer */
+        div[data-testid="stHorizontalBlock"]:has(button[key*="btn_side_focus"]),
+        div[data-testid="stHorizontalBlock"]:has(button[key*="btn_side_clear"]) {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(button[key*="btn_side_focus"]) > div[data-testid="stColumn"],
+        div[data-testid="stHorizontalBlock"]:has(button[key*="btn_side_clear"]) > div[data-testid="stColumn"] {
+            flex: 1 1 50% !important;
+            width: 50% !important;
+            min-width: 0 !important;
+        }
+
+        /* Amenity quick stop buttons: clean 3-column touch grid */
+        div[data-testid="stHorizontalBlock"]:has(button[key*="btn_quick_stop"]) {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 6px !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(button[key*="btn_quick_stop"]) > div[data-testid="stColumn"] {
+            flex: 1 1 33.33% !important;
+            width: 33.33% !important;
+            min-width: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(button[key*="btn_quick_stop"]) button {
+            min-height: 40px !important;
+            font-size: 0.72rem !important;
+            padding: 4px 6px !important;
+            white-space: nowrap !important;
         }
         .st-key-nav_map_and_controls_container div[data-testid="stHorizontalBlock"] {
             display: flex !important;

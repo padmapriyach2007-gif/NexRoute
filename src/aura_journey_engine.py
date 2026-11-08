@@ -1357,6 +1357,197 @@ def build_aura_journey_cockpit_html(
                 gap: 20px;
                 width: 100%;
             }}
+
+            /* =========================================================================
+               MOBILE-FIRST RESPONSIVE ENGINE (ALL SMARTPHONES, FOLDABLES & TABLETS)
+               Supports: Ultra-compact (320px–375px), Standard (376px–480px), Phablets (481px–768px)
+               ========================================================================= */
+            @media (max-width: 768px) {{
+                .aura-journey-shell {{
+                    padding: 10px 10px 14px 10px !important;
+                    border-radius: 16px !important;
+                    margin: 0 0 10px 0 !important;
+                    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75) !important;
+                    box-sizing: border-box !important;
+                    width: 100% !important;
+                }}
+
+                .aura-header-hud {{
+                    flex-direction: column !important;
+                    align-items: stretch !important;
+                    gap: 10px !important;
+                    padding-bottom: 10px !important;
+                }}
+
+                .aura-brand-group {{
+                    justify-content: flex-start !important;
+                    gap: 10px !important;
+                    width: 100% !important;
+                }}
+
+                .aura-avatar-pod {{
+                    width: 46px !important;
+                    height: 46px !important;
+                    min-width: 46px !important;
+                }}
+                .aura-avatar-pod img {{
+                    width: 38px !important;
+                    height: 38px !important;
+                }}
+
+                .aura-title-block {{
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                }}
+
+                .aura-header-hud > div:last-child {{
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    gap: 6px !important;
+                    justify-content: flex-start !important;
+                    width: 100% !important;
+                }}
+
+                #cockpit-lang-select {{
+                    flex: 1 1 auto !important;
+                    min-width: 100px !important;
+                    height: 36px !important;
+                    font-size: 0.70rem !important;
+                }}
+
+                .aura-thought-banner {{
+                    margin: 8px 0 !important;
+                    padding: 8px 12px !important;
+                    gap: 8px !important;
+                    border-radius: 10px !important;
+                }}
+                .aura-thought-text {{
+                    font-size: 0.78rem !important;
+                    line-height: 1.35 !important;
+                }}
+
+                .sensor-motion-hud {{
+                    flex-direction: column !important;
+                    align-items: stretch !important;
+                    gap: 8px !important;
+                    padding: 8px 10px !important;
+                    margin-bottom: 10px !important;
+                }}
+                .sensor-motion-left, .sensor-motion-right {{
+                    width: 100% !important;
+                    justify-content: space-between !important;
+                }}
+
+                .pipeline-track {{
+                    padding: 4px 2px 8px 2px !important;
+                    gap: 8px !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    scroll-snap-type: x mandatory !important;
+                }}
+                .pipeline-step-card {{
+                    flex: 0 0 150px !important;
+                    min-width: 150px !important;
+                    scroll-snap-align: start !important;
+                    border-radius: 12px !important;
+                }}
+                .step-picture-frame {{
+                    height: 72px !important;
+                }}
+
+                .active-maneuver-stage {{
+                    padding: 10px 12px !important;
+                    gap: 10px !important;
+                    margin: 8px 0 !important;
+                    border-radius: 12px !important;
+                }}
+                .maneuver-big-icon {{
+                    width: 44px !important;
+                    height: 44px !important;
+                    min-width: 44px !important;
+                    font-size: 1.5rem !important;
+                    border-radius: 10px !important;
+                }}
+                .maneuver-headline {{
+                    font-size: 0.90rem !important;
+                    line-height: 1.2 !important;
+                }}
+                .maneuver-sub {{
+                    font-size: 0.72rem !important;
+                }}
+                .maneuver-dist-badge {{
+                    font-size: 1.20rem !important;
+                }}
+
+                .aura-3d-scene-container {{
+                    height: clamp(200px, 34vh, 280px) !important;
+                    margin: 8px 0 !important;
+                    border-radius: 12px !important;
+                }}
+
+                .scene-hud-overlay {{
+                    top: 6px !important;
+                    left: 6px !important;
+                    right: 6px !important;
+                    flex-wrap: wrap !important;
+                    gap: 4px !important;
+                }}
+                .scene-badge, .scene-cam-badge {{
+                    font-size: 0.58rem !important;
+                    padding: 2px 5px !important;
+                }}
+
+                .controls-toolbar {{
+                    gap: 8px !important;
+                    padding-top: 8px !important;
+                    margin-top: 8px !important;
+                }}
+
+                .btn-action-pill {{
+                    min-height: 38px !important;
+                    padding: 4px 10px !important;
+                    font-size: 0.72rem !important;
+                    touch-action: manipulation !important;
+                    -webkit-tap-highlight-color: transparent !important;
+                }}
+
+                /* Horizontal Swipeable Vehicle Mode Carousel on Mobile */
+                .controls-toolbar > div:first-child {{
+                    overflow-x: auto !important;
+                    white-space: nowrap !important;
+                    flex-wrap: nowrap !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    padding-bottom: 6px !important;
+                    scrollbar-width: thin !important;
+                    gap: 5px !important;
+                }}
+                .btn-veh-selector {{
+                    flex: 0 0 auto !important;
+                    min-height: 36px !important;
+                    padding: 4px 9px !important;
+                    font-size: 0.70rem !important;
+                }}
+            }}
+
+            @media (max-width: 375px) {{
+                .aura-journey-shell {{
+                    padding: 8px 6px 10px 6px !important;
+                    border-radius: 12px !important;
+                }}
+                .pipeline-step-card {{
+                    flex: 0 0 135px !important;
+                    min-width: 135px !important;
+                }}
+                .maneuver-headline {{
+                    font-size: 0.84rem !important;
+                }}
+                .maneuver-dist-badge {{
+                    font-size: 1.05rem !important;
+                }}
+                .btn-action-pill {{
+                    font-size: 0.68rem !important;
+                    padding: 3px 8px !important;
+                }}
+            }}
         </style>
 
         <!-- Top Header & Brand -->
