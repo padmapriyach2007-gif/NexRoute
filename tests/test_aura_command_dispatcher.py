@@ -171,3 +171,31 @@ class TestAuraCommandDispatcher:
         AuraGlobalCommandDispatcher.apply_execution_result(res, fake_state)
         assert fake_state.get("target_tab") == "nav"
         assert fake_state.get("scroll_to_app_map") is True
+
+    def test_application_wide_advanced_commands(self):
+        ctx = {"active_tab": "nav"}
+
+        # Route planner
+        res = AuraGlobalCommandDispatcher.parse_and_dispatch("Open route planner", ctx)
+        assert res.command_type == AuraCommandType.NAVIGATE_TAB
+        assert res.ui_updates.get("target_tab") == "nav"
+
+        # Plan a trip to Hyderabad
+        res = AuraGlobalCommandDispatcher.parse_and_dispatch("Plan a trip to Hyderabad", ctx)
+        assert res.command_type == AuraCommandType.ROUTE_ACTION
+        assert res.ui_updates.get("pending_dest") == "hyderabad"
+
+        # Add a stop to my route
+        res = AuraGlobalCommandDispatcher.parse_and_dispatch("Add a stop to my route", ctx)
+        assert res.command_type == AuraCommandType.ROUTE_ACTION
+        assert res.ui_updates.get("map_picking_mode") == "stop"
+
+        # Full screen map
+        res = AuraGlobalCommandDispatcher.parse_and_dispatch("Go full screen", ctx)
+        assert res.command_type == AuraCommandType.MAP_ACTION
+        assert res.ui_updates.get("trigger_fullscreen") is True
+
+        # Show map details
+        res = AuraGlobalCommandDispatcher.parse_and_dispatch("Show map details", ctx)
+        assert res.command_type == AuraCommandType.MAP_ACTION
+        assert res.ui_updates.get("trigger_layers_drawer") is True

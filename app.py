@@ -8246,6 +8246,28 @@ if "aura_cmd" in st.query_params:
         except Exception:
             pass
 
+if "close_welcome" in st.query_params:
+    st.session_state.show_aura_welcome = False
+    st.session_state.aura_welcome_greeted = True
+    try:
+        del st.query_params["close_welcome"]
+    except Exception:
+        pass
+
+if "open_welcome" in st.query_params:
+    st.session_state.show_aura_welcome = True
+    try:
+        del st.query_params["open_welcome"]
+    except Exception:
+        pass
+
+if "aura_welcome_greeted" not in st.session_state:
+    st.session_state.aura_welcome_greeted = False
+if "aura_auto_greeting_enabled" not in st.session_state:
+    st.session_state.aura_auto_greeting_enabled = True
+if "show_aura_welcome" not in st.session_state:
+    st.session_state.show_aura_welcome = True
+
 
 
 
@@ -9872,11 +9894,30 @@ components.html(f"""
 
 """, height=0, width=0)
 
+# =========================================================================
+# AURA JARVIS-STYLE WELCOME SCREEN & AUTOMATIC VOICE ASSISTANT ACTIVATION
+# =========================================================================
+if st.session_state.get("show_aura_welcome", True):
+    from src.aura_welcome_screen import render_aura_welcome_hud
+    cur_app_lang = st.session_state.get("app_language", "en")
+    should_auto_speak = st.session_state.get("aura_auto_greeting_enabled", True) and not st.session_state.get("aura_welcome_greeted", False)
+    # Mark greeted so repeated Streamlit reruns NEVER trigger duplicate greetings
+    st.session_state.aura_welcome_greeted = True
 
-
-
-
-
+    welcome_hud_html = render_aura_welcome_hud(
+        current_lang=cur_app_lang,
+        auto_speak=should_auto_speak,
+        bot_logo_uri=aura_logo_uri,
+        user_name="Boss"
+    )
+    components.html(welcome_hud_html, height=480, scrolling=False)
+else:
+    # Quick Re-open Button for AURA Voice Assistant HUD
+    col_w_btn, _ = st.columns([0.35, 0.65])
+    with col_w_btn:
+        if st.button("🎙️ AURA Voice Assistant", key="btn_open_aura_welcome", help="Launch AURA JARVIS-Style Voice Assistant Screen"):
+            st.session_state.show_aura_welcome = True
+            st.rerun()
 
 # Coordinate, telemetry, and text anchors available globally across views
 

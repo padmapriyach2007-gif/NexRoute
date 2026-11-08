@@ -172,7 +172,7 @@ class AuraGlobalCommandDispatcher:
         # ---------------------------------------------------------------------
         # 1. NAVIGATION TAB & APP SECTION CONTROLS
         # ---------------------------------------------------------------------
-        if any(k in q for k in ["నావిగేషన్", "నేవిగేషన్", "नेविगेशन", "வழிசெலுத்தல்"]) or re.search(r"\b(open\s+(navigation|nav|dashboard|map)|go\s+to\s+navigation|start\s+nav)\b", q):
+        if any(k in q for k in ["నావిగేషన్", "నేవిగేషన్", "नेविगेशन", "வழிசெலுத்தல்"]) or re.search(r"\b(open\s+(navigation|nav|dashboard|map|route\s+planner)|go\s+to\s+navigation|start\s+nav|route\s+planner|plan\s+route)\b", q):
             return AuraExecutionResult(
                 command_type=AuraCommandType.NAVIGATE_TAB,
                 spoken_response=resp_bundle["nav_opened"],
@@ -259,6 +259,24 @@ class AuraGlobalCommandDispatcher:
                 ui_updates={"auto_fit_bounds": True, "scroll_to_app_map": True}
             )
 
+        if re.search(r"\b(full\s*screen|go\s+full\s*screen|open\s+full\s*screen|toggle\s+full\s*screen|exit\s+full\s*screen)\b", q):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_ACTION,
+                spoken_response="Toggling full-screen map mode, Boss.",
+                text_response="⛶ Toggling full screen map view...",
+                action_name="toggle_fullscreen",
+                ui_updates={"trigger_fullscreen": True, "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(show\s+map\s+details|map\s+details|layer\s+details|traffic\s+details|transit\s+layers?)\b", q):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_ACTION,
+                spoken_response="Displaying map details and environmental layers, Boss.",
+                text_response="🥞 Opening map details & environmental layers...",
+                action_name="show_map_details",
+                ui_updates={"trigger_layers_drawer": True, "scroll_to_app_map": True}
+            )
+
         # ---------------------------------------------------------------------
         # 3. ROUTE ACTIONS & RECONFIGURATIONS
         # ---------------------------------------------------------------------
@@ -298,6 +316,15 @@ class AuraGlobalCommandDispatcher:
                 text_response=f"⇅ {resp_bundle['swapped']}",
                 action_name="swap_endpoints",
                 ui_updates={"trigger_swap_endpoints": True}
+            )
+
+        if re.search(r"\b(add\s+a\s+stop(\s+to\s+my\s+route)?|add\s+stop|add\s+waypoint|intermediate\s+stop)\b", q):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.ROUTE_ACTION,
+                spoken_response="Intermediate stop selection activated. Click anywhere on the map or type a location, Boss.",
+                text_response="🟣 Intermediate stop mode enabled. Select on map or search above.",
+                action_name="add_intermediate_stop",
+                ui_updates={"map_picking_mode": "stop", "target_tab": "nav", "scroll_to_app_map": True}
             )
 
         if re.search(r"\b(recalculate\s+routes?|find\s+new\s+routes?|refresh\s+routes?|మళ్ళీ\s+లెక్కించు|रूट\s+रिफ्रेश)\b", q):
@@ -413,7 +440,7 @@ class AuraGlobalCommandDispatcher:
         # ---------------------------------------------------------------------
         # 7. ROUTE DESTINATION VIA VOICE: "Navigate to [place]"
         # ---------------------------------------------------------------------
-        nav_dest_match = re.search(r"\b(navigate\s+to|drive\s+to|go\s+to|directions?\s+to|take\s+me\s+to|route\s+to)\s+(.+)", q)
+        nav_dest_match = re.search(r"\b(navigate\s+to|drive\s+to|go\s+to|directions?\s+to|take\s+me\s+to|route\s+to|plan\s+a\s+trip\s+to|plan\s+trip\s+to|trip\s+to)\s+(.+)", q)
         if nav_dest_match:
             dest_query = nav_dest_match.group(2).strip()
             # Exclude app tab names
