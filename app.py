@@ -4170,44 +4170,152 @@ st.markdown("""
         animation: auraLivePulse 2s infinite;
     }
 
-    /* ChatGPT Circular Arrow-Up Send Button */
-    div[data-testid="stChatInput"] button,
-    button[data-testid="stChatInputSubmitButton"] {
+    /* =========================================================================
+       CHATGPT UNIFIED COMPOSER CAPSULE (Plus Button + Input + Mic + Send Arrow)
+       ========================================================================= */
+    .aura-chatgpt-composer-wrapper {
+        margin-top: 10px;
+        width: 100% !important;
+    }
+    .aura-chatgpt-composer-wrapper form[data-testid="stForm"] {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        background: rgba(13, 20, 36, 0.95) !important;
+        border: 1.5px solid rgba(56, 189, 248, 0.38) !important;
+        border-radius: 28px !important;
+        padding: 4px 10px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(0, 240, 255, 0.15) !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) {
+        width: 38px !important;
+        min-width: 38px !important;
+        max-width: 38px !important;
+        flex: 0 0 38px !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
+        flex: 1 1 auto !important;
+        min-width: 120px !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3) {
+        width: 38px !important;
+        min-width: 38px !important;
+        max-width: 38px !important;
+        flex: 0 0 38px !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(4) {
+        width: 42px !important;
+        min-width: 42px !important;
+        max-width: 42px !important;
+        flex: 0 0 42px !important;
+    }
+
+    @media (max-width: 640px) {
+        .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+        }
+        .aura-chatgpt-composer-wrapper div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+            min-width: 0 !important;
+        }
+    }
+
+    /* Plus Button inside Capsule (Left) */
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(1) button {
+        background: transparent !important;
+        border: none !important;
+        color: #94a3b8 !important;
+        font-size: 1.35rem !important;
+        padding: 0 !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+        box-shadow: none !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(1) button:hover {
+        color: #00f0ff !important;
+        background: rgba(0, 240, 255, 0.15) !important;
+    }
+
+    /* Input Field inside Capsule (Center) */
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(2) div[data-testid="stTextInput"] {
+        margin-bottom: 0 !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(2) input {
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        color: #f8fafc !important;
+        font-size: 0.90rem !important;
+        padding: 8px 4px !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(2) input:focus {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Microphone Button inside Capsule (Right) */
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(3) button {
+        background: transparent !important;
+        border: none !important;
+        color: #94a3b8 !important;
+        font-size: 1.15rem !important;
+        padding: 0 !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+        box-shadow: none !important;
+    }
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(3) button:hover {
+        color: #00f0ff !important;
+        background: rgba(0, 240, 255, 0.15) !important;
+    }
+
+    /* Circular Arrow-Up Send Button inside Capsule (Far Right) */
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(4) button {
         background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%) !important;
+        border: none !important;
         border-radius: 50% !important;
         width: 34px !important;
         height: 34px !important;
         min-width: 34px !important;
         min-height: 34px !important;
         color: #030712 !important;
-        box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        border: none !important;
+        font-size: 1.25rem !important;
+        font-weight: 900 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 0 14px rgba(0, 240, 255, 0.5) !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
     }
-    div[data-testid="stChatInput"] button:hover {
+    .aura-chatgpt-composer-wrapper div[data-testid="column"]:nth-child(4) button:hover {
         transform: scale(1.08) !important;
         box-shadow: 0 0 22px rgba(0, 240, 255, 0.85) !important;
-    }
-    div[data-testid="stChatInput"] button:disabled {
-        opacity: 0.35 !important;
-        box-shadow: none !important;
-        cursor: not-allowed !important;
-    }
-
-    /* ChatGPT Composer Input Textarea */
-    div[data-testid="stChatInput"] textarea {
-        background: rgba(13, 20, 36, 0.90) !important;
-        border: 1.5px solid rgba(56, 189, 248, 0.30) !important;
-        border-radius: 22px !important;
-        color: #f8fafc !important;
-        font-size: 0.88rem !important;
-        padding: 10px 16px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40) !important;
-        transition: all 0.25s ease !important;
-    }
-    div[data-testid="stChatInput"] textarea:focus {
-        border-color: #00f0ff !important;
-        box-shadow: 0 0 20px rgba(0, 240, 255, 0.35) !important;
     }
 
     /* Plus and Mic Popover Buttons in Composer */
@@ -6641,120 +6749,126 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 st.session_state.pending_chat_attachments = []
                 st.rerun()
 
-    # Composer Row: Plus (+) Button | Chat Input Field | Mic (🎙️) Button
-    col_plus, col_input, col_mic = st.columns([0.10, 0.80, 0.10], vertical_alignment="bottom")
+    # Unified ChatGPT-Style Message Composer Capsule (Plus Button + Input + Mic + Send Arrow)
+    st.markdown('<div class="aura-chatgpt-composer-wrapper">', unsafe_allow_html=True)
+    with st.form(f"aura_chatgpt_form_{key_prefix}", clear_on_submit=True):
+        col_c_plus, col_c_input, col_c_mic, col_c_send = st.columns([1, 14, 1, 1], vertical_alignment="center")
 
-    # A. Plus (+) Button with Expandable Menu
-    with col_plus:
-        with st.popover("➕", help="Add attachments, files, or travel context"):
-            st.markdown("<div style='font-size: 0.78rem; font-weight: 800; color: #38bdf8; margin-bottom: 8px;'>ATTACH TO JOURNEY</div>", unsafe_allow_html=True)
-            tab_file, tab_geo, tab_pref = st.tabs(["📄 Upload", "📍 Route Data", "⚙️ Preferences"])
-            with tab_file:
-                up_file = st.file_uploader(
-                    "Upload File / Image",
-                    type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "md", "csv", "json", "py"],
-                    key=f"chat_uploader_{key_prefix}"
-                )
-                if up_file is not None:
-                    f_bytes = up_file.getvalue()
-                    f_name = up_file.name
-                    f_mime = up_file.type or "application/octet-stream"
-                    if "pending_chat_attachments" not in st.session_state:
-                        st.session_state.pending_chat_attachments = []
-                    if not any(a.get("name") == f_name for a in st.session_state.pending_chat_attachments):
-                        if f_mime.startswith("image/"):
-                            import base64
-                            b64_str = base64.b64encode(f_bytes).decode("ascii")
-                            st.session_state.pending_chat_attachments.append({
-                                "type": "image",
-                                "name": f_name,
-                                "mime_type": f_mime,
-                                "data_base64": b64_str
-                            })
-                        else:
-                            txt_content, tag = DocumentParser.extract_text_from_bytes(f_bytes, f_name)
-                            st.session_state.pending_chat_attachments.append({
-                                "type": "document",
-                                "name": f_name,
-                                "text": txt_content,
-                                "summary": tag
-                            })
-                        st.success(f"Attached: {f_name}")
+        with col_c_plus:
+            with st.popover("➕", help="Add attachments, files, or travel context"):
+                st.markdown("<div style='font-size: 0.78rem; font-weight: 800; color: #38bdf8; margin-bottom: 8px;'>ATTACH TO JOURNEY</div>", unsafe_allow_html=True)
+                tab_file, tab_geo, tab_pref = st.tabs(["📄 Upload", "📍 Route Data", "⚙️ Preferences"])
+                with tab_file:
+                    up_file = st.file_uploader(
+                        "Upload File / Image",
+                        type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "md", "csv", "json", "py"],
+                        key=f"chat_uploader_{key_prefix}"
+                    )
+                    if up_file is not None:
+                        f_bytes = up_file.getvalue()
+                        f_name = up_file.name
+                        f_mime = up_file.type or "application/octet-stream"
+                        if "pending_chat_attachments" not in st.session_state:
+                            st.session_state.pending_chat_attachments = []
+                        if not any(a.get("name") == f_name for a in st.session_state.pending_chat_attachments):
+                            if f_mime.startswith("image/"):
+                                import base64
+                                b64_str = base64.b64encode(f_bytes).decode("ascii")
+                                st.session_state.pending_chat_attachments.append({
+                                    "type": "image",
+                                    "name": f_name,
+                                    "mime_type": f_mime,
+                                    "data_base64": b64_str
+                                })
+                            else:
+                                txt_content, tag = DocumentParser.extract_text_from_bytes(f_bytes, f_name)
+                                st.session_state.pending_chat_attachments.append({
+                                    "type": "document",
+                                    "name": f_name,
+                                    "text": txt_content,
+                                    "summary": tag
+                                })
+                            st.success(f"Attached: {f_name}")
+                            st.rerun()
+
+                with tab_geo:
+                    orig_l = st.session_state.get("user_live_label") or "Live GPS"
+                    dest_l = st.session_state.get("selected_dest_label") or "Unset Destination"
+                    c_orig = st.session_state.get("user_live_coords")
+                    c_dest = st.session_state.get("selected_dest_coords")
+                    st.caption(f"**Origin:** {orig_l} `({c_orig})`\n\n**Destination:** {dest_l} `({c_dest})`")
+                    if st.button("📌 Attach Live Coordinates & Corridor", key=f"btn_att_geo_{key_prefix}", use_container_width=True):
+                        if "pending_chat_attachments" not in st.session_state:
+                            st.session_state.pending_chat_attachments = []
+                        geo_info = f"Current Location: {orig_l} ({c_orig}), Target Destination: {dest_l} ({c_dest})"
+                        st.session_state.pending_chat_attachments.append({
+                            "type": "document",
+                            "name": "Live_Journey_Context.txt",
+                            "text": geo_info,
+                            "summary": "Live Navigation & Corridor Telemetry"
+                        })
+                        st.success("Attached live route data!")
                         st.rerun()
 
-            with tab_geo:
-                orig_l = st.session_state.get("user_live_label") or "Live GPS"
-                dest_l = st.session_state.get("selected_dest_label") or "Unset Destination"
-                c_orig = st.session_state.get("user_live_coords")
-                c_dest = st.session_state.get("selected_dest_coords")
-                st.caption(f"**Origin:** {orig_l} `({c_orig})`\n\n**Destination:** {dest_l} `({c_dest})`")
-                if st.button("📌 Attach Live Coordinates & Corridor", key=f"btn_att_geo_{key_prefix}", use_container_width=True):
-                    if "pending_chat_attachments" not in st.session_state:
-                        st.session_state.pending_chat_attachments = []
-                    geo_info = f"Current Location: {orig_l} ({c_orig}), Target Destination: {dest_l} ({c_dest})"
-                    st.session_state.pending_chat_attachments.append({
-                        "type": "document",
-                        "name": "Live_Journey_Context.txt",
-                        "text": geo_info,
-                        "summary": "Live Navigation & Corridor Telemetry"
-                    })
-                    st.success("Attached live route data!")
-                    st.rerun()
+                with tab_pref:
+                    st.caption("Active Routing Engine Preferences:")
+                    pref_tolls = st.checkbox("Avoid Toll Roads", value=st.session_state.get("avoid_tolls", False), key=f"chk_pref_toll_{key_prefix}")
+                    pref_hw = st.checkbox("Avoid Highways", value=st.session_state.get("avoid_highways", False), key=f"chk_pref_hw_{key_prefix}")
+                    if st.button("Apply to Assistant Context", key=f"btn_apply_pref_{key_prefix}", use_container_width=True):
+                        st.session_state.avoid_tolls = pref_tolls
+                        st.session_state.avoid_highways = pref_hw
+                        if "pending_chat_attachments" not in st.session_state:
+                            st.session_state.pending_chat_attachments = []
+                        st.session_state.pending_chat_attachments.append({
+                            "type": "document",
+                            "name": "Preferences.txt",
+                            "text": f"User Preferences: avoid_tolls={pref_tolls}, avoid_highways={pref_hw}",
+                            "summary": "User Journey Preferences"
+                        })
+                        st.success("Preferences updated!")
+                        st.rerun()
 
-            with tab_pref:
-                st.caption("Active Routing Engine Preferences:")
-                pref_tolls = st.checkbox("Avoid Toll Roads", value=st.session_state.get("avoid_tolls", False), key=f"chk_pref_toll_{key_prefix}")
-                pref_hw = st.checkbox("Avoid Highways", value=st.session_state.get("avoid_highways", False), key=f"chk_pref_hw_{key_prefix}")
-                if st.button("Apply to Assistant Context", key=f"btn_apply_pref_{key_prefix}", use_container_width=True):
-                    st.session_state.avoid_tolls = pref_tolls
-                    st.session_state.avoid_highways = pref_hw
-                    if "pending_chat_attachments" not in st.session_state:
-                        st.session_state.pending_chat_attachments = []
-                    st.session_state.pending_chat_attachments.append({
-                        "type": "document",
-                        "name": "Preferences.txt",
-                        "text": f"User Preferences: avoid_tolls={pref_tolls}, avoid_highways={pref_hw}",
-                        "summary": "User Journey Preferences"
-                    })
-                    st.success("Preferences updated!")
-                    st.rerun()
+        with col_c_input:
+            user_text_val = st.text_input(
+                "Ask Aura",
+                placeholder="Ask Aura anything about your journey...",
+                label_visibility="collapsed",
+                key=f"chat_text_in_{key_prefix}"
+            )
 
-    # C. Microphone (Voice Input) Button
-    with col_mic:
-        with st.popover("🎙️", help="Voice input / speech recognition"):
-            cur_lang = st.session_state.get("app_language", "en")
-            v_info = LANGUAGE_SPEECH_MAP.get(cur_lang, LANGUAGE_SPEECH_MAP["en"])
-            bcp47_lang = v_info.get("bcp47", "en-IN")
-            st.caption(f"Speech Language: **{v_info.get('name', 'English')}** (`{bcp47_lang}`)")
-            try:
-                aud_data = st.audio_input("Record voice question", key=f"rec_mic_{key_prefix}")
-                if aud_data is not None:
-                    import speech_recognition as sr
-                    r_engine = sr.Recognizer()
-                    from io import BytesIO
-                    with sr.AudioFile(BytesIO(aud_data.getvalue())) as s_src:
-                        a_recorded = r_engine.record(s_src)
-                        try:
-                            transcribed = r_engine.recognize_google(a_recorded, language=bcp47_lang)
-                            if transcribed:
-                                st.session_state.pending_chat_prompt = transcribed
-                                st.success(f"🎙️ \"{transcribed}\"")
-                                st.rerun()
-                        except Exception as e_rec:
-                            st.info(f"Could not transcribe audio ({e_rec}). Type your query in the chat box.")
-            except Exception as e_mic:
-                st.caption("Voice ready. Microphone permissions active.")
+        with col_c_mic:
+            with st.popover("🎙️", help="Voice input / speech recognition"):
+                cur_lang = st.session_state.get("app_language", "en")
+                v_info = LANGUAGE_SPEECH_MAP.get(cur_lang, LANGUAGE_SPEECH_MAP["en"])
+                bcp47_lang = v_info.get("bcp47", "en-IN")
+                st.caption(f"Speech Language: **{v_info.get('name', 'English')}** (`{bcp47_lang}`)")
+                try:
+                    aud_data = st.audio_input("Record voice question", key=f"rec_mic_{key_prefix}")
+                    if aud_data is not None:
+                        import speech_recognition as sr
+                        r_engine = sr.Recognizer()
+                        from io import BytesIO
+                        with sr.AudioFile(BytesIO(aud_data.getvalue())) as s_src:
+                            a_recorded = r_engine.record(s_src)
+                            try:
+                                transcribed = r_engine.recognize_google(a_recorded, language=bcp47_lang)
+                                if transcribed:
+                                    st.session_state.pending_chat_prompt = transcribed
+                                    st.success(f"🎙️ \"{transcribed}\"")
+                                    st.rerun()
+                            except Exception as e_rec:
+                                st.info(f"Could not transcribe audio ({e_rec}). Type your query in the chat box.")
+                except Exception as e_mic:
+                    st.caption("Voice ready. Microphone permissions active.")
 
-    # B & D. Message Input Area and Circular Arrow-Up Send Button
-    with col_input:
-        user_prompt = st.chat_input(
-            "Ask Aura anything about your journey...",
-            key=f"chat_input_val_{key_prefix}"
-        )
+        with col_c_send:
+            submit_click = st.form_submit_button("↑", help="Send to Aura")
 
-    if user_prompt and user_prompt.strip():
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if submit_click and user_text_val and user_text_val.strip():
         with st.spinner("AURA is planning your journey..."):
-            _execute_chat_turn(user_prompt.strip())
+            _execute_chat_turn(user_text_val.strip())
         st.rerun()
 
 # Initialize Default Multi-Objective Navigation & Facilities States (No Sidebar)

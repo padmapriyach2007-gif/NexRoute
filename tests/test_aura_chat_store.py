@@ -52,3 +52,4 @@ def test_rename_and_delete_conversation():
     
     AuraConversationStore.delete_conversation(cid)
     assert AuraConversationStore.get_conversation(cid) is None
+
