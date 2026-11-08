@@ -280,7 +280,7 @@ canvas#auraWaveformCanvas {{
 
     <!-- Title and Status -->
     <div class="aura-header">
-        <div class="aura-title">AURA • JARVIS COPILOT</div>
+        <div class="aura-title">AURA</div>
         <div class="aura-status-pill" id="auraStatusPill">
             <span class="status-indicator-dot" id="statusDot"></span>
             <span id="statusText">AURA STANDBY</span>

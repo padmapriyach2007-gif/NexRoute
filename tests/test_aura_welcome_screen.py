@@ -57,7 +57,7 @@ class TestAuraWelcomeScreen:
             user_name="Boss"
         )
         assert "<!DOCTYPE html>" in html
-        assert "AURA • JARVIS AI COPILOT" in html
+        assert "AURA" in html
         assert "statusBadge" in html
         assert "auraWaveCanvas" in html
         assert "arc-reactor-ring-outer" in html
@@ -94,7 +94,7 @@ class TestAuraWelcomeScreen:
     def test_compact_mode_rendering(self):
         html_compact = render_aura_welcome_hud(current_lang="en", auto_speak=False, compact=True)
         assert "aura-compact-panel" in html_compact
-        assert "AURA • JARVIS COPILOT" in html_compact
+        assert "AURA" in html_compact
         assert "auraWaveCanvas" in html_compact
         assert "startVoiceListening" in html_compact
         assert "sendCommandToStreamlit" in html_compact

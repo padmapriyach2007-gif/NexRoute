@@ -66,3 +66,4 @@ def test_app_mobile_meta_and_css():
     # Verify touch manipulation and iOS zoom prevention
     assert "touch-action: manipulation !important" in app_code
     assert "font-size: 16px !important" in app_code
+

@@ -104,7 +104,7 @@ def render_aura_welcome_hud(
     # Dynamic Multilingual Localization for all AURA HUD words & labels
     brand_title = t("aura.brand_title", default="NEXROUTE", lang=current_lang)
     brand_sub = t("aura.brand_sub", default="AUTONOMOUS SATELLITE TRAVEL", lang=current_lang)
-    brand_pill = t("aura.brand_pill", default="AURA • JARVIS AI COPILOT", lang=current_lang)
+    brand_pill = t("aura.brand_pill", default="AURA", lang=current_lang)
     btn_start_txt = t("aura.btn_speak", default="🎙️ SPEAK", lang=current_lang)
     btn_end_txt = t("aura.btn_end", default="⏹ END", lang=current_lang)
     status_idle_txt = t("aura.status_idle", default="● IDLE • READY", lang=current_lang)
@@ -244,7 +244,7 @@ def render_aura_welcome_hud(
     </div>
     <div class="hud-center">
         <div class="hud-status-row">
-            <span style="font-weight: 800; font-size: 0.76rem; color: #f8fafc; letter-spacing: 0.04em;">AURA • JARVIS COPILOT</span>
+            <span style="font-weight: 800; font-size: 0.76rem; color: #f8fafc; letter-spacing: 0.04em;">AURA</span>
             <span class="hud-status-badge" id="statusBadge">● IDLE • READY</span>
         </div>
         <div class="hud-transcript-text" id="transcriptBox">Voice navigation active. Speak anytime, Boss.</div>
