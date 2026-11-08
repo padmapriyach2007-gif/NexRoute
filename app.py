@@ -13328,66 +13328,49 @@ if st.session_state.get("current_view") == "map_nav":
 
 
                         var directItems = [];
-
-
-
+                        var queryQ = q;
                         var coordMatch = q.match(/^([-+]?[0-9]*\\.[0-9]+|[0-9]+)[\\s,]+([-+]?[0-9]*\\.[0-9]+|[0-9]+)$/);
-
-
+                        var parenMatch = q.match(/\\(?\\s*([-+]?\\d{1,2}(?:\\.\\d+)?)\\s*[\\s,]\\s*([-+]?\\d{1,3}(?:\\.\\d+)?)\\s*\\)?\\s*$/);
 
                         if (coordMatch) {
-
-
-
                             var lat = parseFloat(coordMatch[1]);
-
-
-
                             var lon = parseFloat(coordMatch[2]);
-
-
-
                             if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-
-
-
                                 directItems.push({
-
-
-
                                     name: "Pinpoint (" + lat.toFixed(4) + ", " + lon.toFixed(4) + ")",
-
-
-
                                     display_name: "Physical Coordinates (" + lat.toFixed(5) + ", " + lon.toFixed(5) + ")",
-
-
-
-                                    category_icon: "🌐",
-
-
-
+                                    category_icon: "📌",
                                     area_badge: "Coordinates",
-
-
-
                                     lat: lat,
-
-
-
                                     lon: lon
-
-
-
                                 });
-
-
-
+                                queryQ = "";
                             }
-
-
-
+                        } else if (parenMatch) {
+                            var pLat = parseFloat(parenMatch[1]);
+                            var pLon = parseFloat(parenMatch[2]);
+                            if (!isNaN(pLat) && !isNaN(pLon) && pLat >= -90 && pLat <= 90 && pLon >= -180 && pLon <= 180) {
+                                var prefixName = q.substring(0, parenMatch.index).replace(/[(),\\-]/g, ' ').trim();
+                                var displayName = prefixName ? (prefixName + " (" + pLat.toFixed(5) + ", " + pLon.toFixed(5) + ")") : ("Physical Coordinates (" + pLat.toFixed(5) + ", " + pLon.toFixed(5) + ")");
+                                directItems.push({
+                                    name: prefixName || ("Coordinates (" + pLat.toFixed(4) + ", " + pLon.toFixed(4) + ")"),
+                                    display_name: displayName,
+                                    category_icon: "📌",
+                                    area_badge: "Coordinates",
+                                    lat: pLat,
+                                    lon: pLon
+                                });
+                                queryQ = prefixName;
+                            }
                         }
+
+                        if (!queryQ && directItems.length > 0) {
+                            spinner.style.display = 'none';
+                            renderDropdown(directItems, q);
+                            return;
+                        }
+
+                        var fetchTerm = queryQ || q;
 
 
 
@@ -13579,7 +13562,7 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-                        fetch(apiEndpoint + encodeURIComponent(q) + '&limit=7', { signal: sig })
+                        fetch(apiEndpoint + encodeURIComponent(fetchTerm) + '&limit=7', { signal: sig })
 
 
 
@@ -13667,7 +13650,7 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-                                    fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=7', { signal: sig })
+                                    fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(fetchTerm) + '&limit=7', { signal: sig })
 
 
 
@@ -13727,7 +13710,7 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-                                fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=7', { signal: sig })
+                                fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(fetchTerm) + '&limit=7', { signal: sig })
 
 
 
@@ -18772,7 +18755,7 @@ body {{
 
 
 
-        if not coords_orig or not coords_dest or is_pending or is_same_endpoint:
+        if not coords_orig or not coords_dest or is_same_endpoint:
 
 
 
@@ -21117,6 +21100,7 @@ body {{
                             st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
                             st.session_state.orig_candidates = []
                             st.session_state.orig_candidates_query = ""
+                            st.session_state.orig_pending_confirmation = False
                             st.session_state._prev_route_sig = None
                             st.session_state.focused_route_id = "ALL"
                             st.session_state.selected_route_id = None
@@ -21797,6 +21781,7 @@ body {{
                         st.session_state.selected_dest_id = f"coord_{d_lat:.4f}_{d_lon:.4f}"
                         st.session_state.dest_candidates = []
                         st.session_state.dest_candidates_query = ""
+                        st.session_state.dest_pending_confirmation = False
                         st.session_state._prev_route_sig = None
                         st.session_state.focused_route_id = "ALL"
                         st.session_state.selected_route_id = None
@@ -21870,7 +21855,11 @@ body {{
 
                         st.session_state.dest_candidates_query = ""
 
+                        st.session_state.dest_pending_confirmation = False
 
+
+
+                    st.session_state.dest_pending_confirmation = False
 
                     st.session_state._prev_route_sig = None
 
@@ -21957,6 +21946,8 @@ body {{
 
 
                         st.session_state.dest_candidates_query = ""
+
+                        st.session_state.dest_pending_confirmation = False
 
 
 

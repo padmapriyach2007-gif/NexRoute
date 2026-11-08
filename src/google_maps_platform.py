@@ -5299,10 +5299,12 @@ def build_google_maps_javascript_html(
                     return ll;
                 }});
 
+                var defaultCol = (r.rank === 2 ? '#F59E0B' : (r.rank === 3 ? '#A855F7' : '#00F0FF'));
+                var strokeCol = r.color || defaultCol;
                 var polyObj = new google.maps.Polyline({{
                     path: pathCoords,
                     geodesic: true,
-                    strokeColor: r.color || (isSel ? '#00F0B5' : '#0ea5e9'),
+                    strokeColor: strokeCol,
                     strokeOpacity: isSel ? 1.0 : (hasSelection ? 0.70 : 0.92),
                     strokeWeight: isSel ? 8.5 : (hasSelection ? 5.0 : 6.0),
                     zIndex: isSel ? 100 : (100 - (r.rank || 1))
@@ -6072,15 +6074,16 @@ def build_google_maps_javascript_html(
                     if (rCoords.length < 2) return;
 
                     var isSel = r.is_selected;
-                    var strokeCol = r.color || (isSel ? '#00F0B5' : '#0ea5e9');
+                    var defaultCol = (r.rank === 2 ? '#F59E0B' : (r.rank === 3 ? '#A855F7' : '#00F0FF'));
+                    var strokeCol = r.color || defaultCol;
                     var strokeWt = isSel ? 8.5 : (hasSelection ? 5.0 : 6.0);
                     var strokeOp = isSel ? 1.0 : (hasSelection ? 0.70 : 0.92);
 
                     if (isSel) {{
                         activeLeafletRouteGlow = L.polyline(rCoords, {{
-                            color: '#38bdf8',
+                            color: '#00F0FF',
                             weight: strokeWt + 4,
-                            opacity: 0.5,
+                            opacity: 0.35,
                             lineCap: 'round',
                             lineJoin: 'round'
                         }}).addTo(lMap);

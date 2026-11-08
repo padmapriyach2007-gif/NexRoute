@@ -874,7 +874,7 @@ def filter_distinct_routes(
 
     routes: List[RouteOption],
 
-    max_overlap: float = 0.80,
+    max_overlap: float = 0.88,
 
     origin_coords: Optional[Tuple[float, float]] = None,
 
@@ -2592,7 +2592,7 @@ class RealWorldRouteEngine:
 
                 live_routes,
 
-                max_overlap=0.80,
+                max_overlap=0.88,
 
                 origin_coords=(origin_lat, origin_lon),
 
@@ -2636,7 +2636,7 @@ class RealWorldRouteEngine:
 
                     valid_live_routes,
 
-                    max_overlap=0.82,
+                    max_overlap=0.88,
 
                     origin_coords=(origin_lat, origin_lon),
 
@@ -2647,6 +2647,15 @@ class RealWorldRouteEngine:
                 for r_idx, r in enumerate(distinct_live):
 
                     r.route_id = f"OSRM_{r_idx + 1}"
+                    if not r.name or r.name.startswith("Route") or r.name == "Primary Arterial Route":
+                        if r_idx == 0:
+                            r.name = "Recommended Highway Route (Fastest)" if len(distinct_live) > 1 else "Primary Road Route"
+                        elif r_idx == 1:
+                            r.name = "Alternative 1: Via Arterial Network"
+                        elif r_idx == 2:
+                            r.name = "Alternative 2: Bypass Corridor"
+                        else:
+                            r.name = f"Alternative {r_idx}: Secondary Corridor"
 
                 return _cache_and_return(distinct_live)
 
