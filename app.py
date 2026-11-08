@@ -7953,6 +7953,9 @@ if "dest_lat" in st.query_params and "dest_lon" in st.query_params:
             st.session_state.selected_dest_label = q_dest_name
             st.session_state.pending_dest = q_dest_name
             st.session_state.last_synced_dest = q_dest_name
+            st.session_state.txt_dest = q_dest_name
+            st.session_state.dest_pending_confirmation = False
+            st.session_state.orig_pending_confirmation = False
             st.session_state._prev_route_sig = None
             st.session_state.cached_candidate_routes = None
             st.session_state.auto_fit_bounds = True
@@ -7962,6 +7965,7 @@ if "dest_lat" in st.query_params and "dest_lon" in st.query_params:
             st.session_state.is_in_transit = False
             st.session_state.scroll_to_app_map = True
             st.session_state.target_tab = "nav"
+            st.session_state.current_view = "map_nav"
             if st.session_state.get("user_live_coords"):
                 st.session_state.routes_generated = True
 
@@ -8048,6 +8052,9 @@ if "orig_lat" in st.query_params and "orig_lon" in st.query_params:
             st.session_state.user_live_label = q_orig_name
             st.session_state.pending_orig = q_orig_name
             st.session_state.last_synced_orig = q_orig_name
+            st.session_state.txt_orig = q_orig_name
+            st.session_state.orig_pending_confirmation = False
+            st.session_state.dest_pending_confirmation = False
             st.session_state.is_custom_start_place = True
             st.session_state.orig_candidates = []
             st.session_state.orig_candidates_query = ""
@@ -8059,6 +8066,7 @@ if "orig_lat" in st.query_params and "orig_lon" in st.query_params:
             st.session_state.auto_fit_bounds = True
             st.session_state.scroll_to_app_map = True
             st.session_state.target_tab = "nav"
+            st.session_state.current_view = "map_nav"
             st.session_state.real_location_service.set_manual_location(q_orig_lat, q_orig_lon, q_orig_name)
             if st.session_state.get("selected_dest_coords"):
                 st.session_state.routes_generated = True
@@ -8288,7 +8296,10 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.session_state.user_live_label = p_name
                 st.session_state.pending_orig = p_name
                 st.session_state.last_synced_orig = p_name
+                st.session_state.txt_orig = p_name
                 st.session_state.is_custom_start_place = True
+                st.session_state.orig_pending_confirmation = False
+                st.session_state.dest_pending_confirmation = False
                 st.session_state.selected_orig_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
                 st.session_state.real_location_service.set_manual_location(p_lat, p_lon, p_name)
                 st.session_state.cached_candidate_routes = None
@@ -8308,6 +8319,7 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                         "lon": p_lon,
                         "category_icon": "🟣"
                     })
+                    st.session_state.dest_pending_confirmation = False
                     st.session_state._prev_route_sig = None
                     st.session_state._prev_endpoint_sig = None
                     st.session_state.cached_candidate_routes = None
@@ -8321,6 +8333,9 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.session_state.selected_dest_label = p_name
                 st.session_state.pending_dest = p_name
                 st.session_state.last_synced_dest = p_name
+                st.session_state.txt_dest = p_name
+                st.session_state.dest_pending_confirmation = False
+                st.session_state.orig_pending_confirmation = False
                 st.session_state.selected_dest_id = f"picked_{p_lat:.4f}_{p_lon:.4f}"
                 st.session_state.cached_candidate_routes = None
                 if st.session_state.get("user_live_coords"):
@@ -8335,6 +8350,7 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
             st.session_state.auto_fit_bounds = True
             st.session_state.scroll_to_app_map = True
             st.session_state.target_tab = "nav"
+            st.session_state.current_view = "map_nav"
 
 
 
@@ -10032,6 +10048,12 @@ coords_orig = st.session_state.get("user_live_coords")
 
 coords_dest = st.session_state.get("selected_dest_coords")
 
+# Guaranteed automatic route appearance: whenever start and destination are selected, routes immediately calculate & render
+if coords_orig and coords_dest and coords_orig != coords_dest:
+    st.session_state.routes_generated = True
+    st.session_state.orig_pending_confirmation = False
+    st.session_state.dest_pending_confirmation = False
+
 
 
 orig_text = st.session_state.get("txt_orig", "")
@@ -11489,13 +11511,10 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
     # Preserved references for backward-compatible test assertions
-
-
-
+    # Section 2: Virtual Vehicle Companion
     _companion_hud_ref = build_virtual_companion_hud_html
 
-
-
+    # Section 3: Virtual Human Guide
     _human_guide_ref = build_always_visible_virtual_guide_html
 
 
@@ -11508,6 +11527,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
 
 
+    # Section 4: Additional Route Details
     # 🌟 RECOMMENDED PLACES & STORYBOOK ALONG THE CORRIDOR
 
 

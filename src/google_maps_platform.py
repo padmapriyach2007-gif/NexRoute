@@ -2113,8 +2113,8 @@ def build_google_maps_javascript_html(
             <button onclick="window.cancelMapPickingMode()" style="background: rgba(239,68,68,0.25); border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;">✕ Cancel</button>
         </div>
 
-        <!-- Map-Picking Confirmation Card -->
-        <div id="map-picking-card" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; width: min(90vw, 440px); background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(20,35,65,0.96) 100%); border: 2px solid #38bdf8; border-radius: 14px; padding: 14px 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.7), 0 0 24px rgba(56,189,248,0.3); pointer-events: auto;">
+        <!-- Map-Picking Confirmation Card (Hidden to prevent blocking user) -->
+        <div id="map-picking-card" style="display: none !important; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; width: min(90vw, 440px); background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(20,35,65,0.96) 100%); border: 2px solid #38bdf8; border-radius: 14px; padding: 14px 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.7), 0 0 24px rgba(56,189,248,0.3); pointer-events: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <span style="font-size: 13px; font-weight: 800; color: #38bdf8;" id="map-pick-confirm-badge">🎯 CONFIRM LOCATION</span>
                 <span style="font-size: 11px; color: #94a3b8;" id="map-pick-coords-text">16.2335, 80.5505</span>
