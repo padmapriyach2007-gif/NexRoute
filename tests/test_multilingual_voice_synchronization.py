@@ -160,3 +160,4 @@ def test_voice_assistants_audio_isolation_scripts():
     # Chatbot sets chatbot speaker and checks for dashboard speaker
     assert "localStorage.setItem('aura_active_speaker', 'chatbot')" in c_html
     assert "localStorage.getItem('aura_active_speaker') === 'dashboard'" in c_html
+

@@ -206,3 +206,4 @@ def get_preferred_voice_keywords(lang_code: str) -> List[str]:
     """Returns preferred voice name matching keywords for SpeechSynthesis."""
     cap = get_voice_capability(lang_code)
     return cap.get("voice_search_keywords", ["en-in"]) if cap else ["en-in"]
+
