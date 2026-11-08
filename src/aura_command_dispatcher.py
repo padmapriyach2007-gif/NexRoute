@@ -531,8 +531,39 @@ class AuraGlobalCommandDispatcher:
                 }
             )
 
-        # Destructive Confirmation check: "Clear active route" / "Cancel trip"
-        if re.search(r"\b(clear\s+all\s+stops|clear\s+(active\s+)?route|cancel\s+(my\s+)?trip|రద్దు\s+చేయి|रद्द\s+करो)\b", q):
+        # Alternative Routes Discovery
+        if re.search(r"\b(show|display|find|view)\s+(me\s+)?(alternative|other|all)\s+routes?\b", q):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.ROUTE_ACTION,
+                spoken_response="Displaying all available alternative route corridors on the map, Boss.",
+                text_response="🗺️ Displaying alternative routes on map.",
+                action_name="show_alternative_routes",
+                ui_updates={"active_objective": "all", "routes_generated": True, "cached_candidate_routes": None}
+            )
+
+        # Vehicle Mode Switching
+        mode_match = re.search(r"\b(?:change|switch|set)\s+(?:the\s+)?(?:vehicle|transport(?:ation)?|travel)?\s*(?:mode\s+to|to\s+mode|to)?\s*(car|automobile|bike|motorcycle|bus|bicycle|cycle|walk|pedestrian|truck|tractor|flight|plane|airway|waterway|boat|ferry|taxi|cab|train|rail|metro|subway)\b", q)
+        if mode_match:
+            raw_target = mode_match.group(1).lower()
+            mode_map = {
+                "car": "CAR", "automobile": "CAR", "taxi": "TAXI", "cab": "TAXI",
+                "bike": "BIKE", "motorcycle": "BIKE", "bus": "BUS",
+                "bicycle": "BICYCLE", "cycle": "BICYCLE", "walk": "WALK", "pedestrian": "WALK",
+                "truck": "TRUCK", "tractor": "TRACTOR", "flight": "FLIGHT", "plane": "FLIGHT", "airway": "FLIGHT",
+                "waterway": "WATERWAY", "boat": "WATERWAY", "ferry": "WATERWAY",
+                "train": "TRAIN", "rail": "TRAIN", "metro": "METRO", "subway": "METRO"
+            }
+            sel_mode = mode_map.get(raw_target, "CAR")
+            return AuraExecutionResult(
+                command_type=AuraCommandType.ROUTE_ACTION,
+                spoken_response=f"Vehicle mode switched to {sel_mode.title()}. Recalculating routes, Boss.",
+                text_response=f"🚗 Vehicle mode switched to **{sel_mode}**.",
+                action_name="switch_vehicle_mode",
+                ui_updates={"selected_travel_mode": sel_mode, "cached_candidate_routes": None, "routes_generated": True}
+            )
+
+        # Destructive Confirmation check: "Clear active route" / "Cancel trip" / "Stop navigation"
+        if re.search(r"\b(stop\s+navigation|cancel\s+navigation|end\s+navigation|clear\s+all\s+stops|clear\s+(active\s+)?route|cancel\s+(my\s+)?trip|రద్దు\s+చేయి|रद्द\s+करो)\b", q):
             return AuraExecutionResult(
                 command_type=AuraCommandType.ROUTE_ACTION,
                 spoken_response=resp_bundle["confirm_clear_route"],
@@ -618,6 +649,37 @@ class AuraGlobalCommandDispatcher:
         # ---------------------------------------------------------------------
         # 6. ASSISTANT VOICE & SYSTEM CONTROLS
         # ---------------------------------------------------------------------
+        # Voice Session Pause
+        if re.search(r"\b(pause(\s+the)?(\s+voice)?(\s+assistant)?|pause\s+listening|hold\s+on|wait\s+a\s+sec|విరామం|रोकिए)\b", q):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VOICE_CONTROL,
+                spoken_response="Voice session paused. Click resume or speak when ready, Boss.",
+                text_response="⏸️ Voice session paused. Click RESUME to continue.",
+                action_name="pause_voice_session",
+                ui_updates={"aura_voice_session_state": "PAUSED"}
+            )
+
+        # Voice Session Resume
+        if re.search(r"\b(resume(\s+the)?(\s+voice)?(\s+assistant)?|resume\s+listening|continue\s+listening|పునఃప్రారంభించు|फिर\s+शुरू\s+करें)\b", q):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VOICE_CONTROL,
+                spoken_response="Voice session resumed. I am listening, Boss.",
+                text_response="🎙️ Voice session resumed. Listening, Boss...",
+                action_name="resume_voice_session",
+                ui_updates={"aura_voice_session_state": "LISTENING"}
+            )
+
+        # Voice Session Stop / End Session
+        if re.search(r"\b(stop(\s+the)?(\s+voice)?(\s+assistant)?|end\s+session|end\s+voice|stop\s+session|aura\s+offline|close\s+assistant|disconnect\s+assistant|ఆపండి|बंद\s+करें)\b", q):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VOICE_CONTROL,
+                spoken_response="Voice session ended. AURA is offline. Have a safe journey, Boss.",
+                text_response="⏹️ Voice session ended. AURA offline.",
+                action_name="end_voice_session",
+                ui_updates={"aura_voice_session_state": "STOPPED"}
+            )
+
+        # Silence Speech Output
         if re.search(r"\b(stop\s+talking|be\s+quiet|silence|mute\s+voice|నిశ్శబ్దం|चुप\s+रहो)\b", q):
             return AuraExecutionResult(
                 command_type=AuraCommandType.VOICE_CONTROL,

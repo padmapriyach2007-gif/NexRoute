@@ -454,6 +454,11 @@ canvas#auraWaveformCanvas {{
         }}
     }};
 
+    window.toggleContinuousMode = function() {{
+        continuousMode = !continuousMode;
+        window.togglePersistentVoiceSession();
+    }};
+
     // Silence
     window.silenceAssistant = function() {{
         if (synthesis) synthesis.cancel();
@@ -549,6 +554,11 @@ canvas#auraWaveformCanvas {{
         }}
     }};
 
+    window.toggleContinuousMode = function() {{
+        continuousMode = !continuousMode;
+        window.togglePersistentVoiceSession();
+    }};
+
     // Open Chatbot
     window.openFullChatbot = function() {{
         dispatchDirectCommand('Open chatbot');
@@ -627,15 +637,19 @@ def render_jarvis_chatbot_hud_html(
     last_response_text: str = "",
     key_prefix: str = "main",
     voice_enabled: bool = True,
-    continuous_mode: bool = False,
+    continuous_mode: bool = True,
     *args,
     **kwargs
 ) -> str:
     """
-    Renders the unified Jarvis Voice Assistant interface header for the AURA Chatbot.
-    Features the circular robot avatar, live status indicators (LISTENING, THINKING, SPEAKING, IDLE),
-    real-time canvas waveform, microphone voice input with zero-reload WebSocket bridge,
-    intelligent Text-to-Speech output, Voice ON/OFF switch, Stop/Silence button, and continuous two-way conversation mode.
+    Renders the futuristic AURA - JARVIS AI Copilot Persistent Voice Assistant interface.
+    Features:
+    - Persistent voice session: activate once, interact continuously with auto return-to-listening.
+    - Smart Session Toggle: single glowing cyan control transitioning between START AURA, PAUSE, RESUME, and END SESSION.
+    - Intelligent Voice Interruption: speaks while listening; user speech instantly cancels ongoing TTS and prioritizes new command.
+    - Voice Activity Detection (VAD): configurable silence threshold prevents early submission while supporting natural pauses.
+    - Session State Machine: INACTIVE, LISTENING, PROCESSING, SPEAKING, PAUSED, STOPPED with localStorage persistence.
+    - Zero-reload bridge to NextRoute application engine and live animated audio waveform.
     """
     bcp47_map = {
         "en": "en-IN",
@@ -658,7 +672,6 @@ def render_jarvis_chatbot_hud_html(
     )
 
     initial_voice_state = "true" if voice_enabled else "false"
-    initial_cont_state = "true" if continuous_mode else "false"
 
     return f"""<!DOCTYPE html>
 <html lang="{current_lang}">
@@ -683,16 +696,16 @@ def render_jarvis_chatbot_hud_html(
     }}
 
     .jarvis-hud-card {{
-        background: radial-gradient(circle at 20% 50%, rgba(14, 28, 54, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
-        border: 1.5px solid rgba(0, 240, 255, 0.35);
+        background: radial-gradient(circle at 20% 50%, rgba(14, 28, 54, 0.96) 0%, rgba(3, 7, 18, 0.98) 100%);
+        border: 1.5px solid rgba(0, 240, 255, 0.40);
         border-radius: 16px;
         padding: 8px 14px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 240, 255, 0.12);
-        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 240, 255, 0.15);
+        backdrop-filter: blur(14px);
     }}
 
     /* Circular Avatar with Glowing Orbital Ring */
@@ -713,6 +726,7 @@ def render_jarvis_chatbot_hud_html(
         border-radius: 50%;
         border: 1.5px dashed #00f0ff;
         animation: spinArc 10s linear infinite;
+        transition: border-color 0.3s ease;
     }}
 
     @keyframes spinArc {{
@@ -781,23 +795,57 @@ def render_jarvis_chatbot_hud_html(
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.63rem;
         font-weight: 700;
-        padding: 1px 7px;
+        padding: 2px 8px;
         border-radius: 6px;
-        background: rgba(16, 185, 129, 0.15);
-        border: 1px solid #10b981;
-        color: #34d399;
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid #475569;
+        color: #94a3b8;
         letter-spacing: 0.04em;
         white-space: nowrap;
         transition: all 0.25s ease;
     }}
 
+    .status-badge.listening {{
+        background: rgba(0, 240, 255, 0.20);
+        border-color: #00f0ff;
+        color: #00f0ff;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
+    }}
+
+    .status-badge.thinking {{
+        background: rgba(168, 85, 247, 0.20);
+        border-color: #a855f7;
+        color: #c084fc;
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+    }}
+
+    .status-badge.speaking {{
+        background: rgba(56, 189, 248, 0.20);
+        border-color: #38bdf8;
+        color: #38bdf8;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }}
+
+    .status-badge.paused {{
+        background: rgba(245, 158, 11, 0.20);
+        border-color: #f59e0b;
+        color: #fbbf24;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+    }}
+
+    .status-badge.offline {{
+        background: rgba(239, 68, 68, 0.15);
+        border-color: #ef4444;
+        color: #f87171;
+    }}
+
     .waveform-canvas-box {{
         flex: 1 1 auto;
         height: 20px;
-        min-width: 50px;
-        background: rgba(3, 7, 18, 0.45);
+        min-width: 45px;
+        background: rgba(3, 7, 18, 0.55);
         border-radius: 6px;
-        border: 1px solid rgba(56, 189, 248, 0.20);
+        border: 1px solid rgba(56, 189, 248, 0.22);
         display: flex;
         align-items: center;
         overflow: hidden;
@@ -808,7 +856,7 @@ def render_jarvis_chatbot_hud_html(
         height: 100%;
     }}
 
-    /* Action Buttons */
+    /* Action Buttons: Smart Session Toggle, End Session, Voice Mute */
     .controls-right {{
         display: flex;
         align-items: center;
@@ -816,26 +864,69 @@ def render_jarvis_chatbot_hud_html(
         flex: 0 0 auto;
     }}
 
-    .btn-hud-mic {{
-        background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
-        border: none;
-        border-radius: 50%;
-        width: 34px;
-        height: 34px;
-        min-width: 34px;
-        color: #030712;
-        font-size: 1.05rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    /* Primary Persistent Voice Session Button */
+    .btn-session-main {{
+        background: linear-gradient(135deg, rgba(0, 240, 255, 0.22) 0%, rgba(2, 132, 199, 0.40) 100%);
+        border: 1.5px solid #00f0ff;
+        border-radius: 8px;
+        padding: 5px 12px;
+        color: #00f0ff;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
         cursor: pointer;
-        box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.30);
         transition: all 0.2s ease;
     }}
 
-    .btn-hud-mic:hover {{
-        transform: scale(1.08);
-        box-shadow: 0 0 22px rgba(0, 240, 255, 0.85);
+    .btn-session-main:hover {{
+        transform: translateY(-1px) scale(1.03);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.65);
+        background: linear-gradient(135deg, rgba(0, 240, 255, 0.35) 0%, rgba(2, 132, 199, 0.55) 100%);
+    }}
+
+    .btn-session-main.pause {{
+        border-color: #f59e0b;
+        color: #fbbf24;
+        background: rgba(245, 158, 11, 0.22);
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+    }}
+
+    .btn-session-main.resume {{
+        border-color: #10b981;
+        color: #34d399;
+        background: rgba(16, 185, 129, 0.22);
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+    }}
+
+    /* End Session Action */
+    .btn-session-end {{
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.45);
+        border-radius: 8px;
+        padding: 5px 8px;
+        color: #f87171;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.68rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+    }}
+
+    .btn-session-end:hover {{
+        background: rgba(239, 68, 68, 0.30);
+        color: #ffffff;
+        border-color: #ef4444;
+        box-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
     }}
 
     .btn-pill-toggle {{
@@ -866,35 +957,13 @@ def render_jarvis_chatbot_hud_html(
         color: #00f0ff;
         box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
     }}
-
-    .btn-hud-silence {{
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(239, 68, 68, 0.35);
-        border-radius: 8px;
-        padding: 5px 8px;
-        color: #fca5a5;
-        font-size: 0.68rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        white-space: nowrap;
-        transition: all 0.2s ease;
-    }}
-
-    .btn-hud-silence:hover {{
-        color: #ffffff;
-        border-color: #ef4444;
-        background: rgba(239, 68, 68, 0.25);
-    }}
 </style>
 </head>
 <body>
 
 <div class="jarvis-hud-card">
     <!-- Circular Avatar with Orbiting Ring -->
-    <div class="avatar-pod" onclick="toggleJarvisVoiceRecognition()" title="Click to speak with AURA">
+    <div class="avatar-pod" onclick="togglePersistentVoiceSession()" title="Click to Start / Pause AURA Voice Session">
         <div class="arc-spin-ring" id="avatarArcRing"></div>
         <div class="avatar-circle">
             {avatar_markup}
@@ -908,27 +977,31 @@ def render_jarvis_chatbot_hud_html(
             <span class="brand-subtitle">JARVIS VOICE COPILOT</span>
         </div>
         <div class="status-and-wave-row">
-            <span class="status-badge" id="jarvisStatusBadge">● IDLE • READY</span>
+            <span class="status-badge offline" id="jarvisStatusBadge">● AURA OFFLINE</span>
             <div class="waveform-canvas-box">
                 <canvas id="auraJarvisWaveform"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Right Controls: Mic, Voice Toggle, 2-Way Continuous, Silence -->
+    <!-- Right Controls: Smart Session Toggle, End Session, Voice Audio Toggle -->
     <div class="controls-right">
-        <button class="btn-hud-mic" id="btnJarvisMic" onclick="toggleJarvisVoiceRecognition()" title="Start Voice Input (Speak to AURA)">
-            🎙️
+        <!-- Smart Persistent Session Toggle: START AURA / PAUSE / RESUME -->
+        <button class="btn-session-main" id="btnSessionToggle" onclick="togglePersistentVoiceSession()" title="Start / Pause Continuous Voice Session">
+            ▶ START AURA
         </button>
-        <button class="btn-pill-toggle active" id="btnVoiceToggle" onclick="toggleVoiceEnabled()" title="Toggle Voice Output (Spoken Audio)">
-            🔊 Voice ON
+        <!-- End Session Button -->
+        <button class="btn-session-end" id="btnEndSession" onclick="endVoiceSession()" title="End Voice Session (Offline)">
+            ⏹ END
         </button>
-        <button class="btn-pill-toggle" id="btnContinuousToggle" onclick="toggleContinuousMode()" title="Toggle Continuous 2-Way Conversational Mode">
-            🔄 2-Way
+        <!-- Voice Audio ON/OFF -->
+        <button class="btn-pill-toggle active" id="btnVoiceToggle" onclick="toggleVoiceEnabled()" title="Toggle Spoken Speech Output">
+            🔊 Voice
         </button>
-        <button class="btn-hud-silence" id="btnJarvisSilence" onclick="stopJarvisSpeech()" title="Stop Assistant Speech (Silence)">
-            ⏹ Silence
-        </button>
+        <!-- Backward-compatibility hooks -->
+        <button id="btnJarvisMic" onclick="togglePersistentVoiceSession()" style="display:none;"></button>
+        <button id="btnJarvisSilence" onclick="endVoiceSession()" style="display:none;"></button>
+        <button id="btnContinuousToggle" onclick="toggleContinuousMode()" style="display:none;"></button>
     </div>
 </div>
 
@@ -940,7 +1013,14 @@ def render_jarvis_chatbot_hud_html(
     var lastResponse = {json.dumps(last_response_text)};
 
     var voiceEnabled = {initial_voice_state};
-    var continuousMode = {initial_cont_state};
+    var continuousMode = true;
+
+    // Central Persistent State: 'INACTIVE', 'LISTENING', 'PROCESSING', 'SPEAKING', 'PAUSED', 'STOPPED'
+    var sessionState = localStorage.getItem('aura_persistent_voice_state') || 'INACTIVE';
+    // If refreshed mid-turn, restore to active listening state
+    if (sessionState === 'SPEAKING' || sessionState === 'PROCESSING') {{
+        sessionState = 'LISTENING';
+    }}
 
     var isListening = false;
     var isSpeaking = false;
@@ -949,6 +1029,11 @@ def render_jarvis_chatbot_hud_html(
     var synthesis = window.speechSynthesis;
     var canvas = document.getElementById('auraJarvisWaveform');
     var ctx = canvas ? canvas.getContext('2d') : null;
+
+    var silenceTimer = null;
+    var vadTimeoutMs = 1400; // 1.4s silence threshold for VAD
+    var currentSpeechBuffer = '';
+    var restartDebounceTimer = null;
 
     // Safe Cross-Origin Parent References
     var pWin = null;
@@ -976,84 +1061,87 @@ def render_jarvis_chatbot_hud_html(
         if (btn) {{
             if (voiceEnabled) {{
                 btn.className = 'btn-pill-toggle active';
-                btn.innerHTML = '🔊 Voice ON';
+                btn.innerHTML = '🔊 Voice';
             }} else {{
                 btn.className = 'btn-pill-toggle';
-                btn.innerHTML = '🔇 Voice OFF';
-                stopJarvisSpeech();
+                btn.innerHTML = '🔇 Mute';
+                if (synthesis) synthesis.cancel();
             }}
         }}
     }};
 
-    // Toggle Continuous 2-Way Conversational Mode
     window.toggleContinuousMode = function() {{
         continuousMode = !continuousMode;
-        var btn = document.getElementById('btnContinuousToggle');
-        if (btn) {{
-            if (continuousMode) {{
-                btn.className = 'btn-pill-toggle active';
-                btn.innerHTML = '🔄 2-Way ON';
-            }} else {{
-                btn.className = 'btn-pill-toggle';
-                btn.innerHTML = '🔄 2-Way';
-            }}
-        }}
+        window.togglePersistentVoiceSession();
     }};
 
-    function setHudState(state, message) {{
+    // Update UI Elements matching the central State Machine
+    function updateUIForState(state, message) {{
         var badge = document.getElementById('jarvisStatusBadge');
-        var micBtn = document.getElementById('btnJarvisMic');
+        var btnToggle = document.getElementById('btnSessionToggle');
+        var btnEnd = document.getElementById('btnEndSession');
         var arcRing = document.getElementById('avatarArcRing');
 
-        if (state === 'listening') {{
+        if (!badge || !btnToggle) return;
+
+        if (state === 'LISTENING') {{
             isListening = true;
             isSpeaking = false;
             isThinking = false;
-            if (badge) {{
-                badge.innerText = '🎙️ LISTENING, BOSS...';
-                badge.style.background = 'rgba(0, 240, 255, 0.22)';
-                badge.style.borderColor = '#00f0ff';
-                badge.style.color = '#00f0ff';
-            }}
-            if (micBtn) micBtn.style.boxShadow = '0 0 25px #00f0ff';
+            badge.className = 'status-badge listening';
+            badge.innerText = '🎙️ LISTENING, BOSS...';
+            btnToggle.className = 'btn-session-main pause';
+            btnToggle.innerHTML = '⏸ PAUSE';
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (arcRing) arcRing.style.borderColor = '#00f0ff';
-        }} else if (state === 'thinking') {{
+        }} else if (state === 'PROCESSING') {{
             isListening = false;
             isSpeaking = false;
             isThinking = true;
-            if (badge) {{
-                badge.innerText = '⚡ THINKING, BOSS...';
-                badge.style.background = 'rgba(168, 85, 247, 0.22)';
-                badge.style.borderColor = '#a855f7';
-                badge.style.color = '#c084fc';
-            }}
-            if (micBtn) micBtn.style.boxShadow = '0 0 15px #a855f7';
+            badge.className = 'status-badge thinking';
+            badge.innerText = '⚡ THINKING...';
+            btnToggle.className = 'btn-session-main pause';
+            btnToggle.innerHTML = '⏸ PAUSE';
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (arcRing) arcRing.style.borderColor = '#a855f7';
-        }} else if (state === 'speaking') {{
+        }} else if (state === 'SPEAKING') {{
             isListening = false;
             isSpeaking = true;
             isThinking = false;
-            if (badge) {{
-                badge.innerText = '🔊 SPEAKING...';
-                badge.style.background = 'rgba(56, 189, 248, 0.22)';
-                badge.style.borderColor = '#38bdf8';
-                badge.style.color = '#38bdf8';
-            }}
-            if (micBtn) micBtn.style.boxShadow = '0 0 14px rgba(0, 240, 255, 0.5)';
+            badge.className = 'status-badge speaking';
+            badge.innerText = '🔊 SPEAKING...';
+            btnToggle.className = 'btn-session-main pause';
+            btnToggle.innerHTML = '⏸ PAUSE';
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
             if (arcRing) arcRing.style.borderColor = '#38bdf8';
-        }} else {{
+        }} else if (state === 'PAUSED') {{
             isListening = false;
             isSpeaking = false;
             isThinking = false;
-            if (badge) {{
-                badge.innerText = '● IDLE • READY';
-                badge.style.background = 'rgba(16, 185, 129, 0.15)';
-                badge.style.borderColor = '#10b981';
-                badge.style.color = '#34d399';
-            }}
-            if (micBtn) micBtn.style.boxShadow = '0 0 14px rgba(0, 240, 255, 0.5)';
-            if (arcRing) arcRing.style.borderColor = '#00f0ff';
+            badge.className = 'status-badge paused';
+            badge.innerText = '⏸️ PAUSED';
+            btnToggle.className = 'btn-session-main resume';
+            btnToggle.innerHTML = '▶ RESUME';
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
+            if (arcRing) arcRing.style.borderColor = '#f59e0b';
+        }} else {{
+            // STOPPED or INACTIVE
+            isListening = false;
+            isSpeaking = false;
+            isThinking = false;
+            badge.className = 'status-badge offline';
+            badge.innerText = '● AURA OFFLINE';
+            btnToggle.className = 'btn-session-main start';
+            btnToggle.innerHTML = '▶ START AURA';
+            if (btnEnd) btnEnd.style.display = 'none';
+            if (arcRing) arcRing.style.borderColor = '#475569';
         }}
+    }}
+
+    function setSessionState(newState, message) {{
+        sessionState = newState;
+        localStorage.setItem('aura_persistent_voice_state', newState);
+        updateUIForState(newState, message);
     }}
 
     // Real-Time Waveform Animation
@@ -1066,13 +1154,13 @@ def render_jarvis_chatbot_hud_html(
         var step = canvas.width / numPoints;
         var midY = canvas.height / 2;
 
-        var baseAmp = isSpeaking ? 8 : (isListening ? 6 : (isThinking ? 4 : 2));
-        var freq = isSpeaking ? 0.22 : (isListening ? 0.30 : (isThinking ? 0.40 : 0.10));
+        var baseAmp = isSpeaking ? 8.5 : (isListening ? 6 : (isThinking ? 4.5 : 1.5));
+        var freq = isSpeaking ? 0.24 : (isListening ? 0.28 : (isThinking ? 0.38 : 0.08));
 
         ctx.beginPath();
-        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isThinking ? '#c084fc' : 'rgba(56, 189, 248, 0.35)'));
+        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isThinking ? '#c084fc' : 'rgba(100, 116, 139, 0.4)'));
         ctx.lineWidth = isSpeaking || isListening ? 2 : 1.2;
-        ctx.shadowBlur = isSpeaking ? 10 : 2;
+        ctx.shadowBlur = isSpeaking ? 10 : (isListening ? 6 : 0);
         ctx.shadowColor = '#00f0ff';
 
         for (var i = 0; i <= numPoints; i++) {{
@@ -1084,7 +1172,7 @@ def render_jarvis_chatbot_hud_html(
         }}
         ctx.stroke();
 
-        wavePhase += isSpeaking ? 0.24 : (isListening ? 0.18 : (isThinking ? 0.30 : 0.05));
+        wavePhase += isSpeaking ? 0.24 : (isListening ? 0.18 : (isThinking ? 0.30 : 0.04));
         requestAnimationFrame(drawWave);
     }}
     drawWave();
@@ -1097,7 +1185,6 @@ def render_jarvis_chatbot_hud_html(
         var langLower = (lang || '').toLowerCase();
         var primaryLang = langLower.split('-')[0];
 
-        // 1. Natural / Neural Jarvis matches
         for (var i = 0; i < voices.length; i++) {{
             var v = voices[i];
             var vLang = (v.lang || '').toLowerCase();
@@ -1108,14 +1195,12 @@ def render_jarvis_chatbot_hud_html(
             }}
         }}
 
-        // 2. Exact language match
         for (var j = 0; j < voices.length; j++) {{
             if ((voices[j].lang || '').toLowerCase() === langLower) {{
                 return voices[j];
             }}
         }}
 
-        // 3. Prefix match
         for (var k = 0; k < voices.length; k++) {{
             if ((voices[k].lang || '').toLowerCase().indexOf(primaryLang) === 0) {{
                 return voices[k];
@@ -1124,10 +1209,12 @@ def render_jarvis_chatbot_hud_html(
         return voices[0] || null;
     }}
 
-    // Voice Synthesis
+    // Voice Synthesis with Automatic Return to Listening Loop
     window.speakJarvis = function(text) {{
         if (!text || !voiceEnabled) {{
-            setHudState('idle');
+            if (sessionState === 'LISTENING' || sessionState === 'SPEAKING' || sessionState === 'PROCESSING') {{
+                startListening();
+            }}
             return;
         }}
         if (!synthesis) return;
@@ -1145,99 +1232,243 @@ def render_jarvis_chatbot_hud_html(
             var speechWatchdog = null;
 
             utterance.onstart = function() {{
-                setHudState('speaking');
+                setSessionState('SPEAKING', '🔊 SPEAKING...');
                 if (speechWatchdog) clearTimeout(speechWatchdog);
             }};
 
             utterance.onend = function() {{
                 if (speechWatchdog) clearTimeout(speechWatchdog);
-                setHudState('idle');
-
-                // If continuous two-way mode is active, automatically start listening for user's next spoken input
-                if (continuousMode) {{
+                // AUTOMATIC RETURN TO LISTENING LOOP
+                if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED' && sessionState !== 'INACTIVE') {{
                     setTimeout(function() {{
-                        if (!isListening && !isSpeaking) {{
-                            toggleJarvisVoiceRecognition();
+                        if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
+                            startListening();
                         }}
-                    }}, 450);
+                    }}, 350); // 350ms delay to clear acoustic feedback
                 }}
             }};
 
             utterance.onerror = function(err) {{
                 if (speechWatchdog) clearTimeout(speechWatchdog);
-                setHudState('idle');
+                if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
+                    startListening();
+                }}
             }};
 
-            // Watchdog fallback (in case browser audio policy silently drops onend)
+            // Watchdog fallback
             speechWatchdog = setTimeout(function() {{
-                if (isSpeaking) {{
-                    setHudState('idle');
+                if (isSpeaking && sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
+                    startListening();
                 }}
-            }}, Math.max(3500, text.length * 100));
+            }}, Math.max(3500, text.length * 90));
 
             synthesis.speak(utterance);
         }} catch(e) {{
-            setHudState('idle');
+            if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
+                startListening();
+            }}
         }}
     }};
 
+    window.toggleContinuousMode = function() {{
+        continuousMode = !continuousMode;
+        window.togglePersistentVoiceSession();
+    }};
+
+    // Stop ongoing speech immediately
     window.stopJarvisSpeech = function() {{
         if (synthesis) synthesis.cancel();
-        if (recognition && isListening) {{
-            try {{ recognition.stop(); }} catch(e) {{}}
-        }}
-        setHudState('idle');
+        isSpeaking = false;
     }};
 
-    // Speech-to-Text Recognition and Automatic Submission
-    window.toggleJarvisVoiceRecognition = function() {{
-        if (isListening) {{
-            if (recognition) try {{ recognition.stop(); }} catch(e) {{}}
-            setHudState('idle');
-            return;
-        }}
-
-        stopJarvisSpeech();
+    // Continuous Speech Recognition Engine with VAD and Interruption
+    function startListening() {{
+        if (sessionState === 'PAUSED' || sessionState === 'STOPPED') return;
 
         var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRec) {{
-            alert('Speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
+            alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+            setSessionState('INACTIVE');
             return;
+        }}
+
+        // Clean up previous recognition instance
+        if (recognition) {{
+            try {{ recognition.abort(); }} catch(e) {{}}
+            recognition = null;
         }}
 
         try {{
             recognition = new SpeechRec();
             recognition.lang = bcp47Lang;
-            recognition.continuous = false;
-            recognition.interimResults = false;
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
 
             recognition.onstart = function() {{
-                setHudState('listening');
+                setSessionState('LISTENING', '🎙️ LISTENING, BOSS...');
             }};
 
-            recognition.onresult = function(event) {{
-                var transcript = event.results[0][0].transcript;
-                if (transcript && transcript.trim()) {{
-                    setHudState('thinking');
-                    window.submitVoiceToExistingAgent(transcript.trim());
+            recognition.onspeechstart = function() {{
+                // INTELLIGENT INTERRUPTION: user started speaking while AURA is talking
+                if (isSpeaking) {{
+                    console.log("[AURA] User speech detected during TTS: interrupting immediately!");
+                    stopJarvisSpeech();
+                    setSessionState('LISTENING', '🎙️ LISTENING, BOSS...');
                 }}
             }};
 
-            recognition.onerror = function() {{
-                setHudState('idle');
+            recognition.onresult = function(event) {{
+                var interimTranscript = '';
+                var finalTranscript = '';
+
+                for (var i = event.resultIndex; i < event.results.length; ++i) {{
+                    if (event.results[i].isFinal) {{
+                        finalTranscript += event.results[i][0].transcript;
+                    }} else {{
+                        interimTranscript += event.results[i][0].transcript;
+                    }}
+                }}
+
+                var rawText = (finalTranscript || interimTranscript || '').trim();
+                var lowerText = rawText.toLowerCase();
+
+                // INTELLIGENT INTERRUPTION CHECK: cancel ongoing audio immediately
+                if (isSpeaking && rawText.length > 0) {{
+                    console.log("[AURA] Voice interruption triggered:", rawText);
+                    stopJarvisSpeech();
+                    setSessionState('LISTENING', '🎙️ LISTENING, BOSS...');
+
+                    // Check for standalone interrupt phrases
+                    if (/^(wait|stop talking|hold on|listen to me|cancel that|be quiet|silence|pause)$/i.test(lowerText)) {{
+                        currentSpeechBuffer = '';
+                        return;
+                    }}
+                }}
+
+                if (sessionState !== 'LISTENING') return;
+
+                if (rawText.length > 0) {{
+                    currentSpeechBuffer = rawText;
+                    if (silenceTimer) clearTimeout(silenceTimer);
+
+                    // If final phrase received, check for voice commands like pause/resume/end
+                    if (finalTranscript.trim().length > 0) {{
+                        var finalCmd = finalTranscript.trim();
+                        currentSpeechBuffer = '';
+
+                        // Immediate local handling of Voice Session commands
+                        if (/^(pause(\\s+the)?(\\s+voice)?(\\s+assistant)?|pause\\s+listening|hold\\s+on)$/i.test(finalCmd.toLowerCase())) {{
+                            pauseVoiceSession();
+                            return;
+                        }}
+                        if (/^(stop(\\s+the)?(\\s+voice)?(\\s+assistant)?|end\\s+session|aura\\s+offline|close\\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
+                            endVoiceSession();
+                            return;
+                        }}
+
+                        // Submit to NextRoute engine
+                        setSessionState('PROCESSING', '⚡ THINKING...');
+                        try {{ recognition.stop(); }} catch(e) {{}}
+                        window.submitVoiceToExistingAgent(finalCmd);
+                    }} else {{
+                        // VAD silence detection for interim speech
+                        silenceTimer = setTimeout(function() {{
+                            if (currentSpeechBuffer.length > 0 && sessionState === 'LISTENING') {{
+                                var pendingText = currentSpeechBuffer;
+                                currentSpeechBuffer = '';
+                                setSessionState('PROCESSING', '⚡ THINKING...');
+                                try {{ recognition.stop(); }} catch(e) {{}}
+                                window.submitVoiceToExistingAgent(pendingText);
+                            }}
+                        }}, vadTimeoutMs);
+                    }}
+                }}
+            }};
+
+            recognition.onerror = function(err) {{
+                if (err && err.error === 'not-allowed') {{
+                    alert('Microphone access was denied. Please allow microphone permissions to chat with AURA.');
+                    pauseVoiceSession();
+                    return;
+                }}
+                if (err && err.error !== 'no-speech' && sessionState === 'LISTENING') {{
+                    console.warn("[AURA] Speech recognition notice:", err.error);
+                }}
             }};
 
             recognition.onend = function() {{
-                if (!isThinking && !isSpeaking) setHudState('idle');
+                // If still in LISTENING state, automatically reconnect recognition after brief debounce
+                if (sessionState === 'LISTENING') {{
+                    if (restartDebounceTimer) clearTimeout(restartDebounceTimer);
+                    restartDebounceTimer = setTimeout(function() {{
+                        if (sessionState === 'LISTENING') {{
+                            try {{ recognition.start(); }} catch(e) {{}}
+                        }}
+                    }}, 250);
+                }}
             }};
 
             recognition.start();
         }} catch(e) {{
-            setHudState('idle');
+            console.warn("[AURA] Could not start speech recognition:", e);
+        }}
+    }}
+
+    // -------------------------------------------------------------------------
+    // PERSISTENT SESSION CONTROLS: START, PAUSE, RESUME, END
+    // -------------------------------------------------------------------------
+    window.startVoiceSession = function() {{
+        setSessionState('LISTENING');
+        startListening();
+    }};
+
+    window.pauseVoiceSession = function() {{
+        setSessionState('PAUSED');
+        stopJarvisSpeech();
+        if (recognition) {{
+            try {{ recognition.abort(); }} catch(e) {{}}
+        }}
+        if (silenceTimer) clearTimeout(silenceTimer);
+        currentSpeechBuffer = '';
+    }};
+
+    window.resumeVoiceSession = function() {{
+        setSessionState('LISTENING');
+        startListening();
+    }};
+
+    window.endVoiceSession = function() {{
+        setSessionState('STOPPED');
+        stopJarvisSpeech();
+        if (recognition) {{
+            try {{ recognition.abort(); }} catch(e) {{}}
+            recognition = null;
+        }}
+        if (silenceTimer) clearTimeout(silenceTimer);
+        currentSpeechBuffer = '';
+    }};
+
+    // Smart Toggle: Switches between Inactive/Stopped -> Listening -> Paused -> Resume
+    window.togglePersistentVoiceSession = function() {{
+        if (sessionState === 'INACTIVE' || sessionState === 'STOPPED') {{
+            startVoiceSession();
+        }} else if (sessionState === 'LISTENING' || sessionState === 'PROCESSING' || sessionState === 'SPEAKING') {{
+            pauseVoiceSession();
+        }} else if (sessionState === 'PAUSED') {{
+            resumeVoiceSession();
         }}
     }};
 
-    // Zero-Reload WebSocket Bridge Submission to Existing AI Agent
+    window.toggleContinuousMode = function() {{
+        continuousMode = !continuousMode;
+        window.togglePersistentVoiceSession();
+    }};
+
+    // Backward-compatibility alias for avatar click
+    window.toggleJarvisVoiceRecognition = window.togglePersistentVoiceSession;
+
+    // Zero-Reload WebSocket Bridge to NextRoute Agent
     window.submitVoiceToExistingAgent = function(transcript) {{
         var cleanTranscript = (transcript || '').trim();
         if (!cleanTranscript) return;
@@ -1268,7 +1499,7 @@ def render_jarvis_chatbot_hud_html(
             console.warn("[AURA Bridge] Zero-reload bridge notice:", eBridge);
         }}
 
-        // 2. Also populate visible Streamlit text input box if found
+        // 2. Populate visible composer input if found
         try {{
             if (pDoc) {{
                 var inputElements = pDoc.querySelectorAll('input[aria-label="Ask Aura"], input[placeholder*="Ask Aura"], .aura-chatgpt-composer-wrapper input');
@@ -1295,7 +1526,7 @@ def render_jarvis_chatbot_hud_html(
         }} catch(eParam) {{}}
     }};
 
-    // Unlock speech on first user gesture if browser blocked audible autoplay
+    // Unlock audio autoplay on first interaction
     var unlockAudioOnGesture = function() {{
         try {{
             if (synthesis && synthesis.paused) {{
@@ -1310,12 +1541,17 @@ def render_jarvis_chatbot_hud_html(
     window.addEventListener('keydown', unlockAudioOnGesture, {{ passive: true }});
     window.addEventListener('touchstart', unlockAudioOnGesture, {{ passive: true }});
 
-    // Initial load: Play startup greeting or latest response
+    // Initialize UI on load
+    updateUIForState(sessionState);
+
+    // Initial load: Play latest response or startup greeting, and restore continuous session loop if active
     setTimeout(function() {{
         if (lastResponse && lastResponse.trim()) {{
             window.speakJarvis(lastResponse.trim());
         }} else if (autoGreeting && autoGreeting.trim()) {{
             window.speakJarvis(autoGreeting.trim());
+        }} else if (sessionState === 'LISTENING') {{
+            startListening();
         }}
     }}, 400);
 
