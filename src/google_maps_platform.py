@@ -2453,7 +2453,7 @@ def build_google_maps_javascript_html(
                 var isStop = (window.activeMapPickingTarget === 'stop');
                 if (hudIcon) hudIcon.innerText = isOrig ? "🟢" : (isStop ? "🟣" : "🏁");
                 if (hudTitle) hudTitle.innerText = isOrig ? "START SELECTION MODE" : (isStop ? "INTERMEDIATE STOP SELECTION MODE" : "DESTINATION SELECTION MODE");
-                if (hudDesc) hudDesc.innerText = isOrig ? "Click anywhere on the map to set your starting location" : (isStop ? "Click anywhere on the map to add an intermediate stop" : "Click anywhere on the map to set your destination");
+                if (hudDesc) hudDesc.innerText = isOrig ? "Tap or drag to set your start. (Click anywhere on the map)" : (isStop ? "Click anywhere on the map to add an intermediate stop" : "Tap or drag to set your destination. (Click anywhere on the map)");
                 if (hud) hud.style.display = 'flex';
             }}, 200);
         }}
@@ -4307,8 +4307,9 @@ def build_google_maps_javascript_html(
             // 3. Alternative routes
             if (data && data.routePolylines && data.routePolylines.length > 0) {{
                 data.routePolylines.forEach(function(alt) {{
-                    if (alt.polyline && alt.polyline.length > 0) {{
-                        alt.polyline.forEach(function(pt) {{ pts.push(pt); }});
+                    var altCoords = alt.coordinates || alt.polyline || [];
+                    if (altCoords && altCoords.length > 0) {{
+                        altCoords.forEach(function(pt) {{ pts.push(pt); }});
                     }}
                 }});
             }}
@@ -5291,21 +5292,6 @@ def build_google_maps_javascript_html(
                 }});
                 if (coords.length < 2) return;
 
-                if (orig && orig.lat !== undefined && orig.lng !== undefined) {{
-                    var oLat = parseFloat(orig.lat);
-                    var oLng = parseFloat(orig.lng);
-                    if (Math.abs(coords[0][0] - oLat) > 0.00001 || Math.abs(coords[0][1] - oLng) > 0.00001) {{
-                        coords.unshift([oLat, oLng]);
-                    }}
-                }}
-                if (dest && dest.lat !== undefined && dest.lng !== undefined) {{
-                    var dLat = parseFloat(dest.lat);
-                    var dLng = parseFloat(dest.lng);
-                    if (Math.abs(coords[coords.length - 1][0] - dLat) > 0.00001 || Math.abs(coords[coords.length - 1][1] - dLng) > 0.00001) {{
-                        coords.push([dLat, dLng]);
-                    }}
-                }}
-
                 var isSel = r.is_selected;
                 var pathCoords = coords.map(function(pt) {{
                     var ll = new google.maps.LatLng(pt[0], pt[1]);
@@ -6084,24 +6070,6 @@ def build_google_maps_javascript_html(
                         return [parseFloat(pt[0]), parseFloat(pt[1])];
                     }});
                     if (rCoords.length < 2) return;
-
-                    // Connect polyline directly to origin pin needle tip
-                    if (data.origin && data.origin.lat !== undefined && data.origin.lng !== undefined) {{
-                        var oLat = parseFloat(data.origin.lat);
-                        var oLng = parseFloat(data.origin.lng);
-                        if (Math.abs(rCoords[0][0] - oLat) > 0.00001 || Math.abs(rCoords[0][1] - oLng) > 0.00001) {{
-                            rCoords.unshift([oLat, oLng]);
-                        }}
-                    }}
-
-                    // Connect polyline directly to destination pin
-                    if (data.destination && data.destination.lat !== undefined && data.destination.lng !== undefined) {{
-                        var dLat = parseFloat(data.destination.lat);
-                        var dLng = parseFloat(data.destination.lng);
-                        if (Math.abs(rCoords[rCoords.length - 1][0] - dLat) > 0.00001 || Math.abs(rCoords[rCoords.length - 1][1] - dLng) > 0.00001) {{
-                            rCoords.push([dLat, dLng]);
-                        }}
-                    }}
 
                     var isSel = r.is_selected;
                     var strokeCol = r.color || (isSel ? '#00F0B5' : '#0ea5e9');

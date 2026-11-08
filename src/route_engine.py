@@ -1794,6 +1794,69 @@ class BaseRoutingProvider:
 
 
 
+_SNAP_CACHE: Dict[Tuple[float, float, str], Dict[str, Any]] = {}
+
+
+def snap_to_road_network(
+    lat: float,
+    lon: float,
+    mode: TravelMode = TravelMode.DRIVING,
+    base_url: str = "https://router.project-osrm.org",
+    timeout_sec: float = 4.0
+) -> Dict[str, Any]:
+    """
+    Snaps a geographic coordinate to the nearest valid, traversable road on the road network
+    using OSRM /nearest/v1 API. Prevents routes from cutting across agricultural fields or buildings.
+    """
+    profile = "foot" if mode == TravelMode.WALKING else ("bike" if mode == TravelMode.BICYCLING else "car")
+    cache_key = (round(lat, 5), round(lon, 5), profile)
+    if cache_key in _SNAP_CACHE:
+        return _SNAP_CACHE[cache_key]
+
+    default_res = {
+        "snapped_lat": lat,
+        "snapped_lon": lon,
+        "distance_m": 0.0,
+        "road_name": "Road Network",
+        "is_snapped": False
+    }
+
+    if not math.isfinite(lat) or not math.isfinite(lon) or abs(lat) > 90.0 or abs(lon) > 180.0:
+        return default_res
+
+    url = f"{base_url.rstrip('/')}/nearest/v1/{profile}/{lon:.6f},{lat:.6f}?number=1"
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "NexRoute-RoadSnap/2.0"}
+        )
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data.get("code") == "Ok" and data.get("waypoints"):
+                    wp = data["waypoints"][0]
+                    loc = wp.get("location")
+                    if loc and len(loc) >= 2:
+                        s_lon, s_lat = float(loc[0]), float(loc[1])
+                        d_m = float(wp.get("distance", 0.0))
+                        # Only accept snap if within 800m of road
+                        if d_m <= 800.0:
+                            res = {
+                                "snapped_lat": s_lat,
+                                "snapped_lon": s_lon,
+                                "distance_m": d_m,
+                                "road_name": wp.get("name") or "Road Network",
+                                "is_snapped": True
+                            }
+                            _SNAP_CACHE[cache_key] = res
+                            return res
+    except Exception:
+        pass
+
+    _SNAP_CACHE[cache_key] = default_res
+    return default_res
+
+
 class OSRMGlobalRoutingProvider(BaseRoutingProvider):
 
     """
@@ -1867,22 +1930,34 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
         else:
             profile = "car" 
 
+        # Snap endpoints to traversable road network if road travel mode
+        snapped_orig = (origin_lat, origin_lon)
+        snapped_dest = (dest_lat, dest_lon)
+        if mode not in (TravelMode.FLIGHT, TravelMode.WATERWAY):
+            s_o = snap_to_road_network(origin_lat, origin_lon, mode=mode, base_url=self.base_url, timeout_sec=min(self.timeout_sec, 4.0))
+            if s_o.get("is_snapped"):
+                snapped_orig = (s_o["snapped_lat"], s_o["snapped_lon"])
+            s_d = snap_to_road_network(dest_lat, dest_lon, mode=mode, base_url=self.base_url, timeout_sec=min(self.timeout_sec, 4.0))
+            if s_d.get("is_snapped"):
+                snapped_dest = (s_d["snapped_lat"], s_d["snapped_lon"])
+
         if waypoints:
             valid_wps = [(float(w[0]), float(w[1])) for w in waypoints if w and len(w) == 2]
             if valid_wps:
-                all_pts = [(origin_lat, origin_lon)] + valid_wps + [(dest_lat, dest_lon)]
+                all_pts = [snapped_orig] + valid_wps + [snapped_dest]
                 coords = ";".join(f"{lon:.6f},{lat:.6f}" for lat, lon in all_pts)
             else:
-                coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
+                coords = f"{snapped_orig[1]:.6f},{snapped_orig[0]:.6f};{snapped_dest[1]:.6f},{snapped_dest[0]:.6f}"
         else:
-            coords = f"{origin_lon:.6f},{origin_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
+            coords = f"{snapped_orig[1]:.6f},{snapped_orig[0]:.6f};{snapped_dest[1]:.6f},{snapped_dest[0]:.6f}"
 
-        url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=3&steps=true"
+        # Request native authentic route alternatives from OSRM provider (no fake lateral waypoints)
+        url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&alternatives=true&steps=true"
 
         routes = self._fetch_osrm(
             url, mode, require_accessible,
-            origin_coords=(origin_lat, origin_lon),
-            dest_coords=(dest_lat, dest_lon),
+            origin_coords=snapped_orig,
+            dest_coords=snapped_dest,
             speed_mode=speed_mode,
             custom_speed_kmh=custom_speed_kmh
         )
@@ -1907,60 +1982,27 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                         break
 
         if routes:
+            # Verify and filter distinct authentic routes
+            valid_routes = []
+            for r in routes:
+                is_valid, _ = verify_route_validity(r, origin_lat, origin_lon, dest_lat, dest_lon)
+                if is_valid:
+                    valid_routes.append(r)
+
+            routes_to_filter = valid_routes or routes
             distinct_routes = filter_distinct_routes(
-                routes,
-                max_overlap=0.82,
+                routes_to_filter,
+                max_overlap=0.85,
                 origin_coords=(origin_lat, origin_lon),
                 dest_coords=(dest_lat, dest_lon)
             )
-
-            # Discover multiple alternative routes (up to 3-4 distinct corridors) across the full road network
-            if len(distinct_routes) < 4 and mode not in [TravelMode.FLIGHT, TravelMode.WATERWAY] and not waypoints:
-                try:
-                    import math
-                    mid_lat = (origin_lat + dest_lat) / 2.0
-                    mid_lon = (origin_lon + dest_lon) / 2.0
-                    d_lat = dest_lat - origin_lat
-                    cos_m = math.cos(math.radians(mid_lat))
-                    d_lon = (dest_lon - origin_lon) * cos_m
-
-                    # Probe multiple road corridors on both lateral flanks
-                    for offset_frac in [0.15, -0.15, 0.25, -0.25, 0.35, -0.35]:
-                        perp_lat = -d_lon * offset_frac
-                        perp_lon = (d_lat * offset_frac) / max(0.0001, cos_m)
-                        via_lat = mid_lat + perp_lat
-                        via_lon = mid_lon + perp_lon
-
-                        via_coords = f"{origin_lon:.6f},{origin_lat:.6f};{via_lon:.6f},{via_lat:.6f};{dest_lon:.6f},{dest_lat:.6f}"
-                        via_url = f"{self.base_url}/route/v1/{profile}/{via_coords}?overview=full&geometries=geojson&alternatives=3&steps=true"
-                        via_routes = self._fetch_osrm(
-                            via_url, mode, require_accessible,
-                            origin_coords=(origin_lat, origin_lon),
-                            dest_coords=(dest_lat, dest_lon),
-                            speed_mode=speed_mode,
-                            custom_speed_kmh=custom_speed_kmh
-                        )
-                        if via_routes:
-                            for vr in via_routes:
-                                if vr.distance_meters <= routes[0].distance_meters * 1.75:
-                                    routes.append(vr)
-                            distinct_routes = filter_distinct_routes(
-                                routes,
-                                max_overlap=0.82,
-                                origin_coords=(origin_lat, origin_lon),
-                                dest_coords=(dest_lat, dest_lon)
-                            )
-                            if len(distinct_routes) >= 3:
-                                break
-                except Exception:
-                    pass
 
             # Assign sequential unique route IDs and descriptive road network designations
             for r_idx, r in enumerate(distinct_routes):
                 r.route_id = f"OSRM_{r_idx + 1}"
                 if not r.name or r.name.startswith("Route"):
                     if r_idx == 0:
-                        r.name = "Recommended Highway Route (Fastest)"
+                        r.name = "Recommended Highway Route (Fastest)" if len(distinct_routes) > 1 else "Direct Verified Corridor"
                     elif r_idx == 1:
                         r.name = "Alternative 1: Via Arterial Network"
                     elif r_idx == 2:

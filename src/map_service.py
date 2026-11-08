@@ -2327,18 +2327,20 @@ class MapService:
         # Dynamic Auto Fit-Bounds: Frame map automatically across global routes & waypoints when explicitly enabled
         if auto_fit_bounds:
             all_pts: List[Tuple[float, float]] = []
+            all_pts = []
+            if origin_coords:
+                all_pts.append(origin_coords)
+            if destination_coords:
+                all_pts.append(destination_coords)
+
             selected_route = next((r for r in routes if r.get("is_selected")), None) if routes else None
             if selected_route and selected_route.get("polyline"):
-                all_pts = list(selected_route.get("polyline", []))
-            else:
-                if origin_coords:
-                    all_pts.append(origin_coords)
-                if destination_coords:
-                    all_pts.append(destination_coords)
-                if routes:
-                    for r in routes:
-                        for pt in r.get("polyline", []):
-                            all_pts.append(pt)
+                for pt in selected_route.get("polyline", []):
+                    all_pts.append(pt)
+            elif routes:
+                for r in routes:
+                    for pt in r.get("polyline", []):
+                        all_pts.append(pt)
 
             if all_pts and len(all_pts) >= 2:
                 lats = [p[0] for p in all_pts]
