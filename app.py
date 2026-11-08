@@ -7267,7 +7267,13 @@ if raw_voice_cmd:
             "dest_label": st.session_state.get("selected_dest_label", ""),
             "stops": st.session_state.get("intermediate_stops", []),
             "avoid_tolls": st.session_state.get("avoid_tolls", False),
-            "avoid_highways": st.session_state.get("avoid_highways", False)
+            "avoid_highways": st.session_state.get("avoid_highways", False),
+            "cached_candidate_routes": st.session_state.get("cached_candidate_routes"),
+            "cached_nearby_places": st.session_state.get("cached_nearby_places") or st.session_state.get("corridor_storybook_places") or [],
+            "saved_locations": st.session_state.get("saved_locations", []),
+            "selected_travel_mode": st.session_state.get("selected_travel_mode", "CAR"),
+            "active_step_index": st.session_state.get("current_step_index", 0),
+            "companion_3d_mode": st.session_state.get("companion_3d_mode", True)
         }
         c_lang = st.session_state.get("app_language", "en")
         cmd_result = AuraGlobalCommandDispatcher.parse_and_dispatch(raw_voice_cmd, context=active_ctx, lang=c_lang)

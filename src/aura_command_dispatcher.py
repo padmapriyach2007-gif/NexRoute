@@ -36,6 +36,12 @@ class AuraCommandType(str, Enum):
     SWAP_LOCATIONS = "SWAP_LOCATIONS"
     ADD_WAYPOINT = "ADD_WAYPOINT"
     REMOVE_WAYPOINT = "REMOVE_WAYPOINT"
+    CLEAR_LOCATIONS = "CLEAR_LOCATIONS"
+    CLEAR_ORIGIN = "CLEAR_ORIGIN"
+    CLEAR_DESTINATION = "CLEAR_DESTINATION"
+    MAP_FOCUS_START = "MAP_FOCUS_START"
+    MAP_FOCUS_DESTINATION = "MAP_FOCUS_DESTINATION"
+    MAP_FIT_BOUNDS = "MAP_FIT_BOUNDS"
 
     # Navigation Lifecycle Intents
     START_NAVIGATION = "START_NAVIGATION"
@@ -49,16 +55,38 @@ class AuraCommandType(str, Enum):
     CHANGE_ROUTE_PRIORITY = "CHANGE_ROUTE_PRIORITY"
     RECALCULATE_ROUTE = "RECALCULATE_ROUTE"
     SHOW_ALTERNATIVE_ROUTES = "SHOW_ALTERNATIVE_ROUTES"
+    ROUTE_SELECT_ALTERNATIVE = "ROUTE_SELECT_ALTERNATIVE"
 
     # Map Controls
     FIT_MAP = "FIT_MAP"
     ZOOM_MAP = "ZOOM_MAP"
     MAP_STYLE = "MAP_STYLE"
     MAP_ACTION = "MAP_ACTION"
+    MAP_SET_LAYER = "MAP_SET_LAYER"
+    MAP_CATEGORY_FILTER = "MAP_CATEGORY_FILTER"
 
     # 3D Virtual Guide & Cockpit Controls
     TOGGLE_3D_MODE = "TOGGLE_3D_MODE"
     CONTROL_3D_COMPANION = "CONTROL_3D_COMPANION"
+    VIRTUAL_TOUR_START = "VIRTUAL_TOUR_START"
+    VIRTUAL_TOUR_STOP = "VIRTUAL_TOUR_STOP"
+    VIRTUAL_TOUR_PAUSE = "VIRTUAL_TOUR_PAUSE"
+    VIRTUAL_TOUR_RESUME = "VIRTUAL_TOUR_RESUME"
+    VIRTUAL_TOUR_STEP_NEXT = "VIRTUAL_TOUR_STEP_NEXT"
+    VIRTUAL_TOUR_STEP_PREV = "VIRTUAL_TOUR_STEP_PREV"
+    VIRTUAL_TOUR_TOGGLE_3D = "VIRTUAL_TOUR_TOGGLE_3D"
+
+    # Places, Recommended Places & Sites Automation
+    PLACES_EXPLORE = "PLACES_EXPLORE"
+    PLACES_SAVED = "PLACES_SAVED"
+    PLACES_OPEN_CARD = "PLACES_OPEN_CARD"
+    PLACES_EXPLORE_PLACE = "PLACES_EXPLORE_PLACE"
+    PLACES_SAVE_FAVORITE = "PLACES_SAVE_FAVORITE"
+    PLACES_REMOVE_FAVORITE = "PLACES_REMOVE_FAVORITE"
+    PLACES_SET_CATEGORY = "PLACES_SET_CATEGORY"
+    PLACES_SET_RADIUS = "PLACES_SET_RADIUS"
+    PLACES_SEARCH = "PLACES_SEARCH"
+    PLACES_EXPLORE_LORE = "PLACES_EXPLORE_LORE"
 
     # Travel Modules Intents
     SEARCH_HOTEL = "FACILITY_SEARCH"       # Compatible alias for tests
@@ -751,38 +779,45 @@ class AuraGlobalCommandDispatcher:
         # 4. LOCATION AND ENDPOINT MANAGEMENT (ORIGIN, DESTINATION, WAYPOINTS)
         # ---------------------------------------------------------------------
         # 4.1 Set Origin: "Set my starting point to Vijayawada" / "Start from Guntur"
-        orig_match = re.search(r"\b(?:set\s+(?:my\s+)?(?:start(?:ing)?(?:\s+point|\s+location)?|origin)\s+to|start\s+from|from)\s+([a-zA-Z\s\u0C00-\u0C7F\u0900-\u097F]+?)(?:\s*[,.]|\s+and|\s+destination|$)", q, re.IGNORECASE)
-        if orig_match:
-            raw_orig = orig_match.group(1).strip()
-            # Ignore if just the word "current location" or "here"
-            if raw_orig.lower() not in ["here", "current location", "my location", "live location"]:
-                geo_orig = cls.resolve_location(raw_orig)
-                orig_label = geo_orig["display_name"] if geo_orig else raw_orig.title()
-                orig_coords = (geo_orig["lat"], geo_orig["lon"]) if geo_orig else None
-                spoken_msg = f"Starting point set to {orig_label}."
-                return AuraExecutionResult(
-                    command_type=AuraCommandType.SET_ORIGIN,
-                    spoken_response=spoken_msg,
-                    text_response=f"📍 Starting point set to **{orig_label}**.",
-                    action_name="set_starting_point",
-                    ui_updates={
-                        "user_live_coords": orig_coords,
-                        "user_live_label": orig_label,
-                        "pending_orig": orig_label,
-                        "txt_orig": orig_label,
-                        "is_custom_start_place": True,
-                        "cached_candidate_routes": None,
-                        "routes_generated": bool(orig_coords and ctx.get("dest_coords")),
-                        "scroll_to_app_map": True
-                    }
-                )
+        if not re.search(r"\b(?:remove|delete|unsave)\s+(?:.*?\s+)?from\b", q_lower):
+            orig_match = re.search(r"\b(?:set\s+(?:my\s+)?(?:start(?:ing)?(?:\s+point|\s+location)?|origin)\s+to|start\s+from|from)\s+([a-zA-Z\s\u0C00-\u0C7F\u0900-\u097F]+?)(?:\s*[,.]|\s+and|\s+destination|$)", q, re.IGNORECASE)
+            if orig_match:
+                raw_orig = orig_match.group(1).strip()
+                # Ignore if just the word "current location" or "here" or saved places
+                if raw_orig.lower() not in ["here", "current location", "my location", "live location", "favorites", "saved", "bookmarks", "favorites list", "saved places"]:
+                    geo_orig = cls.resolve_location(raw_orig)
+                    orig_label = geo_orig["display_name"] if geo_orig else raw_orig.title()
+                    orig_coords = (geo_orig["lat"], geo_orig["lon"]) if geo_orig else None
+                    spoken_msg = f"Starting point set to {orig_label}."
+                    return AuraExecutionResult(
+                        command_type=AuraCommandType.SET_ORIGIN,
+                        spoken_response=spoken_msg,
+                        text_response=f"📍 Starting point set to **{orig_label}**.",
+                        action_name="set_starting_point",
+                        ui_updates={
+                            "user_live_coords": orig_coords,
+                            "user_live_label": orig_label,
+                            "pending_orig": orig_label,
+                            "txt_orig": orig_label,
+                            "is_custom_start_place": True,
+                            "cached_candidate_routes": None,
+                            "routes_generated": bool(orig_coords and ctx.get("dest_coords")),
+                            "scroll_to_app_map": True
+                        }
+                    )
 
         # 4.2 Set Destination: "Take me to Hyderabad" / "Navigate to Hyderabad" / "Set destination to Hyderabad"
         dest_match = re.search(r"\b(?:set\s+(?:my\s+)?destination\s+to|navigate\s+to|drive\s+to|take\s+me\s+to|go\s+to|directions?\s+to|route\s+to|plan\s+(?:a\s+)?trip\s+to)\s+([a-zA-Z\s\u0C00-\u0C7F\u0900-\u097F]+)", q, re.IGNORECASE)
         if dest_match:
             dest_query = dest_match.group(1).strip()
-            # Exclude app tab names from being treated as destination
-            if dest_query.lower() not in ["navigation", "chatbot", "chat", "facilities", "map", "tools", "saved", "my trips", "trips", "profile", "my profile", "hotels", "flights", "restaurants", "settings", "my bookings", "bookings"]:
+            # Exclude app tab names and relative place references from being treated as raw destination string
+            excluded_dest_terms = [
+                "navigation", "chatbot", "chat", "facilities", "map", "tools", "saved", "my trips",
+                "trips", "profile", "my profile", "hotels", "flights", "restaurants", "settings",
+                "my bookings", "bookings", "this place", "the place", "this recommendation",
+                "current place", "place", "spot"
+            ]
+            if dest_query.lower() not in excluded_dest_terms:
                 geo_dest = cls.resolve_location(dest_query)
                 dest_label = geo_dest["display_name"] if geo_dest else dest_query.title()
                 dest_coords = (geo_dest["lat"], geo_dest["lon"]) if geo_dest else None
@@ -847,6 +882,64 @@ class AuraGlobalCommandDispatcher:
                 text_response="🗑️ Cleared all intermediate stops. Recalculating direct corridor...",
                 action_name="clear_intermediate_stops",
                 ui_updates={"intermediate_stops": [], "cached_candidate_routes": None, "routes_generated": True}
+            )
+
+        # 4.7 Clear All Locations & Active Route (Requirement 4)
+        if re.search(r"\b(clear\s+(all\s+)?locations|clear\s+(my\s+)?routes?|reset\s+(all\s+)?locations|clear\s+endpoints|locations\s+clear\s+cheyyi)\b|రూట్\s*క్లియర్|ప్రదేశాలు\s*తొలగించు|స్థానాలు\s*క్లియర్|స్థానాలను\s*తొలగించు|स्थान\s*साफ़", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.CLEAR_LOCATIONS,
+                spoken_response="All locations, destination pins, and calculated route alternatives have been cleared.",
+                text_response="🗑️ All route endpoints, pins, and corridor alternatives cleared.",
+                action_name="clear_all_locations",
+                ui_updates={"trigger_clear_all_locations": True}
+            )
+
+        # 4.8 Clear Starting Point Only
+        if re.search(r"\b(clear\s+(my\s+)?start(ing)?(\s+point|\s+location)?|start\s+point\s+clear\s+cheyyi)\b|ప్రారంభ\s*స్థానం\s*తొలగించు|ఆర్డర్\s*క్లియర్|आरंभ\s*हटाएं", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.CLEAR_ORIGIN,
+                spoken_response="Starting point cleared.",
+                text_response="🗑️ Starting point cleared.",
+                action_name="clear_starting_point",
+                ui_updates={"trigger_clear_start": True}
+            )
+
+        # 4.9 Clear Destination Only
+        if re.search(r"\b(clear\s+(my\s+)?destination|dest\s+clear\s+cheyyi|destination\s+clear\s+cheyyi)\b|గమ్యస్థానం\s*తొలగించు|గమ్యం\s*తొలగించు|गंतव्य\s*हटाएं", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.CLEAR_DESTINATION,
+                spoken_response="Destination cleared.",
+                text_response="🗑️ Destination cleared.",
+                action_name="clear_destination",
+                ui_updates={"trigger_clear_dest": True}
+            )
+
+        # 4.10 Focus Start / Focus Destination / Fit Both on Map
+        if re.search(r"\b(focus\s+(on\s+)?(my\s+)?start(ing)?(\s+point)?|center\s+(on\s+)?start|start\s+point\s+chupinchu)\b|ప్రారంభాన్ని\s*చూపించు", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_FOCUS_START,
+                spoken_response="Focusing camera on the starting point.",
+                text_response="🎯 Focused on starting point.",
+                action_name="focus_start_point",
+                ui_updates={"trigger_focus_start": True, "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(focus\s+(on\s+)?(my\s+)?destination|center\s+(on\s+)?destination|dest\s+chupinchu|destination\s+chupinchu)\b|గమ్యాన్ని\s*చూపించు", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_FOCUS_DESTINATION,
+                spoken_response="Focusing camera on the destination.",
+                text_response="🎯 Focused on destination.",
+                action_name="focus_destination",
+                ui_updates={"trigger_focus_dest": True, "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(fit\s+(both\s+)?(markers|route|endpoints)|fit\s+both\s+on\s+map|renditini\s+chupinchu)\b|రెండింటినీ\s*చూపించు|दोनों\s*दिखाओ", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_FIT_BOUNDS,
+                spoken_response="Adjusting map bounds to display both start and destination markers.",
+                text_response="🧭 Fitted both endpoints on the map viewport.",
+                action_name="fit_both_endpoints",
+                ui_updates={"trigger_fit_both": True, "auto_fit_bounds": True, "current_view": "map_nav", "scroll_to_app_map": True}
             )
 
         # ---------------------------------------------------------------------
@@ -918,7 +1011,7 @@ class AuraGlobalCommandDispatcher:
                 ui_updates={"active_objective": "all", "routes_generated": True, "cached_candidate_routes": None}
             )
 
-        if re.search(r"\b(recalculate\s+routes?|find\s+new\s+routes?|refresh\s+routes?|మళ్ళీ\s+లెక్కించు|रूट\s+रिफ्रेश)\b", q_lower):
+        if re.search(r"\b(recalculate\s+routes?|find\s+new\s+routes?|refresh\s+routes?|మళ్ళీ\s+లెక్కించు|రూట్\s+రీఫ్రెష్|रूट\s+रिफ्रेश)\b", q_lower):
             return AuraExecutionResult(
                 command_type=AuraCommandType.RECALCULATE_ROUTE,
                 spoken_response="Recalculating all optimal routes across the road network.",
@@ -927,9 +1020,100 @@ class AuraGlobalCommandDispatcher:
                 ui_updates={"routes_generated": True, "cached_candidate_routes": None, "auto_fit_bounds": True}
             )
 
+        # 6.1 Route Alternative Selection (Route 1 Cyan, Route 2 Orange, Route 3 Purple)
+        if re.search(r"\b(choose|select|set|switch\s+to|pick|take)?\s*(the\s+)?(route\s*1|first\s+route|primary\s+route|cyan\s+route|blue\s+route|రూట్\s*1|మొదటి\s*రూట్|రూట్\s*వన్|సయాన్\s*రూట్|पहला\s*रूट|रूट\s*1)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.ROUTE_SELECT_ALTERNATIVE,
+                spoken_response="Selected Route 1 (Primary road corridor highlighted in cyan).",
+                text_response="🔷 Selected **Route 1** (Primary Route - Cyan).",
+                action_name="select_route_alternative_1",
+                ui_updates={"focused_route_id": "route_1", "selected_candidate_route_id": "route_1", "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(choose|select|set|switch\s+to|pick|take)?\s*(the\s+)?(route\s*2|second\s+route|alt(?:ernative)?\s*1|orange\s+route)\b|రూట్\s*2|రెండవ\s*రూట్|రూట్\s*టూ|ఆరెంజ్\s*రూట్|दूसरा\s*रूट|रूट\s*2", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.ROUTE_SELECT_ALTERNATIVE,
+                spoken_response="Selected Route 2 (Alternative road corridor highlighted in orange).",
+                text_response="🔶 Selected **Route 2** (Alternative 1 - Orange).",
+                action_name="select_route_alternative_2",
+                ui_updates={"focused_route_id": "route_2", "selected_candidate_route_id": "route_2", "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(choose|select|set|switch\s+to|pick|take)?\s*(the\s+)?(route\s*3|third\s+route|alt(?:ernative)?\s*2|purple\s+route)\b|రూట్\s*3|మూడవ\s*రూట్|రూట్\s*త్రీ|పర్పుల్\s*రూట్|तीसरा\s*रूट|रूट\s*3", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.ROUTE_SELECT_ALTERNATIVE,
+                spoken_response="Selected Route 3 (Alternative road corridor highlighted in purple).",
+                text_response="🟣 Selected **Route 3** (Alternative 2 - Purple).",
+                action_name="select_route_alternative_3",
+                ui_updates={"focused_route_id": "route_3", "selected_candidate_route_id": "route_3", "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
         # ---------------------------------------------------------------------
-        # 7. 3D VIRTUAL GUIDE & COMPANION CONTROLS
+        # 7. 3D VIRTUAL GUIDE & VIRTUAL TOURS
         # ---------------------------------------------------------------------
+        if re.search(r"\b(start|begin)\s+(the\s+)?(virtual\s+tour|tour|virtual\s+guide|journey|walkthrough)\b|టూర్\s*ప్రారంభించు|యాత్ర\s*మొదలుపెట్టు|టూర్\s*మొదలుపెట్టు|నడక\s*గైడ్\s*ప్రారంభించు|टूर\s*शुरू", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VIRTUAL_TOUR_START,
+                spoken_response="Starting 3D virtual tour and animated journey guide, Boss.",
+                text_response="🚀 Starting 3D virtual tour and route walkthrough...",
+                action_name="start_virtual_tour",
+                ui_updates={"trigger_tour_start": True, "aura_journey_active": True, "virtual_guide_moving": True, "gps_tracking_active": True, "is_in_transit": True, "current_view": "virtual_guide", "companion_3d_mode": True}
+            )
+
+        if re.search(r"\b(stop|end|exit|quit|cancel)\s+(the\s+)?(virtual\s+tour|tour|journey|walkthrough)\b|టూర్\s*ఆపు|యాత్ర\s*ముగించు|టూర్\s*రద్దు|టూర్\s*ఆపండి|टूर\s*बंद", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VIRTUAL_TOUR_STOP,
+                spoken_response="Virtual tour stopped, Boss.",
+                text_response="🛑 Virtual tour stopped.",
+                action_name="stop_virtual_tour",
+                ui_updates={"trigger_tour_stop": True, "aura_journey_active": False, "virtual_guide_moving": False, "gps_tracking_active": False, "is_in_transit": False}
+            )
+
+        if re.search(r"\b(pause\s+(the\s+)?(virtual\s+)?tour|hold\s+tour)\b|టూర్\s*పాజ్|టూర్\s*విరామం|టూర్\s*ఆపు|टूर\s*रोकें", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VIRTUAL_TOUR_PAUSE,
+                spoken_response="Virtual tour paused.",
+                text_response="⏸️ Virtual tour paused.",
+                action_name="pause_virtual_tour",
+                ui_updates={"trigger_tour_pause": True, "virtual_guide_moving": False}
+            )
+
+        if re.search(r"\b(resume\s+(the\s+)?(virtual\s+)?tour|continue\s+(the\s+)?tour)\b|టూర్\s*కొనసాగించు|టూర్\s*రెజ్యూమ్|टूर\s*जारी\s*रखें", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VIRTUAL_TOUR_RESUME,
+                spoken_response="Resuming virtual tour, Boss.",
+                text_response="▶️ Virtual tour resumed.",
+                action_name="resume_virtual_tour",
+                ui_updates={"trigger_tour_resume": True, "virtual_guide_moving": True}
+            )
+
+        if re.search(r"\b(next\s+(attraction|step|stop|maneuver|turn|point)|go\s+to\s+next\s+step)\b|తరువాతి\s*(దశ|స్టెప్|ఆకర్షణ|స్టాప్)|తదుపరి\s*దశ|अगला\s*कदम|अगला\s*आकर्षण", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VIRTUAL_TOUR_STEP_NEXT,
+                spoken_response="Advancing to next attraction and maneuver step, Boss.",
+                text_response="⏭️ Moving to next journey step.",
+                action_name="next_tour_step",
+                ui_updates={"trigger_tour_next_step": True, "current_view": "virtual_guide"}
+            )
+
+        if re.search(r"\b(prev(?:ious)?\s+(attraction|step|stop|maneuver|turn|point)|go\s+back\s+a\s+step)\b|మునుపటి\s*(దశ|స్టెప్|ఆకర్షణ|స్టాప్)|గత\s*దశ|पिछला\s*कदम", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VIRTUAL_TOUR_STEP_PREV,
+                spoken_response="Returning to previous step.",
+                text_response="⏮️ Returning to previous journey step.",
+                action_name="prev_tour_step",
+                ui_updates={"trigger_tour_prev_step": True, "current_view": "virtual_guide"}
+            )
+
+        if re.search(r"\b(toggle\s+3d|toggle\s+2\.?5d|toggle\s+engine|switch\s+3d)\b|3d\s*మార్చు|3d\s*మోడ్\s*మార్చు|3డి\s*మార్చు|3డి\s*మోడ్", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.VIRTUAL_TOUR_TOGGLE_3D,
+                spoken_response="Toggling 3D and 2.5D visual guide mode.",
+                text_response="🔄 Toggling 3D / 2.5D companion view.",
+                action_name="toggle_3d_engine",
+                ui_updates={"trigger_toggle_3d": True}
+            )
+
         if re.search(r"\b(show|activate|enable|open)\s+(the\s+)?(3d\s+guide|3d\s+companion|virtual\s+guide|3d\s+mode|3d\s+cockpit)\b", q_lower):
             return AuraExecutionResult(
                 command_type=AuraCommandType.TOGGLE_3D_MODE,
@@ -958,8 +1142,36 @@ class AuraGlobalCommandDispatcher:
             )
 
         # ---------------------------------------------------------------------
-        # 8. MAP VIEW CONTROLS & CAMERA STYLES
+        # 8. MAP VIEW CONTROLS, CAMERA STYLES & POI CATEGORIES
         # ---------------------------------------------------------------------
+        # 8.0 Map GPS & Full Screen Actions
+        if re.search(r"\b((center|show|find|locate)\s+(on\s+)?(my\s+|current\s+|live\s+)?location|my\s+location|నా\s+లొకేషన్|నా\s+స్థానం|నా\s+ప్రస్తుత\s+స్థానం|मेरा\s+स्थान)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_ACTION,
+                spoken_response=resp_bundle["gps_centered"],
+                text_response=f"📍 {resp_bundle['gps_centered']}",
+                action_name="center_user_location",
+                ui_updates={"trigger_map_center_user": True, "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(toggle\s+)?(full\s*screen|fullscreen\s+map|expand\s+map|maximize\s+map|ఫుల్‌స్క్రీన్|మ్యాప్\s+పెద్దది\s+చేయి|फुल\s*स्क्रीन)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_ACTION,
+                spoken_response="Toggling map full screen mode.",
+                text_response="⛶ Toggled map full screen.",
+                action_name="toggle_map_fullscreen",
+                ui_updates={"trigger_map_fullscreen": True, "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(open\s+|show\s+)?(map\s+details|layers\s+drawer|map\s+layers|మ్యాప్\s+వివరాలు|లేయర్స్\s+చూపించు|నక్షా\s+వివరాలు)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_ACTION,
+                spoken_response="Opening map details and layer selector.",
+                text_response="🥞 Opening Map Details drawer...",
+                action_name="open_map_details",
+                ui_updates={"trigger_map_details": True, "scroll_to_app_map": True}
+            )
+
         if re.search(r"\b(fit\s+(?:the\s+)?(?:entire\s+|whole\s+|full\s+)?route|fit\s+bounds|show\s+full\s+route|show\s+whole\s+route|zoom\s+to\s+route|మొత్తం\s+రూట్|पूरा\s+रूट)\b", q_lower):
             return AuraExecutionResult(
                 command_type=AuraCommandType.FIT_MAP,
@@ -969,7 +1181,7 @@ class AuraGlobalCommandDispatcher:
                 ui_updates={"auto_fit_bounds": True, "scroll_to_app_map": True}
             )
 
-        if re.search(r"\b(zoom\s+in|magnify\s+map|closer\s+view)\b", q_lower):
+        if re.search(r"\b(zoom\s+in|magnify\s+map|closer\s+view|దగ్గరకు\s+జూమ్|నక్షా\s+జూమ్\s+ఇన్)\b", q_lower):
             return AuraExecutionResult(
                 command_type=AuraCommandType.ZOOM_MAP,
                 spoken_response="Zooming in on map view, Boss.",
@@ -978,7 +1190,7 @@ class AuraGlobalCommandDispatcher:
                 ui_updates={"map_zoom_delta": 1, "scroll_to_app_map": True}
             )
 
-        if re.search(r"\b(zoom\s+out|wider\s+view)\b", q_lower):
+        if re.search(r"\b(zoom\s+out|wider\s+view|దూరంగా\s+జూమ్|నక్షా\s+జూమ్\s+అవుట్)\b", q_lower):
             return AuraExecutionResult(
                 command_type=AuraCommandType.ZOOM_MAP,
                 spoken_response="Zooming out for broader overview, Boss.",
@@ -987,31 +1199,96 @@ class AuraGlobalCommandDispatcher:
                 ui_updates={"map_zoom_delta": -1, "scroll_to_app_map": True}
             )
 
-        if re.search(r"\b(switch\s+to\s+satellite|satellite\s+view|satellite\s+mode|satellite\s+map|శాటిలైట్)\b", q_lower):
+        # 8.1 Map Layer Styles (Satellite, Roadmap, Terrain, Hybrid, Dark)
+        if re.search(r"\b(switch\s+to\s+satellite|satellite\s+view|satellite\s+mode|satellite\s+map|శాటిలైట్|శాటిలైట్\s+మ్యాప్|सैटेलाइट)\b", q_lower):
             return AuraExecutionResult(
-                command_type=AuraCommandType.MAP_STYLE,
+                command_type=AuraCommandType.MAP_SET_LAYER,
                 spoken_response=resp_bundle["satellite_switched"],
                 text_response=f"🛰️ {resp_bundle['satellite_switched']}",
                 action_name="set_map_satellite",
                 ui_updates={"map_engine": "google_satellite", "map_style": "satellite_hybrid", "scroll_to_app_map": True}
             )
 
-        if re.search(r"\b(switch\s+to\s+(roadmap|road\s+map|vector\s+map|normal\s+view)|roadmap\s+view|రోడ్‌మ్యాప్)\b", q_lower):
+        if re.search(r"\b(switch\s+to\s+(roadmap|road\s+map|vector\s+map|normal\s+view)|roadmap\s+view|రోడ్‌మ్యాప్|సాధారణ\s+మ్యాప్|रोडमैप)\b", q_lower):
             return AuraExecutionResult(
-                command_type=AuraCommandType.MAP_STYLE,
+                command_type=AuraCommandType.MAP_SET_LAYER,
                 spoken_response=resp_bundle["roadmap_switched"],
                 text_response=f"🗺️ {resp_bundle['roadmap_switched']}",
                 action_name="set_map_roadmap",
                 ui_updates={"map_engine": "google_roadmap", "map_style": "google_maps_road", "scroll_to_app_map": True}
             )
 
-        if re.search(r"\b(switch\s+to\s+terrain|terrain\s+view|topography|టెర్రైన్)\b", q_lower):
+        if re.search(r"\b(switch\s+to\s+terrain|terrain\s+view|topography|టెర్రైన్|భూభాగం|टेरेन)\b", q_lower):
             return AuraExecutionResult(
-                command_type=AuraCommandType.MAP_STYLE,
+                command_type=AuraCommandType.MAP_SET_LAYER,
                 spoken_response=resp_bundle["terrain_switched"],
                 text_response=f"⛰️ {resp_bundle['terrain_switched']}",
                 action_name="set_map_terrain",
                 ui_updates={"map_engine": "google_terrain", "map_style": "terrain", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(switch\s+to\s+hybrid|hybrid\s+view|hybrid\s+map|హైబ్రిడ్)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_SET_LAYER,
+                spoken_response="Switched to hybrid satellite overlay, Boss.",
+                text_response="🛰️ Switched to Hybrid Satellite Map.",
+                action_name="set_map_hybrid",
+                ui_updates={"map_engine": "google_satellite", "map_style": "satellite_hybrid", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(switch\s+to\s+dark\s+map|dark\s+mode\s+map|night\s+map|డార్క్\s+మ్యాప్|నైట్\s+మ్యాప్)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_SET_LAYER,
+                spoken_response="Switched to dark navigation map style.",
+                text_response="🌙 Switched to Dark Vector Map.",
+                action_name="set_map_dark",
+                ui_updates={"map_engine": "carto_dark", "map_style": "dark_cyberpunk", "scroll_to_app_map": True}
+            )
+
+        # 8.2 Map Category Filters (Hospitals, Supermarkets, Fuel, Restaurants, ATMs, Police, Hotels, Shelters, Malls)
+        if re.search(r"\b(show|find|search|filter)?\s*(nearby\s+)?(supermarkets?|grocery\s+stores?|grocery|సూపర్‌మార్కెట్లు?|కిరాణా|सुपरमार्केट)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_CATEGORY_FILTER,
+                spoken_response="Displaying nearby supermarkets on map.",
+                text_response="🛒 Displaying nearby supermarkets & grocery stores.",
+                action_name="filter_map_supermarkets",
+                ui_updates={"trigger_map_category": "SUPERMARKETS", "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(show|find|search|filter)?\s*(nearby\s+)?(atms?|banking|cash\s+machines?|banks?|ఏటీఎంలు?|బ్యాంకులు?|एटीएम)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_CATEGORY_FILTER,
+                spoken_response="Displaying nearby ATMs and banking facilities.",
+                text_response="🏧 Displaying nearby ATMs & banking locations.",
+                action_name="filter_map_atms",
+                ui_updates={"trigger_map_category": "ATMS", "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(show|find|search|filter)?\s*(nearby\s+)?(shelters?|rest\s+houses?|ఆశ్రమాలు?|విశ్రాంతి\s+గృహాలు?|आश्रय)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_CATEGORY_FILTER,
+                spoken_response="Displaying nearby shelters on map.",
+                text_response="⛺ Displaying nearby emergency shelters.",
+                action_name="filter_map_shelters",
+                ui_updates={"trigger_map_category": "SHELTERS", "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(show|find|search|filter)?\s*(nearby\s+)?(malls?|shopping\s+malls?|shopping\s+centers?|మాల్స్?|షాపింగ్\s+మాల్స్?|मॉल)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_CATEGORY_FILTER,
+                spoken_response="Displaying nearby shopping malls on map.",
+                text_response="🛍️ Displaying nearby shopping malls.",
+                action_name="filter_map_malls",
+                ui_updates={"trigger_map_category": "MALLS", "current_view": "map_nav", "scroll_to_app_map": True}
+            )
+
+        if re.search(r"\b(clear\s+(map\s+)?categor(?:y|ies)|clear\s+poi\s+filter|క్యాటగిరీ\s+క్లియర్|శ్రేణి\s+తొలగించు|श्रेणी\s+हटाएं)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.MAP_CATEGORY_FILTER,
+                spoken_response="Cleared category markers from map.",
+                text_response="✕ Cleared category filter.",
+                action_name="clear_map_category",
+                ui_updates={"trigger_map_category": "NONE", "gmap_category_active": None, "current_view": "map_nav"}
             )
 
         # ---------------------------------------------------------------------
@@ -1139,6 +1416,100 @@ class AuraGlobalCommandDispatcher:
                 text_response=f"👤 {pr_resp}",
                 action_name="open_user_profile",
                 ui_updates={"current_view": "dashboard", "show_user_profile_modal": True, "scroll_to_profile": True}
+            )
+
+        # ---------------------------------------------------------------------
+        # 9.8 PLACES & RECOMMENDED PLACES COMMANDS (Requirement 8)
+        # ---------------------------------------------------------------------
+        # 9.8a Open N-th recommendation / card
+        rec_match = re.search(r"\b(?:open|show|view|select|inspect)\s+(?:the\s+)?(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|[1-9]\d*)\s*(?:st|nd|rd|th)?\s+(?:recommendation|place|spot|landmark|attraction|card|result)\b|\b(మొదటి|రెండవ|మూడవ|నాల్గవ|ఐదవ)\s+(?:రికమండేషన్|ప్రదేశం|స్థలం|ప్లేస్)\b|\b(पहला|दूसरा|तीसरा|चौथा)\s+(?:स्थान|सुझाव)\b", q_lower)
+        if rec_match:
+            raw_ord = (rec_match.group(1) or rec_match.group(2) or rec_match.group(3)).lower()
+            ord_map = {
+                "first": 0, "1st": 0, "1": 0, "మొదటి": 0, "पहला": 0,
+                "second": 1, "2nd": 1, "2": 1, "రెండవ": 1, "दूसरा": 1,
+                "third": 2, "3rd": 2, "3": 2, "మూడవ": 2, "तीसरा": 2,
+                "fourth": 3, "4th": 3, "4": 3, "నాల్గవ": 3, "चौथा": 3,
+                "fifth": 4, "5th": 4, "5": 4, "ఐదవ": 4
+            }
+            c_idx = ord_map.get(raw_ord, 0)
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_OPEN_CARD,
+                spoken_response=f"Opening recommendation number {c_idx + 1}, Boss.",
+                text_response=f"🔍 Opened **Recommendation #{c_idx + 1}** details.",
+                action_name="open_recommendation_card",
+                ui_updates={"trigger_open_recommendation": True, "card_index": c_idx, "current_view": "places"}
+            )
+
+        # 9.8b Save Place to Favorites
+        if re.search(r"\b(save\s+(this\s+|the\s+)?place|add\s+(this\s+|the\s+)?to\s+favorites?|bookmark\s+(this\s+)?place|ఈ\s+స్థలాన్ని\s+సేవ్\s+చేయి|ఫేవరెట్స్\s*లో\s*పెట్టు|స్థలాన్ని\s+భద్రపరుచు|स्थान\s+सहेजें)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_SAVE_FAVORITE,
+                spoken_response="Place saved to your favorites, Boss.",
+                text_response="⭐ Place saved to favorites.",
+                action_name="save_place_favorite",
+                ui_updates={"trigger_save_place": True}
+            )
+
+        # 9.8c Remove Place from Favorites
+        if re.search(r"\b(remove\s+(this\s+|the\s+)?(place\s+)?from\s+favorites?|unsave\s+(this\s+|the\s+)?place|delete\s+from\s+saved|ఫేవరెట్స్\s*నుండి\s*తొలగించు|సేవ్\s+తీసివేయి|పసందీదాల\s+నుండి\s+తీసివేయి|पसंदीदा\s+से\s+हटाएं)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_REMOVE_FAVORITE,
+                spoken_response="Place removed from your favorites.",
+                text_response="🗑️ Place removed from favorites.",
+                action_name="remove_place_favorite",
+                ui_updates={"trigger_unsave_place": True}
+            )
+
+        # 9.8d Explore Lore / Story Behind Place
+        if re.search(r"\b(tell\s+me\s+about\s+this\s+place|what\s+is\s+the\s+history|explore\s+(the\s+)?story|explain\s+(the\s+)?lore|learn\s+more\s+about\s+this\s+place|history\s+of\s+this\s+place|ఈ\s+ప్రదేశం\s+కథ\s+చెప్పు|చరిత్ర\s+చెప్పు|ఈ\s+ప్రదేశం\s+గురించి\s+చెప్పు|స్థల\s+పురాణం|स्थान\s+का\s+इतिहास)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_EXPLORE_LORE,
+                spoken_response="Displaying the cultural lore, heritage narrative, and historical context of this destination.",
+                text_response="📖 Unfolding heritage story and cultural lore for this place...",
+                action_name="explore_place_lore",
+                ui_updates={"trigger_explore_lore": True, "corridor_show_lore_expanded": True}
+            )
+
+        # 9.8e Navigate / Route to Place
+        if re.search(r"\b(navigate\s+to\s+(this|the\s+selected|current)?\s*(place|recommendation|destination)|route\s+to\s+(this|the)?\s*place|take\s+me\s+to\s+this\s+place|ఈ\s+ప్రదేశానికి\s+రూట్\s+చేయి|ఈ\s+స్థలానికి\s+నావిగేట్\s+చేయి|ఈ\s+ప్రదేశానికి\s+తీసుకెళ్లు|इस\s+स्थान\s+पर\s+नेविगेट\s+करो)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_EXPLORE_PLACE,
+                spoken_response="Setting this place as your destination and calculating optimal routes, Boss.",
+                text_response="🎯 Setting destination to selected place and calculating routes...",
+                action_name="navigate_to_recommended_place",
+                ui_updates={"trigger_navigate_to_place": True, "current_view": "map_nav", "routes_generated": True, "cached_candidate_routes": None}
+            )
+
+        # 9.8f Search Radius Picker (5 km, 10 km, 25 km, 50 km)
+        rad_match = re.search(r"\b(?:set|change)?\s*(?:search\s+)?radius\s+(?:to\s+)?(5|10|25|50)\s*(?:km|kilometers?)?\b|\b(5|10|25|50)\s*(?:కి\.?మీ|కిలోమీటర్ల)\s*పరిధి\b|\b(5|10|25|50)\s*किमी\s*त्रिज्या\b", q_lower)
+        if rad_match:
+            r_val = int(rad_match.group(1) or rad_match.group(2) or rad_match.group(3))
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_SET_RADIUS,
+                spoken_response=f"Search radius set to {r_val} kilometers, Boss.",
+                text_response=f"📏 Search radius set to **{r_val} km**.",
+                action_name="set_places_search_radius",
+                ui_updates={"places_smart_radius_choice": f"{r_val} km", "places_search_radius_km": r_val, "current_view": "places"}
+            )
+
+        # 9.8g Places Category Filtering Pills (Attractions, Healthcare, Facilities, Food, Educational, Stays)
+        if re.search(r"\b(?:show|filter|view)?\s*(?:famous\s+)?(attractions|sightseeing|monuments|landmarks|పర్యాటక\s+ఆకర్షణలు|ఆకర్షణలు|ఆకర్షణీయ\s+స్థలాలు|आकर्षण)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_SET_CATEGORY,
+                spoken_response="Displaying famous attractions and cultural heritage landmarks.",
+                text_response="🏛️ Filter set to **Famous Attractions**.",
+                action_name="filter_places_attractions",
+                ui_updates={"places_active_category": "Famous Attractions", "current_view": "places"}
+            )
+
+        if re.search(r"\b(?:show|filter|view)?\s*(educational\s+institutions?|schools?|colleges?|universities?|విద్యా\s+సంస్థలు|స్కూల్స్|కాలేజీలు|शिक्षण\s+संस्थान)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.PLACES_SET_CATEGORY,
+                spoken_response="Displaying educational institutions, schools, and colleges.",
+                text_response="🎓 Filter set to **Educational Institutions**.",
+                action_name="filter_places_education",
+                ui_updates={"places_active_category": "Educational Institutions", "current_view": "places"}
             )
 
         # ---------------------------------------------------------------------
@@ -1475,6 +1846,202 @@ class AuraGlobalCommandDispatcher:
 
             session_state["routes_generated"] = bool(old_dest_coords and old_orig_coords)
             session_state["cached_candidate_routes"] = None
+
+        # Handle Clear All Locations action (Requirement 4)
+        if result.ui_updates.get("trigger_clear_all_locations"):
+            session_state["is_custom_start_place"] = False
+            session_state["orig_candidates"] = []
+            session_state["orig_candidates_query"] = ""
+            session_state["user_live_coords"] = None
+            session_state["user_live_label"] = ""
+            session_state["pending_orig"] = ""
+            session_state["last_synced_orig"] = ""
+            session_state["selected_orig_id"] = None
+            session_state["_prev_synced_orig_coords"] = None
+            session_state["selected_dest_coords"] = None
+            session_state["selected_dest_label"] = None
+            session_state["pending_dest"] = ""
+            session_state["last_synced_dest"] = ""
+            session_state["selected_dest_id"] = None
+            session_state["_prev_synced_dest_coords"] = None
+            session_state["active_dest_meta"] = None
+            session_state["dest_candidates"] = []
+            session_state["dest_candidates_query"] = ""
+            session_state["intermediate_stops"] = []
+            session_state["routes_generated"] = False
+            session_state["_prev_route_sig"] = None
+            session_state["_prev_endpoint_sig"] = None
+            session_state["cached_candidate_routes"] = None
+            session_state["persistent_route_data"] = None
+            session_state["route_alternatives"] = None
+            session_state["focused_route_id"] = "ALL"
+            session_state["selected_route_id"] = None
+            session_state["selected_route_object"] = None
+            session_state["is_in_transit"] = False
+            session_state["current_step_index"] = 0
+            session_state["virtual_guide_moving"] = False
+            session_state["aura_journey_active"] = False
+
+        # Handle Clear Start Point
+        if result.ui_updates.get("trigger_clear_start"):
+            session_state["is_custom_start_place"] = False
+            session_state["orig_candidates"] = []
+            session_state["orig_candidates_query"] = ""
+            session_state["user_live_coords"] = None
+            session_state["user_live_label"] = ""
+            session_state["routes_generated"] = False
+            session_state["pending_orig"] = ""
+            session_state["last_synced_orig"] = ""
+            session_state["selected_orig_id"] = None
+            session_state["_prev_route_sig"] = None
+            session_state["_prev_endpoint_sig"] = None
+            session_state["cached_candidate_routes"] = None
+            session_state["persistent_route_data"] = None
+
+        # Handle Clear Destination
+        if result.ui_updates.get("trigger_clear_dest"):
+            session_state["selected_dest_coords"] = None
+            session_state["selected_dest_label"] = None
+            session_state["routes_generated"] = False
+            session_state["pending_dest"] = ""
+            session_state["last_synced_dest"] = ""
+            session_state["selected_dest_id"] = None
+            session_state["active_dest_meta"] = None
+            session_state["dest_candidates"] = []
+            session_state["dest_candidates_query"] = ""
+            session_state["_prev_route_sig"] = None
+            session_state["_prev_endpoint_sig"] = None
+            session_state["cached_candidate_routes"] = None
+            session_state["persistent_route_data"] = None
+
+        # Handle Focus Start / Focus Destination / Fit Both
+        if result.ui_updates.get("trigger_focus_start"):
+            coords = session_state.get("user_live_coords")
+            if coords:
+                session_state["map_center_override"] = coords
+                session_state["map_center_lat"] = coords[0]
+                session_state["map_center_lon"] = coords[1]
+                session_state["map_zoom"] = 16
+                session_state["map_zoom_level"] = 16
+                session_state["map_focus_target"] = "start"
+                session_state["map_nav_command"] = "FOCUS_START"
+                session_state["auto_fit_bounds"] = False
+                session_state["scroll_to_app_map"] = True
+
+        if result.ui_updates.get("trigger_focus_dest"):
+            coords = session_state.get("selected_dest_coords")
+            if coords:
+                session_state["map_center_override"] = coords
+                session_state["map_center_lat"] = coords[0]
+                session_state["map_center_lon"] = coords[1]
+                session_state["map_zoom"] = 16
+                session_state["map_zoom_level"] = 16
+                session_state["map_focus_target"] = "destination"
+                session_state["map_nav_command"] = "FOCUS_DEST"
+                session_state["auto_fit_bounds"] = False
+                session_state["scroll_to_app_map"] = True
+
+        if result.ui_updates.get("trigger_fit_both"):
+            session_state["auto_fit_bounds"] = True
+            session_state["focused_route_id"] = "ALL"
+            session_state["map_nav_command"] = "FIT_BOUNDS"
+            session_state["scroll_to_app_map"] = True
+
+        # Handle Virtual Tour & Journey Lifecycle
+        if result.ui_updates.get("trigger_tour_start"):
+            session_state["aura_journey_active"] = True
+            session_state["virtual_guide_moving"] = True
+            session_state["gps_tracking_active"] = True
+            session_state["is_in_transit"] = True
+            session_state["current_view"] = "virtual_guide"
+            session_state["companion_3d_mode"] = True
+
+        if result.ui_updates.get("trigger_tour_stop"):
+            session_state["aura_journey_active"] = False
+            session_state["virtual_guide_moving"] = False
+            session_state["gps_tracking_active"] = False
+            session_state["is_in_transit"] = False
+
+        if result.ui_updates.get("trigger_tour_pause"):
+            session_state["virtual_guide_moving"] = False
+
+        if result.ui_updates.get("trigger_tour_resume"):
+            session_state["virtual_guide_moving"] = True
+
+        if result.ui_updates.get("trigger_tour_next_step"):
+            cur_idx = session_state.get("current_step_index", 0)
+            session_state["current_step_index"] = cur_idx + 1
+
+        if result.ui_updates.get("trigger_tour_prev_step"):
+            cur_idx = session_state.get("current_step_index", 0)
+            session_state["current_step_index"] = max(0, cur_idx - 1)
+
+        if result.ui_updates.get("trigger_toggle_3d"):
+            cur_3d = session_state.get("companion_3d_mode", True)
+            session_state["companion_3d_mode"] = not cur_3d
+            session_state["enable_3d_companion"] = not cur_3d
+
+        # Handle Map GPS / Fullscreen
+        if result.ui_updates.get("trigger_map_center_user"):
+            u_coords = session_state.get("user_live_coords")
+            if u_coords:
+                session_state["map_center_override"] = u_coords
+                session_state["map_center_lat"] = u_coords[0]
+                session_state["map_center_lon"] = u_coords[1]
+                session_state["map_zoom"] = 16
+                session_state["map_zoom_level"] = 16
+                session_state["auto_fit_bounds"] = False
+
+        if result.ui_updates.get("trigger_map_fullscreen"):
+            cur_fs = session_state.get("map_is_fullscreen", False)
+            session_state["map_is_fullscreen"] = not cur_fs
+
+        if result.ui_updates.get("trigger_map_category"):
+            m_cat = result.ui_updates.get("trigger_map_category")
+            session_state["gmap_category_active"] = None if m_cat == "NONE" else m_cat
+            session_state["active_map_poi_category"] = None if m_cat == "NONE" else m_cat
+
+        # Handle Places & Recommendations
+        if result.ui_updates.get("trigger_open_recommendation"):
+            c_idx = result.ui_updates.get("card_index", 0)
+            places = session_state.get("cached_nearby_places") or session_state.get("corridor_storybook_places") or []
+            if places and 0 <= c_idx < len(places):
+                sel_p = places[c_idx]
+                session_state["active_destination_detail"] = sel_p
+                session_state["current_selected_place"] = sel_p
+                session_state["corridor_active_place"] = sel_p
+
+        if result.ui_updates.get("trigger_save_place"):
+            cur_p = session_state.get("current_selected_place") or session_state.get("active_destination_detail") or session_state.get("corridor_active_place")
+            if cur_p:
+                if "saved_locations" not in session_state:
+                    session_state["saved_locations"] = []
+                p_name = cur_p.get("name") if isinstance(cur_p, dict) else str(cur_p)
+                if not any((s.get("name") if isinstance(s, dict) else str(s)) == p_name for s in session_state["saved_locations"]):
+                    session_state["saved_locations"].append(cur_p if isinstance(cur_p, dict) else {"name": p_name})
+
+        if result.ui_updates.get("trigger_unsave_place"):
+            cur_p = session_state.get("current_selected_place") or session_state.get("active_destination_detail") or session_state.get("corridor_active_place")
+            if cur_p and "saved_locations" in session_state:
+                p_name = cur_p.get("name") if isinstance(cur_p, dict) else str(cur_p)
+                session_state["saved_locations"] = [s for s in session_state["saved_locations"] if (s.get("name") if isinstance(s, dict) else str(s)) != p_name]
+
+        if result.ui_updates.get("trigger_explore_lore"):
+            session_state["corridor_show_lore_expanded"] = True
+
+        if result.ui_updates.get("trigger_navigate_to_place"):
+            cur_p = session_state.get("current_selected_place") or session_state.get("active_destination_detail") or session_state.get("corridor_active_place")
+            if cur_p and isinstance(cur_p, dict):
+                p_lat = cur_p.get("lat") or cur_p.get("latitude")
+                p_lon = cur_p.get("lon") or cur_p.get("longitude") or cur_p.get("lng")
+                p_name = cur_p.get("name") or "Selected Place"
+                if p_lat and p_lon:
+                    session_state["selected_dest_coords"] = (p_lat, p_lon)
+                    session_state["selected_dest_label"] = p_name
+                    session_state["pending_dest"] = p_name
+                    session_state["routes_generated"] = bool(session_state.get("user_live_coords"))
+                    session_state["cached_candidate_routes"] = None
+                    session_state["current_view"] = "map_nav"
 
         # Apply all other UI updates
         for k, v in result.ui_updates.items():
