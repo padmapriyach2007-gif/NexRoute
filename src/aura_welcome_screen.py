@@ -1079,6 +1079,7 @@ def _build_jarvis_controller_script(
                 function finishUtterance() {{
                     if (doneHandled) return;
                     doneHandled = true;
+                    try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
                     if (watchdogTimer) clearTimeout(watchdogTimer);
                     isSpeaking = false;
                     try {{ window.__AURA_CURRENT_UTTERANCE__ = null; }} catch(e) {{}}
@@ -1102,6 +1103,7 @@ def _build_jarvis_controller_script(
                 }}, safetyTimeoutMs);
 
                 utterance.onstart = function() {{
+                    try {{ localStorage.setItem('aura_active_speaker', 'dashboard'); }} catch(e) {{}}
                     setSessionState('SPEAKING', 'AURA: "' + textToSpeak + '"');
                 }};
 
@@ -1128,6 +1130,7 @@ def _build_jarvis_controller_script(
 
     // Stop ongoing speech immediately
     function stopOngoingSpeech() {{
+        try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
         if (synthesis) synthesis.cancel();
         isSpeaking = false;
     }}
@@ -1204,6 +1207,12 @@ def _build_jarvis_controller_script(
                 }}
 
                 if (sessionState !== 'LISTENING') return;
+                try {{
+                    if (localStorage.getItem('aura_active_speaker') === 'chatbot') {{
+                        // Chatbot assistant is speaking; pause listening to avoid cross-assistant self-triggering
+                        return;
+                    }}
+                }} catch(eAudioLock) {{}}
 
                 if (rawText.length > 0) {{
                     currentSpeechBuffer = rawText;

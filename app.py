@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import types
 import logging
 import base64
@@ -6151,7 +6152,6 @@ if st.session_state.get("show_info_modal", False):
 
 def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     """Renders the upgraded interactive Pathfinder conversational travel assistant interface."""
-    import re
     logger = logging.getLogger("nexroute")
 
     def _safe_chat_btn(label: str, key: Optional[str] = None, use_container_width: bool = True, help: Optional[str] = None, **kwargs):
@@ -6164,7 +6164,6 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             raise exc
 
     def _execute_chat_turn(query_text: str, attachments: Optional[List[Dict[str, Any]]] = None):
-        import re
         att_list = attachments if attachments is not None else st.session_state.get("pending_chat_attachments", [])
         user_msg = {"role": "user", "content": query_text}
         if att_list:
@@ -6183,40 +6182,28 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             "language": st.session_state.get("app_language", "en")
         }
 
-        # 1. Check central command dispatcher for application-wide voice/text actions
-        from src.aura_command_dispatcher import AuraGlobalCommandDispatcher, AuraCommandType
-        cmd_res = AuraGlobalCommandDispatcher.parse_and_dispatch(
-            query_text,
-            context=chat_ctx,
-            lang=chat_ctx.get("language", "en")
-        )
-        if cmd_res and cmd_res.command_type not in (AuraCommandType.GENERAL_CHAT, AuraCommandType.UNKNOWN):
-            AuraGlobalCommandDispatcher.apply_execution_result(cmd_res, st.session_state)
+        # Dedicated Conversational Agent: all chatbot turns route strictly to PathfinderBot
+        # Never route through AuraGlobalCommandDispatcher to prevent cross-assistant dashboard interference
+        try:
+            ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx, attachments=att_list)
+        except Exception as chat_err:
+            logger = logging.getLogger("nexroute")
+            logger.exception("PathfinderChatbot execution error: %s", chat_err)
             ans = {
-                "response": cmd_res.text_response,
-                "spoken_response": cmd_res.spoken_response,
-                "badge": "AURA • AI GUIDE"
+                "response": f"I encountered an issue processing your query through external services, but your live route and navigation tools remain fully operational!\n\n*(Error details: {chat_err})*",
+                "badge": "🤖 AURA TRAVEL COPILOT"
             }
-        else:
-            try:
-                ans = st.session_state.pathfinder_bot.answer(query_text, context=chat_ctx, attachments=att_list)
-            except Exception as chat_err:
-                logger = logging.getLogger("nexroute")
-                logger.exception("PathfinderChatbot execution error: %s", chat_err)
-                ans = {
-                    "response": f"I encountered an issue processing your query through external services, but your live route and navigation tools remain fully operational!\n\n*(Error details: {chat_err})*",
-                    "badge": "🤖 AURA TRAVEL COPILOT"
-                }
 
         st.session_state.aura_chat_history.append({
             "role": "assistant",
             "content": ans.get("response", "Response unavailable."),
-            "badge": ans.get("badge", "NEXROUTE AI")
+            "badge": ans.get("badge", "🤖 AURA TRAVEL COPILOT")
         })
 
-        # Set last response to speak aloud via SpeechSynthesis
+        # Set last response to speak aloud via SpeechSynthesis in Chatbot audio engine
         raw_to_speak = ans.get("spoken_response") or ans.get("response", "")
-        clean_speech = re.sub(r'[*#_`~>\[\]\(\)]', ' ', str(raw_to_speak))[:280].replace("'", "\\'").replace('"', '\\"').replace("\n", " ").strip()
+        import re as _safe_re
+        clean_speech = _safe_re.sub(r'[*#_`~>\[\]\(\)]', ' ', str(raw_to_speak))[:280].replace("'", "\\'").replace('"', '\\"').replace("\n", " ").strip()
         st.session_state.aura_last_response_to_speak = clean_speech
 
         st.session_state.pending_chat_attachments = []
@@ -6522,24 +6509,21 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
     active_title = active_conv.get("title", "New Journey") if active_conv else "New Journey"
 
     # =========================================================================
-    # 2. JARVIS AI VOICE ASSISTANT HUD & STATUS CONTROLLER (INSIDE CHATBOT)
+    # 2. AURA TRAVEL COPILOT CHATBOT VOICE HUD & AUDIO ENGINE
     # =========================================================================
     auto_greet_to_play = ""
-    if not st.session_state.get("aura_startup_greeted", False):
-        from src.aura_voice_hud import get_jarvis_startup_greeting
-        auto_greet_to_play = get_jarvis_startup_greeting(cur_chat_l, user_name="Boss")
-        st.session_state.aura_startup_greeted = True
+    if not st.session_state.get("aura_chatbot_greeted", False):
+        try:
+            from src.aura_voice_hud import get_chatbot_copilot_greeting
+            auto_greet_to_play = get_chatbot_copilot_greeting(cur_chat_l)
+        except Exception:
+            auto_greet_to_play = "Hello! I'm AURA, your travel copilot. How can I help you today?"
+        st.session_state.aura_chatbot_greeted = True
 
     speech_to_play = st.session_state.pop("aura_last_response_to_speak", "")
 
     try:
-        import importlib
-        import src.aura_voice_hud
-        importlib.reload(src.aura_voice_hud)
-    except Exception:
-        pass
-    from src.aura_voice_hud import render_jarvis_chatbot_hud_html
-    try:
+        from src.aura_voice_hud import render_jarvis_chatbot_hud_html
         jarvis_hud_code = render_jarvis_chatbot_hud_html(
             current_lang=cur_chat_l,
             bot_logo_uri=aura_logo_uri,
@@ -6549,8 +6533,8 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
             voice_enabled=st.session_state.get("aura_chatbot_voice_enabled", True),
             continuous_mode=st.session_state.get("aura_chatbot_continuous_mode", False)
         )
-    except TypeError:
-        # Backward-compatibility fallback if an older version of the function is cached in sys.modules
+    except Exception:
+        from src.aura_voice_hud import render_jarvis_chatbot_hud_html
         jarvis_hud_code = render_jarvis_chatbot_hud_html(
             current_lang=cur_chat_l,
             bot_logo_uri=aura_logo_uri,

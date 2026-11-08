@@ -630,6 +630,27 @@ def get_jarvis_startup_greeting(lang: str = "en", user_name: str = "Boss") -> st
         return f"{tod_en}, {user_name}! Welcome to NextRoute. How can I help you?"
 
 
+def get_chatbot_copilot_greeting(lang: str = "en") -> str:
+    """
+    Dedicated greeting for the AURA Travel Copilot Chatbot.
+    Spoken automatically once when the chatbot interface opens.
+    "Hello! I'm AURA, your travel copilot. How can I help you today?"
+    """
+    greetings = {
+        "en": "Hello! I'm AURA, your travel copilot. How can I help you today?",
+        "te": "హలో! నేను మీ ట్రావెల్ కోపైలట్ AURA. నేను మీకు ఎలా సహాయపడగలను?",
+        "hi": "नमस्ते! मैं ऑरा (AURA) हूँ, आपका ट्रैवल कोपायलट। आज मैं आपकी क्या मदद कर सकता हूँ?",
+        "ta": "வணக்கம்! நான் AURA, உங்கள் பயணக் கோபிலட். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+        "kn": "ಹಲೋ! ನಾನು AURA, ನಿಮ್ಮ ಪ್ರಯಾಣ ಸಹಾಯಕ. ನಾನು ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+        "ml": "ഹലോ! ഞാൻ നിങ്ങളുടെ ട്രാവൽ കോപൈലറ്റ് AURA ആണ്. ഇന്ന് ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കണം?",
+        "es": "¡Hola! Soy AURA, tu copiloto de viajes. ¿Cómo puedo ayudarte hoy?",
+        "fr": "Bonjour ! Je suis AURA, votre copilote de voyage. Comment puis-je vous aider aujourd'hui ?",
+        "de": "Hallo! Ich bin AURA, Ihr Reise-Copilot. Wie kann ich Ihnen heute helfen?",
+        "ja": "こんにちは！私は旅行コパイロットのAURAです。今日はどのようなご用件でしょうか？"
+    }
+    return greetings.get(lang, greetings["en"])
+
+
 def render_jarvis_chatbot_hud_html(
     current_lang: str = "en",
     bot_logo_uri: Optional[str] = None,
@@ -1232,11 +1253,13 @@ def render_jarvis_chatbot_hud_html(
             var speechWatchdog = null;
 
             utterance.onstart = function() {{
+                try {{ localStorage.setItem('aura_active_speaker', 'chatbot'); }} catch(e) {{}}
                 setSessionState('SPEAKING', '🔊 SPEAKING...');
                 if (speechWatchdog) clearTimeout(speechWatchdog);
             }};
 
             utterance.onend = function() {{
+                try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
                 if (speechWatchdog) clearTimeout(speechWatchdog);
                 // AUTOMATIC RETURN TO LISTENING LOOP
                 if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED' && sessionState !== 'INACTIVE') {{
@@ -1249,6 +1272,7 @@ def render_jarvis_chatbot_hud_html(
             }};
 
             utterance.onerror = function(err) {{
+                try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
                 if (speechWatchdog) clearTimeout(speechWatchdog);
                 if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
                     startListening();
@@ -1277,6 +1301,7 @@ def render_jarvis_chatbot_hud_html(
 
     // Stop ongoing speech immediately
     window.stopJarvisSpeech = function() {{
+        try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
         if (synthesis) synthesis.cancel();
         isSpeaking = false;
     }};
@@ -1347,6 +1372,12 @@ def render_jarvis_chatbot_hud_html(
                 }}
 
                 if (sessionState !== 'LISTENING') return;
+                try {{
+                    if (localStorage.getItem('aura_active_speaker') === 'dashboard') {{
+                        // Main dashboard assistant is actively speaking; ignore input to prevent cross-assistant audio interference
+                        return;
+                    }}
+                }} catch(eAudioLock) {{}}
 
                 if (rawText.length > 0) {{
                     currentSpeechBuffer = rawText;
