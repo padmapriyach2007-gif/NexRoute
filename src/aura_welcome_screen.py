@@ -214,7 +214,7 @@ def render_aura_welcome_hud(
 </body>
 </html>"""
 
-    # Full Futuristic JARVIS Welcome HUD for Main Dashboard
+    # Full Futuristic Holographic JARVIS Welcome HUD & Command Center for Main Dashboard
     return f"""<!DOCTYPE html>
 <html lang="{current_lang}">
 <head>
@@ -241,125 +241,203 @@ def render_aura_welcome_hud(
         overflow: hidden;
     }}
 
-    .aura-welcome-panel {{
+    .aura-command-center {{
         position: relative;
         width: 100%;
-        max-width: 860px;
-        background: radial-gradient(circle at 50% 20%, rgba(14, 28, 54, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
-        border: 1.5px solid rgba(0, 240, 255, 0.38);
-        border-radius: 20px;
-        padding: 16px 24px;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 28px rgba(0, 240, 255, 0.16);
+        max-width: 880px;
+        background: radial-gradient(ellipse 90% 70% at 50% 10%, rgba(14, 30, 68, 0.94) 0%, rgba(4, 9, 24, 0.98) 100%);
+        border: 1.5px solid rgba(0, 240, 255, 0.32);
+        border-radius: 22px;
+        padding: 14px 22px 16px 22px;
+        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.14), inset 0 0 24px rgba(56, 189, 248, 0.05);
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(24px);
         overflow: hidden;
     }}
 
-    .aura-welcome-panel::before {{
+    /* Futuristic Top Neon Edge Glow */
+    .aura-command-center::before {{
         content: '';
         position: absolute;
         top: 0;
-        left: 0;
-        right: 0;
+        left: 8%;
+        right: 8%;
         height: 2px;
-        background: linear-gradient(90deg, transparent 0%, #00f0ff 50%, transparent 100%);
-        opacity: 0.9;
+        background: linear-gradient(90deg, transparent 0%, #00f0ff 25%, #818cf8 50%, #00f0ff 75%, transparent 100%);
+        opacity: 0.95;
+        box-shadow: 0 0 12px #00f0ff;
     }}
 
-    .welcome-top-row {{
+    /* Subtle Holographic Grid Pattern */
+    .holo-grid-overlay {{
+        position: absolute;
+        inset: 0;
+        background-image: 
+            linear-gradient(rgba(0, 240, 255, 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
+        background-size: 28px 28px;
+        pointer-events: none;
+        opacity: 0.7;
+    }}
+
+    /* Atmospheric Glow Behind Assistant */
+    .holo-ambient-flare {{
+        position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 320px;
+        height: 180px;
+        background: radial-gradient(circle, rgba(0, 240, 255, 0.16) 0%, rgba(129, 140, 248, 0.10) 45%, transparent 75%);
+        filter: blur(36px);
+        pointer-events: none;
+        z-index: 1;
+    }}
+
+    /* 1. TOP COMMAND DECK */
+    .command-top-row {{
         width: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 2;
+    }}
+
+    .brand-cluster {{
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        text-align: left;
+    }}
+
+    .brand-compass-icon {{
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.6));
+    }}
+
+    .brand-titles {{
+        display: flex;
+        flex-direction: column;
+    }}
+
+    .brand-nextroute-title {{
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        background: linear-gradient(135deg, #ffffff 0%, #38bdf8 60%, #818cf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.1;
+    }}
+
+    .brand-nextroute-sub {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.58rem;
+        font-weight: 700;
+        color: #38bdf8;
+        letter-spacing: 0.12em;
+        opacity: 0.85;
     }}
 
     .brand-pill {{
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        background: rgba(0, 240, 255, 0.10);
-        border: 1px solid rgba(0, 240, 255, 0.35);
+        gap: 7px;
+        background: rgba(0, 240, 255, 0.08);
+        border: 1px solid rgba(0, 240, 255, 0.32);
         border-radius: 9999px;
         padding: 3px 12px;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         font-weight: 800;
         color: #00f0ff;
         letter-spacing: 0.08em;
-    }}
-
-    .brand-pulse-dot {{
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #00f0ff;
-        box-shadow: 0 0 10px #00f0ff;
-        animation: dotGlow 1.4s infinite ease-in-out;
-    }}
-
-    @keyframes dotGlow {{
-        0%, 100% {{ transform: scale(0.9); opacity: 0.6; }}
-        50% {{ transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px #00f0ff; }}
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
     }}
 
     .status-badge {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         font-weight: 700;
-        padding: 3px 11px;
+        padding: 3px 10px;
         border-radius: 9999px;
         background: rgba(16, 185, 129, 0.15);
         border: 1px solid #10b981;
         color: #34d399;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.05em;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
         transition: all 0.3s ease;
+        white-space: nowrap;
     }}
 
-    .avatar-wrapper {{
+    /* 2. CENTRAL HOLOGRAPHIC AI REACTOR AVATAR */
+    .avatar-stage {{
         position: relative;
-        width: 66px;
-        height: 66px;
+        width: 104px;
+        height: 104px;
         margin: 2px 0 6px 0;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        z-index: 2;
     }}
 
     .arc-reactor-ring-outer {{
         position: absolute;
-        inset: -5px;
+        inset: -10px;
         border-radius: 50%;
-        border: 1.5px dashed rgba(0, 240, 255, 0.45);
-        animation: spinClockwise 14s linear infinite;
+        border: 1.5px dashed rgba(0, 240, 255, 0.5);
+        animation: spinClockwise 18s linear infinite;
+        box-shadow: 0 0 18px rgba(0, 240, 255, 0.2);
+    }}
+
+    .telemetry-ring-segments {{
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 1.5px dotted rgba(129, 140, 248, 0.6);
+        animation: spinCounterClockwise 12s linear infinite;
     }}
 
     .arc-reactor-ring-mid {{
         position: absolute;
-        inset: -1px;
+        inset: 1px;
         border-radius: 50%;
-        border: 2px solid rgba(56, 189, 248, 0.6);
-        box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
-        animation: ringPulse 2.4s infinite ease-in-out;
-        transition: box-shadow 0.3s ease;
+        border: 2px solid rgba(56, 189, 248, 0.85);
+        box-shadow: 0 0 24px rgba(0, 240, 255, 0.45);
+        animation: reactorPulse 2.8s infinite ease-in-out;
+        transition: all 0.35s ease;
     }}
 
     .avatar-core-circle {{
-        width: 54px;
-        height: 54px;
+        width: 82px;
+        height: 82px;
         border-radius: 50%;
-        background: radial-gradient(circle, #0284c7 0%, #030712 90%);
-        border: 2px solid #00f0ff;
+        background: radial-gradient(circle at 50% 30%, #0369a1 0%, #0284c7 35%, #030712 90%);
+        border: 2.2px solid #00f0ff;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
-        z-index: 2;
+        box-shadow: 0 0 22px rgba(0, 240, 255, 0.7);
+        z-index: 3;
         overflow: hidden;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }}
+
+    .avatar-stage:hover .avatar-core-circle {{
+        transform: scale(1.04);
+        box-shadow: 0 0 32px #00f0ff;
     }}
 
     .avatar-core-img {{
@@ -373,31 +451,40 @@ def render_aura_welcome_hud(
         to {{ transform: rotate(360deg); }}
     }}
 
-    @keyframes ringPulse {{
-        0%, 100% {{ transform: scale(1); opacity: 0.8; }}
-        50% {{ transform: scale(1.05); opacity: 1; }}
+    @keyframes spinCounterClockwise {{
+        from {{ transform: rotate(360deg); }}
+        to {{ transform: rotate(0deg); }}
     }}
 
+    @keyframes reactorPulse {{
+        0%, 100% {{ transform: scale(1); opacity: 0.85; }}
+        50% {{ transform: scale(1.04); opacity: 1; box-shadow: 0 0 30px rgba(0, 240, 255, 0.65); }}
+    }}
+
+    /* 3. GREETING HEADLINE */
     .greeting-headline {{
-        font-size: 1.05rem;
+        font-size: 1.12rem;
         font-weight: 800;
         color: #f8fafc;
-        margin: 2px 0 4px 0;
-        line-height: 1.3;
+        margin: 2px 0 2px 0;
+        line-height: 1.35;
         letter-spacing: -0.01em;
-        background: linear-gradient(135deg, #ffffff 0%, #38bdf8 60%, #818cf8 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #38bdf8 55%, #c084fc 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        z-index: 2;
     }}
 
+    /* 4. WAVEFORM & LIVE TELEMETRY */
     .waveform-container {{
         width: 100%;
-        max-width: 520px;
-        height: 24px;
-        margin: 3px 0 5px 0;
+        max-width: 480px;
+        height: 22px;
+        margin: 2px 0 2px 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        z-index: 2;
     }}
 
     #auraWaveCanvas {{
@@ -408,45 +495,221 @@ def render_aura_welcome_hud(
 
     .live-transcript-box {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.74rem;
+        font-size: 0.72rem;
         color: #38bdf8;
         min-height: 18px;
         line-height: 1.35;
         letter-spacing: 0.02em;
+        z-index: 2;
+        margin-bottom: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 600px;
+    }}
+
+    /* 5. FLOATING GLASSMORPHISM SHORTCUT CARDS */
+    .shortcut-cards-grid {{
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        width: 100%;
+        max-width: 840px;
+        z-index: 2;
+    }}
+
+    .shortcut-card {{
+        background: rgba(15, 23, 42, 0.65);
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 12px;
+        padding: 7px 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+    }}
+
+    .shortcut-card:hover {{
+        background: rgba(20, 35, 68, 0.85);
+        border-color: #00f0ff;
+        box-shadow: 0 4px 16px rgba(0, 240, 255, 0.28), 0 0 10px rgba(0, 240, 255, 0.15);
+        transform: translateY(-2.5px);
+    }}
+
+    .shortcut-icon-pod {{
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        border: 1px solid;
+        flex-shrink: 0;
+    }}
+
+    .shortcut-info {{
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }}
+
+    .shortcut-title {{
+        font-size: 0.76rem;
+        font-weight: 800;
+        color: #f8fafc;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+
+    .shortcut-hint {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.58rem;
+        color: #94a3b8;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+
+    @media (max-width: 768px) {{
+        .shortcut-cards-grid {{
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }}
+        .brand-nextroute-title {{
+            font-size: 0.85rem;
+        }}
+        .greeting-headline {{
+            font-size: 1.0rem;
+        }}
+    }}
+
+    @media (max-width: 480px) {{
+        .shortcut-cards-grid {{
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }}
+        .brand-nextroute-sub {{
+            display: none;
+        }}
     }}
 </style>
 </head>
 <body>
 
-<div class="aura-welcome-panel" id="welcomePanel">
-    <div class="welcome-top-row">
+<div class="aura-command-center" id="welcomePanel">
+    <div class="holo-grid-overlay"></div>
+    <div class="holo-ambient-flare"></div>
+
+    <!-- 1. Top Command Deck Header -->
+    <div class="command-top-row">
+        <div class="brand-cluster">
+            <div class="brand-compass-icon">
+                <svg width="28" height="28" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="17" cy="17" r="15" stroke="url(#cGrad)" stroke-width="1.6" stroke-dasharray="3 3.5"/>
+                    <circle cx="17" cy="17" r="9" stroke="rgba(0, 240, 255, 0.45)" stroke-width="1.2"/>
+                    <polygon points="17,4 20.5,17 17,30 13.5,17" fill="url(#cGrad)" opacity="0.95"/>
+                    <polygon points="17,4 20.5,17 17,17" fill="#ffffff" opacity="0.85"/>
+                    <circle cx="17" cy="17" r="2.8" fill="#ffffff"/>
+                    <defs>
+                        <linearGradient id="cGrad" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#00f0ff"/>
+                            <stop offset="50%" stop-color="#38bdf8"/>
+                            <stop offset="100%" stop-color="#818cf8"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="brand-titles">
+                <span class="brand-nextroute-title">NEXTROUTE</span>
+                <span class="brand-nextroute-sub">AUTONOMOUS SATELLITE TRAVEL</span>
+            </div>
+        </div>
+
         <div class="brand-pill">
-            <span class="brand-pulse-dot"></span>
             AURA • JARVIS AI COPILOT
         </div>
+
         <div class="status-badge" id="statusBadge">
-            ● IDLE • READY
+            ● SYSTEM ONLINE • READY
         </div>
     </div>
 
-    <div class="avatar-wrapper" onclick="window.AURA_TOGGLE_MIC()" title="Click to speak with AURA">
+    <!-- 2. Central Holographic AURA Avatar Reactor -->
+    <div class="avatar-stage" onclick="window.AURA_TOGGLE_MIC()" title="Click to speak with AURA">
         <div class="arc-reactor-ring-outer"></div>
+        <div class="telemetry-ring-segments"></div>
         <div class="arc-reactor-ring-mid" id="avatarMidRing"></div>
         <div class="avatar-core-circle">
             {avatar_markup}
         </div>
     </div>
 
+    <!-- 3. Dynamic Welcome Greeting Headline -->
     <h1 class="greeting-headline" id="greetingHeadline">
         "{greeting_text}"
     </h1>
 
+    <!-- 4. Real-Time Audio Waveform Canvas -->
     <div class="waveform-container">
         <canvas id="auraWaveCanvas"></canvas>
     </div>
 
+    <!-- 5. Live Speech Transcript Pod -->
     <div class="live-transcript-box" id="transcriptBox">
-        Ready for voice command, Boss.
+        Ready for voice command, Boss. Speak anytime or tap a shortcut below.
+    </div>
+
+    <!-- 6. Floating Glassmorphism Navigation Shortcuts -->
+    <div class="shortcut-cards-grid">
+        <div class="shortcut-card" onclick="window.dispatchCardNav('Open navigation')" title="Jump to Navigation & Live Corridor Routing">
+            <div class="shortcut-icon-pod" style="background: rgba(0, 240, 255, 0.14); border-color: #00f0ff; color: #00f0ff;">🧭</div>
+            <div class="shortcut-info">
+                <span class="shortcut-title">Navigation</span>
+                <span class="shortcut-hint">Corridor Routing</span>
+            </div>
+        </div>
+        <div class="shortcut-card" onclick="window.dispatchCardNav('Show my trips')" title="Open Autonomous Trips & Itineraries">
+            <div class="shortcut-icon-pod" style="background: rgba(129, 140, 248, 0.14); border-color: #818cf8; color: #818cf8;">✈️</div>
+            <div class="shortcut-info">
+                <span class="shortcut-title">My Trips</span>
+                <span class="shortcut-hint">Itinerary Studio</span>
+            </div>
+        </div>
+        <div class="shortcut-card" onclick="window.dispatchCardNav('Show hotels')" title="Find Nearby Hotels & Accommodations">
+            <div class="shortcut-icon-pod" style="background: rgba(245, 158, 11, 0.14); border-color: #f59e0b; color: #fbbf24;">🏨</div>
+            <div class="shortcut-info">
+                <span class="shortcut-title">Hotels</span>
+                <span class="shortcut-hint">Stays & Resorts</span>
+            </div>
+        </div>
+        <div class="shortcut-card" onclick="window.dispatchCardNav('Open flights')" title="Launch Flight Corridor Planner">
+            <div class="shortcut-icon-pod" style="background: rgba(56, 189, 248, 0.14); border-color: #38bdf8; color: #38bdf8;">🛫</div>
+            <div class="shortcut-info">
+                <span class="shortcut-title">Flights</span>
+                <span class="shortcut-hint">Air Corridors</span>
+            </div>
+        </div>
+        <div class="shortcut-card" onclick="window.dispatchCardNav('Show restaurants')" title="Discover Food & Dining Along Route">
+            <div class="shortcut-icon-pod" style="background: rgba(236, 72, 153, 0.14); border-color: #ec4899; color: #f472b6;">🍽️</div>
+            <div class="shortcut-info">
+                <span class="shortcut-title">Restaurants</span>
+                <span class="shortcut-hint">Dining & Food</span>
+            </div>
+        </div>
+        <div class="shortcut-card" onclick="window.dispatchCardNav('Go to my profile')" title="View Profile & Settings">
+            <div class="shortcut-icon-pod" style="background: rgba(16, 185, 129, 0.14); border-color: #10b981; color: #34d399;">👤</div>
+            <div class="shortcut-info">
+                <span class="shortcut-title">Profile</span>
+                <span class="shortcut-hint">User Account</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -799,6 +1062,15 @@ def _build_jarvis_controller_script(
             }}
             startVoiceListening();
         }}
+    }};
+
+    window.dispatchCardNav = function(phrase) {{
+        if (synthesis && (synthesis.speaking || synthesis.paused)) {{
+            try {{ synthesis.cancel(); }} catch(e) {{}}
+            isSpeaking = false;
+        }}
+        setAssistantState('processing', 'Executing: ' + phrase);
+        handleRecognizedVoiceCommand(phrase);
     }};
 
     // Zero-Reload WebSocket Command Execution Bridge to Streamlit

@@ -7290,7 +7290,7 @@ if st.session_state.current_view == "dashboard":
             bot_logo_uri=aura_logo_uri,
             user_name="Boss"
         )
-        components.html(welcome_hud_html, height=215, scrolling=False)
+        components.html(welcome_hud_html, height=390, scrolling=False)
 
     render_quantum_hero_section()
 
