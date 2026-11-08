@@ -578,6 +578,9 @@ def build_aura_journey_cockpit_html(
 
     active_step = maneuvers[current_step_idx] if 0 <= current_step_idx < len(maneuvers) else maneuvers[0]
 
+    from src.vehicle_navigation_controller import VehicleModeManager
+    vehicle_suite_js = VehicleModeManager.generate_threejs_vehicle_suite_js()
+
     return f"""
     <div id='aura-journey-root' class='aura-journey-shell'>
         <style>
@@ -1450,6 +1453,7 @@ def build_aura_journey_cockpit_html(
             <canvas id='aura-scenic-canvas' style='display: block; width: 100%; height: 100%;'></canvas>
             <div class='scene-hud-overlay'>
                 <div class='scene-badge' id='hud-runtime-badge'><span class='pulse-dot' id='hud-pulse-dot'></span> <span id='hud-runtime-text'>✦ 2.5D SCENIC RUNTIME ACTIVE</span></div>
+                <div class='scene-cam-badge' id='hud-vehicle-mode'>VEHICLE: {travel_mode.upper()}</div>
                 <div class='scene-cam-badge' id='hud-cam-mode'>CAM: 3D FOLLOW DRONE</div>
                 <div class='scene-cam-badge' id='hud-env-mode'>ENV: DAY</div>
                 <button id='btn-toggle-engine' class='scene-cam-badge' style='cursor: pointer; pointer-events: auto; background: rgba(56, 189, 248, 0.25); border: 1px solid rgba(56, 189, 248, 0.6); color: #e0f2fe; font-weight: 700;' onclick='window.toggleEngineCompanion()'>🔄 Toggle 3D / 2.5D</button>
@@ -1472,6 +1476,20 @@ def build_aura_journey_cockpit_html(
 
         <!-- 3D Camera & Avatar Action Toolbar -->
         <div class='controls-toolbar'>
+            <!-- Dynamic Vehicle Mode Selector -->
+            <div style='display: flex; gap: 5px; align-items: center; flex-wrap: wrap; width: 100%; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 6px;'>
+                <span style='font-size: 0.72rem; font-weight: 800; color: #38bdf8;'>TRAVEL VEHICLE:</span>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("CAR")'>🚗 Car</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("BIKE")'>🏍️ Bike</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("BUS")'>🚌 Bus</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("BICYCLE")'>🚴 Cycle</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("WALK")'>🚶 Walk</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("TRUCK")'>🚚 Truck</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("TRACTOR")'>🚜 Tractor</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("FLIGHT")'>✈️ Flight</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("WATERWAY")'>🚢 Ship</button>
+                <button class='btn-action-pill' onclick='window.switchVehicleMode("TRAIN")'>🚆 Train</button>
+            </div>
             <!-- Avatar Actions -->
             <div style='display: flex; gap: 6px; align-items: center;'>
                 <span style='font-size: 0.72rem; font-weight: 700; color: #94a3b8;'>AURA ACTIONS:</span>
@@ -2519,6 +2537,21 @@ def build_aura_journey_cockpit_html(
         }};
 
         // =========================================================================
+        // DYNAMIC VEHICLE MODE-BASED VIRTUAL GUIDE SUITE
+        // =========================================================================
+        {vehicle_suite_js}
+
+        window.activeVehicleMode = '{travel_mode}'.toUpperCase();
+        window.switchVehicleMode = function(newMode) {{
+            window.activeVehicleMode = String(newMode || 'CAR').toUpperCase();
+            if (window.activeVehicleController) {{
+                window.activeVehicleController.setMode(window.activeVehicleMode);
+            }}
+            var vBadge = document.getElementById('hud-vehicle-mode');
+            if (vBadge) vBadge.innerText = 'VEHICLE: ' + window.activeVehicleMode;
+        }};
+
+        // =========================================================================
         // THREE.JS 3D AURA ROBOT & ROADWAY SCENE ENGINE
         // =========================================================================
         let threeEnv = null;
@@ -3134,6 +3167,20 @@ def build_aura_journey_cockpit_html(
 
                 scene.add(auraRoot);
 
+                // Connect Dynamic Vehicle Controller
+                const auraLimbs = {{
+                    head: headGroup,
+                    torso: torso,
+                    armL: armLGroup,
+                    armR: armRGroup,
+                    legL: legLGroup,
+                    legR: legRGroup,
+                    stick: navStickGroup,
+                    ring: auraRing
+                }};
+                window.activeVehicleController = new VehicleController(scene, auraRoot, auraLimbs);
+                window.activeVehicleController.setMode('{travel_mode}');
+
                 // Animation Clock
                 let clock = new THREE.Clock();
 
@@ -3141,6 +3188,13 @@ def build_aura_journey_cockpit_html(
                     threeAnimId = requestAnimationFrame(renderLoop);
                     try {{
                         const elapsed = clock.getElapsedTime();
+
+                        // Dynamic Vehicle Kinematics and Movement
+                        if (window.activeVehicleController) {{
+                            const turnAngle = (currentAnimState === 'turn_left') ? 0.35 : ((currentAnimState === 'turn_right') ? -0.35 : 0.0);
+                            const isArr = (currentAnimState === 'arrive');
+                            window.activeVehicleController.updateKinematics(elapsed, userSpeedKmh, turnAngle, isArr);
+                        }}
 
                         // Procedural Skeletal Animations
                         if (currentAnimState === 'arrive') {{

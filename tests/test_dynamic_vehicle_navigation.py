@@ -110,3 +110,63 @@ def test_query_params_sync_destination_in_app():
     assert 'st.session_state.txt_orig = q_orig_name' in content
     assert 'st.session_state.txt_orig = p_name' in content
     assert 'st.session_state.orig_pending_confirmation = False' in content
+
+
+def test_global_route_engine_all_modes():
+    """Verify route engine produces valid candidate routes across multiple modes."""
+    from src.route_engine import RealWorldRouteEngine, TravelMode
+    engine = RealWorldRouteEngine()
+
+    # Test Flight
+    flight_routes = engine.calculate_routes(17.3850, 78.4867, 12.9716, 77.5946, mode=TravelMode.FLIGHT)
+    assert len(flight_routes) >= 3, "Flight mode must produce at least 3 airway corridors"
+    assert any("FL330" in r.name or "Airway" in r.name for r in flight_routes)
+
+    # Test Waterway
+    water_routes = engine.calculate_routes(18.9220, 72.8347, 15.4909, 73.8278, mode=TravelMode.WATERWAY)
+    assert len(water_routes) >= 2, "Waterway mode must produce at least 2 maritime corridors"
+    assert any("Waterway" in r.name or "Channel" in r.name for r in water_routes)
+
+    # Test Taxi and Train speed multipliers / properties
+    taxi_routes = engine.calculate_routes(17.3850, 78.4867, 17.4000, 78.4900, mode=TravelMode.TAXI)
+    assert len(taxi_routes) >= 1
+    train_routes = engine.calculate_routes(17.3850, 78.4867, 17.4000, 78.4900, mode=TravelMode.TRAIN)
+    assert len(train_routes) >= 1
+
+
+def test_aura_journey_cockpit_vehicle_integration():
+    """Verify 3D cockpit HTML includes vehicle suite, HUD badge, and active vehicle controller."""
+    from src.aura_journey_engine import build_aura_journey_cockpit_html, ManeuverSequenceBuilder
+    maneuvers = ManeuverSequenceBuilder.build_sequence(
+        steps=[],
+        origin_label="Hyderabad",
+        dest_label="Bengaluru",
+        total_distance_m=560000.0,
+        travel_mode="car"
+    )
+    html = build_aura_journey_cockpit_html(
+        origin_name="Hyderabad",
+        dest_name="Bengaluru",
+        travel_mode="car",
+        total_distance_km=560.0,
+        total_duration_mins=480.0,
+        maneuvers=maneuvers
+    )
+    assert "VehicleController" in html
+    assert "activeVehicleController" in html
+    assert "hud-vehicle-mode" in html
+    assert "switchVehicleMode" in html
+
+
+def test_virtual_human_guide_vehicle_overlay():
+    """Verify 2D articulated guide HTML includes dynamic vehicle cockpit rendering."""
+    from src.virtual_human_guide import build_always_visible_virtual_guide_html
+    html = build_always_visible_virtual_guide_html(
+        origin_name="Mumbai",
+        dest_name="Goa",
+        travel_mode="bike"
+    )
+    assert "isVehicleMode" in html
+    assert "isCycling" in html
+    assert "isMotorbike" in html
+    assert "DYNAMIC 2D VEHICLE COCKPIT" in html

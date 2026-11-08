@@ -1121,12 +1121,37 @@ def build_always_visible_virtual_guide_html(
             let leftKneeFlex = 0;
             let rightKneeFlex = 0;
 
+            const rawMode = (cfg.travelMode || 'walking').toLowerCase();
+            const isVehicleMode = rawMode !== 'walking' && rawMode !== 'walk' && rawMode !== 'pedestrian';
+            const isCycling = rawMode === 'bicycling' || rawMode === 'bicycle' || rawMode === 'cycle';
+            const isMotorbike = rawMode === 'bike' || rawMode === 'motorcycle';
+            const isSeatedVehicle = isVehicleMode && !isCycling;
+
             if (jumpPhase > 0) {{
                 // Tucked knees during jump apex
                 leftLegAngle = -0.3;
                 rightLegAngle = -0.3;
                 leftKneeFlex = 0.7;
                 rightKneeFlex = 0.7;
+            }} else if (isCycling) {{
+                // Active pedaling cadence
+                const cycleCadence = animPhase * 3.5;
+                leftLegAngle = Math.sin(cycleCadence) * 0.52 - 0.2;
+                rightLegAngle = Math.sin(cycleCadence + Math.PI) * 0.52 - 0.2;
+                leftKneeFlex = 0.65 + Math.cos(cycleCadence) * 0.45;
+                rightKneeFlex = 0.65 + Math.cos(cycleCadence + Math.PI) * 0.45;
+            }} else if (isMotorbike) {{
+                // Leaning forward on sports bike / motorbike
+                leftLegAngle = -0.55;
+                rightLegAngle = -0.55;
+                leftKneeFlex = 1.05;
+                rightKneeFlex = 1.05;
+            }} else if (isSeatedVehicle) {{
+                // Seated cockpit posture in car, bus, truck, tractor, plane, boat
+                leftLegAngle = -0.72;
+                rightLegAngle = -0.72;
+                leftKneeFlex = 1.25;
+                rightKneeFlex = 1.25;
             }} else if (walkSpeed > 0) {{
                 const strideAmp = walkSpeed > 1.2 ? 0.65 : 0.48;
                 leftLegAngle = Math.sin(animPhase) * strideAmp;
@@ -1395,6 +1420,320 @@ def build_always_visible_virtual_guide_html(
             drawArm(rightArmAngle, false);
 
             ctx.restore(); // end body
+
+            // -----------------------------------------------------------------
+            // DYNAMIC 2D VEHICLE COCKPIT / CHASSIS OVERLAY
+            // -----------------------------------------------------------------
+            if (isVehicleMode) {{
+                ctx.save();
+                ctx.translate(cx, bodyY);
+
+                if (isCycling) {{
+                    // BICYCLE: Frame, wheels, handlebars, chain ring
+                    ctx.strokeStyle = '#06b6d4';
+                    ctx.lineWidth = 3.5;
+                    ctx.lineCap = 'round';
+                    // Frame triangle
+                    ctx.beginPath();
+                    ctx.moveTo(-28, 48); // rear hub
+                    ctx.lineTo(0, 48);   // bottom bracket
+                    ctx.lineTo(16, 12);  // head tube
+                    ctx.lineTo(-14, 18); // seat post
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    // Seat stay & chain stay
+                    ctx.beginPath();
+                    ctx.moveTo(-14, 18);
+                    ctx.lineTo(-28, 48);
+                    ctx.stroke();
+
+                    // Front fork & wheel
+                    ctx.beginPath();
+                    ctx.moveTo(16, 12);
+                    ctx.lineTo(28, 48);
+                    ctx.stroke();
+
+                    // Wheels
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.arc(-28, 48, 16, 0, Math.PI * 2); // Rear wheel
+                    ctx.arc(28, 48, 16, 0, Math.PI * 2);  // Front wheel
+                    ctx.stroke();
+
+                    // Spinning spokes
+                    const spokeAngle = animPhase * 5;
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+                    for (let s = 0; s < 4; s++) {{
+                        const a = spokeAngle + (s * Math.PI / 2);
+                        ctx.beginPath();
+                        ctx.moveTo(-28, 48);
+                        ctx.lineTo(-28 + Math.cos(a)*16, 48 + Math.sin(a)*16);
+                        ctx.moveTo(28, 48);
+                        ctx.lineTo(28 + Math.cos(a)*16, 48 + Math.sin(a)*16);
+                        ctx.stroke();
+                    }}
+
+                    // Handlebars
+                    ctx.strokeStyle = '#f1f5f9';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(14, 8);
+                    ctx.lineTo(20, 6);
+                    ctx.stroke();
+
+                }} else if (isMotorbike) {{
+                    // MOTORCYCLE: Sport chassis, twin headlights, exhaust, alloy wheels
+                    ctx.fillStyle = '#0284c7';
+                    ctx.beginPath();
+                    ctx.moveTo(-36, 44);
+                    ctx.lineTo(-10, 18);
+                    ctx.lineTo(18, 14);
+                    ctx.lineTo(34, 30);
+                    ctx.lineTo(34, 46);
+                    ctx.lineTo(-30, 48);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Wheels
+                    ctx.fillStyle = '#0f172a';
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.arc(-32, 46, 17, 0, Math.PI * 2);
+                    ctx.arc(32, 46, 17, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Windshield visor
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+                    ctx.beginPath();
+                    ctx.moveTo(12, 10);
+                    ctx.lineTo(24, 0);
+                    ctx.lineTo(28, 14);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Headlight beam
+                    ctx.fillStyle = 'rgba(254, 240, 138, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(35, 26, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                }} else if (rawMode === 'flight' || rawMode === 'plane' || rawMode === 'airway') {{
+                    // FLIGHT: Jet fuselage, delta wings, wingtip strobes, jet exhaust
+                    ctx.fillStyle = '#e2e8f0';
+                    ctx.strokeStyle = '#0284c7';
+                    ctx.lineWidth = 2;
+                    // Fuselage nose cone
+                    ctx.beginPath();
+                    ctx.ellipse(0, 32, 28, 18, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Cockpit canopy
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 22, 14, 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Swept delta wings
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.beginPath();
+                    ctx.moveTo(-24, 32);
+                    ctx.lineTo(-65, 42);
+                    ctx.lineTo(-20, 44);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(24, 32);
+                    ctx.lineTo(65, 42);
+                    ctx.lineTo(20, 44);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Wingtip navigation strobes
+                    ctx.fillStyle = '#ef4444'; // Red port
+                    ctx.beginPath(); ctx.arc(-65, 42, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#10b981'; // Green starboard
+                    ctx.beginPath(); ctx.arc(65, 42, 3, 0, Math.PI * 2); ctx.fill();
+
+                    // Jet afterburner glow
+                    const thrustPulse = 6 + Math.sin(animPhase * 8) * 3;
+                    const jetGrad = ctx.createRadialGradient(0, 52, 2, 0, 52 + thrustPulse, 12);
+                    jetGrad.addColorStop(0, '#67e8f9');
+                    jetGrad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = jetGrad;
+                    ctx.fillRect(-15, 50, 30, thrustPulse + 10);
+
+                }} else if (rawMode === 'waterway' || rawMode === 'boat' || rawMode === 'ship' || rawMode === 'ferry') {{
+                    // WATERWAY: Speedboat / Ferry hull & foaming wake
+                    ctx.fillStyle = '#0284c7';
+                    ctx.beginPath();
+                    ctx.moveTo(-45, 42);
+                    ctx.lineTo(-30, 24);
+                    ctx.lineTo(30, 24);
+                    ctx.lineTo(45, 42);
+                    ctx.lineTo(-45, 42);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Windshield
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+                    ctx.beginPath();
+                    ctx.moveTo(-20, 24);
+                    ctx.lineTo(-14, 14);
+                    ctx.lineTo(14, 14);
+                    ctx.lineTo(20, 24);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Bow wave / wake foam
+                    const wakeOff = Math.sin(animPhase * 6) * 3;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-52, 44 + wakeOff);
+                    ctx.quadraticCurveTo(0, 48 - wakeOff, 52, 44 + wakeOff);
+                    ctx.stroke();
+
+                }} else if (rawMode === 'tractor') {{
+                    // TRACTOR: Big rear lugged wheels, green/yellow chassis, rollbar & vertical exhaust
+                    ctx.fillStyle = '#15803d'; // John Deere green
+                    ctx.fillRect(-32, 22, 64, 24);
+                    ctx.strokeStyle = '#facc15'; // yellow trim
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-32, 22, 64, 24);
+
+                    // Large rear wheels
+                    ctx.fillStyle = '#1e293b';
+                    ctx.strokeStyle = '#64748b';
+                    ctx.lineWidth = 5;
+                    ctx.beginPath();
+                    ctx.arc(-34, 38, 22, 0, Math.PI * 2);
+                    ctx.arc(34, 38, 22, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Vertical exhaust stack puffing smoke
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(18, 22);
+                    ctx.lineTo(18, 4);
+                    ctx.stroke();
+
+                }} else if (rawMode === 'bus') {{
+                    // TRANSIT BUS: Broad front windshield, destination sign, headlights
+                    ctx.fillStyle = '#1e3a8a';
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.roundRect(-42, 14, 84, 46, 8);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // LED Destination Display
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(-32, 18, 64, 9);
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.font = 'bold 7px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('NEXROUTE METRO', 0, 25);
+
+                    // Panoramic Windshield
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+                    ctx.fillRect(-34, 29, 68, 16);
+
+                    // Twin Headlights
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillRect(-36, 48, 10, 6);
+                    ctx.fillRect(26, 48, 10, 6);
+
+                }} else if (rawMode === 'truck') {{
+                    // HEAVY TRUCK: Chrome grill, tall cab, clearance lights
+                    ctx.fillStyle = '#b91c1c';
+                    ctx.beginPath();
+                    ctx.roundRect(-44, 16, 88, 46, 6);
+                    ctx.fill();
+
+                    // Chrome horizontal grill bars
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 2;
+                    for (let g = 0; g < 4; g++) {{
+                        ctx.beginPath();
+                        ctx.moveTo(-28, 40 + g * 5);
+                        ctx.lineTo(28, 40 + g * 5);
+                        ctx.stroke();
+                    }}
+
+                    // Amber clearance roof lights
+                    ctx.fillStyle = '#f59e0b';
+                    for (let c = -2; c <= 2; c++) {{
+                        ctx.beginPath();
+                        ctx.arc(c * 14, 18, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+
+                }} else {{
+                    // CAR / TAXI / DEFAULT: Sleek aerodynamic hood, steering wheel, LED headlights
+                    const isTaxi = rawMode === 'taxi';
+                    ctx.fillStyle = isTaxi ? '#eab308' : '#0284c7'; // Taxi yellow or NexRoute cyan
+                    ctx.beginPath();
+                    ctx.roundRect(-38, 24, 76, 36, 10);
+                    ctx.fill();
+                    ctx.strokeStyle = isTaxi ? '#ca8a04' : '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    if (isTaxi) {{
+                        // Roof TAXI illuminated signboard
+                        ctx.fillStyle = '#fef08a';
+                        ctx.strokeStyle = '#854d0e';
+                        ctx.lineWidth = 1;
+                        ctx.fillRect(-14, 15, 28, 9);
+                        ctx.strokeRect(-14, 15, 28, 9);
+                        ctx.fillStyle = '#1e293b';
+                        ctx.font = 'bold 7px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('TAXI', 0, 22);
+                    }}
+
+                    // Tinted Windshield
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+                    ctx.beginPath();
+                    ctx.moveTo(-28, 24);
+                    ctx.lineTo(-20, 12);
+                    ctx.lineTo(20, 12);
+                    ctx.lineTo(28, 24);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Steering Wheel
+                    ctx.strokeStyle = '#334155';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(-8, 20, 8, Math.PI, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Twin Projector Headlights
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(-26, 42, 5, 0, Math.PI * 2);
+                    ctx.arc(26, 42, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }}
+
+                ctx.restore();
+            }}
 
             requestAnimationFrame(drawRealisticHuman);
         }}
