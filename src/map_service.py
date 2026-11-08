@@ -2219,9 +2219,9 @@ class MapService:
                     popup=folium.Popup(popup_html, max_width=260)
                 ).add_to(m)
 
-        # 5. Add Multiple Route Polylines with Intelligent Dual-Stroke Visual Hierarchy
+        # 5. Add Multiple Route Polylines with Intelligent Dual-Stroke Visual Hierarchy (Google Maps / Swiggy style)
         if routes:
-            palette = ["#00f0b5", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#3b82f6"]
+            palette = ["#00f0ff", "#f59e0b", "#a855f7", "#3b82f6", "#10b981", "#ec4899"]
             for idx, r in enumerate(routes):
                 coords = r.get("polyline", [])
                 if not coords or len(coords) < 2:
@@ -2243,11 +2243,11 @@ class MapService:
                     if dur_min <= 0.0:
                         dur_min = max(2.0, round(dist_km / 55.0 * 60.0, 1))
 
-                # Route styling and palette selection
+                # Route styling: Primary (#00f0ff Cyan), Alt 1 (#f59e0b Orange), Alt 2 (#a855f7 Purple)
                 if not is_eligible or "RESTRICT" in str(status).upper() or "INACCESSIBLE" in str(status).upper():
                     line_color = "#ef4444"  # Red for restricted / closed corridors
                     dash_array = "5, 10"
-                    opacity = 0.85 if is_selected else (0.40 if has_selection else 0.55)
+                    opacity = 0.85 if is_selected else (0.50 if has_selection else 0.60)
                     weight = 6.0 if is_selected else 3.5
                 elif is_selected:
                     line_color = r.get("color") or palette[(rank - 1) % len(palette)]
@@ -2255,34 +2255,36 @@ class MapService:
                     opacity = 1.0
                     weight = 8.5
                 elif has_selection:
-                    # Alternative routes visible alongside the focused selection
+                    # Alternative routes remain clearly visible simultaneously alongside selected route
                     line_color = r.get("color") or palette[(rank - 1) % len(palette)]
                     dash_array = None
-                    opacity = 0.70
-                    weight = 5.0
+                    opacity = 0.82
+                    weight = 6.0
                 else:
                     line_color = r.get("color") or palette[(rank - 1) % len(palette)]
                     dash_array = None
                     opacity = 0.95 if rank == 1 else 0.85
-                    weight = 7.0 if rank == 1 else 5.5
+                    weight = 7.5 if rank == 1 else 6.0
 
                 route_label = r.get("name", f"Route {idx+1}")
                 cond_text = r.get("road_condition", "Smooth paved asphalt")
 
                 # Background dual-stroke casing line: deep contrast outline against satellite imagery
                 casing_color = "#020617" if is_selected else "#0f172a"
-                casing_weight = weight + 3.0
-                casing_opacity = 0.85 if is_selected else 0.65
+                casing_weight = weight + 3.5
+                casing_opacity = 0.90 if is_selected else 0.75
 
                 folium.PolyLine(
                     locations=coords,
                     color=casing_color,
                     weight=casing_weight,
                     opacity=casing_opacity,
-                    dash_array=dash_array
+                    dash_array=dash_array,
+                    line_cap="round",
+                    line_join="round"
                 ).add_to(m)
 
-                # Foreground vibrant polyline
+                # Foreground vibrant polyline with rounded joints
                 popup_html = f"""
                 <div style='font-family: -apple-system, BlinkMacSystemFont, sans-serif; min-width: 220px;'>
                     <div style='font-weight: 800; font-size: 13px; color: {line_color}; margin-bottom: 4px;'>
@@ -2303,7 +2305,9 @@ class MapService:
                     weight=weight,
                     opacity=opacity,
                     dash_array=dash_array,
-                    tooltip=f"{'⭐ RECOMMENDED: ' if rank == 1 else ''}{route_label} ({dist_km:.1f} km, ~{dur_min:.0f} min)",
+                    line_cap="round",
+                    line_join="round",
+                    tooltip=f"{'⭐ RECOMMENDED: ' if rank == 1 else f'ALTERNATIVE #{rank}: '}{route_label} ({dist_km:.1f} km, ~{dur_min:.0f} min)",
                     popup=folium.Popup(popup_html, max_width=320)
                 ).add_to(m)
 

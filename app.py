@@ -10110,7 +10110,9 @@ if c_raw_d:
                 st.session_state.selected_dest_id = f"coord_{d_lat:.4f}_{d_lon:.4f}"
                 st.session_state.last_synced_dest = c_raw_d
                 st.session_state._prev_route_sig = None
-                st.session_state.cached_candidate_routes = None
+                if st.session_state.get("_prev_synced_dest_coords") != coords_dest:
+                    st.session_state.cached_candidate_routes = None
+                    st.session_state._prev_synced_dest_coords = coords_dest
                 if st.session_state.get("user_live_coords"):
                     st.session_state.routes_generated = True
                     st.session_state.auto_fit_bounds = True
@@ -10129,7 +10131,9 @@ if c_raw_d:
                 st.session_state.active_dest_meta = b_auto
                 st.session_state.last_synced_dest = c_raw_d
                 st.session_state._prev_route_sig = None
-                st.session_state.cached_candidate_routes = None
+                if st.session_state.get("_prev_synced_dest_coords") != coords_dest:
+                    st.session_state.cached_candidate_routes = None
+                    st.session_state._prev_synced_dest_coords = coords_dest
                 if st.session_state.get("user_live_coords"):
                     st.session_state.routes_generated = True
                     st.session_state.auto_fit_bounds = True
@@ -10172,7 +10176,9 @@ if raw_o:
                 st.session_state.selected_orig_id = f"coord_{c_lat:.4f}_{c_lon:.4f}"
                 st.session_state.last_synced_orig = raw_o
                 st.session_state._prev_route_sig = None
-                st.session_state.cached_candidate_routes = None
+                if st.session_state.get("_prev_synced_orig_coords") != coords_orig:
+                    st.session_state.cached_candidate_routes = None
+                    st.session_state._prev_synced_orig_coords = coords_orig
                 if "real_location_service" in st.session_state and hasattr(st.session_state.real_location_service, "set_manual_location"):
                     st.session_state.real_location_service.set_manual_location(c_lat, c_lon, place_lbl)
                 if st.session_state.get("selected_dest_coords"):
@@ -16641,16 +16647,11 @@ if st.session_state.get("current_view") == "map_nav":
 
 
         v_min = float(vehicle_limits["min"])
-
-
-
         v_max = float(vehicle_limits["max"])
-
-
-
         v_span = max(0.1, v_max - v_min)
-
-
+        display_speed = float(vehicle_limits.get("normal", 50.0))
+        pct = max(0.0, min(1.0, (display_speed - v_min) / v_span))
+        unit_str = vehicle_limits.get("unit", "KM/H")
 
         active_mode = st.session_state.selected_speed_mode
 
@@ -19007,15 +19008,25 @@ body {{
 
 
 
-                st.session_state.cached_candidate_routes = candidate_routes
-
-
+                if candidate_routes:
+                    st.session_state.cached_candidate_routes = candidate_routes
+                    st.session_state.persistent_route_data = {
+                        "endpoint_sig": endpoint_sig,
+                        "routes": candidate_routes,
+                        "coords_orig": coords_orig,
+                        "coords_dest": coords_dest
+                    }
+                elif st.session_state.get("persistent_route_data") and st.session_state["persistent_route_data"].get("endpoint_sig") == endpoint_sig:
+                    candidate_routes = st.session_state["persistent_route_data"].get("routes", [])
+                    st.session_state.cached_candidate_routes = candidate_routes
+                else:
+                    st.session_state.cached_candidate_routes = candidate_routes
 
             else:
-
-
-
                 candidate_routes = st.session_state.cached_candidate_routes
+                if not candidate_routes and st.session_state.get("persistent_route_data") and st.session_state["persistent_route_data"].get("endpoint_sig") == endpoint_sig:
+                    candidate_routes = st.session_state["persistent_route_data"].get("routes", [])
+                    st.session_state.cached_candidate_routes = candidate_routes
 
 
 
@@ -19472,7 +19483,7 @@ body {{
 
 
 
-        palette = ["#00F0B5", "#F59E0B", "#A855F7", "#EC4899", "#3B82F6", "#F97316", "#06B6D4"]
+        palette = ["#00F0FF", "#F59E0B", "#A855F7", "#38BDF8", "#10B981", "#EC4899"]
 
 
 
@@ -19823,11 +19834,9 @@ body {{
 
 
 
-        if not primary_route_poly and coords_orig and coords_dest:
-
-
-
-            primary_route_poly = [coords_orig, coords_dest]
+        # Never draw fake straight lines across terrain or agricultural fields
+        if not primary_route_poly:
+            primary_route_poly = []
 
 
 
@@ -22031,6 +22040,42 @@ body {{
                     st.session_state.cached_candidate_routes = None
                     st.toast("Destination cleared", icon="🗑️")
                     st.rerun()
+
+            # Dedicated Clear Locations button: clears all route alternatives, start/destination pins, and resets state
+            has_active_locs = bool(coords_orig or coords_dest or st.session_state.get("cached_candidate_routes") or st.session_state.get("persistent_route_data"))
+            if st.button("🗑️ Clear Locations", key="btn_clear_all_locations_routes", use_container_width=True, disabled=not has_active_locs, help="Clear all route paths, start/destination pins, and return map to clean unrouted view"):
+                st.session_state.is_custom_start_place = False
+                st.session_state.orig_candidates = []
+                st.session_state.orig_candidates_query = ""
+                st.session_state.user_live_coords = None
+                st.session_state.user_live_label = ""
+                st.session_state.pending_orig = ""
+                st.session_state.last_synced_orig = ""
+                st.session_state.selected_orig_id = None
+                st.session_state._prev_synced_orig_coords = None
+                st.session_state.selected_dest_coords = None
+                st.session_state.selected_dest_label = None
+                st.session_state.pending_dest = ""
+                st.session_state.last_synced_dest = ""
+                st.session_state.selected_dest_id = None
+                st.session_state._prev_synced_dest_coords = None
+                st.session_state.active_dest_meta = None
+                st.session_state.dest_candidates = []
+                st.session_state.dest_candidates_query = ""
+                st.session_state.intermediate_stops = []
+                st.session_state.routes_generated = False
+                st.session_state._prev_route_sig = None
+                st.session_state._prev_endpoint_sig = None
+                st.session_state.cached_candidate_routes = None
+                st.session_state.persistent_route_data = None
+                st.session_state.route_alternatives = None
+                st.session_state.focused_route_id = "ALL"
+                st.session_state.selected_route_id = None
+                st.session_state.selected_route_object = None
+                st.session_state.is_in_transit = False
+                st.session_state.current_step_index = 0
+                st.toast("Locations and routes cleared", icon="🗑️")
+                st.rerun()
 
 # ➕ Highly Visible "ADD A STOP TO YOUR ROUTE" Section (Requirement 6)
             st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)

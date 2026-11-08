@@ -133,3 +133,4 @@ def test_switch_vehicle_mode_js_runtime():
     assert "btn-veh-selector" in html
     assert "hud-vehicle-mode" in html
     assert "AudioContext" in html
+

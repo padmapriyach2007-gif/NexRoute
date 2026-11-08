@@ -1982,17 +1982,59 @@ class OSRMGlobalRoutingProvider(BaseRoutingProvider):
                         break
 
         if routes:
-            # Verify and filter distinct authentic routes
+            # Verify authentic routes
             valid_routes = []
             for r in routes:
                 is_valid, _ = verify_route_validity(r, origin_lat, origin_lon, dest_lat, dest_lon)
                 if is_valid:
                     valid_routes.append(r)
 
+            # If fewer than 3 alternatives were returned by OSRM server, generate genuine road network alternatives using road-snapped via points
+            if len(valid_routes) < 3 and mode not in (TravelMode.FLIGHT, TravelMode.WATERWAY) and not waypoints:
+                mid_lat = (snapped_orig[0] + snapped_dest[0]) / 2.0
+                mid_lon = (snapped_orig[1] + snapped_dest[1]) / 2.0
+                dlat = snapped_dest[0] - snapped_orig[0]
+                dlon = snapped_dest[1] - snapped_orig[1]
+                norm = math.hypot(dlat, dlon)
+                if norm > 0.005:
+                    offset_dist = min(0.05, max(0.015, norm * 0.25))
+                    via_offsets = [
+                        (-dlon / norm * offset_dist, dlat / norm * offset_dist),
+                        (dlon / norm * offset_dist, -dlat / norm * offset_dist),
+                        (-dlon / norm * (offset_dist * 1.6), dlat / norm * (offset_dist * 1.6))
+                    ]
+                    for off_lat, off_lon in via_offsets:
+                        if len(valid_routes) >= 3:
+                            break
+                        via_cand_lat = mid_lat + off_lat
+                        via_cand_lon = mid_lon + off_lon
+                        snapped_via = snap_to_road_network(via_cand_lat, via_cand_lon, mode=mode, base_url=self.base_url, timeout_sec=2.5)
+                        if snapped_via.get("is_snapped"):
+                            v_lat = snapped_via["snapped_lat"]
+                            v_lon = snapped_via["snapped_lon"]
+                            via_coords = f"{snapped_orig[1]:.6f},{snapped_orig[0]:.6f};{v_lon:.6f},{v_lat:.6f};{snapped_dest[1]:.6f},{snapped_dest[0]:.6f}"
+                            via_url = f"{self.base_url}/route/v1/{profile}/{via_coords}?overview=full&geometries=geojson&steps=true"
+                            via_routes = self._fetch_osrm(
+                                via_url, mode, require_accessible,
+                                origin_coords=snapped_orig,
+                                dest_coords=snapped_dest,
+                                speed_mode=speed_mode,
+                                custom_speed_kmh=custom_speed_kmh
+                            )
+                            if via_routes:
+                                for vr in via_routes:
+                                    is_v, _ = verify_route_validity(vr, origin_lat, origin_lon, dest_lat, dest_lon)
+                                    if is_v:
+                                        # Verify it is not an exact duplicate of existing polylines
+                                        is_dup = any(abs(vr.distance_km - er.distance_km) < 0.2 for er in valid_routes)
+                                        if not is_dup:
+                                            valid_routes.append(vr)
+                                            break
+
             routes_to_filter = valid_routes or routes
             distinct_routes = filter_distinct_routes(
                 routes_to_filter,
-                max_overlap=0.85,
+                max_overlap=0.88,
                 origin_coords=(origin_lat, origin_lon),
                 dest_coords=(dest_lat, dest_lon)
             )
