@@ -268,11 +268,11 @@ def render_aura_welcome_hud(
     .aura-command-center {{
         position: relative;
         width: 100%;
-        max-width: 880px;
+        max-width: 100%;
         background: radial-gradient(ellipse 90% 70% at 50% 10%, rgba(14, 30, 68, 0.94) 0%, rgba(4, 9, 24, 0.98) 100%);
         border: 1.5px solid rgba(0, 240, 255, 0.32);
         border-radius: 22px;
-        padding: 14px 22px 16px 22px;
+        padding: 14px 20px 16px 20px;
         box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.14), inset 0 0 24px rgba(56, 189, 248, 0.05);
         display: flex;
         flex-direction: column;
@@ -784,7 +784,7 @@ def render_aura_welcome_hud(
 
     /* Distinct Position Coordinates */
     .node-nav {{
-        left: 10px;
+        left: clamp(4px, 1.2%, 10px);
         top: 140px;
         transform: translateY(-50%);
         --node-glow: #00e5ff;
@@ -794,7 +794,7 @@ def render_aura_welcome_hud(
     }}
 
     .node-trips {{
-        left: 105px;
+        left: clamp(25px, 9%, 105px);
         top: 22px;
         --node-glow: #8b5cf6;
         border-color: rgba(139, 92, 246, 0.38);
@@ -805,7 +805,7 @@ def render_aura_welcome_hud(
     }}
 
     .node-hotels {{
-        right: 10px;
+        right: clamp(4px, 1.2%, 10px);
         top: 140px;
         transform: translateY(-50%);
         --node-glow: #f59e0b;
@@ -818,7 +818,7 @@ def render_aura_welcome_hud(
     }}
 
     .node-flights {{
-        right: 95px;
+        right: clamp(25px, 9%, 95px);
         bottom: 22px;
         --node-glow: #00ffc6;
         border-color: rgba(0, 255, 198, 0.38);
@@ -829,7 +829,7 @@ def render_aura_welcome_hud(
     }}
 
     .node-food {{
-        left: 95px;
+        left: clamp(25px, 9%, 95px);
         bottom: 22px;
         --node-glow: #ec4899;
         border-color: rgba(236, 72, 153, 0.38);

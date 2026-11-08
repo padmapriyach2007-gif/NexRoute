@@ -687,6 +687,8 @@ from src.travel_copilot_studio import (
 
     render_quantum_hero_section,
 
+    render_quantum_hero_title_card,
+
 
 
     render_travel_copilot_studio,
@@ -7332,10 +7334,12 @@ if st.session_state.get("switch_to_nav_tab", False):
 
 
 if st.session_state.current_view == "dashboard":
-    # AURA JARVIS AI VOICE ASSISTANT HUD (AUTOMATIC GREETING ON LAUNCH & CONTINUOUS VOICE COMMANDS)
-    if st.session_state.get("show_aura_welcome", True):
+    # Side-by-side: NexRoute Hero Card on the left, AURA Voice Assistant Flashcard on the right
+    cur_app_lang = st.session_state.get("app_language", "en")
+    show_aura = st.session_state.get("show_aura_welcome", True)
+
+    if show_aura:
         from src.aura_welcome_screen import render_aura_welcome_hud
-        cur_app_lang = st.session_state.get("app_language", "en")
         should_auto_speak = not st.session_state.get("aura_welcome_greeted", False)
         st.session_state.aura_welcome_greeted = True
 
@@ -7345,9 +7349,16 @@ if st.session_state.current_view == "dashboard":
             bot_logo_uri=aura_logo_uri,
             user_name="Boss"
         )
-        components.html(welcome_hud_html, height=435, scrolling=False)
+        col_hero, col_aura = st.columns([1, 1.35], gap="medium")
+        with col_hero:
+            render_quantum_hero_title_card(side_by_side=True)
+        with col_aura:
+            components.html(welcome_hud_html, height=435, scrolling=False)
 
-    render_quantum_hero_section()
+        # Multilingual Interface Selection Bar and 4 Workspace Cards below
+        render_quantum_hero_section(include_title=False)
+    else:
+        render_quantum_hero_section(include_title=True)
 
 
 
