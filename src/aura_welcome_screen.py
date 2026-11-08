@@ -591,7 +591,7 @@ def render_aura_welcome_hud(
 
     /* 3. GREETING HEADLINE */
     .greeting-headline {{
-        font-size: 1.12rem;
+        font-size: 1.08rem;
         font-weight: 800;
         color: #f8fafc;
         margin: 2px 0 2px 0;
@@ -606,8 +606,8 @@ def render_aura_welcome_hud(
     /* 4. WAVEFORM & LIVE TELEMETRY */
     .waveform-container {{
         width: 100%;
-        max-width: 480px;
-        height: 22px;
+        max-width: 440px;
+        height: 20px;
         margin: 2px 0 2px 0;
         display: flex;
         align-items: center;
@@ -623,108 +623,368 @@ def render_aura_welcome_hud(
 
     .live-transcript-box {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
+        font-size: 0.70rem;
         color: #38bdf8;
         min-height: 18px;
         line-height: 1.35;
         letter-spacing: 0.02em;
         z-index: 2;
-        margin-bottom: 8px;
+        margin-bottom: 2px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 600px;
+        max-width: 520px;
     }}
 
-    /* 5. FLOATING GLASSMORPHISM SHORTCUT CARDS */
-    .shortcut-cards-grid {{
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: 8px;
+    /* =========================================================================
+       5. HOLOGRAPHIC AI TRAVEL COMMAND CENTER & ORBITAL NAVIGATION STAGE
+       ========================================================================= */
+    .holo-orbital-stage {{
+        position: relative;
         width: 100%;
-        max-width: 840px;
-        z-index: 2;
-    }}
-
-    .shortcut-card {{
-        background: rgba(15, 23, 42, 0.65);
-        border: 1px solid rgba(56, 189, 248, 0.22);
-        border-radius: 12px;
-        padding: 7px 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        backdrop-filter: blur(12px);
-        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-        text-align: left;
-    }}
-
-    .shortcut-card:hover {{
-        background: rgba(20, 35, 68, 0.85);
-        border-color: #00f0ff;
-        box-shadow: 0 4px 16px rgba(0, 240, 255, 0.28), 0 0 10px rgba(0, 240, 255, 0.15);
-        transform: translateY(-2.5px);
-    }}
-
-    .shortcut-icon-pod {{
-        width: 26px;
-        height: 26px;
-        border-radius: 8px;
+        max-width: 860px;
+        min-height: 330px;
+        height: 330px;
+        margin-top: 2px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.95rem;
-        border: 1px solid;
-        flex-shrink: 0;
+        z-index: 2;
     }}
 
-    .shortcut-info {{
+    /* Ambient SVG Orbital Rings & Energy Beams Layer */
+    .holo-orbital-svg {{
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+        overflow: visible;
+    }}
+
+    .orbital-ring {{
+        fill: none;
+        stroke: rgba(0, 229, 255, 0.24);
+        stroke-dasharray: 4 6;
+        animation: rotateOrbitalRing 60s linear infinite;
+        transform-origin: 440px 140px;
+    }}
+
+    .orbital-ring-mid {{
+        fill: none;
+        stroke: rgba(139, 92, 246, 0.18);
+        stroke-dasharray: 3 9;
+        animation: rotateOrbitalRingCounter 45s linear infinite;
+        transform-origin: 440px 140px;
+    }}
+
+    .orbital-ring-outer {{
+        fill: none;
+        stroke: rgba(0, 255, 198, 0.12);
+        stroke-dasharray: 6 12;
+    }}
+
+    @keyframes rotateOrbitalRing {{
+        from {{ transform: rotate(0deg); }}
+        to {{ transform: rotate(360deg); }}
+    }}
+
+    @keyframes rotateOrbitalRingCounter {{
+        from {{ transform: rotate(360deg); }}
+        to {{ transform: rotate(0deg); }}
+    }}
+
+    /* SVG Energy Conduit Lines connecting Central AI to Modules */
+    .energy-conduit-base {{
+        fill: none;
+        stroke: rgba(0, 229, 255, 0.16);
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        transition: all 0.3s ease;
+    }}
+
+    .energy-conduit-pulse {{
+        fill: none;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-dasharray: 8 20;
+        animation: conduitStream 2.4s linear infinite;
+        opacity: 0.75;
+        transition: all 0.3s ease;
+    }}
+
+    @keyframes conduitStream {{
+        from {{ stroke-dashoffset: 56; }}
+        to {{ stroke-dashoffset: 0; }}
+    }}
+
+    .beam-active .energy-conduit-base {{
+        stroke-width: 2.8;
+        opacity: 1;
+        filter: drop-shadow(0 0 8px #00e5ff);
+    }}
+
+    .beam-active .energy-conduit-pulse {{
+        stroke-width: 3.5;
+        opacity: 1;
+        stroke-dasharray: 12 12;
+        animation-duration: 1.2s;
+    }}
+
+    /* Central AURA Node in Command Stage */
+    .aura-center-node {{
+        position: absolute;
+        left: 50%;
+        top: 40%;
+        transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        align-items: center;
+        text-align: center;
+        z-index: 5;
+        pointer-events: auto;
     }}
 
-    .shortcut-title {{
-        font-size: 0.76rem;
+    /* Container for Modules */
+    .holo-modules-container {{
+        position: contents;
+    }}
+
+    /* Floating Holographic Travel Modules */
+    .holo-module-node {{
+        position: absolute;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px 8px 10px;
+        background: rgba(6, 16, 31, 0.82);
+        border: 1.2px solid rgba(0, 229, 255, 0.32);
+        border-radius: 9999px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px rgba(0, 229, 255, 0.12), inset 0 0 10px rgba(0, 229, 255, 0.05);
+        cursor: pointer;
+        z-index: 6;
+        transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+        text-decoration: none;
+    }}
+
+    .holo-module-node:hover {{
+        transform: translateY(-4px) scale(1.06);
+        border-color: #00e5ff;
+        background: rgba(10, 25, 52, 0.94);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 229, 255, 0.45), inset 0 0 14px rgba(0, 255, 198, 0.2);
+    }}
+
+    .holo-module-node.active-node {{
+        border-color: #00ffc6;
+        background: rgba(4, 30, 50, 0.96);
+        box-shadow: 0 0 28px rgba(0, 255, 198, 0.65);
+    }}
+
+    /* Distinct Position Coordinates */
+    .node-nav {{
+        left: 10px;
+        top: 140px;
+        transform: translateY(-50%);
+        --node-glow: #00e5ff;
+    }}
+    .node-nav:hover {{
+        transform: translateY(-54%) scale(1.06);
+    }}
+
+    .node-trips {{
+        left: 105px;
+        top: 22px;
+        --node-glow: #8b5cf6;
+        border-color: rgba(139, 92, 246, 0.38);
+    }}
+    .node-trips:hover {{
+        border-color: #8b5cf6;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(139, 92, 246, 0.5);
+    }}
+
+    .node-hotels {{
+        right: 10px;
+        top: 140px;
+        transform: translateY(-50%);
+        --node-glow: #f59e0b;
+        border-color: rgba(245, 158, 11, 0.38);
+    }}
+    .node-hotels:hover {{
+        transform: translateY(-54%) scale(1.06);
+        border-color: #fbbf24;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 158, 11, 0.5);
+    }}
+
+    .node-flights {{
+        right: 95px;
+        bottom: 22px;
+        --node-glow: #00ffc6;
+        border-color: rgba(0, 255, 198, 0.38);
+    }}
+    .node-flights:hover {{
+        border-color: #00ffc6;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 255, 198, 0.5);
+    }}
+
+    .node-food {{
+        left: 95px;
+        bottom: 22px;
+        --node-glow: #ec4899;
+        border-color: rgba(236, 72, 153, 0.38);
+    }}
+    .node-food:hover {{
+        border-color: #f472b6;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(236, 72, 153, 0.5);
+    }}
+
+    /* Icon Glyphs */
+    .holo-glyph-disc {{
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle, rgba(15, 23, 42, 0.9) 0%, rgba(2, 8, 18, 0.95) 100%);
+        border: 1.4px solid currentColor;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+        flex-shrink: 0;
+        transition: all 0.25s ease;
+    }}
+
+    .holo-module-node:hover .holo-glyph-disc {{
+        transform: scale(1.08);
+        box-shadow: 0 0 16px currentColor;
+    }}
+
+    .holo-glyph-reticle {{
+        position: absolute;
+        inset: -3px;
+        border-radius: 50%;
+        border: 1px dashed currentColor;
+        opacity: 0.45;
+        animation: spinGlyphReticle 10s linear infinite;
+    }}
+
+    @keyframes spinGlyphReticle {{
+        from {{ transform: rotate(0deg); }}
+        to {{ transform: rotate(360deg); }}
+    }}
+
+    /* Text Telemetry */
+    .holo-node-meta {{
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+    }}
+
+    .holo-node-title {{
+        font-family: 'Inter', sans-serif;
+        font-size: 0.82rem;
         font-weight: 800;
         color: #f8fafc;
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }}
-
-    .shortcut-hint {{
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.58rem;
-        color: #94a3b8;
         line-height: 1.15;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        letter-spacing: 0.02em;
     }}
 
-    @media (max-width: 768px) {{
-        .shortcut-cards-grid {{
-            grid-template-columns: repeat(3, 1fr);
+    .holo-node-sub {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.56rem;
+        font-weight: 700;
+        color: #38bdf8;
+        letter-spacing: 0.06em;
+        line-height: 1.15;
+    }}
+
+    .holo-status-blip {{
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #00ffc6;
+        box-shadow: 0 0 6px #00ffc6;
+        margin-left: 2px;
+        animation: blipPulse 1.8s infinite ease-in-out;
+    }}
+
+    @keyframes blipPulse {{
+        0%, 100% {{ opacity: 0.4; transform: scale(0.9); }}
+        50% {{ opacity: 1; transform: scale(1.2); }}
+    }}
+
+    /* =========================================================================
+       RESPONSIVE DESIGN (TABLET & MOBILE)
+       ========================================================================= */
+    @media (max-width: 820px) {{
+        .holo-orbital-stage {{
+            height: auto;
+            min-height: unset;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 4px 0;
+        }}
+
+        .holo-orbital-svg {{
+            display: none;
+        }}
+
+        .aura-center-node {{
+            position: relative;
+            left: unset;
+            top: unset;
+            transform: none;
+            margin-bottom: 4px;
+        }}
+
+        .holo-modules-container {{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }}
+
+        .holo-module-node {{
+            position: relative;
+            left: unset !important;
+            right: unset !important;
+            top: unset !important;
+            bottom: unset !important;
+            transform: none !important;
+            flex: 1 1 calc(33% - 12px);
+            min-width: 140px;
+            max-width: 220px;
+        }}
+    }}
+
+    @media (max-width: 540px) {{
+        .holo-module-node {{
+            flex: 1 1 calc(50% - 10px);
+            min-width: 125px;
+            padding: 6px 10px;
             gap: 6px;
+        }}
+        .holo-glyph-disc {{
+            width: 30px;
+            height: 30px;
+        }}
+        .holo-node-title {{
+            font-size: 0.74rem;
+        }}
+        .holo-node-sub {{
+            font-size: 0.52rem;
         }}
         .brand-nexroute-title {{
-            font-size: 0.85rem;
-        }}
-        .greeting-headline {{
-            font-size: 1.0rem;
-        }}
-    }}
-
-    @media (max-width: 480px) {{
-        .shortcut-cards-grid {{
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
+            font-size: 0.82rem;
         }}
         .brand-nexroute-sub {{
             display: none;
+        }}
+        .greeting-headline {{
+            font-size: 0.95rem;
         }}
     }}
 </style>
@@ -779,73 +1039,205 @@ def render_aura_welcome_hud(
         </div>
     </div>
 
-    <!-- 2. Central Holographic AURA Avatar Reactor -->
-    <div class="avatar-stage" onclick="window.togglePersistentVoiceSession()" title="Click to speak with AURA">
-        <div class="arc-reactor-ring-outer"></div>
-        <div class="telemetry-ring-segments"></div>
-        <div class="arc-reactor-ring-mid" id="avatarMidRing"></div>
-        <div class="avatar-core-circle">
-            {avatar_markup}
-        </div>
-    </div>
+    <!-- 2. Holographic AI Travel Command Center / Orbital Stage -->
+    <div class="holo-orbital-stage" id="orbitalStage">
+        <!-- Background SVG Radar, Orbital Rings & Neural Energy Beams -->
+        <svg class="holo-orbital-svg" viewBox="0 0 880 340" preserveAspectRatio="none">
+            <defs>
+                <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <linearGradient id="gradNav" x1="1" y1="0" x2="0" y2="0">
+                    <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.9" />
+                    <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.3" />
+                </linearGradient>
+                <linearGradient id="gradTrips" x1="1" y1="1" x2="0" y2="0">
+                    <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.9" />
+                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.3" />
+                </linearGradient>
+                <linearGradient id="gradHotels" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.9" />
+                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3" />
+                </linearGradient>
+                <linearGradient id="gradFlights" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#00ffc6" stop-opacity="0.9" />
+                    <stop offset="100%" stop-color="#00ffc6" stop-opacity="0.3" />
+                </linearGradient>
+                <linearGradient id="gradFood" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ec4899" stop-opacity="0.9" />
+                    <stop offset="100%" stop-color="#ec4899" stop-opacity="0.3" />
+                </linearGradient>
+            </defs>
 
-    <!-- 3. Dynamic Welcome Greeting Headline -->
-    <h1 class="greeting-headline" id="greetingHeadline">
-        "{greeting_text}"
-    </h1>
+            <!-- Concentric Holographic Orbital Rings -->
+            <ellipse cx="440" cy="140" rx="360" ry="145" class="orbital-ring-outer" />
+            <ellipse cx="440" cy="140" rx="260" ry="110" class="orbital-ring-mid" />
+            <circle cx="440" cy="140" r="105" class="orbital-ring" />
 
-    <!-- 4. Real-Time Audio Waveform Canvas -->
-    <div class="waveform-container">
-        <canvas id="auraWaveCanvas"></canvas>
-    </div>
+            <!-- Five Neural Energy Connecting Beams (Center 440, 140 to each Module) -->
+            <!-- 1. Navigation (Mid-Left) -->
+            <g id="beam-nav">
+                <path d="M 440 140 L 140 140" class="energy-conduit-base" />
+                <path d="M 440 140 L 140 140" class="energy-conduit-pulse" stroke="url(#gradNav)" />
+            </g>
+            <!-- 2. My Trips (Upper-Left) -->
+            <g id="beam-trips">
+                <path d="M 440 140 L 210 48" class="energy-conduit-base" />
+                <path d="M 440 140 L 210 48" class="energy-conduit-pulse" stroke="url(#gradTrips)" />
+            </g>
+            <!-- 3. Hotels (Mid-Right) -->
+            <g id="beam-hotels">
+                <path d="M 440 140 L 740 140" class="energy-conduit-base" />
+                <path d="M 440 140 L 740 140" class="energy-conduit-pulse" stroke="url(#gradHotels)" />
+            </g>
+            <!-- 4. Flights (Lower-Right) -->
+            <g id="beam-flights">
+                <path d="M 440 140 L 665 248" class="energy-conduit-base" />
+                <path d="M 440 140 L 665 248" class="energy-conduit-pulse" stroke="url(#gradFlights)" />
+            </g>
+            <!-- 5. Restaurants (Lower-Left) -->
+            <g id="beam-food">
+                <path d="M 440 140 L 215 248" class="energy-conduit-base" />
+                <path d="M 440 140 L 215 248" class="energy-conduit-pulse" stroke="url(#gradFood)" />
+            </g>
+        </svg>
 
-    <!-- 5. Live Speech Transcript Pod -->
-    <div class="live-transcript-box" id="transcriptBox">
-        Ready for voice command, Boss. Speak anytime or tap a shortcut below.
-    </div>
+        <!-- Central Holographic AURA Avatar Reactor & Live Telemetry -->
+        <div class="aura-center-node">
+            <div class="avatar-stage" onclick="window.togglePersistentVoiceSession()" title="Click to speak with AURA">
+                <div class="arc-reactor-ring-outer"></div>
+                <div class="telemetry-ring-segments"></div>
+                <div class="arc-reactor-ring-mid" id="avatarMidRing"></div>
+                <div class="avatar-core-circle">
+                    {avatar_markup}
+                </div>
+            </div>
 
-    <!-- 6. Floating Glassmorphism Navigation Shortcuts -->
-    <div class="shortcut-cards-grid">
-        <div class="shortcut-card" onclick="window.dispatchCardNav('Open navigation')" title="Jump to Navigation & Live Corridor Routing">
-            <div class="shortcut-icon-pod" style="background: rgba(0, 240, 255, 0.14); border-color: #00f0ff; color: #00f0ff;">🧭</div>
-            <div class="shortcut-info">
-                <span class="shortcut-title">Navigation</span>
-                <span class="shortcut-hint">Corridor Routing</span>
+            <h1 class="greeting-headline" id="greetingHeadline">
+                "{greeting_text}"
+            </h1>
+
+            <div class="waveform-container">
+                <canvas id="auraWaveCanvas"></canvas>
+            </div>
+
+            <div class="live-transcript-box" id="transcriptBox">
+                Ready for voice command, Boss. Speak anytime or select an orbital module.
             </div>
         </div>
-        <div class="shortcut-card" onclick="window.dispatchCardNav('Show my trips')" title="Open Autonomous Trips & Itineraries">
-            <div class="shortcut-icon-pod" style="background: rgba(129, 140, 248, 0.14); border-color: #818cf8; color: #818cf8;">✈️</div>
-            <div class="shortcut-info">
-                <span class="shortcut-title">My Trips</span>
-                <span class="shortcut-hint">Itinerary Studio</span>
+
+        <!-- Five Floating Holographic Travel Modules -->
+        <div class="holo-modules-container">
+            <!-- 1. Navigation Module -->
+            <div class="holo-module-node node-nav"
+                 onclick="window.dispatchCardNav('Open navigation', this)"
+                 onmouseenter="window.highlightOrbitalBeam('beam-nav', true)"
+                 onmouseleave="window.highlightOrbitalBeam('beam-nav', false)"
+                 title="Open Corridor Routing Navigation">
+                <div class="holo-glyph-disc" style="color: #00e5ff;">
+                    <div class="holo-glyph-reticle"></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" stroke-dasharray="3 3"/>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="rgba(0, 229, 255, 0.45)"/>
+                        <circle cx="12" cy="12" r="1.8" fill="#ffffff"/>
+                    </svg>
+                </div>
+                <div class="holo-node-meta">
+                    <span class="holo-node-title">Navigation</span>
+                    <span class="holo-node-sub">CORRIDOR ROUTING</span>
+                </div>
+                <div class="holo-status-blip" style="background: #00e5ff; box-shadow: 0 0 8px #00e5ff;"></div>
             </div>
-        </div>
-        <div class="shortcut-card" onclick="window.dispatchCardNav('Show hotels')" title="Find Nearby Hotels & Accommodations">
-            <div class="shortcut-icon-pod" style="background: rgba(245, 158, 11, 0.14); border-color: #f59e0b; color: #fbbf24;">🏨</div>
-            <div class="shortcut-info">
-                <span class="shortcut-title">Hotels</span>
-                <span class="shortcut-hint">Stays & Resorts</span>
+
+            <!-- 2. My Trips Module -->
+            <div class="holo-module-node node-trips"
+                 onclick="window.dispatchCardNav('Show my trips', this)"
+                 onmouseenter="window.highlightOrbitalBeam('beam-trips', true)"
+                 onmouseleave="window.highlightOrbitalBeam('beam-trips', false)"
+                 title="Open Itinerary Studio & Trips">
+                <div class="holo-glyph-disc" style="color: #8b5cf6;">
+                    <div class="holo-glyph-reticle"></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="5" cy="18" r="2.5" fill="rgba(139, 92, 246, 0.45)"/>
+                        <circle cx="12" cy="6" r="2.5" fill="rgba(139, 92, 246, 0.45)"/>
+                        <circle cx="19" cy="14" r="2.5" fill="rgba(139, 92, 246, 0.45)"/>
+                        <path d="M7 16.5 L10.5 8" stroke-dasharray="2 2"/>
+                        <path d="M13.5 7.5 L17.5 12.5"/>
+                    </svg>
+                </div>
+                <div class="holo-node-meta">
+                    <span class="holo-node-title">My Trips</span>
+                    <span class="holo-node-sub" style="color: #c084fc;">ITINERARY STUDIO</span>
+                </div>
+                <div class="holo-status-blip" style="background: #8b5cf6; box-shadow: 0 0 8px #8b5cf6;"></div>
             </div>
-        </div>
-        <div class="shortcut-card" onclick="window.dispatchCardNav('Open flights')" title="Launch Flight Corridor Planner">
-            <div class="shortcut-icon-pod" style="background: rgba(56, 189, 248, 0.14); border-color: #38bdf8; color: #38bdf8;">🛫</div>
-            <div class="shortcut-info">
-                <span class="shortcut-title">Flights</span>
-                <span class="shortcut-hint">Air Corridors</span>
+
+            <!-- 3. Hotels Module -->
+            <div class="holo-module-node node-hotels"
+                 onclick="window.dispatchCardNav('Show hotels', this)"
+                 onmouseenter="window.highlightOrbitalBeam('beam-hotels', true)"
+                 onmouseleave="window.highlightOrbitalBeam('beam-hotels', false)"
+                 title="Search Stays & Accommodations">
+                <div class="holo-glyph-disc" style="color: #f59e0b;">
+                    <div class="holo-glyph-reticle"></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>
+                        <path d="M16 11h4a2 2 0 0 1 2 2v8"/>
+                        <rect x="7.5" y="7" width="2" height="2" fill="#fbbf24"/>
+                        <rect x="11.5" y="7" width="2" height="2" fill="#fbbf24"/>
+                        <rect x="7.5" y="12" width="2" height="2" fill="#fbbf24"/>
+                        <rect x="11.5" y="12" width="2" height="2" fill="#fbbf24"/>
+                        <line x1="2" y1="21" x2="22" y2="21"/>
+                    </svg>
+                </div>
+                <div class="holo-node-meta">
+                    <span class="holo-node-title">Hotels</span>
+                    <span class="holo-node-sub" style="color: #fbbf24;">STAYS & RESORTS</span>
+                </div>
+                <div class="holo-status-blip" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></div>
             </div>
-        </div>
-        <div class="shortcut-card" onclick="window.dispatchCardNav('Show restaurants')" title="Discover Food & Dining Along Route">
-            <div class="shortcut-icon-pod" style="background: rgba(236, 72, 153, 0.14); border-color: #ec4899; color: #f472b6;">🍽️</div>
-            <div class="shortcut-info">
-                <span class="shortcut-title">Restaurants</span>
-                <span class="shortcut-hint">Dining & Food</span>
+
+            <!-- 4. Flights Module -->
+            <div class="holo-module-node node-flights"
+                 onclick="window.dispatchCardNav('Open flights', this)"
+                 onmouseenter="window.highlightOrbitalBeam('beam-flights', true)"
+                 onmouseleave="window.highlightOrbitalBeam('beam-flights', false)"
+                 title="Launch Air Corridor Planner">
+                <div class="holo-glyph-disc" style="color: #00ffc6;">
+                    <div class="holo-glyph-reticle"></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ffc6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3.5c-.5-.5-2.5 0-4 1.5L13.5 8.5 5.3 6.7c-.8-.2-1.5.3-1.6 1.1-.1.4.1.9.4 1.2l4.8 4.8-3.4 3.4-2.5-.5c-.4-.1-.8.1-1 .4l-.3.4c-.3.4-.2.9.2 1.2l3.4 2.4 2.4 3.4c.3.4.8.5 1.2.2l.4-.3c.3-.2.5-.6.4-1l-.5-2.5 3.4-3.4 4.8 4.8c.3.3.8.5 1.2.4.8-.1 1.3-.8 1.1-1.6z"/>
+                    </svg>
+                </div>
+                <div class="holo-node-meta">
+                    <span class="holo-node-title">Flights</span>
+                    <span class="holo-node-sub" style="color: #00ffc6;">AIR CORRIDORS</span>
+                </div>
+                <div class="holo-status-blip" style="background: #00ffc6; box-shadow: 0 0 8px #00ffc6;"></div>
             </div>
-        </div>
-        <div class="shortcut-card" onclick="window.dispatchCardNav('Go to my profile')" title="View Profile & Settings">
-            <div class="shortcut-icon-pod" style="background: rgba(16, 185, 129, 0.14); border-color: #10b981; color: #34d399;">👤</div>
-            <div class="shortcut-info">
-                <span class="shortcut-title">Profile</span>
-                <span class="shortcut-hint">User Account</span>
+
+            <!-- 5. Restaurants Module -->
+            <div class="holo-module-node node-food"
+                 onclick="window.dispatchCardNav('Show restaurants', this)"
+                 onmouseenter="window.highlightOrbitalBeam('beam-food', true)"
+                 onmouseleave="window.highlightOrbitalBeam('beam-food', false)"
+                 title="Find Dining & Restaurants Along Route">
+                <div class="holo-glyph-disc" style="color: #ec4899;">
+                    <div class="holo-glyph-reticle"></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 17h18"/>
+                        <path d="M5 17a7 7 0 0 1 14 0"/>
+                        <circle cx="12" cy="7" r="1.5" fill="#f472b6"/>
+                        <path d="M4 20h16"/>
+                        <circle cx="12" cy="13" r="1" fill="#ffffff"/>
+                    </svg>
+                </div>
+                <div class="holo-node-meta">
+                    <span class="holo-node-title">Restaurants</span>
+                    <span class="holo-node-sub" style="color: #f472b6;">DINING & FOOD</span>
+                </div>
+                <div class="holo-status-blip" style="background: #ec4899; box-shadow: 0 0 8px #ec4899;"></div>
             </div>
         </div>
     </div>
@@ -1451,11 +1843,11 @@ function stopOngoingSpeech() {{
                         currentSpeechBuffer = '';
 
                         // Immediate local handling of Voice Session commands
-                        if (/^(pause(\s+the)?(\s+voice)?(\s+assistant)?|pause\s+listening|hold\s+on)$/i.test(finalCmd.toLowerCase())) {{
+                        if (/^(pause(\\s+the)?(\\s+voice)?(\\s+assistant)?|pause\\s+listening|hold\\s+on)$/i.test(finalCmd.toLowerCase())) {{
                             pauseVoiceSession();
                             return;
                         }}
-                        if (/^(stop(\s+the)?(\s+voice)?(\s+assistant)?|end\s+session|aura\s+offline|close\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
+                        if (/^(stop(\\s+the)?(\\s+voice)?(\\s+assistant)?|end\\s+session|aura\\s+offline|close\\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
                             endVoiceSession();
                             return;
                         }}
@@ -1567,7 +1959,26 @@ function stopOngoingSpeech() {{
     // Backward-compatibility alias
     window.AURA_TOGGLE_MIC = window.togglePersistentVoiceSession;
 
-    window.dispatchCardNav = function(phrase) {{
+    window.highlightOrbitalBeam = function(beamId, active) {{
+        try {{
+            var beam = document.getElementById(beamId);
+            if (beam) {{
+                if (active) {{
+                    beam.classList.add('beam-active');
+                }} else {{
+                    beam.classList.remove('beam-active');
+                }}
+            }}
+        }} catch(e) {{}}
+    }};
+
+    window.dispatchCardNav = function(phrase, nodeElem) {{
+        try {{
+            if (nodeElem) {{
+                document.querySelectorAll('.holo-module-node').forEach(function(el) {{ el.classList.remove('active-node'); }});
+                nodeElem.classList.add('active-node');
+            }}
+        }} catch(e) {{}}
         stopOngoingSpeech();
         setSessionState('PROCESSING', 'Executing: ' + phrase);
         handleRecognizedVoiceCommand(phrase);
@@ -1621,7 +2032,7 @@ function stopOngoingSpeech() {{
 
         // Check for specific Navigation Destination queries
         // Example: "Navigate to Vijayawada" -> "Of course, Boss. Finding the best routes to Vijayawada."
-        var navMatch = lower.match(/(?:navigate|route|drive|go|directions?)\s+(?:to|towards)\s+([a-zA-Z\s]+)/i);
+        var navMatch = lower.match(/(?:navigate|route|drive|go|directions?)\\s+(?:to|towards)\\s+([a-zA-Z\\s]+)/i);
         if (navMatch && navMatch[1]) {{
             var destCity = navMatch[1].trim();
             destCity = destCity.charAt(0).toUpperCase() + destCity.slice(1);

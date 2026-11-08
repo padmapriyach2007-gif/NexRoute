@@ -782,7 +782,7 @@ class AuraGlobalCommandDispatcher:
         if dest_match:
             dest_query = dest_match.group(1).strip()
             # Exclude app tab names from being treated as destination
-            if dest_query.lower() not in ["navigation", "chatbot", "chat", "facilities", "map", "tools", "saved", "my trips", "profile", "hotels", "flights", "restaurants", "settings"]:
+            if dest_query.lower() not in ["navigation", "chatbot", "chat", "facilities", "map", "tools", "saved", "my trips", "trips", "profile", "my profile", "hotels", "flights", "restaurants", "settings", "my bookings", "bookings"]:
                 geo_dest = cls.resolve_location(dest_query)
                 dest_label = geo_dest["display_name"] if geo_dest else dest_query.title()
                 dest_coords = (geo_dest["lat"], geo_dest["lon"]) if geo_dest else None
@@ -1098,8 +1098,8 @@ class AuraGlobalCommandDispatcher:
                 }
             )
 
-        # 9.4 My Trips / Itinerary Studio
-        if re.search(r"\b(open|show|go\s+to|view)\s+(my\s+)?(trips?|itinerar(?:y|ies)|travel\s+studio|copilot\s+studio|ట్రిప్స్|यात्राएं)\b", q_lower):
+        # 9.4 My Trips / Itinerary Studio / Bookings
+        if re.search(r"\b(open|show|go\s+to|view)\s+(my\s+)?(trips?|itinerar(?:y|ies)|travel\s+studio|copilot\s+studio|bookings?|ట్రిప్స్|यात्राएं)\b", q_lower):
             tr_resp = resp_bundle["trips_opened"]
             return AuraExecutionResult(
                 command_type=AuraCommandType.OPEN_MY_TRIPS,

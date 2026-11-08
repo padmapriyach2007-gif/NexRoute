@@ -234,3 +234,4 @@ class TestAuraFullApplicationVoiceController:
         assert mock_session_state["active_objective"] == "FASTEST"
         assert mock_session_state["aura_journey_active"] is True
         assert mock_session_state["virtual_guide_moving"] is True
+
