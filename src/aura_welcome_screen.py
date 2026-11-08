@@ -5,7 +5,7 @@ Full real-time voice assistant engine providing:
 2. Real-time microphone listening via Web Speech API (webkitSpeechRecognition) with continuous listening.
 3. Audible SpeechSynthesis output with natural Jarvis pitch/rate and Chrome GC bug prevention.
 4. Seamless React WebSocket communication bridge to Streamlit without disruptive browser page reloads.
-5. Internal section navigation across Navigation, My Trips, Hotels, Flights, Restaurants, Profile, Settings, and Home.
+5. Internal section navigation across Navigation, Hotels, Flights, Restaurants, Profile, Settings, and Home.
 6. Unified state management across both Main Dashboard and sub-navigation views.
 """
 
@@ -782,44 +782,32 @@ def render_aura_welcome_hud(
         box-shadow: 0 0 28px rgba(0, 255, 198, 0.65);
     }}
 
-    /* Distinct Position Coordinates */
+    /* Distinct Position Coordinates - Symmetrical 4-Quadrant Orbital Matrix */
     .node-nav {{
-        left: clamp(4px, 1.2%, 10px);
-        top: 140px;
-        transform: translateY(-50%);
+        left: clamp(15px, 4%, 45px);
+        top: 24px;
         --node-glow: #00e5ff;
+        border-color: rgba(0, 229, 255, 0.38);
     }}
     .node-nav:hover {{
-        transform: translateY(-54%) scale(1.06);
-    }}
-
-    .node-trips {{
-        left: clamp(25px, 9%, 105px);
-        top: 22px;
-        --node-glow: #8b5cf6;
-        border-color: rgba(139, 92, 246, 0.38);
-    }}
-    .node-trips:hover {{
-        border-color: #8b5cf6;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(139, 92, 246, 0.5);
+        border-color: #00e5ff;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 229, 255, 0.5);
     }}
 
     .node-hotels {{
-        right: clamp(4px, 1.2%, 10px);
-        top: 140px;
-        transform: translateY(-50%);
+        right: clamp(15px, 4%, 45px);
+        top: 24px;
         --node-glow: #f59e0b;
         border-color: rgba(245, 158, 11, 0.38);
     }}
     .node-hotels:hover {{
-        transform: translateY(-54%) scale(1.06);
         border-color: #fbbf24;
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 158, 11, 0.5);
     }}
 
     .node-flights {{
-        right: clamp(25px, 9%, 95px);
-        bottom: 22px;
+        right: clamp(15px, 4%, 45px);
+        bottom: 24px;
         --node-glow: #00ffc6;
         border-color: rgba(0, 255, 198, 0.38);
     }}
@@ -829,8 +817,8 @@ def render_aura_welcome_hud(
     }}
 
     .node-food {{
-        left: clamp(25px, 9%, 95px);
-        bottom: 22px;
+        left: clamp(15px, 4%, 45px);
+        bottom: 24px;
         --node-glow: #ec4899;
         border-color: rgba(236, 72, 153, 0.38);
     }}
@@ -1052,10 +1040,6 @@ def render_aura_welcome_hud(
                     <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.9" />
                     <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.3" />
                 </linearGradient>
-                <linearGradient id="gradTrips" x1="1" y1="1" x2="0" y2="0">
-                    <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.9" />
-                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.3" />
-                </linearGradient>
                 <linearGradient id="gradHotels" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.9" />
                     <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3" />
@@ -1075,31 +1059,26 @@ def render_aura_welcome_hud(
             <ellipse cx="440" cy="140" rx="260" ry="110" class="orbital-ring-mid" />
             <circle cx="440" cy="140" r="105" class="orbital-ring" />
 
-            <!-- Five Neural Energy Connecting Beams (Center 440, 140 to each Module) -->
-            <!-- 1. Navigation (Mid-Left) -->
+            <!-- Four Neural Energy Connecting Beams (Center 440, 140 to each 4-Quadrant Module) -->
+            <!-- 1. Navigation (Upper-Left) -->
             <g id="beam-nav">
-                <path d="M 440 140 L 140 140" class="energy-conduit-base" />
-                <path d="M 440 140 L 140 140" class="energy-conduit-pulse" stroke="url(#gradNav)" />
+                <path d="M 440 140 L 195 50" class="energy-conduit-base" />
+                <path d="M 440 140 L 195 50" class="energy-conduit-pulse" stroke="url(#gradNav)" />
             </g>
-            <!-- 2. My Trips (Upper-Left) -->
-            <g id="beam-trips">
-                <path d="M 440 140 L 210 48" class="energy-conduit-base" />
-                <path d="M 440 140 L 210 48" class="energy-conduit-pulse" stroke="url(#gradTrips)" />
-            </g>
-            <!-- 3. Hotels (Mid-Right) -->
+            <!-- 2. Hotels (Upper-Right) -->
             <g id="beam-hotels">
-                <path d="M 440 140 L 740 140" class="energy-conduit-base" />
-                <path d="M 440 140 L 740 140" class="energy-conduit-pulse" stroke="url(#gradHotels)" />
+                <path d="M 440 140 L 685 50" class="energy-conduit-base" />
+                <path d="M 440 140 L 685 50" class="energy-conduit-pulse" stroke="url(#gradHotels)" />
             </g>
-            <!-- 4. Flights (Lower-Right) -->
+            <!-- 3. Flights (Lower-Right) -->
             <g id="beam-flights">
-                <path d="M 440 140 L 665 248" class="energy-conduit-base" />
-                <path d="M 440 140 L 665 248" class="energy-conduit-pulse" stroke="url(#gradFlights)" />
+                <path d="M 440 140 L 685 230" class="energy-conduit-base" />
+                <path d="M 440 140 L 685 230" class="energy-conduit-pulse" stroke="url(#gradFlights)" />
             </g>
-            <!-- 5. Restaurants (Lower-Left) -->
+            <!-- 4. Restaurants (Lower-Left) -->
             <g id="beam-food">
-                <path d="M 440 140 L 215 248" class="energy-conduit-base" />
-                <path d="M 440 140 L 215 248" class="energy-conduit-pulse" stroke="url(#gradFood)" />
+                <path d="M 440 140 L 195 230" class="energy-conduit-base" />
+                <path d="M 440 140 L 195 230" class="energy-conduit-pulse" stroke="url(#gradFood)" />
             </g>
         </svg>
 
@@ -1127,7 +1106,7 @@ def render_aura_welcome_hud(
             </div>
         </div>
 
-        <!-- Five Floating Holographic Travel Modules -->
+        <!-- Four Floating Holographic Travel Modules -->
         <div class="holo-modules-container">
             <!-- 1. Navigation Module -->
             <div class="holo-module-node node-nav"
@@ -1150,30 +1129,7 @@ def render_aura_welcome_hud(
                 <div class="holo-status-blip" style="background: #00e5ff; box-shadow: 0 0 8px #00e5ff;"></div>
             </div>
 
-            <!-- 2. My Trips Module -->
-            <div class="holo-module-node node-trips"
-                 onclick="window.dispatchCardNav('Show my trips', this)"
-                 onmouseenter="window.highlightOrbitalBeam('beam-trips', true)"
-                 onmouseleave="window.highlightOrbitalBeam('beam-trips', false)"
-                 title="Open Itinerary Studio & Trips">
-                <div class="holo-glyph-disc" style="color: #8b5cf6;">
-                    <div class="holo-glyph-reticle"></div>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="5" cy="18" r="2.5" fill="rgba(139, 92, 246, 0.45)"/>
-                        <circle cx="12" cy="6" r="2.5" fill="rgba(139, 92, 246, 0.45)"/>
-                        <circle cx="19" cy="14" r="2.5" fill="rgba(139, 92, 246, 0.45)"/>
-                        <path d="M7 16.5 L10.5 8" stroke-dasharray="2 2"/>
-                        <path d="M13.5 7.5 L17.5 12.5"/>
-                    </svg>
-                </div>
-                <div class="holo-node-meta">
-                    <span class="holo-node-title">My Trips</span>
-                    <span class="holo-node-sub" style="color: #c084fc;">ITINERARY STUDIO</span>
-                </div>
-                <div class="holo-status-blip" style="background: #8b5cf6; box-shadow: 0 0 8px #8b5cf6;"></div>
-            </div>
-
-            <!-- 3. Hotels Module -->
+            <!-- 2. Hotels Module -->
             <div class="holo-module-node node-hotels"
                  onclick="window.dispatchCardNav('Show hotels', this)"
                  onmouseenter="window.highlightOrbitalBeam('beam-hotels', true)"
@@ -1198,7 +1154,7 @@ def render_aura_welcome_hud(
                 <div class="holo-status-blip" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></div>
             </div>
 
-            <!-- 4. Flights Module -->
+            <!-- 3. Flights Module -->
             <div class="holo-module-node node-flights"
                  onclick="window.dispatchCardNav('Open flights', this)"
                  onmouseenter="window.highlightOrbitalBeam('beam-flights', true)"
@@ -1217,7 +1173,7 @@ def render_aura_welcome_hud(
                 <div class="holo-status-blip" style="background: #00ffc6; box-shadow: 0 0 8px #00ffc6;"></div>
             </div>
 
-            <!-- 5. Restaurants Module -->
+            <!-- 4. Restaurants Module -->
             <div class="holo-module-node node-food"
                  onclick="window.dispatchCardNav('Show restaurants', this)"
                  onmouseenter="window.highlightOrbitalBeam('beam-food', true)"

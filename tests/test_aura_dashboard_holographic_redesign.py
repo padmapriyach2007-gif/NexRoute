@@ -33,41 +33,38 @@ class TestAuraDashboardHolographicRedesign:
             user_name="Boss"
         )
 
-    def test_profile_shortcut_completely_removed_from_dashboard(self, hud_html):
-        """Profile shortcut card must NOT exist in the dashboard markup."""
-        # No profile shortcut pod/card or text in the holographic modules
+    def test_profile_and_trips_shortcuts_removed_from_dashboard(self, hud_html):
+        """Profile and My Trips shortcut cards must NOT exist in the holographic dashboard markup."""
+        # No profile or trips shortcut pod/card in the holographic modules
         assert 'class="shortcut-card"' not in hud_html
         assert 'window.dispatchCardNav(\'Go to my profile\'' not in hud_html
         assert '<span class="shortcut-title">Profile</span>' not in hud_html
         assert 'node-profile' not in hud_html
+        assert 'node-trips' not in hud_html
+        assert 'beam-trips' not in hud_html
+        assert 'ITINERARY STUDIO' not in hud_html
 
-    def test_five_primary_holographic_modules_present(self, hud_html):
-        """Dashboard must contain exactly the 5 primary holographic travel modules."""
+    def test_four_primary_holographic_modules_present(self, hud_html):
+        """Dashboard must contain exactly the 4 primary holographic travel modules in a balanced matrix."""
         # 1. Navigation
         assert "node-nav" in hud_html
         assert "Navigation" in hud_html
         assert "CORRIDOR ROUTING" in hud_html
         assert "window.dispatchCardNav('Open navigation'" in hud_html
 
-        # 2. My Trips
-        assert "node-trips" in hud_html
-        assert "My Trips" in hud_html
-        assert "ITINERARY STUDIO" in hud_html
-        assert "window.dispatchCardNav('Show my trips'" in hud_html
-
-        # 3. Hotels
+        # 2. Hotels
         assert "node-hotels" in hud_html
         assert "Hotels" in hud_html
         assert "STAYS & RESORTS" in hud_html
         assert "window.dispatchCardNav('Show hotels'" in hud_html
 
-        # 4. Flights
+        # 3. Flights
         assert "node-flights" in hud_html
         assert "Flights" in hud_html
         assert "AIR CORRIDORS" in hud_html
         assert "window.dispatchCardNav('Open flights'" in hud_html
 
-        # 5. Restaurants
+        # 4. Restaurants
         assert "node-food" in hud_html
         assert "Restaurants" in hud_html
         assert "DINING & FOOD" in hud_html
@@ -95,9 +92,9 @@ class TestAuraDashboardHolographicRedesign:
         assert "orbital-ring-mid" in hud_html
         assert "orbital-ring-outer" in hud_html
 
-        # 5 connecting energy beams
+        # 4 connecting energy beams
         assert 'id="beam-nav"' in hud_html
-        assert 'id="beam-trips"' in hud_html
+        assert 'id="beam-trips"' not in hud_html
         assert 'id="beam-hotels"' in hud_html
         assert 'id="beam-flights"' in hud_html
         assert 'id="beam-food"' in hud_html
