@@ -101,3 +101,31 @@ def test_voice_command_stop_navigation():
     assert cmd.action_name == "confirm_clear_trip"
     assert cmd.requires_confirmation is True
 
+
+
+def test_welcome_hud_persistent_voice_controls():
+    """Verify that the welcome screen HUD also contains the persistent voice session controls."""
+    from src.aura_welcome_screen import render_aura_welcome_hud
+    html = render_aura_welcome_hud(
+        current_lang="en",
+        user_name="Boss",
+        auto_speak=True,
+        bot_logo_uri="https://example.com/logo.png"
+    )
+    # Smart Session Toggle button on Welcome Screen HUD
+    assert "btnSessionToggle" in html
+    assert "togglePersistentVoiceSession" in html
+    assert "START AURA" in html
+
+    # End Session Button
+    assert "btnEndSession" in html
+    assert "endVoiceSession" in html
+
+    # Status Badge and Waveform
+    assert "statusBadge" in html
+    assert "auraWaveCanvas" in html
+
+    # Persistent State Management & VAD
+    assert "aura_persistent_voice_state" in html
+    assert "vadTimeoutMs" in html
+    assert "onspeechstart" in html
