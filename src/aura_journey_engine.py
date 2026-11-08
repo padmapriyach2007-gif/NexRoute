@@ -579,6 +579,7 @@ def build_aura_journey_cockpit_html(
     active_step = maneuvers[current_step_idx] if 0 <= current_step_idx < len(maneuvers) else maneuvers[0]
 
     from src.vehicle_navigation_controller import VehicleModeManager
+    norm_travel_mode = VehicleModeManager.normalize_mode(travel_mode)
     vehicle_suite_js = VehicleModeManager.generate_threejs_vehicle_suite_js()
 
     return f"""
@@ -1453,7 +1454,7 @@ def build_aura_journey_cockpit_html(
             <canvas id='aura-scenic-canvas' style='display: block; width: 100%; height: 100%;'></canvas>
             <div class='scene-hud-overlay'>
                 <div class='scene-badge' id='hud-runtime-badge'><span class='pulse-dot' id='hud-pulse-dot'></span> <span id='hud-runtime-text'>✦ 2.5D SCENIC RUNTIME ACTIVE</span></div>
-                <div class='scene-cam-badge' id='hud-vehicle-mode'>VEHICLE: {travel_mode.upper()}</div>
+                <div class='scene-cam-badge' id='hud-vehicle-mode'>VEHICLE: {norm_travel_mode}</div>
                 <div class='scene-cam-badge' id='hud-cam-mode'>CAM: 3D FOLLOW DRONE</div>
                 <div class='scene-cam-badge' id='hud-env-mode'>ENV: DAY</div>
                 <button id='btn-toggle-engine' class='scene-cam-badge' style='cursor: pointer; pointer-events: auto; background: rgba(56, 189, 248, 0.25); border: 1px solid rgba(56, 189, 248, 0.6); color: #e0f2fe; font-weight: 700;' onclick='window.toggleEngineCompanion()'>🔄 Toggle 3D / 2.5D</button>
@@ -1479,16 +1480,16 @@ def build_aura_journey_cockpit_html(
             <!-- Dynamic Vehicle Mode Selector -->
             <div style='display: flex; gap: 5px; align-items: center; flex-wrap: wrap; width: 100%; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 6px;'>
                 <span style='font-size: 0.72rem; font-weight: 800; color: #38bdf8;'>TRAVEL VEHICLE:</span>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("CAR")'>🚗 Car</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("BIKE")'>🏍️ Bike</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("BUS")'>🚌 Bus</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("BICYCLE")'>🚴 Cycle</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("WALK")'>🚶 Walk</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("TRUCK")'>🚚 Truck</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("TRACTOR")'>🚜 Tractor</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("FLIGHT")'>✈️ Flight</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("WATERWAY")'>🚢 Ship</button>
-                <button class='btn-action-pill' onclick='window.switchVehicleMode("TRAIN")'>🚆 Train</button>
+                <button id='btn-veh-CAR' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "CAR" else ""}' data-mode='CAR' onclick='window.switchVehicleMode("CAR")'>🚗 Car</button>
+                <button id='btn-veh-BIKE' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BIKE" else ""}' data-mode='BIKE' onclick='window.switchVehicleMode("BIKE")'>🏍️ Bike</button>
+                <button id='btn-veh-BUS' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BUS" else ""}' data-mode='BUS' onclick='window.switchVehicleMode("BUS")'>🚌 Bus</button>
+                <button id='btn-veh-BICYCLE' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "BICYCLE" else ""}' data-mode='BICYCLE' onclick='window.switchVehicleMode("BICYCLE")'>🚴 Cycle</button>
+                <button id='btn-veh-WALK' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "WALK" else ""}' data-mode='WALK' onclick='window.switchVehicleMode("WALK")'>🚶 Walk</button>
+                <button id='btn-veh-TRUCK' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRUCK" else ""}' data-mode='TRUCK' onclick='window.switchVehicleMode("TRUCK")'>🚚 Truck</button>
+                <button id='btn-veh-TRACTOR' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRACTOR" else ""}' data-mode='TRACTOR' onclick='window.switchVehicleMode("TRACTOR")'>🚜 Tractor</button>
+                <button id='btn-veh-FLIGHT' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "FLIGHT" else ""}' data-mode='FLIGHT' onclick='window.switchVehicleMode("FLIGHT")'>✈️ Flight</button>
+                <button id='btn-veh-WATERWAY' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "WATERWAY" else ""}' data-mode='WATERWAY' onclick='window.switchVehicleMode("WATERWAY")'>🚢 Ship</button>
+                <button id='btn-veh-TRAIN' class='btn-action-pill btn-veh-selector {"active" if norm_travel_mode == "TRAIN" else ""}' data-mode='TRAIN' onclick='window.switchVehicleMode("TRAIN")'>🚆 Train</button>
             </div>
             <!-- Avatar Actions -->
             <div style='display: flex; gap: 6px; align-items: center;'>
@@ -2541,14 +2542,69 @@ def build_aura_journey_cockpit_html(
         // =========================================================================
         {vehicle_suite_js}
 
-        window.activeVehicleMode = '{travel_mode}'.toUpperCase();
+        window.activeVehicleMode = '{norm_travel_mode}';
         window.switchVehicleMode = function(newMode) {{
-            window.activeVehicleMode = String(newMode || 'CAR').toUpperCase();
-            if (window.activeVehicleController) {{
-                window.activeVehicleController.setMode(window.activeVehicleMode);
+            const raw = String(newMode || 'CAR').toUpperCase().trim();
+            const aliases = {{
+                'CAR': 'CAR', 'DRIVING': 'CAR', 'AUTOMOBILE': 'CAR', 'TAXI': 'CAR', 'CAB': 'CAR',
+                'BIKE': 'BIKE', 'MOTORCYCLE': 'BIKE', 'MOTORBIKE': 'BIKE', 'SCOOTER': 'BIKE',
+                'BUS': 'BUS', 'TRANSIT': 'BUS', 'COACH': 'BUS',
+                'CYCLE': 'BICYCLE', 'BICYCLE': 'BICYCLE', 'CYCLING': 'BICYCLE', 'BIKING': 'BICYCLE',
+                'WALK': 'WALK', 'WALKING': 'WALK', 'PEDESTRIAN': 'WALK',
+                'TRUCK': 'TRUCK', 'HEAVY': 'TRUCK', 'LORRY': 'TRUCK', 'SEMI': 'TRUCK',
+                'TRACTOR': 'TRACTOR', 'AGRO': 'TRACTOR', 'FARM': 'TRACTOR',
+                'FLIGHT': 'FLIGHT', 'PLANE': 'FLIGHT', 'AIRPLANE': 'FLIGHT', 'AIR': 'FLIGHT', 'AVIATION': 'FLIGHT',
+                'SHIP': 'WATERWAY', 'BOAT': 'WATERWAY', 'FERRY': 'WATERWAY', 'WATERWAY': 'WATERWAY',
+                'TRAIN': 'TRAIN', 'RAIL': 'TRAIN', 'RAILWAY': 'TRAIN', 'METRO': 'TRAIN', 'SUBWAY': 'TRAIN'
+            }};
+            const norm = aliases[raw] || 'CAR';
+            window.activeVehicleMode = norm;
+
+            // 1. Highlight clicked vehicle in the bottom toolbar
+            const vehBtns = document.querySelectorAll('.btn-veh-selector');
+            vehBtns.forEach(function(b) {{
+                if (b.getAttribute('data-mode') === norm || b.id === 'btn-veh-' + norm) {{
+                    b.classList.add('active');
+                }} else {{
+                    b.classList.remove('active');
+                }}
+            }});
+
+            // 2. Synchronize HUD Vehicle Mode Badge
+            const vBadge = document.getElementById('hud-vehicle-mode');
+            if (vBadge) {{
+                const modeNames = {{
+                    'CAR': 'CAR', 'BIKE': 'BIKE / MOTO', 'BUS': 'TRANSIT BUS',
+                    'BICYCLE': 'BICYCLE', 'WALK': 'PEDESTRIAN', 'TRUCK': 'HEAVY TRUCK',
+                    'TRACTOR': 'AGRO TRACTOR', 'FLIGHT': 'AIR FLIGHT', 'WATERWAY': 'CRUISE SHIP',
+                    'TRAIN': 'EXPRESS TRAIN'
+                }};
+                vBadge.innerText = 'VEHICLE: ' + (modeNames[norm] || norm);
             }}
-            var vBadge = document.getElementById('hud-vehicle-mode');
-            if (vBadge) vBadge.innerText = 'VEHICLE: ' + window.activeVehicleMode;
+
+            // 3. Synchronize 3D Three.js active vehicle controller if available
+            if (window.activeVehicleController) {{
+                window.activeVehicleController.setMode(norm);
+            }}
+
+            // 4. Futuristic High-Tech Audio Feedback Tone
+            try {{
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {{
+                    const actx = new AudioCtx();
+                    const osc = actx.createOscillator();
+                    const gain = actx.createGain();
+                    osc.connect(gain);
+                    gain.connect(actx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, actx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, actx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.12, actx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(actx.currentTime + 0.16);
+                }}
+            }} catch(e) {{}}
         }};
 
         // =========================================================================
@@ -3179,7 +3235,7 @@ def build_aura_journey_cockpit_html(
                     ring: auraRing
                 }};
                 window.activeVehicleController = new VehicleController(scene, auraRoot, auraLimbs);
-                window.activeVehicleController.setMode('{travel_mode}');
+                window.activeVehicleController.setMode('{norm_travel_mode}');
 
                 // Animation Clock
                 let clock = new THREE.Clock();
@@ -3196,76 +3252,90 @@ def build_aura_journey_cockpit_html(
                             window.activeVehicleController.updateKinematics(elapsed, userSpeedKmh, turnAngle, isArr);
                         }}
 
-                        // Procedural Skeletal Animations
-                        if (currentAnimState === 'arrive') {{
-                            // Celebratory Jumping & Dual Arm Waves
-                            const hop = Math.abs(Math.sin(elapsed * 7.5)) * 0.45;
-                            auraRoot.position.y = hop;
-                            armRGroup.rotation.z = 0.8 + Math.sin(elapsed * 9) * 0.3;
-                            armRGroup.rotation.x = -1.2;
-                            armLGroup.rotation.z = -0.8 - Math.sin(elapsed * 9) * 0.3;
-                            armLGroup.rotation.x = -1.2;
-                            legLGroup.rotation.x = -hop * 0.5;
-                            legRGroup.rotation.x = -hop * 0.5;
-                            headGroup.rotation.y = Math.sin(elapsed * 4) * 0.25;
-                            auraRing.scale.setScalar(1.0 + Math.sin(elapsed * 6) * 0.4);
-                            auraRing.material.opacity = 0.9;
-                        }} else if (currentAnimState === 'turn_left') {{
-                            // Smoothly point stick to the left
-                            auraRoot.position.y = 0;
-                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0.65, 0.1);
-                            headGroup.rotation.y = 0.35;
-                            armRGroup.rotation.z = -1.1; // Raise and point left
-                            armRGroup.rotation.x = 0.6;
-                            navStickGroup.rotation.z = -0.5;
-                            armLGroup.rotation.x = 0.2;
-                            legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
-                            legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
-                            auraRing.material.opacity = 0.3;
-                        }} else if (currentAnimState === 'turn_right') {{
-                            // Smoothly point stick to the right
-                            auraRoot.position.y = 0;
-                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, -0.65, 0.1);
-                            headGroup.rotation.y = -0.35;
-                            armRGroup.rotation.z = 1.2; // Raise and point right
-                            armRGroup.rotation.x = 0.6;
-                            navStickGroup.rotation.z = 0.5;
-                            armLGroup.rotation.x = 0.2;
-                            legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
-                            legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
-                            auraRing.material.opacity = 0.3;
-                        }} else if (currentAnimState === 'wave') {{
-                            // Waving hello
-                            auraRoot.position.y = 0;
-                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0, 0.1);
-                            headGroup.rotation.y = Math.sin(elapsed * 3) * 0.15;
-                            armRGroup.rotation.z = 1.3 + Math.sin(elapsed * 10) * 0.35;
-                            armRGroup.rotation.x = 0.2;
-                            armLGroup.rotation.x = 0.1;
-                            legLGroup.rotation.x = 0;
-                            legRGroup.rotation.x = 0;
-                        }} else if (currentAnimState === 'run') {{
-                            // High-speed Stride
-                            const stride = Math.sin(elapsed * 10) * 0.85;
-                            legLGroup.rotation.x = stride;
-                            legRGroup.rotation.x = -stride;
-                            armLGroup.rotation.x = -stride * 0.7;
-                            armRGroup.rotation.x = stride * 0.7;
-                            armRGroup.rotation.z = 0.2;
-                            auraRoot.position.y = Math.abs(Math.sin(elapsed * 10)) * 0.12;
-                            headGroup.rotation.y = 0;
+                        // Procedural Skeletal Animations (Separated by Pedestrian vs Seated Vehicle)
+                        const isWalkingMode = (!window.activeVehicleController || window.activeVehicleController.currentMode === 'WALK');
+                        if (isWalkingMode) {{
+                            if (currentAnimState === 'arrive') {{
+                                // Celebratory Jumping & Dual Arm Waves
+                                const hop = Math.abs(Math.sin(elapsed * 7.5)) * 0.45;
+                                auraRoot.position.y = hop;
+                                armRGroup.rotation.z = 0.8 + Math.sin(elapsed * 9) * 0.3;
+                                armRGroup.rotation.x = -1.2;
+                                armLGroup.rotation.z = -0.8 - Math.sin(elapsed * 9) * 0.3;
+                                armLGroup.rotation.x = -1.2;
+                                legLGroup.rotation.x = -hop * 0.5;
+                                legRGroup.rotation.x = -hop * 0.5;
+                                headGroup.rotation.y = Math.sin(elapsed * 4) * 0.25;
+                                auraRing.scale.setScalar(1.0 + Math.sin(elapsed * 6) * 0.4);
+                                auraRing.material.opacity = 0.9;
+                            }} else if (currentAnimState === 'turn_left') {{
+                                // Smoothly point stick to the left
+                                auraRoot.position.y = 0;
+                                auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0.65, 0.1);
+                                headGroup.rotation.y = 0.35;
+                                armRGroup.rotation.z = -1.1; // Raise and point left
+                                armRGroup.rotation.x = 0.6;
+                                navStickGroup.rotation.z = -0.5;
+                                armLGroup.rotation.x = 0.2;
+                                legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
+                                legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
+                                auraRing.material.opacity = 0.3;
+                            }} else if (currentAnimState === 'turn_right') {{
+                                // Smoothly point stick to the right
+                                auraRoot.position.y = 0;
+                                auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, -0.65, 0.1);
+                                headGroup.rotation.y = -0.35;
+                                armRGroup.rotation.z = 1.2; // Raise and point right
+                                armRGroup.rotation.x = 0.6;
+                                navStickGroup.rotation.z = 0.5;
+                                armLGroup.rotation.x = 0.2;
+                                legLGroup.rotation.x = Math.sin(elapsed * 3) * 0.2;
+                                legRGroup.rotation.x = -Math.sin(elapsed * 3) * 0.2;
+                                auraRing.material.opacity = 0.3;
+                            }} else if (currentAnimState === 'wave') {{
+                                // Waving hello
+                                auraRoot.position.y = 0;
+                                auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0, 0.1);
+                                headGroup.rotation.y = Math.sin(elapsed * 3) * 0.15;
+                                armRGroup.rotation.z = 1.3 + Math.sin(elapsed * 10) * 0.35;
+                                armRGroup.rotation.x = 0.2;
+                                armLGroup.rotation.x = 0.1;
+                                legLGroup.rotation.x = 0;
+                                legRGroup.rotation.x = 0;
+                            }} else if (currentAnimState === 'run') {{
+                                // High-speed Stride
+                                const stride = Math.sin(elapsed * 10) * 0.85;
+                                legLGroup.rotation.x = stride;
+                                legRGroup.rotation.x = -stride;
+                                armLGroup.rotation.x = -stride * 0.7;
+                                armRGroup.rotation.x = stride * 0.7;
+                                armRGroup.rotation.z = 0.2;
+                                auraRoot.position.y = Math.abs(Math.sin(elapsed * 10)) * 0.12;
+                                headGroup.rotation.y = 0;
+                            }} else {{
+                                // Natural Walking Stride
+                                const stride = Math.sin(elapsed * 5.5) * 0.52;
+                                legLGroup.rotation.x = stride;
+                                legRGroup.rotation.x = -stride;
+                                armLGroup.rotation.x = -stride * 0.6;
+                                armRGroup.rotation.x = stride * 0.6;
+                                armRGroup.rotation.z = 0.15;
+                                auraRoot.position.y = Math.abs(Math.sin(elapsed * 5.5)) * 0.06;
+                                headGroup.rotation.y = Math.sin(elapsed * 2.5) * 0.1;
+                                auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0, 0.1);
+                                auraRing.material.opacity = 0.4;
+                            }}
                         }} else {{
-                            // Natural Walking Stride
-                            const stride = Math.sin(elapsed * 5.5) * 0.52;
-                            legLGroup.rotation.x = stride;
-                            legRGroup.rotation.x = -stride;
-                            armLGroup.rotation.x = -stride * 0.6;
-                            armRGroup.rotation.x = stride * 0.6;
-                            armRGroup.rotation.z = 0.15;
-                            auraRoot.position.y = Math.abs(Math.sin(elapsed * 5.5)) * 0.06;
-                            headGroup.rotation.y = Math.sin(elapsed * 2.5) * 0.1;
-                            auraRoot.rotation.y = safeLerp(auraRoot.rotation.y, 0, 0.1);
-                            auraRing.material.opacity = 0.4;
+                            // Dynamic Vehicle Seated / Riding Mode
+                            // VirtualGuidePoseController applies the sitting/riding posture on wheels/handlebars
+                            if (currentAnimState === 'arrive') {{
+                                armRGroup.rotation.z = 1.0 + Math.sin(elapsed * 9) * 0.25;
+                                armRGroup.rotation.x = -0.6;
+                                headGroup.rotation.y = Math.sin(elapsed * 4) * 0.2;
+                            }} else if (currentAnimState === 'wave') {{
+                                armRGroup.rotation.z = 1.2 + Math.sin(elapsed * 10) * 0.3;
+                                armRGroup.rotation.x = -0.3;
+                            }}
                         }}
 
                         // Blinking Visor Eyes
@@ -3752,261 +3822,1001 @@ def build_aura_journey_cockpit_html(
                 ctx.stroke();
                 ctx.shadowBlur = 0; // reset shadow
 
-                // 7. ROADSIDE STREET LAMPS (animated glow in night/sunset)
+                // 7. ROADSIDE STREET LAMPS (animated perspective movement)
                 const lampPositions = [
-                    {{ t: 0.25, side: -1 }},
-                    {{ t: 0.45, side: 1 }},
-                    {{ t: 0.68, side: -1 }},
-                    {{ t: 0.88, side: 1 }}
+                    {{ baseT: 0.15, side: -1 }},
+                    {{ baseT: 0.40, side: 1 }},
+                    {{ baseT: 0.65, side: -1 }},
+                    {{ baseT: 0.90, side: 1 }}
                 ];
+                const lampScrollSpeed = (motionState === 'MOVING' || isLiveMoving) ? (Math.max(currentSpeedKmh, 15.0) * 0.006) : 0.035;
                 lampPositions.forEach(lp => {{
-                    const ly = horizonY + (h - horizonY) * lp.t;
-                    const rWAtY = roadHorizonW + (roadBottomW - roadHorizonW) * lp.t;
-                    const lx = roadCenterX + lp.side * (rWAtY * 0.5 + 14);
-                    const lampHeight = 22 + lp.t * 32;
+                    const t = (lp.baseT + (elapsed * lampScrollSpeed)) % 1.0;
+                    const ly = horizonY + (h - horizonY) * t;
+                    const rWAtY = roadHorizonW + (roadBottomW - roadHorizonW) * t;
+                    const lx = roadCenterX + lp.side * (rWAtY * 0.5 + 16 * (0.3 + t * 0.7));
+                    const lampHeight = 18 + t * 36;
 
                     // Pole
                     ctx.strokeStyle = '#334155';
-                    ctx.lineWidth = 2.5;
+                    ctx.lineWidth = 1.5 + t * 1.5;
                     ctx.beginPath();
                     ctx.moveTo(lx, ly);
                     ctx.lineTo(lx, ly - lampHeight);
-                    ctx.lineTo(lx - lp.side * 10, ly - lampHeight - 4);
+                    ctx.lineTo(lx - lp.side * (6 + t * 6), ly - lampHeight - 4);
                     ctx.stroke();
 
                     // Lamp head & glow
                     if (isNight || isSunset) {{
-                        const lampGrad = ctx.createRadialGradient(lx - lp.side * 10, ly - lampHeight - 4, 2, lx - lp.side * 10, ly, 38);
-                        lampGrad.addColorStop(0, 'rgba(254, 240, 138, 0.75)');
+                        const glowR = 15 + t * 30;
+                        const lampGrad = ctx.createRadialGradient(lx - lp.side * (6 + t * 6), ly - lampHeight - 4, 2, lx - lp.side * (6 + t * 6), ly, glowR);
+                        lampGrad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
                         lampGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
                         ctx.fillStyle = lampGrad;
                         ctx.beginPath();
-                        ctx.arc(lx - lp.side * 10, ly - lampHeight - 4, 38, 0, Math.PI * 2);
+                        ctx.arc(lx - lp.side * (6 + t * 6), ly - lampHeight - 4, glowR, 0, Math.PI * 2);
                         ctx.fill();
                     }}
                 }});
 
-                // 8. ROADSIDE TREES WITH WIND SWAY
+                // 8. ROADSIDE TREES WITH PERSPECTIVE STREAMING
                 const treeSway = Math.sin(elapsed * 2.2) * 4;
-                const trees = [
-                    {{ x: roadCenterX - roadBottomW * 0.5 - 28, y: h * 0.88, h: 56, type: 'canopy' }},
-                    {{ x: roadCenterX - roadBottomW * 0.42 - 32, y: h * 0.74, h: 42, type: 'pine' }},
-                    {{ x: roadCenterX - roadBottomW * 0.32 - 25, y: h * 0.62, h: 32, type: 'canopy' }},
-                    {{ x: roadCenterX + roadBottomW * 0.5 + 28, y: h * 0.88, h: 54, type: 'pine' }},
-                    {{ x: roadCenterX + roadBottomW * 0.42 + 30, y: h * 0.72, h: 44, type: 'canopy' }},
-                    {{ x: roadCenterX + roadBottomW * 0.32 + 25, y: h * 0.62, h: 32, type: 'pine' }}
+                const baseTrees = [
+                    {{ slot: 0.08, side: -1, type: 'canopy', baseH: 52 }},
+                    {{ slot: 0.25, side: 1, type: 'pine', baseH: 58 }},
+                    {{ slot: 0.42, side: -1, type: 'pine', baseH: 48 }},
+                    {{ slot: 0.58, side: 1, type: 'canopy', baseH: 54 }},
+                    {{ slot: 0.75, side: -1, type: 'canopy', baseH: 56 }},
+                    {{ slot: 0.92, side: 1, type: 'pine', baseH: 50 }}
                 ];
-                trees.forEach(tr => {{
+                const treeScrollSpeed = (motionState === 'MOVING' || isLiveMoving) ? (Math.max(currentSpeedKmh, 15.0) * 0.006) : 0.035;
+                baseTrees.forEach(tr => {{
+                    const t = (tr.slot + (elapsed * treeScrollSpeed)) % 1.0;
+                    const ty = horizonY + (h - horizonY) * t;
+                    const scale = 0.2 + t * 0.85;
+                    const halfW = (roadHorizonW * 0.5 + (roadBottomW * 0.5 - roadHorizonW * 0.5) * t);
+                    const tx = roadCenterX + tr.side * (halfW + 32 * scale);
+                    const th = tr.baseH * scale;
+
                     // Trunk
                     ctx.fillStyle = '#4a2e18';
-                    ctx.fillRect(tr.x - 3, tr.y - tr.h * 0.35, 6, tr.h * 0.35);
+                    ctx.fillRect(tx - 2 * scale, ty - th * 0.35, 4 * scale, th * 0.35);
 
                     // Crown
                     ctx.fillStyle = isNight ? '#064e3b' : (isSunset ? '#14532d' : '#15803d');
                     ctx.beginPath();
                     if (tr.type === 'pine') {{
-                        ctx.moveTo(tr.x + treeSway * 0.6, tr.y - tr.h);
-                        ctx.lineTo(tr.x + tr.h * 0.35, tr.y - tr.h * 0.35);
-                        ctx.lineTo(tr.x - tr.h * 0.35, tr.y - tr.h * 0.35);
+                        ctx.moveTo(tx + treeSway * 0.5 * scale, ty - th);
+                        ctx.lineTo(tx + th * 0.35, ty - th * 0.35);
+                        ctx.lineTo(tx - th * 0.35, ty - th * 0.35);
                     }} else {{
-                        ctx.arc(tr.x + treeSway * 0.7, tr.y - tr.h * 0.65, tr.h * 0.38, 0, Math.PI * 2);
+                        ctx.arc(tx + treeSway * 0.6 * scale, ty - th * 0.65, th * 0.38, 0, Math.PI * 2);
                     }}
                     ctx.fill();
                 }});
 
-                // 9. AURA: THE CUTE COMPANION (Foreground Live Avatar)
+                // 9. DYNAMIC VEHICLE & VIRTUAL GUIDE (AURA) SUITE
+                const curMode = (window.activeVehicleMode || '{norm_travel_mode}').toUpperCase();
+                const isMoving = (motionState === 'MOVING' || isLiveMoving);
+                const spd = isMoving ? Math.max(currentSpeedKmh, 35.0) : 20.0;
+                const turnTilt = (currentAnimState === 'turn_left') ? -0.22 : ((currentAnimState === 'turn_right') ? 0.22 : (roadCurve * 0.006));
+                const chassisRoll = (currentAnimState === 'turn_left') ? -0.12 : ((currentAnimState === 'turn_right') ? 0.12 : (roadCurve * 0.004));
+                const suspensionBob = Math.sin(elapsed * 18) * 1.5;
+                const wheelAngle = elapsed * (spd * 0.5);
+
                 let auraBaseX = roadCenterX;
                 let auraBaseY = h * 0.78;
-
                 if (activeCam === 'pov') {{
-                    auraBaseX = w * 0.76;
-                    auraBaseY = h * 0.82;
+                    auraBaseX = w * 0.5;
+                    auraBaseY = h * 0.84;
                 }} else if (activeCam === 'iso') {{
-                    auraBaseX = roadCenterX + 45;
+                    auraBaseX = roadCenterX + 35;
                     auraBaseY = h * 0.75;
                 }}
 
-                // Animation Strides & Dynamics
-                let walkBob = 0;
-                let legLRot = 0;
-                let legRRot = 0;
-                let armLRot = 0;
-                let armRRot = 0;
-                let stickRot = 0;
-                let auraScale = (activeCam === 'pov') ? 0.95 : 1.15;
+                // Helper: Draw cute Aura Avatar seated or in cockpit
+                function drawCuteAuraDriver(cx, cy, scale, isSeated, handsOnWheel, wheelRadius) {{
+                    ctx.save();
+                    ctx.translate(cx, cy);
 
-                if (currentAnimState === 'arrive') {{
-                    // Celebration Jump & Wave
-                    walkBob = Math.abs(Math.sin(elapsed * 7)) * 22;
-                    armLRot = -1.2 + Math.sin(elapsed * 9) * 0.3;
-                    armRRot = 1.2 + Math.sin(elapsed * 9) * 0.3;
-                }} else if (currentAnimState === 'wave') {{
-                    armRRot = 1.4 + Math.sin(elapsed * 8) * 0.45;
-                    armLRot = 0.1;
-                }} else if (currentAnimState === 'run') {{
-                    walkBob = Math.abs(Math.sin(elapsed * 10)) * 7;
-                    legLRot = Math.sin(elapsed * 10) * 26;
-                    legRRot = -legLRot;
-                    armLRot = -legLRot * 0.6;
-                    armRRot = legLRot * 0.6;
-                }} else if (currentAnimState === 'turn_left') {{
-                    armRRot = -0.9;
-                    stickRot = -0.6;
-                }} else if (currentAnimState === 'turn_right') {{
-                    armRRot = 0.9;
-                    stickRot = 0.6;
-                }} else {{
-                    // Walking
-                    walkBob = Math.abs(Math.sin(elapsed * 5.5)) * 4.5;
-                    legLRot = Math.sin(elapsed * 5.5) * 16;
-                    legRRot = -legLRot;
-                    armLRot = -legLRot * 0.5;
-                    armRRot = legLRot * 0.5;
-                }}
+                    // Visor blink
+                    const isBlink = Math.sin(elapsed * 2.5) > 0.96;
 
-                const ax = auraBaseX;
-                const ay = auraBaseY - walkBob;
-
-                // Pulsing Holographic Ring on ground
-                const ringRadX = 26 * auraScale;
-                const ringRadY = 10 * auraScale;
-                ctx.save();
-                ctx.shadowColor = '#00f0ff';
-                ctx.shadowBlur = 12;
-                ctx.strokeStyle = 'rgba(0, 240, 255, 0.85)';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.ellipse(ax, auraBaseY + 18 * auraScale, ringRadX, ringRadY, 0, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-
-                // Aura Legs with Cyan Magnetic Boots
-                // Left Leg
-                ctx.save();
-                ctx.translate(ax - 10 * auraScale, ay + 6 * auraScale);
-                ctx.rotate(legLRot * Math.PI / 180);
-                ctx.fillStyle = '#0f2b48';
-                ctx.fillRect(-4 * auraScale, 0, 8 * auraScale, 18 * auraScale);
-                ctx.fillStyle = '#00f0ff';
-                ctx.fillRect(-5 * auraScale, 16 * auraScale, 11 * auraScale, 6 * auraScale);
-                ctx.restore();
-
-                // Right Leg
-                ctx.save();
-                ctx.translate(ax + 10 * auraScale, ay + 6 * auraScale);
-                ctx.rotate(legRRot * Math.PI / 180);
-                ctx.fillStyle = '#0f2b48';
-                ctx.fillRect(-4 * auraScale, 0, 8 * auraScale, 18 * auraScale);
-                ctx.fillStyle = '#00f0ff';
-                ctx.fillRect(-5 * auraScale, 16 * auraScale, 11 * auraScale, 6 * auraScale);
-                ctx.restore();
-
-                // Aura Torso (Chassis)
-                ctx.fillStyle = '#0f2b48';
-                ctx.beginPath();
-                drawRoundedRect(ctx, ax - 17 * auraScale, ay - 16 * auraScale, 34 * auraScale, 26 * auraScale, 8 * auraScale);
-                ctx.fill();
-                ctx.strokeStyle = '#38bdf8';
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-
-                // Glowing Reactor Core
-                ctx.save();
-                ctx.shadowColor = '#00f0ff';
-                ctx.shadowBlur = 10;
-                ctx.fillStyle = '#00f0ff';
-                ctx.beginPath();
-                ctx.arc(ax, ay - 3 * auraScale, 6 * auraScale, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                // Left Arm
-                ctx.save();
-                ctx.translate(ax - 20 * auraScale, ay - 10 * auraScale);
-                ctx.rotate(armLRot * Math.PI / 180);
-                ctx.fillStyle = '#0f2b48';
-                ctx.fillRect(-3 * auraScale, 0, 6 * auraScale, 18 * auraScale);
-                ctx.fillStyle = '#00f0ff';
-                ctx.beginPath();
-                ctx.arc(0, 18 * auraScale, 3.5 * auraScale, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                // Right Arm (Holding Glowing Navigation Stick!)
-                ctx.save();
-                ctx.translate(ax + 20 * auraScale, ay - 10 * auraScale);
-                ctx.rotate(-armRRot * Math.PI / 180);
-                ctx.fillStyle = '#0f2b48';
-                ctx.fillRect(-3 * auraScale, 0, 6 * auraScale, 18 * auraScale);
-
-                // NAVIGATION STICK
-                ctx.translate(0, 18 * auraScale);
-                ctx.rotate(stickRot);
-                // Gold Shaft
-                ctx.fillStyle = '#f59e0b';
-                ctx.fillRect(-1.5 * auraScale, -24 * auraScale, 3 * auraScale, 32 * auraScale);
-                // Glowing Cyan Crystal Beacon
-                ctx.shadowColor = '#00f0ff';
-                ctx.shadowBlur = 16;
-                ctx.fillStyle = '#00f0ff';
-                ctx.beginPath();
-                ctx.arc(0, -25 * auraScale, 6.5 * auraScale, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(0, -25 * auraScale, 2.5 * auraScale, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                // Aura Head
-                const headY = ay - 32 * auraScale;
-                ctx.fillStyle = '#0f2b48';
-                ctx.beginPath();
-                drawRoundedRect(ctx, ax - 18 * auraScale, headY, 36 * auraScale, 26 * auraScale, 10 * auraScale);
-                ctx.fill();
-                ctx.strokeStyle = '#38bdf8';
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-
-                // Visor Screen
-                ctx.fillStyle = '#030712';
-                ctx.beginPath();
-                drawRoundedRect(ctx, ax - 14 * auraScale, headY + 5 * auraScale, 28 * auraScale, 16 * auraScale, 6 * auraScale);
-                ctx.fill();
-
-                // Glowing Digital Eyes (with cute blink)
-                const isBlink = Math.sin(elapsed * 2.5) > 0.96;
-                ctx.fillStyle = '#38bdf8';
-                ctx.shadowColor = '#38bdf8';
-                ctx.shadowBlur = 8;
-                if (isBlink) {{
-                    ctx.fillRect(ax - 9 * auraScale, headY + 12 * auraScale, 6 * auraScale, 1.5 * auraScale);
-                    ctx.fillRect(ax + 3 * auraScale, headY + 12 * auraScale, 6 * auraScale, 1.5 * auraScale);
-                }} else {{
-                    ctx.beginPath();
-                    ctx.arc(ax - 6 * auraScale, headY + 12 * auraScale, 2.8 * auraScale, 0, Math.PI * 2);
-                    ctx.arc(ax + 6 * auraScale, headY + 12 * auraScale, 2.8 * auraScale, 0, Math.PI * 2);
+                    // Torso / Chassis
+                    ctx.fillStyle = '#0f2b48';
+                    drawRoundedRect(ctx, -14 * scale, -10 * scale, 28 * scale, 22 * scale, 6 * scale);
                     ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.2 * scale;
+                    ctx.stroke();
+
+                    // Glowing Core Reactor
+                    ctx.save();
+                    ctx.shadowColor = '#00f0ff';
+                    ctx.shadowBlur = 8;
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 4.5 * scale, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Head
+                    const headY = -24 * scale;
+                    ctx.fillStyle = '#0f2b48';
+                    drawRoundedRect(ctx, -15 * scale, headY, 30 * scale, 20 * scale, 7 * scale);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.2 * scale;
+                    ctx.stroke();
+
+                    // Visor Screen
+                    ctx.fillStyle = '#030712';
+                    drawRoundedRect(ctx, -12 * scale, headY + 4 * scale, 24 * scale, 12 * scale, 4 * scale);
+                    ctx.fill();
+
+                    // Visor Eyes
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.shadowColor = '#38bdf8';
+                    ctx.shadowBlur = 6;
+                    if (isBlink) {{
+                        ctx.fillRect(-8 * scale, headY + 9 * scale, 5 * scale, 1.2 * scale);
+                        ctx.fillRect(3 * scale, headY + 9 * scale, 5 * scale, 1.2 * scale);
+                    }} else {{
+                        ctx.beginPath();
+                        ctx.arc(-5.5 * scale, headY + 9.5 * scale, 2.2 * scale, 0, Math.PI * 2);
+                        ctx.arc(5.5 * scale, headY + 9.5 * scale, 2.2 * scale, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+
+                    // Smile
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.lineWidth = 1.2 * scale;
+                    ctx.beginPath();
+                    ctx.arc(0, headY + 12 * scale, 3 * scale, 0.1 * Math.PI, 0.9 * Math.PI, false);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    // Antenna
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(-1 * scale, headY - 6 * scale, 2 * scale, 6 * scale);
+                    ctx.shadowColor = '#00f0ff';
+                    ctx.shadowBlur = 8;
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.arc(0, headY - 7 * scale, 3 * scale, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    // Hands & Steering Wheel
+                    if (handsOnWheel) {{
+                        const wr = wheelRadius || (13 * scale);
+                        ctx.save();
+                        ctx.strokeStyle = '#1e293b';
+                        ctx.lineWidth = 3 * scale;
+                        ctx.beginPath();
+                        ctx.arc(0, 9 * scale, wr, 0, Math.PI * 2);
+                        ctx.stroke();
+                        // Steering Spokes
+                        ctx.strokeStyle = '#64748b';
+                        ctx.lineWidth = 1.5 * scale;
+                        ctx.beginPath();
+                        ctx.moveTo(-wr, 9 * scale); ctx.lineTo(wr, 9 * scale);
+                        ctx.moveTo(0, 9 * scale); ctx.lineTo(0, 9 * scale + wr);
+                        ctx.stroke();
+                        // Hands gripping wheel
+                        ctx.fillStyle = '#00f0ff';
+                        ctx.beginPath();
+                        ctx.arc(-wr * 0.85, 9 * scale - 2 * scale, 3.2 * scale, 0, Math.PI * 2);
+                        ctx.arc(wr * 0.85, 9 * scale - 2 * scale, 3.2 * scale, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }}
+
+                    ctx.restore();
                 }}
 
-                // Digital Smile
-                ctx.strokeStyle = '#00f0ff';
-                ctx.lineWidth = 1.5 * auraScale;
-                ctx.beginPath();
-                ctx.arc(ax, headY + 15 * auraScale, 3.5 * auraScale, 0.1 * Math.PI, 0.9 * Math.PI, false);
-                ctx.stroke();
-                ctx.shadowBlur = 0;
+                // Helper: Draw spinning wheel from rear perspective
+                function drawSpinningWheel(wx, wy, radX, radY, angle, isDeepTread) {{
+                    ctx.save();
+                    ctx.translate(wx, wy);
 
-                // Antenna Stem & Orb
-                ctx.fillStyle = '#f59e0b';
-                ctx.fillRect(ax - 1 * auraScale, headY - 8 * auraScale, 2 * auraScale, 8 * auraScale);
-                ctx.shadowColor = '#00f0ff';
-                ctx.shadowBlur = 10;
-                ctx.fillStyle = '#00f0ff';
-                ctx.beginPath();
-                ctx.arc(ax, headY - 10 * auraScale, 3.5 * auraScale, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
+                    // Tire Shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, radY * 0.9, radX * 1.1, radY * 0.35, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Rubber Tire
+                    ctx.fillStyle = '#111827';
+                    ctx.strokeStyle = '#374151';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, radX, radY, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Rim
+                    ctx.fillStyle = '#475569';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, radX * 0.65, radY * 0.65, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Rotating rim spokes
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 1.2;
+                    const spokeCount = isDeepTread ? 8 : 5;
+                    for (let i = 0; i < spokeCount; i++) {{
+                        const th = angle + (i * Math.PI * 2 / spokeCount);
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(Math.cos(th) * radX * 0.6, Math.sin(th) * radY * 0.6);
+                        ctx.stroke();
+                    }}
+
+                    // Center Nut
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+                }}
+
+                // Helper: Dynamic Forward Headlight Beam Cones
+                function drawHeadlightBeams(lx, rx, by, reachY, beamColor) {{
+                    if (!isNight && !isSunset) return;
+                    ctx.save();
+                    const bGrad = ctx.createLinearGradient(0, by, 0, by - reachY);
+                    bGrad.addColorStop(0, beamColor || 'rgba(254, 240, 138, 0.42)');
+                    bGrad.addColorStop(0.35, 'rgba(254, 240, 138, 0.22)');
+                    bGrad.addColorStop(1, 'rgba(254, 240, 138, 0.0)');
+                    ctx.fillStyle = bGrad;
+
+                    // Left Beam
+                    ctx.beginPath();
+                    ctx.moveTo(lx, by);
+                    ctx.lineTo(lx - 55, by - reachY);
+                    ctx.lineTo(lx - 8, by - reachY);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Right Beam
+                    ctx.beginPath();
+                    ctx.moveTo(rx, by);
+                    ctx.lineTo(rx + 8, by - reachY);
+                    ctx.lineTo(rx + 55, by - reachY);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.restore();
+                }}
+
+                if (curMode === 'WALK') {{
+                    // =========================================================================
+                    // 1. PEDESTRIAN WALK MODE (Original Aura Mascot with Nav Stick)
+                    // =========================================================================
+                    let walkBob = 0;
+                    let legLRot = 0;
+                    let legRRot = 0;
+                    let armLRot = 0;
+                    let armRRot = 0;
+                    let stickRot = 0;
+                    let auraScale = (activeCam === 'pov') ? 0.95 : 1.15;
+
+                    if (currentAnimState === 'arrive') {{
+                        walkBob = Math.abs(Math.sin(elapsed * 7)) * 22;
+                        armLRot = -1.2 + Math.sin(elapsed * 9) * 0.3;
+                        armRRot = 1.2 + Math.sin(elapsed * 9) * 0.3;
+                    }} else if (currentAnimState === 'wave') {{
+                        armRRot = 1.4 + Math.sin(elapsed * 8) * 0.45;
+                        armLRot = 0.1;
+                    }} else if (currentAnimState === 'run') {{
+                        walkBob = Math.abs(Math.sin(elapsed * 10)) * 7;
+                        legLRot = Math.sin(elapsed * 10) * 26;
+                        legRRot = -legLRot;
+                        armLRot = -legLRot * 0.6;
+                        armRRot = legLRot * 0.6;
+                    }} else if (currentAnimState === 'turn_left') {{
+                        armRRot = -0.9;
+                        stickRot = -0.6;
+                    }} else if (currentAnimState === 'turn_right') {{
+                        armRRot = 0.9;
+                        stickRot = 0.6;
+                    }} else {{
+                        walkBob = Math.abs(Math.sin(elapsed * 5.5)) * 4.5;
+                        legLRot = Math.sin(elapsed * 5.5) * 16;
+                        legRRot = -legLRot;
+                        armLRot = -legLRot * 0.5;
+                        armRRot = legLRot * 0.5;
+                    }}
+
+                    const ax = auraBaseX;
+                    const ay = auraBaseY - walkBob;
+
+                    // Holographic Ring on ground
+                    ctx.save();
+                    ctx.shadowColor = '#00f0ff';
+                    ctx.shadowBlur = 12;
+                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.85)';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.ellipse(ax, auraBaseY + 18 * auraScale, 26 * auraScale, 10 * auraScale, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Left Leg
+                    ctx.save();
+                    ctx.translate(ax - 10 * auraScale, ay + 6 * auraScale);
+                    ctx.rotate(legLRot * Math.PI / 180);
+                    ctx.fillStyle = '#0f2b48';
+                    ctx.fillRect(-4 * auraScale, 0, 8 * auraScale, 18 * auraScale);
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.fillRect(-5 * auraScale, 16 * auraScale, 11 * auraScale, 6 * auraScale);
+                    ctx.restore();
+
+                    // Right Leg
+                    ctx.save();
+                    ctx.translate(ax + 10 * auraScale, ay + 6 * auraScale);
+                    ctx.rotate(legRRot * Math.PI / 180);
+                    ctx.fillStyle = '#0f2b48';
+                    ctx.fillRect(-4 * auraScale, 0, 8 * auraScale, 18 * auraScale);
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.fillRect(-5 * auraScale, 16 * auraScale, 11 * auraScale, 6 * auraScale);
+                    ctx.restore();
+
+                    // Torso
+                    ctx.fillStyle = '#0f2b48';
+                    drawRoundedRect(ctx, ax - 17 * auraScale, ay - 16 * auraScale, 34 * auraScale, 26 * auraScale, 8 * auraScale);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    // Core Reactor
+                    ctx.save();
+                    ctx.shadowColor = '#00f0ff';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.arc(ax, ay - 3 * auraScale, 6 * auraScale, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Left Arm
+                    ctx.save();
+                    ctx.translate(ax - 20 * auraScale, ay - 10 * auraScale);
+                    ctx.rotate(armLRot * Math.PI / 180);
+                    ctx.fillStyle = '#0f2b48';
+                    ctx.fillRect(-3 * auraScale, 0, 6 * auraScale, 18 * auraScale);
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.arc(0, 18 * auraScale, 3.5 * auraScale, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Right Arm & Stick
+                    ctx.save();
+                    ctx.translate(ax + 20 * auraScale, ay - 10 * auraScale);
+                    ctx.rotate(-armRRot * Math.PI / 180);
+                    ctx.fillStyle = '#0f2b48';
+                    ctx.fillRect(-3 * auraScale, 0, 6 * auraScale, 18 * auraScale);
+                    ctx.translate(0, 18 * auraScale);
+                    ctx.rotate(stickRot);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(-1.5 * auraScale, -24 * auraScale, 3 * auraScale, 32 * auraScale);
+                    ctx.shadowColor = '#00f0ff';
+                    ctx.shadowBlur = 16;
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.arc(0, -25 * auraScale, 6.5 * auraScale, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, -25 * auraScale, 2.5 * auraScale, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Head
+                    const headY = ay - 32 * auraScale;
+                    ctx.fillStyle = '#0f2b48';
+                    drawRoundedRect(ctx, ax - 18 * auraScale, headY, 36 * auraScale, 26 * auraScale, 10 * auraScale);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    // Visor
+                    ctx.fillStyle = '#030712';
+                    drawRoundedRect(ctx, ax - 14 * auraScale, headY + 5 * auraScale, 28 * auraScale, 16 * auraScale, 6 * auraScale);
+                    ctx.fill();
+
+                    // Eyes
+                    const isBlink = Math.sin(elapsed * 2.5) > 0.96;
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.shadowColor = '#38bdf8';
+                    ctx.shadowBlur = 8;
+                    if (isBlink) {{
+                        ctx.fillRect(ax - 9 * auraScale, headY + 12 * auraScale, 6 * auraScale, 1.5 * auraScale);
+                        ctx.fillRect(ax + 3 * auraScale, headY + 12 * auraScale, 6 * auraScale, 1.5 * auraScale);
+                    }} else {{
+                        ctx.beginPath();
+                        ctx.arc(ax - 6 * auraScale, headY + 12 * auraScale, 2.8 * auraScale, 0, Math.PI * 2);
+                        ctx.arc(ax + 6 * auraScale, headY + 12 * auraScale, 2.8 * auraScale, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+
+                    // Smile
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.lineWidth = 1.5 * auraScale;
+                    ctx.beginPath();
+                    ctx.arc(ax, headY + 15 * auraScale, 3.5 * auraScale, 0.1 * Math.PI, 0.9 * Math.PI, false);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    // Antenna
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(ax - 1 * auraScale, headY - 8 * auraScale, 2 * auraScale, 8 * auraScale);
+                    ctx.shadowColor = '#00f0ff';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.arc(ax, headY - 10 * auraScale, 3.5 * auraScale, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                }} else if (curMode === 'BIKE') {{
+                    // =========================================================================
+                    // 2. MOTORCYCLE (SPORT BIKE)
+                    // =========================================================================
+                    drawHeadlightBeams(auraBaseX, auraBaseX, auraBaseY + 6, 120, 'rgba(254, 240, 138, 0.5)');
+
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + suspensionBob * 1.3);
+                    ctx.rotate(turnTilt * 1.8);
+
+                    drawSpinningWheel(0, 18, 15, 20, wheelAngle);
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(-8, -4, 16, 22);
+
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -32);
+                    ctx.lineTo(16, -10);
+                    ctx.lineTo(12, 10);
+                    ctx.lineTo(-12, 10);
+                    ctx.lineTo(-16, -10);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#1e293b';
+                    drawRoundedRect(ctx, -14, -14, 28, 12, 4);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillRect(14, 2, 8, 16);
+
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(-24, -28); ctx.lineTo(24, -28);
+                    ctx.stroke();
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.fillRect(-26, -34, 5, 6);
+                    ctx.fillRect(21, -34, 5, 6);
+
+                    drawCuteAuraDriver(0, -22, 0.78, true, false, 0);
+
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(-10, -22); ctx.lineTo(-20, -28);
+                    ctx.moveTo(10, -22); ctx.lineTo(20, -28);
+                    ctx.stroke();
+
+                    ctx.save();
+                    ctx.shadowColor = '#ef4444';
+                    ctx.shadowBlur = 12;
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(-10, 4, 20, 5);
+                    ctx.restore();
+
+                    ctx.restore();
+
+                }} else if (curMode === 'BUS') {{
+                    // =========================================================================
+                    // 3. TRANSIT COACH BUS
+                    // =========================================================================
+                    drawHeadlightBeams(auraBaseX - 45, auraBaseX + 45, auraBaseY + 6, 150, 'rgba(254, 240, 138, 0.45)');
+
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + suspensionBob * 0.7);
+                    ctx.rotate(chassisRoll * 0.6);
+
+                    drawSpinningWheel(-56, 20, 14, 18, wheelAngle, true);
+                    drawSpinningWheel(56, 20, 14, 18, wheelAngle, true);
+
+                    const busGrad = ctx.createLinearGradient(-65, -50, 65, 30);
+                    busGrad.addColorStop(0, '#1e3a8a');
+                    busGrad.addColorStop(0.7, '#1d4ed8');
+                    busGrad.addColorStop(1, '#0f172a');
+                    ctx.fillStyle = busGrad;
+                    drawRoundedRect(ctx, -68, -62, 136, 80, 12);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#020617';
+                    drawRoundedRect(ctx, -56, -56, 112, 14, 4);
+                    ctx.fill();
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.font = 'bold 9px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('✦ NEXTROUTE EXPRESS ✦', 0, -46);
+
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                    drawRoundedRect(ctx, -58, -38, 116, 32, 6);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    drawCuteAuraDriver(0, -22, 0.82, true, true, 16);
+
+                    ctx.save();
+                    ctx.shadowColor = '#ef4444';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(-64, -2, 6, 16);
+                    ctx.fillRect(58, -2, 6, 16);
+                    ctx.restore();
+
+                    ctx.restore();
+
+                }} else if (curMode === 'BICYCLE') {{
+                    // =========================================================================
+                    // 4. BICYCLE (ROAD CYCLE)
+                    // =========================================================================
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + suspensionBob);
+                    ctx.rotate(turnTilt * 1.5);
+
+                    drawSpinningWheel(0, 18, 14, 18, wheelAngle);
+
+                    ctx.strokeStyle = '#10b981';
+                    ctx.lineWidth = 3.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 18); ctx.lineTo(-12, -8);
+                    ctx.lineTo(0, -24);
+                    ctx.lineTo(0, 18);
+                    ctx.moveTo(0, -24); ctx.lineTo(16, -10);
+                    ctx.lineTo(-12, -8);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#1e293b';
+                    drawRoundedRect(ctx, -10, -27, 20, 5, 2);
+                    ctx.fill();
+
+                    const crankR = 9;
+                    const crankX = Math.cos(wheelAngle * 0.7) * crankR;
+                    const crankY = Math.sin(wheelAngle * 0.7) * crankR;
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-12 - crankX, -8 - crankY);
+                    ctx.lineTo(-12 + crankX, -8 + crankY);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-16, -28); ctx.lineTo(16, -28);
+                    ctx.stroke();
+
+                    drawCuteAuraDriver(0, -32, 0.75, true, false, 0);
+
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(-6, -24); ctx.lineTo(-12 - crankX, -8 - crankY);
+                    ctx.moveTo(6, -24); ctx.lineTo(-12 + crankX, -8 + crankY);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(-8, -32); ctx.lineTo(-14, -28);
+                    ctx.moveTo(8, -32); ctx.lineTo(14, -28);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#ef4444';
+                    ctx.shadowColor = '#ef4444';
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(0, -21, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.restore();
+
+                }} else if (curMode === 'TRUCK') {{
+                    // =========================================================================
+                    // 5. HEAVY CARGO TRUCK / SEMI
+                    // =========================================================================
+                    drawHeadlightBeams(auraBaseX - 48, auraBaseX + 48, auraBaseY + 6, 160, 'rgba(254, 240, 138, 0.45)');
+
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + suspensionBob * 1.1);
+                    ctx.rotate(chassisRoll * 0.7);
+
+                    drawSpinningWheel(-60, 24, 15, 20, wheelAngle, true);
+                    drawSpinningWheel(-45, 24, 15, 20, wheelAngle, true);
+                    drawSpinningWheel(45, 24, 15, 20, wheelAngle, true);
+                    drawSpinningWheel(60, 24, 15, 20, wheelAngle, true);
+
+                    const truckGrad = ctx.createLinearGradient(-65, -70, 65, 30);
+                    truckGrad.addColorStop(0, '#9a3412');
+                    truckGrad.addColorStop(0.6, '#c2410c');
+                    truckGrad.addColorStop(1, '#431407');
+                    ctx.fillStyle = truckGrad;
+                    drawRoundedRect(ctx, -68, -75, 136, 95, 10);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ea580c';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.fillRect(-74, -85, 6, 50);
+                    ctx.fillRect(68, -85, 6, 50);
+
+                    ctx.save();
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.shadowColor = '#f59e0b';
+                    ctx.shadowBlur = 6;
+                    for (let i = -2; i <= 2; i++) {{
+                        ctx.beginPath();
+                        ctx.arc(i * 18, -72, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+                    ctx.restore();
+
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+                    drawRoundedRect(ctx, -56, -58, 112, 34, 6);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    drawCuteAuraDriver(0, -40, 0.84, true, true, 18);
+
+                    ctx.fillStyle = '#facc15';
+                    ctx.fillRect(-64, 4, 128, 12);
+                    ctx.fillStyle = '#1e293b';
+                    for (let k = -5; k <= 5; k++) {{
+                        ctx.beginPath();
+                        ctx.moveTo(k * 12 - 4, 16);
+                        ctx.lineTo(k * 12 + 4, 4);
+                        ctx.lineTo(k * 12 + 8, 4);
+                        ctx.lineTo(k * 12, 16);
+                        ctx.fill();
+                    }}
+
+                    ctx.restore();
+
+                }} else if (curMode === 'TRACTOR') {{
+                    // =========================================================================
+                    // 6. AGRICULTURAL TRACTOR
+                    // =========================================================================
+                    drawHeadlightBeams(auraBaseX - 35, auraBaseX + 35, auraBaseY + 4, 120, 'rgba(254, 240, 138, 0.4)');
+
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + Math.sin(elapsed * 22) * 2.5);
+                    ctx.rotate(chassisRoll);
+
+                    drawSpinningWheel(-52, 12, 18, 24, wheelAngle, true);
+                    drawSpinningWheel(52, 12, 18, 24, wheelAngle, true);
+
+                    ctx.fillStyle = '#15803d';
+                    drawRoundedRect(ctx, -38, -25, 76, 40, 6);
+                    ctx.fill();
+                    ctx.strokeStyle = '#22c55e';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillRect(-28, -52, 4, 30);
+                    ctx.fillStyle = 'rgba(203, 213, 225, 0.4)';
+                    ctx.beginPath();
+                    ctx.arc(-26 + Math.sin(elapsed * 10) * 3, -56 - (elapsed * 15 % 15), 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#166534';
+                    drawRoundedRect(ctx, -56, -14, 18, 24, 4);
+                    drawRoundedRect(ctx, 38, -14, 18, 24, 4);
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#eab308';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(-28, 0); ctx.lineTo(-28, -48);
+                    ctx.lineTo(28, -48); ctx.lineTo(28, 0);
+                    ctx.stroke();
+
+                    drawCuteAuraDriver(0, -22, 0.85, true, true, 16);
+
+                    ctx.restore();
+
+                }} else if (curMode === 'FLIGHT') {{
+                    // =========================================================================
+                    // 7. SUPERSONIC FLIGHT / AIR JET
+                    // =========================================================================
+                    const flightAlt = Math.sin(elapsed * 2.0) * 8.0;
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY - 52 + flightAlt);
+                    ctx.rotate(turnTilt * 2.2);
+
+                    const thrustLen = 35 + Math.sin(elapsed * 25) * 8;
+                    const pGradL = ctx.createLinearGradient(-35, 10, -35, 10 + thrustLen);
+                    pGradL.addColorStop(0, '#00f0ff');
+                    pGradL.addColorStop(0.4, 'rgba(56, 189, 248, 0.8)');
+                    pGradL.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                    ctx.fillStyle = pGradL;
+                    ctx.beginPath();
+                    ctx.moveTo(-42, 10); ctx.lineTo(-28, 10); ctx.lineTo(-35, 10 + thrustLen);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    const pGradR = ctx.createLinearGradient(35, 10, 35, 10 + thrustLen);
+                    pGradR.addColorStop(0, '#00f0ff');
+                    pGradR.addColorStop(0.4, 'rgba(56, 189, 248, 0.8)');
+                    pGradR.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                    ctx.fillStyle = pGradR;
+                    ctx.beginPath();
+                    ctx.moveTo(28, 10); ctx.lineTo(42, 10); ctx.lineTo(35, 10 + thrustLen);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -25);
+                    ctx.lineTo(75, 4);
+                    ctx.lineTo(60, 14);
+                    ctx.lineTo(0, 5);
+                    ctx.lineTo(-60, 14);
+                    ctx.lineTo(-75, 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#ef4444';
+                    ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 8;
+                    ctx.beginPath(); ctx.arc(-74, 5, 3.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#22c55e';
+                    ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 8;
+                    ctx.beginPath(); ctx.arc(74, 5, 3.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.fillStyle = '#e2e8f0';
+                    drawRoundedRect(ctx, -20, -38, 40, 50, 14);
+                    ctx.fill();
+                    ctx.strokeStyle = '#0284c7';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                    drawRoundedRect(ctx, -14, -32, 28, 22, 7);
+                    ctx.fill();
+
+                    drawCuteAuraDriver(0, -20, 0.72, true, false, 0);
+
+                    ctx.restore();
+
+                }} else if (curMode === 'WATERWAY') {{
+                    // =========================================================================
+                    // 8. WATERWAY CRUISE / FAST FERRY
+                    // =========================================================================
+                    const waveRoll = Math.sin(elapsed * 2.8) * 0.05;
+                    const waveBob = Math.sin(elapsed * 3.2) * 3.5;
+
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + waveBob);
+                    ctx.rotate(waveRoll);
+
+                    ctx.fillStyle = 'rgba(14, 165, 233, 0.45)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 16, 75, 12, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(-55, 16, 12, 0, Math.PI);
+                    ctx.arc(55, 16, 12, 0, Math.PI);
+                    ctx.stroke();
+
+                    const hullGrad = ctx.createLinearGradient(-60, 0, 60, 20);
+                    hullGrad.addColorStop(0, '#0369a1');
+                    hullGrad.addColorStop(0.5, '#0284c7');
+                    hullGrad.addColorStop(1, '#075985');
+                    ctx.fillStyle = hullGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(-65, -4);
+                    ctx.lineTo(65, -4);
+                    ctx.lineTo(50, 18);
+                    ctx.lineTo(-50, 18);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#f8fafc';
+                    drawRoundedRect(ctx, -42, -26, 84, 24, 5);
+                    ctx.fill();
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#fef08a';
+                    for (let p = -3; p <= 3; p++) {{
+                        ctx.beginPath();
+                        ctx.arc(p * 11, -14, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(-2, -42, 4, 16);
+                    const radarW = Math.cos(elapsed * 4) * 16;
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-radarW, -42); ctx.lineTo(radarW, -42);
+                    ctx.stroke();
+
+                    drawCuteAuraDriver(0, -22, 0.76, true, true, 12);
+
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(-62, -6, 5, 4);
+                    ctx.fillStyle = '#22c55e';
+                    ctx.fillRect(57, -6, 5, 4);
+
+                    ctx.restore();
+
+                }} else if (curMode === 'TRAIN') {{
+                    // =========================================================================
+                    // 9. HIGH-SPEED EXPRESS BULLET TRAIN
+                    // =========================================================================
+                    ctx.save();
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(auraBaseX - 45, auraBaseY + 26); ctx.lineTo(auraBaseX - 18, auraBaseY - 60);
+                    ctx.moveTo(auraBaseX + 45, auraBaseY + 26); ctx.lineTo(auraBaseX + 18, auraBaseY - 60);
+                    ctx.stroke();
+                    ctx.strokeStyle = '#78350f';
+                    ctx.lineWidth = 2;
+                    for (let r = 0; r < 5; r++) {{
+                        const ry = auraBaseY + 22 - (r * 16);
+                        const rw = 45 - (r * 5);
+                        ctx.beginPath();
+                        ctx.moveTo(auraBaseX - rw, ry); ctx.lineTo(auraBaseX + rw, ry);
+                        ctx.stroke();
+                    }}
+                    ctx.restore();
+
+                    drawHeadlightBeams(auraBaseX - 35, auraBaseX + 35, auraBaseY + 6, 170, 'rgba(254, 240, 138, 0.55)');
+
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + suspensionBob * 0.6);
+                    ctx.rotate(chassisRoll * 0.5);
+
+                    const trainGrad = ctx.createLinearGradient(-50, -50, 50, 30);
+                    trainGrad.addColorStop(0, '#6366f1');
+                    trainGrad.addColorStop(0.6, '#4f46e5');
+                    trainGrad.addColorStop(1, '#312e81');
+                    ctx.fillStyle = trainGrad;
+                    drawRoundedRect(ctx, -52, -64, 104, 84, 16);
+                    ctx.fill();
+                    ctx.strokeStyle = '#818cf8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-16, -64); ctx.lineTo(-8, -82); ctx.lineTo(8, -82); ctx.lineTo(16, -64);
+                    ctx.moveTo(-20, -82); ctx.lineTo(20, -82);
+                    ctx.stroke();
+
+                    if (Math.sin(elapsed * 18) > 0.85) {{
+                        ctx.fillStyle = '#00f0ff';
+                        ctx.shadowColor = '#00f0ff'; ctx.shadowBlur = 10;
+                        ctx.beginPath(); ctx.arc(0, -82, 3.5, 0, Math.PI * 2); ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }}
+
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                    drawRoundedRect(ctx, -42, -45, 84, 28, 8);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    drawCuteAuraDriver(0, -32, 0.8, true, true, 16);
+
+                    ctx.save();
+                    ctx.shadowColor = '#fef08a';
+                    ctx.shadowBlur = 14;
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(-34, 4, 6, 0, Math.PI * 2);
+                    ctx.arc(34, 4, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    ctx.restore();
+
+                }} else {{
+                    // =========================================================================
+                    // 10. DEFAULT CAR / AUTOMOBILE (SPORT SEDAN)
+                    // =========================================================================
+                    drawHeadlightBeams(auraBaseX - 32, auraBaseX + 32, auraBaseY, 130, 'rgba(224, 242, 254, 0.45)');
+
+                    ctx.save();
+                    ctx.translate(auraBaseX, auraBaseY + suspensionBob);
+                    ctx.rotate(chassisRoll);
+
+                    drawSpinningWheel(-44, 14, 12, 16, wheelAngle);
+                    drawSpinningWheel(44, 14, 12, 16, wheelAngle);
+
+                    const carGrad = ctx.createLinearGradient(-50, -10, 50, 20);
+                    carGrad.addColorStop(0, '#0369a1');
+                    carGrad.addColorStop(0.5, '#0284c7');
+                    carGrad.addColorStop(1, '#0c4a6e');
+                    ctx.fillStyle = carGrad;
+                    drawRoundedRect(ctx, -52, -4, 104, 22, 7);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#0f172a';
+                    drawRoundedRect(ctx, -38, -32, 76, 30, 8);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+                    ctx.stroke();
+
+                    ctx.fillStyle = 'rgba(14, 116, 144, 0.65)';
+                    drawRoundedRect(ctx, -34, -28, 68, 22, 5);
+                    ctx.fill();
+
+                    drawCuteAuraDriver(0, -12, 0.72, true, true, 12);
+
+                    ctx.save();
+                    ctx.shadowColor = '#ef4444';
+                    ctx.shadowBlur = 12;
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(-50, 0, 16, 6);
+                    ctx.fillRect(34, 0, 16, 6);
+                    ctx.restore();
+
+                    const isBlinkOn = Math.sin(elapsed * 12) > 0;
+                    if (currentAnimState === 'turn_left' && isBlinkOn) {{
+                        ctx.fillStyle = '#f59e0b';
+                        ctx.fillRect(-52, -3, 8, 5);
+                    }} else if (currentAnimState === 'turn_right' && isBlinkOn) {{
+                        ctx.fillStyle = '#f59e0b';
+                        ctx.fillRect(44, -3, 8, 5);
+                    }}
+
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.fillRect(-28, 14, 8, 4);
+                    ctx.fillRect(20, 14, 8, 4);
+
+                    ctx.restore();
+                }}
 
                 ctx.restore();
 

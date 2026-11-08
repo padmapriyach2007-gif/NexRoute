@@ -1176,11 +1176,17 @@ class VehicleModeManager:
                     // Position guide relative to vehicle seat
                     const seat = config.seat_offset || [0, 0, 0];
                     this.auraRoot.position.set(seat[0], seat[1], seat[2]);
+                    this.auraRoot.scale.setScalar(config.guide_scale || 0.68);
                     vObj.group.add(this.auraRoot);
+                    if (this.limbs && this.limbs.ring) this.limbs.ring.visible = false;
+                    if (this.limbs && this.limbs.stick) this.limbs.stick.visible = false;
                 }} else {{
                     // Pedestrian mode: guide attached directly to scene root
                     this.auraRoot.position.set(0, 0, 0);
+                    this.auraRoot.scale.setScalar(1.0);
                     this.scene.add(this.auraRoot);
+                    if (this.limbs && this.limbs.ring) this.limbs.ring.visible = true;
+                    if (this.limbs && this.limbs.stick) this.limbs.stick.visible = true;
                 }}
             }};
 
