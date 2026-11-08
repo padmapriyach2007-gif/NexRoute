@@ -2586,13 +2586,16 @@ def render_travel_copilot_studio():
         if btn_clear:
             if bot and hasattr(bot, "reset_conversation"):
                 bot.reset_conversation()
+            from src.aura_chat_store import AuraConversationStore
             st.session_state.aura_chat_history = [
                 {
                     "role": "assistant",
-                    "badge": "🧭 NEXROUTE AI",
-                    "content": "✨ *Hello! I am NexRoute, your AI Travel Assistant powered by Ollama. How can I help you plan your journey?*"
+                    "badge": "✦ AURA • TRAVEL COPILOT",
+                    "content": "Hi! I'm AURA ✨\n\nYour intelligent AI travel copilot. Where would you like to explore today?"
                 }
             ]
+            if "aura_active_conv_id" in st.session_state and st.session_state.aura_active_conv_id:
+                AuraConversationStore.update_messages(st.session_state.aura_active_conv_id, st.session_state.aura_chat_history)
             st.rerun()
 
         if btn_send and chat_in and chat_in.strip():
@@ -2616,6 +2619,9 @@ def render_travel_copilot_studio():
                 st.session_state.aura_chat_history.append({
                     "role": "assistant",
                     "content": ans.get("response", "Response unavailable."),
-                    "badge": ans.get("badge", "NEXROUTE AI")
+                    "badge": ans.get("badge", "✦ AURA • TRAVEL COPILOT")
                 })
+            from src.aura_chat_store import AuraConversationStore
+            if "aura_active_conv_id" in st.session_state and st.session_state.aura_active_conv_id:
+                AuraConversationStore.update_messages(st.session_state.aura_active_conv_id, st.session_state.aura_chat_history)
             st.rerun()

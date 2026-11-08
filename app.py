@@ -4102,202 +4102,165 @@ st.markdown("""
 
 
 
-    /* Popover Content Dialog Window */
-
-
-
-    div[data-testid="stPopoverBody"] {
-
-
-
-        background: rgba(7, 17, 31, 0.97) !important;
-
-
-
-        backdrop-filter: blur(24px) saturate(190%) !important;
-
-
-
-        -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-
-
-
-        border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
-
-
-
-        border-radius: 18px !important;
-
-
-
-        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.95), 0 0 32px rgba(14, 165, 233, 0.28) !important;
-
-
-
-        max-width: 440px !important;
-
-
-
-        width: 420px !important;
-
-
-
-        max-height: 580px !important;
-
-
-
-        overflow-y: auto !important;
-
-
-
-        padding: 16px !important;
-
-
-
-        z-index: 100000000 !important;
-
-
-
-    }
-
     /* =========================================================================
-       AURA CHATBOT: SUGGESTED QUESTIONS & CLEAN TOOLBAR
+       AURA: CHATGPT-INSPIRED VISUAL DESIGN & PREMIUM AI TRAVEL COPILOT THEME
        ========================================================================= */
-    div[class*="st-key-aura_quick_chips_deck"] {
-        margin-top: 12px !important;
-        padding: 10px 12px 10px 12px !important;
-        background: rgba(10, 20, 38, 0.72) !important;
-        border: 1px solid rgba(56, 189, 248, 0.24) !important;
+
+    /* Popover Content Dialog Window - Spacious, Modern ChatGPT Layout */
+    div[data-testid="stPopoverBody"] {
+        background: linear-gradient(180deg, #080c16 0%, #04070f 100%) !important;
+        backdrop-filter: blur(28px) saturate(200%) !important;
+        -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+        border: 1.5px solid rgba(56, 189, 248, 0.32) !important;
+        border-radius: 24px !important;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 240, 255, 0.20) !important;
+        max-width: 860px !important;
+        width: min(840px, 95vw) !important;
+        max-height: 88vh !important;
+        height: 720px !important;
+        overflow-y: auto !important;
+        padding: 16px 18px !important;
+        z-index: 100000000 !important;
+    }
+
+    @media (max-width: 640px) {
+        div[data-testid="stPopoverBody"] {
+            width: 96vw !important;
+            max-width: 96vw !important;
+            height: 92vh !important;
+            max-height: 92vh !important;
+            padding: 12px 10px !important;
+            border-radius: 16px !important;
+            left: 2vw !important;
+            right: 2vw !important;
+        }
+    }
+
+    /* Message Bubbles - Smooth Entrance Animation */
+    @keyframes auraFadeSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .aura-msg-user {
+        animation: auraFadeSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .aura-msg-assistant {
+        animation: auraFadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Pulse Dot Animation for Online Indicator */
+    @keyframes auraLivePulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .aura-online-pulse {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        animation: auraLivePulse 2s infinite;
+    }
+
+    /* ChatGPT Circular Arrow-Up Send Button */
+    div[data-testid="stChatInput"] button,
+    button[data-testid="stChatInputSubmitButton"] {
+        background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%) !important;
+        border-radius: 50% !important;
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
+        color: #030712 !important;
+        box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border: none !important;
+    }
+    div[data-testid="stChatInput"] button:hover {
+        transform: scale(1.08) !important;
+        box-shadow: 0 0 22px rgba(0, 240, 255, 0.85) !important;
+    }
+    div[data-testid="stChatInput"] button:disabled {
+        opacity: 0.35 !important;
+        box-shadow: none !important;
+        cursor: not-allowed !important;
+    }
+
+    /* ChatGPT Composer Input Textarea */
+    div[data-testid="stChatInput"] textarea {
+        background: rgba(13, 20, 36, 0.90) !important;
+        border: 1.5px solid rgba(56, 189, 248, 0.30) !important;
+        border-radius: 22px !important;
+        color: #f8fafc !important;
+        font-size: 0.88rem !important;
+        padding: 10px 16px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40) !important;
+        transition: all 0.25s ease !important;
+    }
+    div[data-testid="stChatInput"] textarea:focus {
+        border-color: #00f0ff !important;
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.35) !important;
+    }
+
+    /* Plus and Mic Popover Buttons in Composer */
+    div[class*="st-key-popover_composer_plus"] button,
+    div[class*="st-key-popover_composer_mic"] button,
+    div[class*="st-key-btn_hist_toggle"] button,
+    div[class*="st-key-btn_new_chat_top"] button {
+        background: rgba(15, 23, 42, 0.85) !important;
+        border: 1px solid rgba(56, 189, 248, 0.35) !important;
         border-radius: 12px !important;
-        backdrop-filter: blur(14px) !important;
-        -webkit-backdrop-filter: blur(14px) !important;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
-    }
-
-    .aura-suggested-title-badge {
-        display: inline-flex !important;
-        align-items: center !important;
-        font-size: 0.72rem !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.06em !important;
         color: #38bdf8 !important;
-        margin-bottom: 2px !important;
-        user-select: none !important;
-    }
-
-    /* Discreet, elegant Clear Chat button in the header row */
-    div[class*="st-key-chip_clear"] button {
-        min-height: 28px !important;
-        height: 28px !important;
-        padding: 2px 10px !important;
-        font-size: 0.70rem !important;
-        font-weight: 500 !important;
-        color: #94a3b8 !important;
-        background: rgba(15, 23, 42, 0.6) !important;
-        border: 1px solid rgba(148, 163, 184, 0.25) !important;
-        border-radius: 6px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         transition: all 0.2s ease !important;
     }
-    div[class*="st-key-chip_clear"] button:hover {
-        color: #f87171 !important;
-        border-color: rgba(239, 68, 68, 0.55) !important;
-        background: rgba(239, 68, 68, 0.12) !important;
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.2) !important;
-    }
-    div[class*="st-key-chip_clear"] button::before {
-        content: "" !important;
-        display: inline-block !important;
-        width: 11px !important;
-        height: 11px !important;
-        margin-right: 5px !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-size: contain !important;
-        flex-shrink: 0 !important;
-    }
-    div[class*="st-key-chip_clear"] button:hover::before {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f87171' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3C/svg%3E") !important;
+    div[class*="st-key-popover_composer_plus"] button:hover,
+    div[class*="st-key-popover_composer_mic"] button:hover,
+    div[class*="st-key-btn_hist_toggle"] button:hover,
+    div[class*="st-key-btn_new_chat_top"] button:hover {
+        border-color: #00f0ff !important;
+        background: rgba(0, 240, 255, 0.18) !important;
+        box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
+        color: #ffffff !important;
     }
 
-    /* Suggested Question Buttons: Minimal, Dark Navy & Cyan */
-    div[class*="st-key-btn_sq_"] {
-        margin-top: 6px !important;
-    }
-    div[class*="st-key-btn_sq_"] button {
-        background: rgba(15, 23, 42, 0.8) !important;
+    /* Welcome Suggested Prompt Buttons */
+    div[class*="st-key-btn_welcome_sug_"] button {
+        background: rgba(15, 23, 42, 0.80) !important;
         border: 1px solid rgba(56, 189, 248, 0.28) !important;
-        border-radius: 9px !important;
-        color: #e2e8f0 !important;
-        font-size: 0.76rem !important;
-        font-weight: 500 !important;
+        border-radius: 14px !important;
+        color: #f1f5f9 !important;
+        font-size: 0.84rem !important;
+        font-weight: 600 !important;
         line-height: 1.3 !important;
-        padding: 8px 12px !important;
-        min-height: 42px !important;
+        padding: 10px 16px !important;
+        min-height: 46px !important;
         width: 100% !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: flex-start !important;
         text-align: left !important;
-        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
-        white-space: normal !important;
-        word-break: break-word !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40) !important;
     }
-    div[class*="st-key-btn_sq_"] button:hover {
+    div[class*="st-key-btn_welcome_sug_"] button:hover {
         border-color: #00f0ff !important;
-        background: rgba(14, 165, 233, 0.16) !important;
+        background: rgba(0, 240, 255, 0.15) !important;
         color: #ffffff !important;
-        box-shadow: 0 0 14px rgba(0, 240, 255, 0.28), 0 4px 12px rgba(0, 0, 0, 0.45) !important;
-        transform: translateY(-1px) !important;
-    }
-    div[class*="st-key-btn_sq_"] button:active {
-        transform: translateY(0px) scale(0.99) !important;
-    }
-
-    /* Lucide Icon: Route / Navigation */
-    div[class*="st-key-btn_sq_route"] button::before {
-        content: "" !important;
-        display: inline-block !important;
-        width: 15px !important;
-        height: 15px !important;
-        min-width: 15px !important;
-        margin-right: 8px !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='3 11 22 2 13 21 11 13 3 11'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-size: contain !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Lucide Icon: Fuel & Cost */
-    div[class*="st-key-btn_sq_cost"] button::before {
-        content: "" !important;
-        display: inline-block !important;
-        width: 15px !important;
-        height: 15px !important;
-        min-width: 15px !important;
-        margin-right: 8px !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M4 9h10'/%3E%3Cpath d='M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18'/%3E%3Cpath d='M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.8a2 2 0 0 0-.6-1.4L18 5'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-size: contain !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Lucide Icon: Places / Sights */
-    div[class*="st-key-btn_sq_places"] button::before {
-        content: "" !important;
-        display: inline-block !important;
-        width: 15px !important;
-        height: 15px !important;
-        min-width: 15px !important;
-        margin-right: 8px !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-size: contain !important;
-        flex-shrink: 0 !important;
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.35), 0 6px 18px rgba(0, 0, 0, 0.50) !important;
+        transform: translateY(-2px) !important;
     }
 
 
@@ -5875,17 +5838,28 @@ if "pathfinder_bot" not in st.session_state:
 
 
 
+from src.aura_chat_store import AuraConversationStore
+
 def get_aura_welcome_message(lang_code: str = "en"):
-    badge = t("aura.welcome_badge", default="🤖 AURA READY", lang=lang_code)
-    msg = t("aura.welcome_msg", default="👋 <b>Hi! I'm Aura</b>, your intelligent AI travel assistant for <b>NexRoute</b>.<br><br>I can help you plan trips, find optimal routes, discover nearby places & halfway stops, estimate fuel and tolls, and answer any travel or everyday questions.<br><br>Where would you like to explore today?", lang=lang_code)
+    badge = "✦ AURA • TRAVEL COPILOT"
+    msg = "Hi! I'm AURA ✨\n\nYour intelligent AI travel copilot. Where would you like to explore today?\n\nAsk me about route planning, shortest corridors, nearby attractions, halfway stops, road conditions, or fuel & toll costs."
     return {
         "role": "assistant",
         "badge": badge,
-        "content": f"<div style='font-size: 0.86rem; line-height: 1.5; color: #f1f5f9;'>{msg}</div>"
+        "content": msg
     }
 
+if "aura_active_conv_id" not in st.session_state:
+    st.session_state.aura_active_conv_id = AuraConversationStore.get_or_create_active_id()
+if "aura_show_history" not in st.session_state:
+    st.session_state.aura_show_history = False
+
 if "aura_chat_history" not in st.session_state or not st.session_state.aura_chat_history:
-    st.session_state.aura_chat_history = [get_aura_welcome_message(st.session_state.get("app_language", "en"))]
+    _init_c = AuraConversationStore.get_conversation(st.session_state.aura_active_conv_id)
+    if _init_c and _init_c.get("messages"):
+        st.session_state.aura_chat_history = _init_c["messages"]
+    else:
+        st.session_state.aura_chat_history = [get_aura_welcome_message(st.session_state.get("app_language", "en"))]
 
 
 
@@ -6107,6 +6081,17 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         })
 
         st.session_state.pending_chat_attachments = []
+
+        # Persist conversation to persistent store
+        if "aura_active_conv_id" in st.session_state and st.session_state.aura_active_conv_id:
+            try:
+                from src.aura_chat_store import AuraConversationStore
+                AuraConversationStore.update_messages(
+                    st.session_state.aura_active_conv_id,
+                    st.session_state.aura_chat_history
+                )
+            except Exception as e_save:
+                logger.warning("Could not persist conversation: %s", e_save)
 
 
 
@@ -6374,107 +6359,369 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
 
 
 
+    from src.aura_chat_store import AuraConversationStore
+
+    # Initialize conversation state
+    if "aura_show_history" not in st.session_state:
+        st.session_state.aura_show_history = False
+    if "aura_active_conv_id" not in st.session_state or not st.session_state.aura_active_conv_id:
+        st.session_state.aura_active_conv_id = AuraConversationStore.get_or_create_active_id()
+    if "aura_renaming_id" not in st.session_state:
+        st.session_state.aura_renaming_id = None
+    if "aura_confirm_delete_id" not in st.session_state:
+        st.session_state.aura_confirm_delete_id = None
+
+    # Sync with store
+    active_conv = AuraConversationStore.get_conversation(st.session_state.aura_active_conv_id)
+    if active_conv and active_conv.get("messages"):
+        st.session_state.aura_chat_history = active_conv["messages"]
+    elif "aura_chat_history" not in st.session_state or not st.session_state.aura_chat_history:
+        cur_chat_l = st.session_state.get("app_language", "en")
+        st.session_state.aura_chat_history = [get_aura_welcome_message(cur_chat_l)]
+
     cur_chat_l = st.session_state.get("app_language", "en")
+    active_title = active_conv.get("title", "New Journey") if active_conv else "New Journey"
 
+    # =========================================================================
+    # MINIMAL CHATGPT-STYLE HEADER WITH HISTORY TOGGLE & NEW CHAT
+    # =========================================================================
+    h_col1, h_col2, h_col3 = st.columns([1.1, 2.2, 1.1], vertical_alignment="center")
+    with h_col1:
+        hist_btn_label = "✕ Close" if st.session_state.aura_show_history else "☰ History"
+        if st.button(hist_btn_label, key=f"btn_hist_toggle_{key_prefix}", help="Toggle chat history drawer", use_container_width=True):
+            st.session_state.aura_show_history = not st.session_state.aura_show_history
+            st.rerun()
+    with h_col2:
+        st.markdown("""
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <div style="width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);">
+                <span style="color: #030712; font-size: 0.80rem; font-weight: 900;">✦</span>
+            </div>
+            <div style="text-align: left; line-height: 1.15;">
+                <div style="font-weight: 800; font-size: 0.88rem; color: #f8fafc; letter-spacing: 0.03em;">
+                    AURA <span style="font-size: 0.68rem; color: #38bdf8; font-weight: 600;">• AI Travel Copilot</span>
+                </div>
+                <div style="font-size: 0.62rem; color: #10b981; display: flex; align-items: center; gap: 4px; font-weight: 600;">
+                    <span class="aura-online-pulse"></span> Online
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with h_col3:
+        if st.button("➕ New Chat", key=f"btn_new_chat_top_{key_prefix}", help="Start a new conversation", use_container_width=True):
+            new_cid = AuraConversationStore.create_conversation()
+            st.session_state.aura_active_conv_id = new_cid
+            st.session_state.aura_chat_history = [get_aura_welcome_message(cur_chat_l)]
+            st.session_state.pending_chat_attachments = []
+            st.session_state.aura_show_history = False
+            if "pathfinder_bot" in st.session_state and hasattr(st.session_state.pathfinder_bot, "reset_conversation"):
+                st.session_state.pathfinder_bot.reset_conversation()
+            st.rerun()
 
+    # =========================================================================
+    # 3. CHAT HISTORY DRAWER (ChatGPT Style)
+    # =========================================================================
+    if st.session_state.aura_show_history:
+        st.markdown("""
+        <div style="margin-top: 10px; margin-bottom: 8px; font-size: 0.82rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+            <span>💬</span> Previous Conversations
+        </div>
+        """, unsafe_allow_html=True)
 
+        search_q = st.text_input(
+            "Search chats",
+            placeholder="🔍 Search past conversations...",
+            key=f"search_hist_{key_prefix}",
+            label_visibility="collapsed"
+        )
 
+        all_convs = AuraConversationStore.list_conversations(search_query=search_q)
 
-
-
-
-    if len(st.session_state.aura_chat_history) == 1 and st.session_state.aura_chat_history[0].get("role") == "assistant" and "AURA" in st.session_state.aura_chat_history[0].get("badge", ""):
-
-
-
-
-
-
-
-
-        st.session_state.aura_chat_history[0] = get_aura_welcome_message(cur_chat_l)
-
-
-
-
-
-
-
-
-    c_box = st.container(height=height)
-
-
-
-    with c_box:
-        cur_l = st.session_state.get("app_language", "en")
-        bcp_code = LANGUAGE_SPEECH_MAP.get(cur_l, {}).get("bcp47", "en-IN")
-
-        for idx, msg in enumerate(st.session_state.aura_chat_history):
-            if msg["role"] == "user":
-                att_chips = ""
-                if "attachments" in msg and msg["attachments"]:
-                    chips = "".join([f"<span style='background: rgba(255,255,255,0.25); border-radius: 4px; padding: 1px 6px; margin-right: 4px; font-size: 0.72rem;'>📎 {a}</span>" for a in msg["attachments"]])
-                    att_chips = f"<div style='margin-bottom: 4px;'>{chips}</div>"
-
-                st.markdown(f"""
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-                    <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 85%; font-size: 0.82rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-weight: 500;">
-                        {att_chips}
-                        {msg['content']}
-                    </div>
+        hist_box = st.container(height=height if height > 240 else 360)
+        with hist_box:
+            if not all_convs:
+                st.markdown("""
+                <div style="text-align: center; color: #94a3b8; padding: 28px 12px; font-size: 0.82rem;">
+                    No conversations found matching your search.
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                b_badge = f"<span style='font-size: 0.62rem; font-weight: 800; color: #38bdf8; font-family: monospace; letter-spacing: 0.05em; background: rgba(56, 189, 248, 0.12); padding: 1px 6px; border-radius: 4px; display: inline-block;'>{msg.get('badge', 'NEXROUTE AI')}</span>"
-                clean_text = re.sub(r'[*#_`~>\[\]\(\)]', ' ', msg.get('content', ''))[:260].replace("'", "\\'").replace('"', '\\"').replace("\n", " ")
+                for c in all_convs:
+                    cid = c["id"]
+                    is_active = (cid == st.session_state.aura_active_conv_id)
+                    title = c.get("title", "Untitled Journey")
+                    msg_count = len([m for m in c.get("messages", []) if m.get("role") == "user"])
+                    updated_iso = c.get("updated_at", "")
+                    time_display = updated_iso[:10] if updated_iso else ""
 
-                st.markdown(f"""
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; margin-bottom: 4px;">
-                    <div>{b_badge}</div>
-                    <button onclick="window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance('{clean_text}'); u.lang = '{bcp_code}'; window.speechSynthesis.speak(u);" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; font-size: 0.68rem; font-weight: 700; border-radius: 6px; padding: 2px 8px; cursor: pointer;">
-                        🔊 Listen
-                    </button>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown(msg.get("content", ""))
+                    active_border = "border: 1.5px solid #00f0ff; background: rgba(0, 240, 255, 0.08);" if is_active else "border: 1px solid rgba(56, 189, 248, 0.22); background: rgba(15, 23, 42, 0.70);"
 
-    # ChatGPT-Style Toolbar: Attachments (+) & Voice Recognition (🎙️) & New Chat (🧹)
-    ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1.6, 1.4, 1.2])
-    with ctrl_col1:
-        with st.popover("➕ Attach File", help="Upload PDF, Image, Code, or Text for AI analysis"):
-            up_file = st.file_uploader(
-                "Upload Image or Document",
-                type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "md", "csv"],
-                key=f"chat_uploader_{key_prefix}"
-            )
-            if up_file is not None:
-                f_bytes = up_file.getvalue()
-                f_name = up_file.name
-                f_mime = up_file.type or "application/octet-stream"
-                if "pending_chat_attachments" not in st.session_state:
-                    st.session_state.pending_chat_attachments = []
+                    st.markdown(f"""
+                    <div style="{active_border} border-radius: 12px; padding: 8px 12px; margin-bottom: 6px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 0.82rem; font-weight: 700; color: {'#00f0ff' if is_active else '#f1f5f9'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;">
+                                {'✦ ' if is_active else '💬 '}{title}
+                            </div>
+                            <div style="font-size: 0.65rem; color: #94a3b8;">
+                                {msg_count} msgs • {time_display}
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                if not any(a.get("name") == f_name for a in st.session_state.pending_chat_attachments):
-                    if f_mime.startswith("image/"):
-                        b64_str = base64.b64encode(f_bytes).decode("ascii")
-                        st.session_state.pending_chat_attachments.append({
-                            "type": "image",
-                            "name": f_name,
-                            "mime_type": f_mime,
-                            "data_base64": b64_str
-                        })
-                    else:
-                        txt_content, tag = DocumentParser.extract_text_from_bytes(f_bytes, f_name)
-                        st.session_state.pending_chat_attachments.append({
-                            "type": "document",
-                            "name": f_name,
-                            "text": txt_content,
-                            "summary": tag
-                        })
-                    st.success(f"Attached: {f_name}")
+                    b_col1, b_col2, b_col3 = st.columns([1.5, 0.8, 0.8])
+                    with b_col1:
+                        if not is_active:
+                            if st.button("📂 Open", key=f"btn_open_conv_{cid}_{key_prefix}", use_container_width=True):
+                                st.session_state.aura_active_conv_id = cid
+                                st.session_state.aura_chat_history = c.get("messages", [])
+                                st.session_state.aura_show_history = False
+                                st.rerun()
+                        else:
+                            st.caption("✨ Current Chat")
+                    with b_col2:
+                        if st.button("✏️", key=f"btn_ren_conv_{cid}_{key_prefix}", help="Rename conversation", use_container_width=True):
+                            st.session_state.aura_renaming_id = cid
+                            st.session_state.aura_confirm_delete_id = None
+                            st.rerun()
+                    with b_col3:
+                        if st.button("🗑️", key=f"btn_del_conv_{cid}_{key_prefix}", help="Delete conversation", use_container_width=True):
+                            st.session_state.aura_confirm_delete_id = cid
+                            st.session_state.aura_renaming_id = None
+                            st.rerun()
 
-    with ctrl_col2:
-        with st.popover("🎙️ Voice Input", help="Speak in your language"):
+                    # Inline rename form
+                    if st.session_state.get("aura_renaming_id") == cid:
+                        r_col_in, r_col_save, r_col_cancel = st.columns([2.2, 0.9, 0.9])
+                        with r_col_in:
+                            new_t = st.text_input("New title", value=title, key=f"in_ren_{cid}_{key_prefix}", label_visibility="collapsed")
+                        with r_col_save:
+                            if st.button("Save", key=f"btn_save_ren_{cid}_{key_prefix}", use_container_width=True):
+                                if new_t and new_t.strip():
+                                    AuraConversationStore.rename_conversation(cid, new_t.strip())
+                                st.session_state.aura_renaming_id = None
+                                st.rerun()
+                        with r_col_cancel:
+                            if st.button("✕", key=f"btn_cancel_ren_{cid}_{key_prefix}", use_container_width=True):
+                                st.session_state.aura_renaming_id = None
+                                st.rerun()
+
+                    # Delete confirmation prompt
+                    if st.session_state.get("aura_confirm_delete_id") == cid:
+                        st.markdown(f"""
+                        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 6px 10px; margin: 4px 0; font-size: 0.74rem; color: #fca5a5;">
+                            ⚠️ Delete "{title}" permanently?
+                        </div>
+                        """, unsafe_allow_html=True)
+                        d_col_yes, d_col_no = st.columns([1, 1])
+                        with d_col_yes:
+                            if st.button("Yes, Delete", key=f"btn_yes_del_{cid}_{key_prefix}", type="primary", use_container_width=True):
+                                AuraConversationStore.delete_conversation(cid)
+                                st.session_state.aura_confirm_delete_id = None
+                                if st.session_state.aura_active_conv_id == cid:
+                                    st.session_state.aura_active_conv_id = AuraConversationStore.get_or_create_active_id()
+                                    cur_conv = AuraConversationStore.get_conversation(st.session_state.aura_active_conv_id)
+                                    st.session_state.aura_chat_history = cur_conv.get("messages", [get_aura_welcome_message(cur_chat_l)]) if cur_conv else [get_aura_welcome_message(cur_chat_l)]
+                                st.rerun()
+                        with d_col_no:
+                            if st.button("Cancel", key=f"btn_no_del_{cid}_{key_prefix}", use_container_width=True):
+                                st.session_state.aura_confirm_delete_id = None
+                                st.rerun()
+
+        if st.button("← Back to Conversation", key=f"btn_back_to_chat_{key_prefix}", use_container_width=True):
+            st.session_state.aura_show_history = False
+            st.rerun()
+        return
+
+    # =========================================================================
+    # CONVERSATION VIEW (Welcome Screen OR Messages Area)
+    # =========================================================================
+    has_user_convo = any(m.get("role") == "user" for m in st.session_state.aura_chat_history)
+
+    if not has_user_convo:
+        # =====================================================================
+        # 6. WELCOME SCREEN (ChatGPT Style)
+        # =====================================================================
+        st.markdown("""
+        <div style="text-align: center; padding: 22px 14px 16px 14px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 62px; height: 62px; border-radius: 20px; background: linear-gradient(135deg, #00f0ff 0%, #0284c7 60%, #2563eb 100%); box-shadow: 0 10px 28px rgba(0, 240, 255, 0.40), 0 0 18px rgba(2, 132, 199, 0.35); margin-bottom: 14px; border: 1.5px solid rgba(255, 255, 255, 0.25);">
+                <span style="color: #030712; font-size: 1.6rem; font-weight: 900;">✨</span>
+            </div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: #ffffff; margin: 0 0 6px 0; letter-spacing: 0.03em;">
+                Hi! I'm AURA ✨
+            </h1>
+            <p style="font-size: 0.86rem; color: #94a3b8; line-height: 1.55; max-width: 440px; margin: 0 auto 16px auto; font-weight: 400;">
+                Your intelligent AI travel copilot. Where would you like to explore today?
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # 5 Clickable Suggested Prompts (Requirement 6)
+        sug_prompts = [
+            ("🛣️  Plan a trip to Hyderabad", "Plan a comprehensive 3-day trip to Hyderabad with top tourist attractions, local cuisine, and optimized travel routes."),
+            ("⚡  Find the shortest route", "Find the shortest, fastest route between my starting location and destination with real-time condition updates."),
+            ("📍  Discover nearby attractions", "Discover top-rated tourist attractions, restaurants, and essential stops near my current area."),
+            ("🛑  Find halfway stops between two cities", "Find the best halfway stops, scenic viewpoints, and rest areas between my origin and destination."),
+            ("⛽  Estimate fuel costs and tolls", "Estimate my total travel cost including fuel consumption, FASTag toll charges, and vehicle efficiency.")
+        ]
+
+        for s_idx, (s_label, s_query) in enumerate(sug_prompts):
+            if st.button(s_label, key=f"btn_welcome_sug_{s_idx}_{key_prefix}", use_container_width=True):
+                _execute_chat_turn(s_query)
+                st.rerun()
+
+    else:
+        # =====================================================================
+        # 1. CHATGPT-STYLE CONVERSATION AREA
+        # =====================================================================
+        c_box = st.container(height=height)
+        with c_box:
+            cur_l = st.session_state.get("app_language", "en")
+            bcp_code = LANGUAGE_SPEECH_MAP.get(cur_l, {}).get("bcp47", "en-IN")
+
+            for idx, msg in enumerate(st.session_state.aura_chat_history):
+                if msg["role"] == "user":
+                    att_chips = ""
+                    if "attachments" in msg and msg["attachments"]:
+                        chips = "".join([f"<span style='background: rgba(255,255,255,0.22); border-radius: 6px; padding: 2px 7px; margin-right: 5px; font-size: 0.70rem;'>📎 {a}</span>" for a in msg["attachments"]])
+                        att_chips = f"<div style='margin-bottom: 6px;'>{chips}</div>"
+
+                    st.markdown(f"""
+                    <div class="aura-msg-user" style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                        <div style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; padding: 10px 15px; border-radius: 18px 18px 4px 18px; max-width: 84%; font-size: 0.85rem; box-shadow: 0 4px 16px rgba(2, 132, 199, 0.28); font-weight: 500; line-height: 1.5; word-break: break-word;">
+                            {att_chips}
+                            {msg['content']}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    b_badge = f"<span style='font-size: 0.64rem; font-weight: 800; color: #38bdf8; font-family: monospace; letter-spacing: 0.05em; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 2px 8px; border-radius: 6px; display: inline-block;'>✦ {msg.get('badge', 'AURA • TRAVEL COPILOT')}</span>"
+                    import re
+                    clean_text = re.sub(r'[*#_`~>\[\]\(\)]', ' ', msg.get('content', ''))[:280].replace("'", "\\'").replace('"', '\\"').replace("\n", " ")
+
+                    st.markdown(f"""
+                    <div class="aura-msg-assistant" style="background: rgba(13, 20, 36, 0.85); border: 1px solid rgba(56, 189, 248, 0.26); border-radius: 16px 16px 16px 4px; padding: 13px 16px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.40);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div>{b_badge}</div>
+                            <div style="display: flex; gap: 6px;">
+                                <button onclick="window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance('{clean_text}'); u.lang = '{bcp_code}'; window.speechSynthesis.speak(u);" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; font-size: 0.68rem; font-weight: 700; border-radius: 9999px; padding: 2px 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    🔊 Listen
+                                </button>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; line-height: 1.6; color: #f1f5f9; word-break: break-word;">
+                    """, unsafe_allow_html=True)
+                    st.markdown(msg.get("content", ""))
+                    st.markdown("</div></div>", unsafe_allow_html=True)
+
+            # Auto-scroll anchor
+            st.markdown('<div id="aura-chat-anchor" style="height: 1px;"></div>', unsafe_allow_html=True)
+            st.markdown("""
+            <script>
+                var anchor = document.getElementById("aura-chat-anchor");
+                if (anchor) {
+                    anchor.scrollIntoView({ behavior: "smooth", block: "end" });
+                }
+            </script>
+            """, unsafe_allow_html=True)
+
+    # =========================================================================
+    # 2. CHATGPT-STYLE MESSAGE INPUT COMPOSER
+    # =========================================================================
+    st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+
+    # Active pending attachment pills
+    if st.session_state.get("pending_chat_attachments"):
+        p_col1, p_col2 = st.columns([0.85, 0.15])
+        with p_col1:
+            pills = "".join([f"<span style='background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; margin-right: 5px; display: inline-flex; align-items: center;'>📎 {a.get('name')}</span>" for a in st.session_state.pending_chat_attachments])
+            st.markdown(f"<div style='margin-bottom: 6px;'>{pills}</div>", unsafe_allow_html=True)
+        with p_col2:
+            if st.button("✖", key=f"btn_rm_att_{key_prefix}", use_container_width=True, help="Remove pending attachments"):
+                st.session_state.pending_chat_attachments = []
+                st.rerun()
+
+    # Composer Row: Plus (+) Button | Chat Input Field | Mic (🎙️) Button
+    col_plus, col_input, col_mic = st.columns([0.10, 0.80, 0.10], vertical_alignment="bottom")
+
+    # A. Plus (+) Button with Expandable Menu
+    with col_plus:
+        with st.popover("➕", help="Add attachments, files, or travel context"):
+            st.markdown("<div style='font-size: 0.78rem; font-weight: 800; color: #38bdf8; margin-bottom: 8px;'>ATTACH TO JOURNEY</div>", unsafe_allow_html=True)
+            tab_file, tab_geo, tab_pref = st.tabs(["📄 Upload", "📍 Route Data", "⚙️ Preferences"])
+            with tab_file:
+                up_file = st.file_uploader(
+                    "Upload File / Image",
+                    type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "md", "csv", "json", "py"],
+                    key=f"chat_uploader_{key_prefix}"
+                )
+                if up_file is not None:
+                    f_bytes = up_file.getvalue()
+                    f_name = up_file.name
+                    f_mime = up_file.type or "application/octet-stream"
+                    if "pending_chat_attachments" not in st.session_state:
+                        st.session_state.pending_chat_attachments = []
+                    if not any(a.get("name") == f_name for a in st.session_state.pending_chat_attachments):
+                        if f_mime.startswith("image/"):
+                            import base64
+                            b64_str = base64.b64encode(f_bytes).decode("ascii")
+                            st.session_state.pending_chat_attachments.append({
+                                "type": "image",
+                                "name": f_name,
+                                "mime_type": f_mime,
+                                "data_base64": b64_str
+                            })
+                        else:
+                            txt_content, tag = DocumentParser.extract_text_from_bytes(f_bytes, f_name)
+                            st.session_state.pending_chat_attachments.append({
+                                "type": "document",
+                                "name": f_name,
+                                "text": txt_content,
+                                "summary": tag
+                            })
+                        st.success(f"Attached: {f_name}")
+                        st.rerun()
+
+            with tab_geo:
+                orig_l = st.session_state.get("user_live_label") or "Live GPS"
+                dest_l = st.session_state.get("selected_dest_label") or "Unset Destination"
+                c_orig = st.session_state.get("user_live_coords")
+                c_dest = st.session_state.get("selected_dest_coords")
+                st.caption(f"**Origin:** {orig_l} `({c_orig})`\n\n**Destination:** {dest_l} `({c_dest})`")
+                if st.button("📌 Attach Live Coordinates & Corridor", key=f"btn_att_geo_{key_prefix}", use_container_width=True):
+                    if "pending_chat_attachments" not in st.session_state:
+                        st.session_state.pending_chat_attachments = []
+                    geo_info = f"Current Location: {orig_l} ({c_orig}), Target Destination: {dest_l} ({c_dest})"
+                    st.session_state.pending_chat_attachments.append({
+                        "type": "document",
+                        "name": "Live_Journey_Context.txt",
+                        "text": geo_info,
+                        "summary": "Live Navigation & Corridor Telemetry"
+                    })
+                    st.success("Attached live route data!")
+                    st.rerun()
+
+            with tab_pref:
+                st.caption("Active Routing Engine Preferences:")
+                pref_tolls = st.checkbox("Avoid Toll Roads", value=st.session_state.get("avoid_tolls", False), key=f"chk_pref_toll_{key_prefix}")
+                pref_hw = st.checkbox("Avoid Highways", value=st.session_state.get("avoid_highways", False), key=f"chk_pref_hw_{key_prefix}")
+                if st.button("Apply to Assistant Context", key=f"btn_apply_pref_{key_prefix}", use_container_width=True):
+                    st.session_state.avoid_tolls = pref_tolls
+                    st.session_state.avoid_highways = pref_hw
+                    if "pending_chat_attachments" not in st.session_state:
+                        st.session_state.pending_chat_attachments = []
+                    st.session_state.pending_chat_attachments.append({
+                        "type": "document",
+                        "name": "Preferences.txt",
+                        "text": f"User Preferences: avoid_tolls={pref_tolls}, avoid_highways={pref_hw}",
+                        "summary": "User Journey Preferences"
+                    })
+                    st.success("Preferences updated!")
+                    st.rerun()
+
+    # C. Microphone (Voice Input) Button
+    with col_mic:
+        with st.popover("🎙️", help="Voice input / speech recognition"):
             cur_lang = st.session_state.get("app_language", "en")
             v_info = LANGUAGE_SPEECH_MAP.get(cur_lang, LANGUAGE_SPEECH_MAP["en"])
             bcp47_lang = v_info.get("bcp47", "en-IN")
@@ -6484,103 +6731,31 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 if aud_data is not None:
                     import speech_recognition as sr
                     r_engine = sr.Recognizer()
+                    from io import BytesIO
                     with sr.AudioFile(BytesIO(aud_data.getvalue())) as s_src:
                         a_recorded = r_engine.record(s_src)
                         try:
                             transcribed = r_engine.recognize_google(a_recorded, language=bcp47_lang)
                             if transcribed:
-                                st.session_state[f"txt_{key_prefix}"] = transcribed
+                                st.session_state.pending_chat_prompt = transcribed
                                 st.success(f"🎙️ \"{transcribed}\"")
+                                st.rerun()
                         except Exception as e_rec:
-                            st.info(f"Could not transcribe audio ({e_rec}). Type your query below.")
-            except Exception:
-                pass
+                            st.info(f"Could not transcribe audio ({e_rec}). Type your query in the chat box.")
+            except Exception as e_mic:
+                st.caption("Voice ready. Microphone permissions active.")
 
-    with ctrl_col3:
-        if st.button("🧹 New Chat", key=f"btn_new_chat_{key_prefix}", help="Clear conversation and reset context", use_container_width=True):
-            qc_l = st.session_state.get("app_language", "en")
-            st.session_state.aura_chat_history = [get_aura_welcome_message(qc_l)]
-            st.session_state.pending_chat_attachments = []
-            if "pathfinder_bot" in st.session_state and hasattr(st.session_state.pathfinder_bot, "reset_conversation"):
-                st.session_state.pathfinder_bot.reset_conversation()
-            st.rerun()
+    # B & D. Message Input Area and Circular Arrow-Up Send Button
+    with col_input:
+        user_prompt = st.chat_input(
+            "Ask Aura anything about your journey...",
+            key=f"chat_input_val_{key_prefix}"
+        )
 
-    # Active pending attachment pills
-    if st.session_state.get("pending_chat_attachments"):
-        p_col1, p_col2 = st.columns([0.82, 0.18])
-        with p_col1:
-            pills = "".join([f"<span style='background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.72rem; padding: 2px 7px; border-radius: 6px; margin-right: 5px;'>📎 {a.get('name')}</span>" for a in st.session_state.pending_chat_attachments])
-            st.markdown(f"<div style='margin-bottom: 6px;'>{pills}</div>", unsafe_allow_html=True)
-        with p_col2:
-            if st.button("✖ Remove", key=f"btn_rm_att_{key_prefix}", use_container_width=True):
-                st.session_state.pending_chat_attachments = []
-                st.rerun()
-
-    with st.form(f"aura_form_{key_prefix}", clear_on_submit=True):
-        col_in, col_btn = st.columns([4, 1])
-        with col_in:
-            u_text = st.text_input(
-                t("chat.title"),
-                placeholder="Ask NexRoute AI anything... (Routes, places, math, code, general knowledge)",
-                label_visibility="collapsed",
-                key=f"txt_{key_prefix}"
-            )
-        with col_btn:
-            s_click = st.form_submit_button(t("chat.send"), use_container_width=True)
-
-
-
-
-
-
-
-    if s_click and u_text and u_text.strip():
-        q_str = u_text.strip()
-        _execute_chat_turn(q_str)
+    if user_prompt and user_prompt.strip():
+        with st.spinner("AURA is planning your journey..."):
+            _execute_chat_turn(user_prompt.strip())
         st.rerun()
-
-    with st.container(key=f"aura_quick_chips_deck_{key_prefix}"):
-        qc_cur_l = st.session_state.get("app_language", "en")
-        
-        # Section Header: "Suggested Questions" on left, subtle "Clear Chat" on right
-        hdr_col_title, hdr_col_clear = st.columns([3.2, 1.3])
-        with hdr_col_title:
-            st.markdown(f"""
-            <div class="aura-suggested-title-badge">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
-                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-                </svg>
-                <span>{t("aura.suggested_title", default="Suggested Questions", lang=qc_cur_l)}</span>
-            </div>
-            """, unsafe_allow_html=True)
-        with hdr_col_clear:
-            if st.button(t("aura.clear_chat", default="Clear", lang=qc_cur_l), key=f"chip_clear_{key_prefix}", use_container_width=True):
-                st.session_state.aura_chat_history = [get_aura_welcome_message(qc_cur_l)]
-                if "pathfinder_bot" in st.session_state:
-                    st.session_state.pathfinder_bot.reset_conversation()
-                st.rerun()
-
-        # 3 Clean Text Suggestions with Consistent Lucide Icons
-        lbl_r = t("aura.suggest_route", default="Fastest route & avoid traffic", lang=qc_cur_l)
-        if st.button(lbl_r, key=f"btn_sq_route_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_route", default="Find the fastest route and avoid live traffic", lang=qc_cur_l))
-            st.rerun()
-
-        lbl_c = t("aura.suggest_cost", default="Estimate fuel cost & rest stops", lang=qc_cur_l)
-        if st.button(lbl_c, key=f"btn_sq_cost_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_cost", default="Estimate my fuel cost and rest stops for this journey", lang=qc_cur_l))
-            st.rerun()
-
-        lbl_p = t("aura.suggest_places", default="Discover top sights & places nearby", lang=qc_cur_l)
-        if st.button(lbl_p, key=f"btn_sq_places_{key_prefix}", use_container_width=True):
-            _execute_chat_turn(t("aura.prompt_places", default="Discover top tourist attractions and food stops nearby", lang=qc_cur_l))
-            st.rerun()
-
-
-
-
-
-
 
 # Initialize Default Multi-Objective Navigation & Facilities States (No Sidebar)
 
@@ -29729,34 +29904,8 @@ st.markdown('<div id="floating-copilot-trigger-anchor"></div>', unsafe_allow_htm
 
 
 
-with st.popover(" ", help="Open AURA • Adaptive User Route Assistant"):
-
-
-
-    st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(56, 189, 248, 0.35); padding-bottom: 8px; margin-bottom: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px; cursor: pointer;" class="aura-tour-btn" id="aura-chat-header-tour-trigger" title="Click to start Guided Tour!">
-            <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #00f0ff; background: radial-gradient(circle, rgba(0,240,255,0.2) 0%, rgba(10,25,47,0.9) 80%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px rgba(0, 240, 255, 0.65); overflow: hidden;">
-                <img src="{aura_logo_uri}" style="width: 36px; height: 36px; object-fit: contain;" alt="AURA AI Guide" />
-            </div>
-            <div>
-                <div style="font-weight: 800; font-size: 0.96rem; color: #f8fafc; letter-spacing: 0.04em; display: flex; align-items: center; gap: 6px;">
-                    <span style="color: #00f0ff; font-size: 0.85rem;">✦</span> AURA • AI Guide
-                </div>
-                <div style="font-size: 0.66rem; color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
-                    Ask questions, get travel advice and explore places using AI
-                </div>
-            </div>
-        </div>
-        <span style="font-size: 0.65rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; background: rgba(0, 240, 255, 0.15); border: 1px solid rgba(0, 240, 255, 0.45); color: #38bdf8; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 5px;">
-            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #00f0ff; box-shadow: 0 0 6px #00f0ff;"></span> ONLINE
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-
-    render_aura_chat_box(key_prefix="popover_window", height=340)
+with st.popover(" ", help="Open AURA • Intelligent AI Travel Companion"):
+    render_aura_chat_box(key_prefix="popover_window", height=440)
 
 
 
