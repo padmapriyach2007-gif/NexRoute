@@ -35,10 +35,10 @@ def get_aura_startup_greeting(lang: str = "en", user_name: str = "Boss") -> str:
 
     greetings_table = {
         "en": {
-            "morning": f"Good morning, {user_name}! Welcome to NextRoute. How can I help you?",
-            "afternoon": f"Good afternoon, {user_name}! Welcome to NextRoute. What can I do for you?",
-            "evening": f"Good evening, {user_name}! Welcome to NextRoute. How can I help you?",
-            "night": f"Hello, {user_name}! Welcome back to NextRoute. How can I assist you tonight?"
+            "morning": f"Good morning, {user_name}! Welcome to NextRoute. I'm AURA, your autonomous travel assistant. How can I help you?",
+            "afternoon": f"Good afternoon, {user_name}! Welcome to NextRoute. I'm AURA, your autonomous travel assistant. What can I do for you?",
+            "evening": f"Good evening, {user_name}! Welcome to NextRoute. I'm AURA, your autonomous travel assistant. How can I help you?",
+            "night": f"Hello, {user_name}! Welcome back to NextRoute. I'm AURA, your autonomous travel assistant. How can I assist you tonight?"
         },
         "te": {
             "morning": f"శుభోదయం, {user_name}! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
@@ -103,6 +103,22 @@ def render_aura_welcome_hud(
 
     # Dynamic Multilingual Localization for all AURA HUD words & labels
     brand_title = t("aura.brand_title", default="NEXROUTE", lang=current_lang)
+    txt_state_init = t("aura.state_initializing", default="● INITIALIZING", lang=current_lang)
+    txt_state_greet = t("aura.state_greeting", default="● GREETING", lang=current_lang)
+    txt_state_wake = t("aura.state_wake_standby", default="● WAKE-WORD STANDBY", lang=current_lang)
+    txt_state_list = t("aura.state_listening", default="● LISTENING...", lang=current_lang)
+    txt_state_silence = t("aura.state_silence_detected", default="● SILENCE DETECTED", lang=current_lang)
+    txt_state_proc = t("aura.state_processing", default="● PROCESSING...", lang=current_lang)
+    txt_state_spk = t("aura.state_speaking", default="● SPEAKING...", lang=current_lang)
+    txt_state_err = t("aura.state_error", default="● ERROR", lang=current_lang)
+    txt_state_stop = t("aura.state_stopped", default="● STOPPED", lang=current_lang)
+    txt_mic_act = t("aura.mic_active", default="🎙️ MIC: ACTIVE", lang=current_lang)
+    txt_mic_std = t("aura.mic_standby", default="🎙️ MIC: STANDBY", lang=current_lang)
+    txt_mic_mut = t("aura.mic_muted", default="🔇 MIC: MUTED", lang=current_lang)
+    txt_mic_den = t("aura.mic_denied", default="⚠️ MIC: DENIED", lang=current_lang)
+    txt_prompt_wake = t("aura.prompt_wake_standby", default='Say "Hey AURA" or click avatar to speak...', lang=current_lang)
+    txt_prompt_silence = t("aura.prompt_silence", default="Silence detected. Finalizing command...", lang=current_lang)
+    txt_wake_ack = t("aura.wake_word_ack", default="Yes, Boss?", lang=current_lang)
     brand_sub = t("aura.brand_sub", default="AUTONOMOUS SATELLITE TRAVEL", lang=current_lang)
     brand_pill = t("aura.brand_pill", default="AURA", lang=current_lang)
     btn_start_txt = t("aura.btn_speak", default="🎙️ SPEAK", lang=current_lang)
@@ -451,10 +467,186 @@ def render_aura_welcome_hud(
         box-shadow: 0 0 14px rgba(245, 158, 11, 0.45);
     }}
 
-    .status-badge.offline {{
+    .status-badge.offline,
+    .status-badge.stopped {{
         background: rgba(239, 68, 68, 0.16);
         border-color: #ef4444;
         color: #f87171;
+    }}
+
+    .status-badge.initializing {{
+        background: rgba(14, 165, 233, 0.2);
+        border-color: #0ea5e9;
+        color: #38bdf8;
+        box-shadow: 0 0 12px rgba(14, 165, 233, 0.4);
+    }}
+
+    .status-badge.greeting {{
+        background: rgba(168, 85, 247, 0.22);
+        border-color: #a855f7;
+        color: #c084fc;
+        box-shadow: 0 0 14px rgba(168, 85, 247, 0.45);
+    }}
+
+    .status-badge.wake-standby {{
+        background: rgba(0, 240, 255, 0.14);
+        border-color: #00f0ff;
+        color: #38bdf8;
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+    }}
+
+    .status-badge.silence-detected {{
+        background: rgba(251, 191, 36, 0.2);
+        border-color: #f59e0b;
+        color: #fef08a;
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.45);
+    }}
+
+    .status-badge.error {{
+        background: rgba(239, 68, 68, 0.25);
+        border-color: #ef4444;
+        color: #fca5a5;
+        box-shadow: 0 0 16px rgba(239, 68, 68, 0.55);
+    }}
+
+    /* Hardware Microphone Telemetry Pill */
+    .mic-status-pill {{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 9999px;
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid #334155;
+        color: #94a3b8;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }}
+
+    .mic-status-pill.active {{
+        border-color: #00f0ff;
+        color: #00f0ff;
+        background: rgba(0, 240, 255, 0.18);
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+    }}
+
+    .mic-status-pill.standby {{
+        border-color: #38bdf8;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+    }}
+
+    .mic-status-pill.muted {{
+        border-color: #f59e0b;
+        color: #fbbf24;
+        background: rgba(245, 158, 11, 0.12);
+    }}
+
+    .mic-status-pill.denied {{
+        border-color: #ef4444;
+        color: #f87171;
+        background: rgba(239, 68, 68, 0.2);
+    }}
+
+    .mic-indicator-dot {{
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        display: inline-block;
+    }}
+
+    .mic-status-pill.active .mic-indicator-dot {{
+        animation: blipPulse 1.1s infinite;
+    }}
+
+    /* 9-State Avatar Reactor Animation Classes */
+    @keyframes avatarBreathing {{
+        0%, 100% {{
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.28);
+            transform: scale(1);
+        }}
+        50% {{
+            box-shadow: 0 0 34px rgba(0, 240, 255, 0.62);
+            transform: scale(1.025);
+        }}
+    }}
+
+    @keyframes pulseCyanWave {{
+        0%, 100% {{
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.7);
+            transform: scale(1.015);
+        }}
+        50% {{
+            box-shadow: 0 0 48px rgba(0, 240, 255, 0.95);
+            transform: scale(1.055);
+        }}
+    }}
+
+    @keyframes rotateDigitalRings {{
+        0% {{ transform: rotate(0deg); }}
+        100% {{ transform: rotate(360deg); }}
+    }}
+
+    @keyframes voiceWaveModulation {{
+        0%, 100% {{
+            box-shadow: 0 0 22px rgba(56, 189, 248, 0.6);
+            transform: scale(1.01);
+        }}
+        50% {{
+            box-shadow: 0 0 42px rgba(56, 189, 248, 0.92);
+            transform: scale(1.045);
+        }}
+    }}
+
+    @keyframes errorWarningPulse {{
+        0%, 100% {{
+            box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+        }}
+        50% {{
+            box-shadow: 0 0 34px rgba(239, 68, 68, 0.88);
+        }}
+    }}
+
+    .avatar-stage.state-initializing {{
+        animation: avatarBreathing 2.5s ease-in-out infinite;
+    }}
+
+    .avatar-stage.state-greeting {{
+        animation: voiceWaveModulation 1s ease-in-out infinite;
+    }}
+
+    .avatar-stage.state-wake-word-standby,
+    .avatar-stage.state-wake_word_standby {{
+        animation: avatarBreathing 3s ease-in-out infinite;
+    }}
+
+    .avatar-stage.state-listening {{
+        animation: pulseCyanWave 1.2s ease-in-out infinite;
+    }}
+
+    .avatar-stage.state-silence-detected,
+    .avatar-stage.state-silence_detected {{
+        animation: avatarBreathing 1.2s ease-in-out infinite;
+    }}
+
+    .avatar-stage.state-processing .arc-reactor-ring-outer {{
+        animation: rotateDigitalRings 0.9s linear infinite !important;
+    }}
+
+    .avatar-stage.state-speaking {{
+        animation: voiceWaveModulation 0.8s ease-in-out infinite;
+    }}
+
+    .avatar-stage.state-error {{
+        animation: errorWarningPulse 1.4s ease-in-out infinite;
+    }}
+
+    .avatar-stage.state-stopped {{
+        opacity: 0.55;
     }}
 
     /* Smart Persistent Session Toggle Controls */
@@ -1139,6 +1331,11 @@ def render_aura_welcome_hud(
         </div>
 
         <div class="top-right-controls">
+            <!-- Microphone Permission & Real-Time Activity State Indicator -->
+            <div class="mic-status-pill standby" id="micStatusIndicator" title="Microphone permission & hardware state">
+                <span class="mic-indicator-dot"></span>
+                <span id="micStatusText">{txt_mic_std}</span>
+            </div>
             <!-- Persistent Smart Voice Session Toggle -->
             <button class="btn-session-main start" id="btnSessionToggle" onclick="window.togglePersistentVoiceSession()" title="Start / Pause Continuous Voice Session">
                 {btn_start_txt}
@@ -1147,8 +1344,8 @@ def render_aura_welcome_hud(
             <button class="btn-session-end" id="btnEndSession" onclick="window.endVoiceSession()" style="display: none;" title="End Voice Session (Offline)">
                 {btn_end_txt}
             </button>
-            <div class="status-badge idle" id="statusBadge">
-                {status_idle_txt}
+            <div class="status-badge wake-standby" id="statusBadge">
+                {txt_state_wake}
             </div>
         </div>
     </div>
@@ -1342,6 +1539,23 @@ def _build_jarvis_controller_script(
     speech recognition, continuous voice loop, voice activity detection,
     intelligent mid-speech interruption, silence detection, and React WebSocket communication bridge to Streamlit.
     """
+    txt_state_init = t("aura.state_initializing", default="● INITIALIZING", lang=current_lang)
+    txt_state_greet = t("aura.state_greeting", default="● GREETING", lang=current_lang)
+    txt_state_wake = t("aura.state_wake_standby", default="● WAKE-WORD STANDBY", lang=current_lang)
+    txt_state_list = t("aura.state_listening", default="● LISTENING...", lang=current_lang)
+    txt_state_silence = t("aura.state_silence_detected", default="● SILENCE DETECTED", lang=current_lang)
+    txt_state_proc = t("aura.state_processing", default="● PROCESSING...", lang=current_lang)
+    txt_state_spk = t("aura.state_speaking", default="● SPEAKING...", lang=current_lang)
+    txt_state_err = t("aura.state_error", default="● ERROR", lang=current_lang)
+    txt_state_stop = t("aura.state_stopped", default="● STOPPED", lang=current_lang)
+    txt_mic_act = t("aura.mic_active", default="🎙️ MIC: ACTIVE", lang=current_lang)
+    txt_mic_std = t("aura.mic_standby", default="🎙️ MIC: STANDBY", lang=current_lang)
+    txt_mic_mut = t("aura.mic_muted", default="🔇 MIC: MUTED", lang=current_lang)
+    txt_mic_den = t("aura.mic_denied", default="⚠️ MIC: DENIED", lang=current_lang)
+    txt_prompt_wake = t("aura.prompt_wake_standby", default='Say "Hey AURA" or click avatar to speak...', lang=current_lang)
+    txt_prompt_silence = t("aura.prompt_silence", default="Silence detected. Finalizing command...", lang=current_lang)
+    txt_wake_ack = t("aura.wake_word_ack", default="Yes, Boss?", lang=current_lang)
+
     return f"""
 <script>
 (function() {{
@@ -1350,14 +1564,29 @@ def _build_jarvis_controller_script(
     var shouldAutoSpeak = {json.dumps(bool(auto_speak))};
     var initialGreetingText = {json.dumps(greeting_text)};
 
-    var txtGreeting = {json.dumps(t("aura.status_greeting", default="🔊 GREETING, BOSS...", lang=current_lang))};
-    var txtListening = {json.dumps(t("aura.status_listening", default="🎙️ LISTENING...", lang=current_lang))};
-    var txtSpeaking = {json.dumps(t("aura.status_speaking", default="🔊 SPEAKING...", lang=current_lang))};
-    var txtProcessing = {json.dumps(t("aura.status_processing", default="⚡ PROCESSING...", lang=current_lang))};
+    // Localized 9 Voice States
+    var txtInit = {json.dumps(txt_state_init)};
+    var txtGreeting = {json.dumps(txt_state_greet)};
+    var txtWakeStandby = {json.dumps(txt_state_wake)};
+    var txtListening = {json.dumps(txt_state_list)};
+    var txtSilence = {json.dumps(txt_state_silence)};
+    var txtProcessing = {json.dumps(txt_state_proc)};
+    var txtSpeaking = {json.dumps(txt_state_spk)};
+    var txtError = {json.dumps(txt_state_err)};
+    var txtStopped = {json.dumps(txt_state_stop)};
+
+    // Localized Mic States
+    var txtMicActive = {json.dumps(txt_mic_act)};
+    var txtMicStandby = {json.dumps(txt_mic_std)};
+    var txtMicMuted = {json.dumps(txt_mic_mut)};
+    var txtMicDenied = {json.dumps(txt_mic_den)};
+
+    // Localized Prompts & Wake Acks
+    var txtPromptWake = {json.dumps(txt_prompt_wake)};
+    var txtPromptSilence = {json.dumps(txt_prompt_silence)};
+    var txtWakeAck = {json.dumps(txt_wake_ack)};
     var txtPaused = {json.dumps(t("aura.status_paused", default="⏸️ PAUSED", lang=current_lang))};
-    var txtIdle = {json.dumps(t("aura.status_idle", default="● IDLE • READY", lang=current_lang))};
     var txtIdlePrompt = {json.dumps(t("aura.status_idle_prompt", default="Ready for your command... Speak or click avatar.", lang=current_lang))};
-    var txtOffline = {json.dumps(t("aura.status_offline", default="● AURA OFFLINE", lang=current_lang))};
     var txtBtnPause = {json.dumps(t("aura.btn_pause", default="⏸ PAUSE", lang=current_lang))};
     var txtBtnResume = {json.dumps(t("aura.btn_resume", default="▶ RESUME", lang=current_lang))};
     var txtBtnSpeak = {json.dumps(t("aura.btn_speak", default="🎙️ SPEAK", lang=current_lang))};
@@ -1379,20 +1608,21 @@ def _build_jarvis_controller_script(
     }}
 
     // -------------------------------------------------------------------------
-    // Configurable Voice & Silence Detection Thresholds
+    // Configurable Voice & Silence Detection Thresholds (2.0s VAD Window)
     // -------------------------------------------------------------------------
     var voiceConfig = {{
-        silenceThresholdMs: 1400,        // Short pause: wait for sentence to finish
-        vadTimeoutMs: 1400,              // Backward-compatibility alias
-        extendedSilenceMs: 6500,         // Extended silence: stop active recording and enter IDLE
+        silenceThresholdMs: 2000,        // 2.0s Intelligent Silence Detection threshold
+        vadTimeoutMs: 2000,              // Backward-compatibility alias
+        extendedSilenceMs: 7500,         // Extended silence: return to wake-word standby
         maxUtteranceDurationMs: 15000,   // Max duration per utterance
-        autoStopOnSilence: true,         // Automatically stop active mic recording on silence
-        autoRestartAfterResponse: true,  // Automatically return to waiting state after response
+        wakeWordEnabled: true,           // Continuous wake-word scanning ("Hey AURA")
+        autoStopOnSilence: true,         // Automatically finalize mic recording on silence
+        autoRestartAfterResponse: true,  // Automatically return to wake-word standby loop
         preventEmptyTranscriptions: true // Discard empty transcriptions
     }};
 
     // -------------------------------------------------------------------------
-    // Time-Appropriate Client-Side Local Time Greeting
+    // Time-Appropriate Dynamic Greeting
     // -------------------------------------------------------------------------
     function getClientLocalGreeting(lang, userName) {{
         var h = new Date().getHours();
@@ -1404,49 +1634,49 @@ def _build_jarvis_controller_script(
 
         var greetings = {{
             en: {{
-                morning: "Good morning, " + userName + "! Welcome to NextRoute. How can I help you?",
-                afternoon: "Good afternoon, " + userName + "! Welcome to NextRoute. What can I do for you?",
-                evening: "Good evening, " + userName + "! Welcome to NextRoute. How can I help you?",
-                night: "Hello, " + userName + "! Welcome back to NextRoute. How can I assist you tonight?"
+                morning: "Good morning, " + userName + "! Welcome to NextRoute. I'm AURA, your autonomous travel assistant. How can I help you?",
+                afternoon: "Good afternoon, " + userName + "! Welcome to NextRoute. I'm AURA, your autonomous travel assistant. What can I do for you?",
+                evening: "Good evening, " + userName + "! Welcome to NextRoute. I'm AURA, your autonomous travel assistant. How can I help you?",
+                night: "Hello, " + userName + "! Welcome back to NextRoute. I'm AURA, your autonomous travel assistant. How can I assist you tonight?"
             }},
             te: {{
-                morning: "శుభోదయం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
-                afternoon: "శుభ మధ్యాహ్నం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. మీ కోసం నేను ఏమి చేయగలను?",
-                evening: "శుభ సాయంత్రం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీకు ఎలా సహాయపడగలను?",
-                night: "నమస్కారం, " + userName + "! నెక్స్‌రూట్‌కి తిరిగి స్వాగతం. ఈ రాత్రి నేను మీకు ఎలా సహాయపడగలను?"
+                morning: "శుభోదయం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీ ఆటోనామస్ ట్రావెల్ అసిస్టెంట్ AURA. నేను మీకు ఎలా సహాయపడగలను?",
+                afternoon: "శుభ మధ్యాహ్నం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీ ఆటోనామస్ ట్రావెల్ అసిస్టెంట్ AURA. మీ కోసం నేను ఏమి చేయగలను?",
+                evening: "శుభ సాయంత్రం, " + userName + "! నెక్స్‌రూట్‌కి స్వాగతం. నేను మీ ఆటోనామస్ ట్రావెల్ అసిస్టెంట్ AURA. నేను మీకు ఎలా సహాయపడగలను?",
+                night: "నమస్కారం, " + userName + "! నెక్స్‌రూట్‌కి తిరిగి స్వాగతం. నేను మీ ఆటోనామస్ ట్రావెల్ అసిస్టెంట్ AURA. ఈ రాత్రి నేను మీకు ఎలా సహాయపడగలను?"
             }},
             hi: {{
-                morning: "शुभ प्रभात, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
-                afternoon: "शुभ दोपहर, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं आपके लिए क्या कर सकता हूँ?",
-                evening: "शुभ संध्या, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं आपकी क्या मदद कर सकता हूँ?",
-                night: "नमस्ते, " + userName + "! नेक्स्ट-रूट में पुनः स्वागत है। आज रात मैं आपकी क्या सहायता कर सकता हूँ?"
+                morning: "शुभ प्रभात, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं AURA, आपका ऑटोनॉमस ट्रैवल असिस्टेंट हूँ। मैं आपकी क्या मदद कर सकता हूँ?",
+                afternoon: "शुभ दोपहर, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं AURA, आपका ऑटोनॉमस ट्रैवल असिस्टेंट हूँ। मैं आपके लिए क्या कर सकता हूँ?",
+                evening: "शुभ संध्या, " + userName + "! नेक्स्ट-रूट में आपका स्वागत है। मैं AURA, आपका ऑटोनॉमस ट्रैवल असिस्टेंट हूँ। मैं आपकी क्या मदद कर सकता हूँ?",
+                night: "नमस्ते, " + userName + "! नेक्स्ट-रूट में पुनः स्वागत है। मैं AURA, आपका ऑटोनॉमस ट्रैवल असिस्टेंट हूँ। आज रात मैं आपकी क्या सहायता कर सकता हूँ?"
             }},
             ta: {{
-                morning: "காலை வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
-                afternoon: "மதிய வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. உங்களுக்காக நான் என்ன செய்ய முடியும்?",
-                evening: "மாலை வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
-                night: "வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு மீண்டும் நல்வரவு. இன்று இரவு நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
+                morning: "காலை வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்கள் பயண உதவியாளர் AURA. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+                afternoon: "மதிய வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்கள் பயண உதவியாளர் AURA. உங்களுக்காக நான் என்ன செய்ய முடியும்?",
+                evening: "மாலை வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு நல்வரவு. நான் உங்கள் பயண உதவியாளர் AURA. நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+                night: "வணக்கம், " + userName + "! நெக்ஸ்ட்-ரூட்டிற்கு மீண்டும் நல்வரவு. நான் உங்கள் பயண உதவியாளர் AURA. இன்று இரவு நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?"
             }},
             kn: {{
-                morning: "ಶುಭೋದಯ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
-                afternoon: "ಶುಭ ಮಧ್ಯಾಹ್ನ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಿಮಗಾಗಿ ನಾನು ಏನು ಮಾಡಲಿ?",
-                evening: "ಶುಭ ಸಂಜೆ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
-                night: "ನಮಸ್ಕಾರ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಮತ್ತೆ ಸುಸ್ವಾಗತ. ಇಂದು ರಾತ್ರಿ ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+                morning: "ಶುಭೋದಯ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು AURA, ನಿಮ್ಮ ಸ್ವಾಯತ್ತ ಪ್ರಯಾಣ ಸಹಾಯಕ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+                afternoon: "ಶುಭ ಮಧ್ಯಾಹ್ನ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು AURA, ನಿಮ್ಮ ಸ್ವಾಯತ್ತ ಪ್ರಯಾಣ ಸಹಾಯಕ. ನಿಮಗಾಗಿ ನಾನು ಏನು ಮಾಡಲಿ?",
+                evening: "ಶುಭ ಸಂಜೆ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಾನು AURA, ನಿಮ್ಮ ಸ್ವಾಯತ್ತ ಪ್ರಯಾಣ ಸಹಾಯಕ. ನಾನು మీకు ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+                night: "ನಮಸ್ಕಾರ, " + userName + "! ನೆಕ್ಸ್ಟ್‌-ರೂಟ್‌ಗೆ ಮತ್ತೆ ಸುಸ್ವಾಗತ. ನಾನು AURA, ನಿಮ್ಮ ಸ್ವಾಯತ್ತ ಪ್ರಯಾಣ ಸಹಾಯಕ. ಇಂದು ರಾತ್ರಿ ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
             }},
             ml: {{
-                morning: "സുപ്രഭാതം, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
-                afternoon: "ശുഭ ഉച്ചതിരിഞ്ഞ്, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എന്താണ് ചെയ്യേണ്ടത്?",
-                evening: "ശുഭ സായാഹ്നം, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
-                night: "ഹലോ, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് വീണ്ടും സ്വാഗതം. ഇന്ന് രാത്രി ഞാൻ എങ്ങനെ സഹായിക്കണം?"
+                morning: "സുപ്രഭാതം, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ AURA, നിങ്ങളുടെ സ്വയംഭരണ യാത്രാ സഹായി. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
+                afternoon: "ശുഭ ഉച്ചതിരിഞ്ഞ്, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ AURA. ഞാൻ എന്താണ് ചെയ്യേണ്ടത്?",
+                evening: "ശുഭ സായാഹ്നം, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് സ്വാഗതം. ഞാൻ AURA. ഞാൻ എങ്ങനെ സഹായിക്കണം?",
+                night: "ഹലോ, " + userName + "! നെക്സ്റ്റ്-റൂട്ടിലേക്ക് വീണ്ടും സ്വാഗതം. ഞാൻ AURA. ഇന്ന് രാത്രി ഞാൻ എങ്ങനെ സഹായിക്കണം?"
             }},
             bn: {{
-                morning: "সুপ্রভাত, " + userName + "! নেক্সটরুটে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+                morning: "সুপ্রভাত, " + userName + "! নেক্সটরুটে স্বাগতম। আমি AURA, আপনার স্বয়ংক্রিয় ভ্রমণ সহায়ক। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
                 afternoon: "শুভ অপরাহ্ন, " + userName + "! নেক্সটরুটে স্বাগতম। আমি আপনার জন্য কি করতে পারি?",
                 evening: "শুভ সন্ধ্যা, " + userName + "! নেক্সটরুটে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
                 night: "হ্যালো, " + userName + "! নেক্সটরুটে আবার স্বাগতম। আজ রাতে আমি আপনাকে কীভাবে সাহায্য করতে পারি?"
             }},
             mr: {{
-                morning: "शुभ सकाळ, " + userName + "! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपली काय मदत करू शकतो?",
+                morning: "शुभ सकाळ, " + userName + "! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी AURA, आपला स्वायत्त प्रवास सहाय्यक. मी आपली काय मदत करू शकतो?",
                 afternoon: "शुभ दुपार, " + userName + "! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपल्यासाठी काय करू शकतो?",
                 evening: "शुभ संध्याकाळ, " + userName + "! नेक्स्ट-रूट मध्ये आपले स्वागत आहे. मी आपली काय मदत करू शकतो?",
                 night: "नमस्कार, " + userName + "! नेक्स्ट-रूट मध्ये पुन्हा स्वागत आहे. आज रात्री मी आपली कशी मदत करू शकतो?"
@@ -1463,13 +1693,75 @@ def _build_jarvis_controller_script(
         greetingHeadlineElem.innerText = '"' + clientGreeting + '"';
     }}
 
+    // Localized Wake-Word Acknowledgments
+    var wakeWordAcks = {{
+        en: "Yes, Boss?",
+        te: "చెప్పండి బాస్?",
+        hi: "हाँ, बॉस?",
+        ta: "சொல்லுங்கள் பாஸ்?",
+        kn: "ಹೇಳಿ ಬಾಸ್?",
+        ml: "പറയൂ ബോസ്?",
+        bn: "বলুন বস?",
+        mr: "बोला बॉस?"
+    }};
+
     // -------------------------------------------------------------------------
-    // Central State Machine:
-    // 'INACTIVE', 'INITIALIZING', 'GREETING', 'IDLE', 'LISTENING', 'PROCESSING', 'SPEAKING', 'PAUSED', 'STOPPED'
+    // Multilingual Wake-Word Detector across all 8 supported languages:
+    // English, Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, Marathi
     // -------------------------------------------------------------------------
-    var sessionState = localStorage.getItem('aura_persistent_voice_state') || 'IDLE';
-    if (sessionState === 'SPEAKING' || sessionState === 'PROCESSING') {{
-        sessionState = 'IDLE';
+    function isWakeWordPhrase(text, lang) {{
+        if (!text) return false;
+        var clean = text.toLowerCase().trim();
+        if (/\b(hey\s+aura|wake\s+up\s+aura|ok\s+aura|aura|hi\s+aura)\b/i.test(clean)) return true;
+        if (/(హే\s*ఆరా|ఆరా|మేల్కొను\s*ఆరా|నమస్తే\s*ఆరా)/.test(clean)) return true;
+        if (/(हे\s*ऑरा|ऑरा|जागो\s*ऑरा|नमस्ते\s*ऑरा)/.test(clean)) return true;
+        if (/(ஹே\s*ஆரா|ஆரா|எழுந்திரு\s*ஆரா)/.test(clean)) return true;
+        if (/(ಹೇ\s*ಔರಾ|ಔರಾ|ಎಚ್ಚರಾಗು\s*ಔರಾ)/.test(clean)) return true;
+        if (/(ഹേ\s*ഓറ|ഓറ|ഉണരുക\s*ഓറ)/.test(clean)) return true;
+        if (/(হে\s*অরা|অরা|জেগে\s*ওঠো\s*অরা)/.test(clean)) return true;
+        if (/(हे\s*ऑरा|ऑरा|जागृत\s*व्हा\s*ऑरा)/.test(clean)) return true;
+        return false;
+    }}
+
+    function extractCommandAfterWakeWord(text) {{
+        if (!text) return '';
+        var replaced = text
+            .replace(/^(hey\s+aura|wake\s+up\s+aura|ok\s+aura|aura|hi\s+aura)[,\s:]*/i, '')
+            .replace(/^(హే\s*ఆరా|ఆరా|మేల్కొను\s*ఆరా|నమస్తే\s*ఆరా)[,\s:]*/, '')
+            .replace(/^(हे\s*ऑरा|ऑरा|जागो\s*ऑरा|नमस्ते\s*ऑरा)[,\s:]*/, '')
+            .replace(/^(ஹே\s*ஆரா|ஆரா|எழுந்திரு\s*ஆரா)[,\s:]*/, '')
+            .replace(/^(ಹೇ\s*ಔರಾ|ಔರಾ|ಎಚ್ಚರಾಗು\s*ಔರಾ)[,\s:]*/, '')
+            .replace(/^(ഹേ\s*ഓറ|ഓറ|ഉണരുക\s*ഓറ)[,\s:]*/, '')
+            .replace(/^(হে\s*অরা|অরা|জেগে\s*ওঠো\s*অরা)[,\s:]*/, '')
+            .replace(/^(हे\s*ऑरा|ऑरा|जागृत\s*व्हा\s*ऑरा)[,\s:]*/, '');
+        return replaced.trim();
+    }}
+
+    // -------------------------------------------------------------------------
+    // Exact 9-State Central Voice State Machine:
+    // 1. INITIALIZING
+    // 2. GREETING
+    // 3. WAKE_WORD_STANDBY
+    // 4. LISTENING
+    // 5. SILENCE_DETECTED
+    // 6. PROCESSING
+    // 7. SPEAKING
+    // 8. ERROR
+    // 9. STOPPED
+    // -------------------------------------------------------------------------
+    var STATE_INITIALIZING = 'INITIALIZING';
+    var STATE_GREETING = 'GREETING';
+    var STATE_WAKE_WORD_STANDBY = 'WAKE_WORD_STANDBY';
+    var STATE_LISTENING = 'LISTENING';
+    var STATE_SILENCE_DETECTED = 'SILENCE_DETECTED';
+    var STATE_PROCESSING = 'PROCESSING';
+    var STATE_SPEAKING = 'SPEAKING';
+    var STATE_ERROR = 'ERROR';
+    var STATE_STOPPED = 'STOPPED';
+
+    var sessionState = localStorage.getItem('aura_persistent_voice_state') || STATE_WAKE_WORD_STANDBY;
+    if (sessionState === 'IDLE' || sessionState === 'SPEAKING' || sessionState === 'PROCESSING' || sessionState === 'SILENCE_DETECTED') {{
+        sessionState = STATE_WAKE_WORD_STANDBY;
     }}
 
     var isListening = false;
@@ -1487,13 +1779,26 @@ def _build_jarvis_controller_script(
     var ctx = canvas ? canvas.getContext('2d') : null;
     var animationId = null;
 
-    var silenceTimer = null;         // VAD short pause timer
-    var extendedSilenceTimer = null; // VAD extended silence timer
+    var silenceTimer = null;         // 2.0s Intelligent Silence Detection Timer
+    var extendedSilenceTimer = null; // Extended timeout timer
     var currentSpeechBuffer = '';
     var restartDebounceTimer = null;
+    var commandDispatchLock = false; // Prevent double execution of identical command
+
+    // Hardware Microphone Status Updater
+    function setMicStatus(status) {{
+        var pill = document.getElementById('micStatusIndicator');
+        var txt = document.getElementById('micStatusText');
+        if (!pill || !txt) return;
+        pill.className = 'mic-status-pill ' + status.toLowerCase();
+        if (status === 'ACTIVE') txt.innerText = txtMicActive;
+        else if (status === 'STANDBY') txt.innerText = txtMicStandby;
+        else if (status === 'MUTED') txt.innerText = txtMicMuted;
+        else if (status === 'DENIED') txt.innerText = txtMicDenied;
+    }}
 
     // -------------------------------------------------------------------------
-    // UI Status & Control State Synchronization
+    // UI Status & Avatar Reactor State Synchronization
     // -------------------------------------------------------------------------
     function updateUIForState(state, message) {{
         var badge = document.getElementById('statusBadge');
@@ -1501,10 +1806,26 @@ def _build_jarvis_controller_script(
         var btnEnd = document.getElementById('btnEndSession');
         var midRing = document.getElementById('avatarMidRing');
         var transBox = document.getElementById('transcriptBox');
+        var avatarStage = document.querySelector('.avatar-stage');
 
         if (transBox && message) transBox.innerText = message;
 
-        if (state === 'GREETING') {{
+        // Apply avatar animation class
+        if (avatarStage) {{
+            avatarStage.className = 'avatar-stage state-' + state.toLowerCase().replace(/_/g, '-');
+        }}
+
+        if (state === STATE_INITIALIZING) {{
+            isListening = false;
+            isSpeaking = false;
+            isProcessing = false;
+            if (badge) {{
+                badge.className = 'status-badge initializing';
+                badge.innerText = txtInit;
+            }}
+            setMicStatus('STANDBY');
+            if (midRing) midRing.style.boxShadow = '0 0 16px #0ea5e9';
+        }} else if (state === STATE_GREETING) {{
             isListening = false;
             isSpeaking = true;
             isProcessing = false;
@@ -1517,8 +1838,24 @@ def _build_jarvis_controller_script(
                 btnToggle.innerHTML = txtBtnPause;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
-            if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
-        }} else if (state === 'LISTENING') {{
+            setMicStatus('STANDBY');
+            if (midRing) midRing.style.boxShadow = '0 0 28px #a855f7';
+        }} else if (state === STATE_WAKE_WORD_STANDBY) {{
+            isListening = true;
+            isSpeaking = false;
+            isProcessing = false;
+            if (badge) {{
+                badge.className = 'status-badge wake-standby';
+                badge.innerText = txtWakeStandby;
+            }}
+            if (btnToggle) {{
+                btnToggle.className = 'btn-session-main start';
+                btnToggle.innerHTML = txtBtnSpeak;
+            }}
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
+            setMicStatus('STANDBY');
+            if (midRing) midRing.style.boxShadow = '0 0 18px rgba(0, 240, 255, 0.45)';
+        }} else if (state === STATE_LISTENING) {{
             isListening = true;
             isSpeaking = false;
             isProcessing = false;
@@ -1531,22 +1868,19 @@ def _build_jarvis_controller_script(
                 btnToggle.innerHTML = txtBtnPause;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
+            setMicStatus('ACTIVE');
             if (midRing) midRing.style.boxShadow = '0 0 32px #00f0ff';
-        }} else if (state === 'SPEAKING') {{
+        }} else if (state === STATE_SILENCE_DETECTED) {{
             isListening = false;
-            isSpeaking = true;
-            isProcessing = false;
+            isSpeaking = false;
+            isProcessing = true;
             if (badge) {{
-                badge.className = 'status-badge speaking';
-                badge.innerText = txtSpeaking;
+                badge.className = 'status-badge silence-detected';
+                badge.innerText = txtSilence;
             }}
-            if (btnToggle) {{
-                btnToggle.className = 'btn-session-main pause';
-                btnToggle.innerHTML = txtBtnPause;
-            }}
-            if (btnEnd) btnEnd.style.display = 'inline-flex';
-            if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
-        }} else if (state === 'PROCESSING') {{
+            setMicStatus('STANDBY');
+            if (midRing) midRing.style.boxShadow = '0 0 24px #f59e0b';
+        }} else if (state === STATE_PROCESSING) {{
             isListening = false;
             isSpeaking = false;
             isProcessing = true;
@@ -1559,50 +1893,50 @@ def _build_jarvis_controller_script(
                 btnToggle.innerHTML = txtBtnPause;
             }}
             if (btnEnd) btnEnd.style.display = 'inline-flex';
+            setMicStatus('STANDBY');
             if (midRing) midRing.style.boxShadow = '0 0 28px #a855f7';
-        }} else if (state === 'PAUSED') {{
+        }} else if (state === STATE_SPEAKING) {{
+            isListening = false;
+            isSpeaking = true;
+            isProcessing = false;
+            if (badge) {{
+                badge.className = 'status-badge speaking';
+                badge.innerText = txtSpeaking;
+            }}
+            if (btnToggle) {{
+                btnToggle.className = 'btn-session-main pause';
+                btnToggle.innerHTML = txtBtnPause;
+            }}
+            if (btnEnd) btnEnd.style.display = 'inline-flex';
+            setMicStatus('STANDBY');
+            if (midRing) midRing.style.boxShadow = '0 0 28px #38bdf8';
+        }} else if (state === STATE_ERROR) {{
             isListening = false;
             isSpeaking = false;
             isProcessing = false;
             if (badge) {{
-                badge.className = 'status-badge paused';
-                badge.innerText = txtPaused;
+                badge.className = 'status-badge error';
+                badge.innerText = txtError;
             }}
-            if (btnToggle) {{
-                btnToggle.className = 'btn-session-main resume';
-                btnToggle.innerHTML = txtBtnResume;
-            }}
+            setMicStatus('DENIED');
             if (btnEnd) btnEnd.style.display = 'inline-flex';
-            if (midRing) midRing.style.boxShadow = '0 0 16px rgba(245, 158, 11, 0.45)';
-        }} else if (state === 'IDLE') {{
-            isListening = false;
-            isSpeaking = false;
-            isProcessing = false;
-            if (badge) {{
-                badge.className = 'status-badge idle';
-                badge.innerText = txtIdle;
-            }}
-            if (btnToggle) {{
-                btnToggle.className = 'btn-session-main start';
-                btnToggle.innerHTML = txtBtnSpeak;
-            }}
-            if (btnEnd) btnEnd.style.display = 'inline-flex';
-            if (midRing) midRing.style.boxShadow = '0 0 18px rgba(0, 240, 255, 0.45)';
+            if (midRing) midRing.style.boxShadow = '0 0 24px #ef4444';
         }} else {{
-            // STOPPED or INACTIVE
+            // STOPPED or PAUSED
             isListening = false;
             isSpeaking = false;
             isProcessing = false;
             if (badge) {{
-                badge.className = 'status-badge offline';
-                badge.innerText = txtOffline;
+                badge.className = 'status-badge stopped';
+                badge.innerText = txtStopped;
             }}
             if (btnToggle) {{
                 btnToggle.className = 'btn-session-main start';
                 btnToggle.innerHTML = txtBtnStart;
             }}
             if (btnEnd) btnEnd.style.display = 'none';
-            if (midRing) midRing.style.boxShadow = '0 0 16px rgba(0, 240, 255, 0.35)';
+            setMicStatus('MUTED');
+            if (midRing) midRing.style.boxShadow = '0 0 10px rgba(100, 116, 139, 0.3)';
         }}
     }}
 
@@ -1630,13 +1964,13 @@ def _build_jarvis_controller_script(
         var step = canvas.width / numPoints;
         var midY = canvas.height / 2;
 
-        var baseAmp = isSpeaking ? 10 : (isListening ? 7 : (isProcessing ? 4.5 : (sessionState === 'IDLE' ? 2.5 : 1.2)));
-        var freq = isSpeaking ? 0.18 : (isListening ? 0.24 : (isProcessing ? 0.36 : 0.08));
+        var baseAmp = isSpeaking ? 10 : (isListening ? (sessionState === STATE_LISTENING ? 8 : 3.5) : (isProcessing ? 4.5 : 1.2));
+        var freq = isSpeaking ? 0.18 : (isListening ? (sessionState === STATE_LISTENING ? 0.24 : 0.12) : 0.08);
 
         ctx.beginPath();
-        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (isListening ? '#38bdf8' : (isProcessing ? '#c084fc' : (sessionState === 'IDLE' ? 'rgba(56, 189, 248, 0.65)' : 'rgba(100, 116, 139, 0.3)')));
-        ctx.lineWidth = isSpeaking || isListening ? 2.2 : 1.4;
-        ctx.shadowBlur = isSpeaking ? 14 : (isListening ? 10 : (sessionState === 'IDLE' ? 4 : 1));
+        ctx.strokeStyle = isSpeaking ? '#00f0ff' : (sessionState === STATE_LISTENING ? '#00f0ff' : (sessionState === STATE_WAKE_WORD_STANDBY ? '#38bdf8' : '#a855f7'));
+        ctx.lineWidth = isSpeaking || sessionState === STATE_LISTENING ? 2.2 : 1.4;
+        ctx.shadowBlur = isSpeaking ? 14 : (sessionState === STATE_LISTENING ? 12 : 4);
         ctx.shadowColor = '#00f0ff';
 
         for (var i = 0; i <= numPoints; i++) {{
@@ -1648,7 +1982,7 @@ def _build_jarvis_controller_script(
         }}
         ctx.stroke();
 
-        wavePhase += isSpeaking ? 0.22 : (isListening ? 0.16 : 0.04);
+        wavePhase += isSpeaking ? 0.22 : (sessionState === STATE_LISTENING ? 0.18 : 0.05);
         animationId = requestAnimationFrame(drawWave);
     }}
     drawWave();
@@ -1680,14 +2014,13 @@ def _build_jarvis_controller_script(
         }}
     }}
 
-    // Voice Synthesis with Mutex Audio Lock
-        function selectNaturalVoiceForLang(voices, bcp47Code, langCode) {{
+    function selectNaturalVoiceForLang(voices, bcp47, langCode) {{
         if (!voices || voices.length === 0) return null;
-        var bcp47Lower = (bcp47Code || '').toLowerCase();
-        var prefix = (langCode || bcp47Lower.split('-')[0]).toLowerCase();
+        var bcp47Lower = (bcp47 || 'en-IN').toLowerCase();
+        var prefix = (langCode || 'en').toLowerCase();
 
         var preferredKeywords = {{
-            te: ["mohan", "shruti", "తెలుగు", "telugu"],
+            te: ["mohan", "chitra", "తెలుగు", "telugu"],
             hi: ["hemant", "kalpana", "हिन्दी", "hindi", "swara", "madhur", "lekha"],
             ta: ["valluvar", "pallavi", "தமிழ்", "tamil"],
             kn: ["gagan", "sapna", "ಕನ್ನಡ", "kannada"],
@@ -1713,7 +2046,7 @@ def _build_jarvis_controller_script(
             }}
         }}
 
-        // Priority 2: Match any voice matching the exact BCP-47 tag (e.g., te-IN, hi-IN)
+        // Priority 2: Match any voice matching the exact BCP-47 tag
         for (var j = 0; j < voices.length; j++) {{
             if ((voices[j].lang || '').toLowerCase() === bcp47Lower) {{
                 return voices[j];
@@ -1727,12 +2060,7 @@ def _build_jarvis_controller_script(
             }}
         }}
 
-        // English fallback to first available
-        if (prefix === 'en') {{
-            return voices[0] || null;
-        }}
-
-        // For non-English languages, never fallback to an unrelated English voice!
+        if (prefix === 'en') return voices[0] || null;
         return null;
     }}
 
@@ -1751,7 +2079,7 @@ def _build_jarvis_controller_script(
                 var selVoice = selectNaturalVoiceForLang(voices, bcp47Lang, activeLang);
                 if (!selVoice && activeLang !== 'en') {{
                     console.warn("[AURA] Speech synthesis voice for " + activeLang + " is not installed on this browser. Displaying text response.");
-                    setSessionState('IDLE', 'Voice for ' + activeLang.toUpperCase() + ' unavailable. Text is displayed.');
+                    setSessionState(STATE_WAKE_WORD_STANDBY, 'Voice for ' + activeLang.toUpperCase() + ' unavailable. Text is displayed.');
                     if (onDone) onDone();
                     return;
                 }}
@@ -1773,13 +2101,14 @@ def _build_jarvis_controller_script(
 
                     if (onDone) onDone();
 
-                    // AUTOMATIC RETURN TO LISTENING / WAITING LOOP
-                    if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED' && sessionState !== 'INACTIVE') {{
+                    // AUTOMATIC RETURN TO WAKE-WORD STANDBY LOOP
+                    if (sessionState !== STATE_STOPPED && sessionState !== 'PAUSED') {{
                         setTimeout(function() {{
-                            if (sessionState !== 'PAUSED' && sessionState !== 'STOPPED') {{
+                            if (sessionState !== STATE_STOPPED) {{
+                                setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
                                 startVoiceListening();
                             }}
-                        }}, 350); // 350ms delay to clear acoustic echo
+                        }}, 400); // 400ms delay to clear acoustic echo
                     }}
                 }}
 
@@ -1791,7 +2120,7 @@ def _build_jarvis_controller_script(
 
                 utterance.onstart = function() {{
                     try {{ localStorage.setItem('aura_active_speaker', 'dashboard'); }} catch(e) {{}}
-                    setSessionState('SPEAKING', 'AURA: "' + textToSpeak + '"');
+                    setSessionState(STATE_SPEAKING, 'AURA: "' + textToSpeak + '"');
                 }};
 
                 utterance.onend = function() {{
@@ -1814,33 +2143,29 @@ def _build_jarvis_controller_script(
             if (onDone) onDone();
         }}
     }}
-function stopOngoingSpeech() {{
+
+    function stopOngoingSpeech() {{
         try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
         if (synthesis) synthesis.cancel();
         isSpeaking = false;
     }}
 
-    // -------------------------------------------------------------------------
-    // Extended Silence Handler: stops active mic recording and enters IDLE
-    // -------------------------------------------------------------------------
+    // Extended Silence Handler: stops active listening and returns to wake-word standby
     function resetExtendedSilenceTimer() {{
         if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
         if (!voiceConfig.autoStopOnSilence) return;
         extendedSilenceTimer = setTimeout(function() {{
-            if (sessionState === 'LISTENING') {{
-                console.log("[AURA] Extended silence timeout reached (6.5s). Entering IDLE state.");
-                if (recognition) {{
-                    try {{ recognition.stop(); }} catch(e) {{}}
-                }}
+            if (sessionState === STATE_LISTENING) {{
+                console.log("[AURA] Extended silence timeout reached (7.5s). Entering Wake-Word Standby.");
                 currentSpeechBuffer = '';
-                setSessionState('IDLE', txtIdlePrompt);
+                setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
             }}
         }}, voiceConfig.extendedSilenceMs);
     }}
 
-    // Real-Time Speech Recognition Engine with VAD, Silence Detection, and Interruption
+    // Real-Time Speech Recognition Engine with Wake-Word & 2.0s Silence VAD
     function startVoiceListening() {{
-        if (sessionState === 'PAUSED' || sessionState === 'STOPPED') return;
+        if (sessionState === STATE_STOPPED || sessionState === 'PAUSED') return;
 
         var SpeechRec = null;
         try {{
@@ -1851,7 +2176,7 @@ function stopOngoingSpeech() {{
         }}
 
         if (!SpeechRec) {{
-            setSessionState('INACTIVE', 'Speech recognition not supported in browser. Use Chrome or Edge.');
+            setSessionState(STATE_ERROR, 'Speech recognition not supported in browser. Use Chrome or Edge.');
             return;
         }}
 
@@ -1868,24 +2193,22 @@ function stopOngoingSpeech() {{
             recognition.maxAlternatives = 1;
 
             recognition.onstart = function() {{
-                setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+                setMicStatus(sessionState === STATE_LISTENING ? 'ACTIVE' : 'STANDBY');
                 resetExtendedSilenceTimer();
             }};
 
             recognition.onspeechstart = function() {{
-                // Speech started: clear silence timer
                 if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
 
-                // INTELLIGENT INTERRUPTION: user started speaking while AURA is talking
+                // INTERRUPTION: user speaks while AURA is talking
                 if (isSpeaking) {{
                     console.log("[AURA] User speech detected during TTS: interrupting immediately!");
                     stopOngoingSpeech();
-                    setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+                    setSessionState(STATE_LISTENING, txtListening);
                 }}
             }};
 
             recognition.onresult = function(event) {{
-                // Clear extended silence timer while active speech is received
                 if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
 
                 var interimTranscript = '';
@@ -1902,95 +2225,134 @@ function stopOngoingSpeech() {{
                 var rawText = (finalTranscript || interimTranscript || '').trim();
                 var lowerText = rawText.toLowerCase();
 
-                // INTELLIGENT INTERRUPTION CHECK: cancel ongoing audio immediately
-                if (isSpeaking && rawText.length > 0) {{
-                    console.log("[AURA] Voice interruption triggered:", rawText);
-                    stopOngoingSpeech();
-                    setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
-
-                    if (/^(wait|stop talking|hold on|listen to me|cancel that|be quiet|silence|pause)$/i.test(lowerText)) {{
-                        currentSpeechBuffer = '';
-                        var tBox = document.getElementById('transcriptBox');
-                        if (tBox) tBox.innerText = 'Listening, Boss... Speak your command.';
-                        resetExtendedSilenceTimer();
-                        return;
-                    }}
-                }}
-
-                if (sessionState !== 'LISTENING' && sessionState !== 'IDLE') return;
+                // Chatbot audio mutual exclusion lock
                 try {{
                     if (localStorage.getItem('aura_active_speaker') === 'chatbot') {{
-                        // Chatbot assistant is speaking; pause listening to avoid cross-assistant self-triggering
                         return;
                     }}
                 }} catch(eAudioLock) {{}}
 
-                if (rawText.length > 0) {{
-                    currentSpeechBuffer = rawText;
-                    var tBox = document.getElementById('transcriptBox');
-                    if (tBox) tBox.innerText = '🎙️ "' + rawText + '"';
+                // VOICE INTERRUPTION CHECK
+                if (isSpeaking && rawText.length > 0) {{
+                    stopOngoingSpeech();
+                    setSessionState(STATE_LISTENING, txtListening);
+                }}
 
-                    if (silenceTimer) clearTimeout(silenceTimer);
+                // -----------------------------------------------------------------
+                // WAKE-WORD DETECTION in WAKE_WORD_STANDBY
+                // -----------------------------------------------------------------
+                if (sessionState === STATE_WAKE_WORD_STANDBY) {{
+                    if (isWakeWordPhrase(rawText, activeLang)) {{
+                        console.log("[AURA] Wake-Word detected!", rawText);
+                        var extractedCmd = extractCommandAfterWakeWord(rawText);
 
-                    // If final phrase received, check for voice commands
-                    if (finalTranscript.trim().length > 0) {{
-                        var finalCmd = finalTranscript.trim();
-                        currentSpeechBuffer = '';
+                        if (extractedCmd.length > 0) {{
+                            // User said wake-word + command in one sentence ("Hey AURA find hospitals")
+                            setSessionState(STATE_LISTENING, '🎙️ "' + extractedCmd + '"');
+                            currentSpeechBuffer = extractedCmd;
+                            if (silenceTimer) clearTimeout(silenceTimer);
 
-                        // Immediate local handling of Voice Session commands
-                        if (/^(pause(\\s+the)?(\\s+voice)?(\\s+assistant)?|pause\\s+listening|hold\\s+on)$/i.test(finalCmd.toLowerCase())) {{
-                            pauseVoiceSession();
-                            return;
+                            // Start 2.0s silence timer on the extracted command
+                            silenceTimer = setTimeout(function() {{
+                                executeFinalCommand(currentSpeechBuffer);
+                            }}, voiceConfig.silenceThresholdMs);
+                        }} else {{
+                            // User spoke only wake-word ("Hey AURA") -> Acknowledge and listen!
+                            setSessionState(STATE_LISTENING, txtListening);
+                            currentSpeechBuffer = '';
+                            var ackPhrase = wakeWordAcks[activeLang] || txtWakeAck;
+                            speakJarvis(ackPhrase, function() {{
+                                setSessionState(STATE_LISTENING, txtListening);
+                                resetExtendedSilenceTimer();
+                            }});
                         }}
-                        if (/^(stop(\\s+the)?(\\s+voice)?(\\s+assistant)?|end\\s+session|aura\\s+offline|close\\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
-                            endVoiceSession();
-                            return;
-                        }}
+                    }}
+                    return;
+                }}
 
-                        // Submit to NextRoute engine
-                        setSessionState('PROCESSING', 'YOU: "' + finalCmd + '"');
-                        try {{ recognition.stop(); }} catch(e) {{}}
-                        handleRecognizedVoiceCommand(finalCmd);
-                    }} else {{
-                        // VAD short pause silence detection for interim speech (1.4s)
-                        silenceTimer = setTimeout(function() {{
-                            if (currentSpeechBuffer.length > 0 && (sessionState === 'LISTENING' || sessionState === 'IDLE')) {{
-                                var pendingText = currentSpeechBuffer.trim();
-                                currentSpeechBuffer = '';
-                                if (pendingText.length >= 2) {{
-                                    setSessionState('PROCESSING', 'YOU: "' + pendingText + '"');
-                                    try {{ recognition.stop(); }} catch(e) {{}}
-                                    handleRecognizedVoiceCommand(pendingText);
-                                }}
+                // -----------------------------------------------------------------
+                // ACTIVE LISTENING with 2.0s Silence Detection
+                // -----------------------------------------------------------------
+                if (sessionState === STATE_LISTENING) {{
+                    if (rawText.length > 0) {{
+                        currentSpeechBuffer = rawText;
+                        var tBox = document.getElementById('transcriptBox');
+                        if (tBox) tBox.innerText = '🎙️ "' + rawText + '"';
+
+                        if (silenceTimer) clearTimeout(silenceTimer);
+
+                        // If browser marked phrase final
+                        if (finalTranscript.trim().length > 0) {{
+                            var finalCmd = finalTranscript.trim();
+                            currentSpeechBuffer = finalCmd;
+
+                            // Immediate local handling of Voice Session control commands
+                            if (/^(pause(\s+the)?(\s+voice)?(\s+assistant)?|pause\s+listening|hold\s+on)$/i.test(finalCmd.toLowerCase())) {{
+                                pauseVoiceSession();
+                                return;
                             }}
-                        }}, voiceConfig.silenceThresholdMs);
+                            if (/^(stop(\s+the)?(\s+voice)?(\s+assistant)?|end\s+session|aura\s+offline|close\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
+                                endVoiceSession();
+                                return;
+                            }}
+
+                            // Finalize on 2.0s silence or short final transition
+                            silenceTimer = setTimeout(function() {{
+                                executeFinalCommand(finalCmd);
+                            }}, 300);
+                        }} else {{
+                            // Interim speech: start 2000ms silence detection timer
+                            silenceTimer = setTimeout(function() {{
+                                if (currentSpeechBuffer.length > 0) {{
+                                    executeFinalCommand(currentSpeechBuffer);
+                                }}
+                            }}, voiceConfig.silenceThresholdMs);
+                        }}
                     }}
                 }}
             }};
 
+            function executeFinalCommand(cmdText) {{
+                var cleanCmd = (cmdText || '').trim();
+                if (!cleanCmd || cleanCmd.length < 2 || commandDispatchLock) return;
+
+                commandDispatchLock = true;
+                currentSpeechBuffer = '';
+                if (silenceTimer) clearTimeout(silenceTimer);
+                if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+
+                // Transition through SILENCE_DETECTED to PROCESSING
+                setSessionState(STATE_SILENCE_DETECTED, txtPromptSilence);
+                setTimeout(function() {{
+                    setSessionState(STATE_PROCESSING, 'YOU: "' + cleanCmd + '"');
+                    try {{ recognition.stop(); }} catch(e) {{}}
+                    handleRecognizedVoiceCommand(cleanCmd);
+                    setTimeout(function() {{ commandDispatchLock = false; }}, 1200);
+                }}, 250);
+            }}
+
             recognition.onerror = function(event) {{
                 if (event.error === 'no-speech') {{
-                    // No speech captured during active window: enter IDLE to prevent infinite mic loop
-                    if (sessionState === 'LISTENING') {{
-                        setSessionState('IDLE', txtIdlePrompt);
+                    if (sessionState === STATE_LISTENING) {{
+                        setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
                     }}
                     return;
                 }} else if (event.error === 'not-allowed') {{
-                    setSessionState('INACTIVE', 'Microphone permission required. Please allow mic in address bar.');
+                    setMicStatus('DENIED');
+                    setSessionState(STATE_ERROR, 'Microphone permission required. Please allow mic in address bar.');
                     pauseVoiceSession();
                 }} else if (event.error === 'network') {{
-                    if (sessionState === 'LISTENING') {{
+                    if (sessionState === STATE_LISTENING || sessionState === STATE_WAKE_WORD_STANDBY) {{
                         setTimeout(startVoiceListening, 1500);
                     }}
                 }}
             }};
 
             recognition.onend = function() {{
-                if (sessionState === 'LISTENING') {{
-                    // Only auto-restart if still within listening window and not in IDLE/PAUSED/STOPPED
+                if (sessionState === STATE_LISTENING || sessionState === STATE_WAKE_WORD_STANDBY) {{
                     if (restartDebounceTimer) clearTimeout(restartDebounceTimer);
                     restartDebounceTimer = setTimeout(function() {{
-                        if (sessionState === 'LISTENING') {{
+                        if (sessionState === STATE_LISTENING || sessionState === STATE_WAKE_WORD_STANDBY) {{
                             try {{ recognition.start(); }} catch(e) {{}}
                         }}
                     }}, 250);
@@ -2000,20 +2362,33 @@ function stopOngoingSpeech() {{
             recognition.start();
         }} catch(err) {{
             console.warn("[AURA] Could not start speech recognition:", err);
-            setSessionState('IDLE', txtIdlePrompt);
+            setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
         }}
     }}
+
+    // Tab visibility handling: suspend recognition when tab is hidden, resume on foreground
+    document.addEventListener('visibilitychange', function() {{
+        if (document.hidden) {{
+            if (recognition && sessionState === STATE_WAKE_WORD_STANDBY) {{
+                try {{ recognition.abort(); }} catch(e) {{}}
+            }}
+        }} else {{
+            if (sessionState === STATE_WAKE_WORD_STANDBY || sessionState === STATE_LISTENING) {{
+                setTimeout(startVoiceListening, 300);
+            }}
+        }}
+    }});
 
     // -------------------------------------------------------------------------
     // PERSISTENT SESSION CONTROLS: START, PAUSE, RESUME, END
     // -------------------------------------------------------------------------
     window.startVoiceSession = function() {{
-        setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+        setSessionState(STATE_LISTENING, txtListening);
         startVoiceListening();
     }};
 
     window.pauseVoiceSession = function() {{
-        setSessionState('PAUSED', 'Voice session paused. Click RESUME to continue.');
+        setSessionState(STATE_STOPPED, 'Voice session paused. Click RESUME or speak to continue.');
         stopOngoingSpeech();
         if (recognition) {{
             try {{ recognition.abort(); }} catch(e) {{}}
@@ -2024,12 +2399,12 @@ function stopOngoingSpeech() {{
     }};
 
     window.resumeVoiceSession = function() {{
-        setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+        setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
         startVoiceListening();
     }};
 
     window.endVoiceSession = function() {{
-        setSessionState('STOPPED', 'AURA is offline. Click START AURA to begin voice session.');
+        setSessionState(STATE_STOPPED, 'AURA is offline. Click START AURA to begin voice session.');
         stopOngoingSpeech();
         if (recognition) {{
             try {{ recognition.abort(); }} catch(e) {{}}
@@ -2040,19 +2415,35 @@ function stopOngoingSpeech() {{
         currentSpeechBuffer = '';
     }};
 
-    // Smart Toggle: Transitions through Inactive/Stopped/Idle -> Listening -> Paused -> Resume
     window.togglePersistentVoiceSession = function() {{
-        if (sessionState === 'INACTIVE' || sessionState === 'STOPPED' || sessionState === 'IDLE') {{
+        if (sessionState === STATE_STOPPED || sessionState === 'PAUSED' || sessionState === STATE_ERROR) {{
             startVoiceSession();
-        }} else if (sessionState === 'LISTENING' || sessionState === 'PROCESSING' || sessionState === 'SPEAKING') {{
+        }} else if (sessionState === STATE_LISTENING || sessionState === STATE_PROCESSING || sessionState === STATE_SPEAKING) {{
             pauseVoiceSession();
-        }} else if (sessionState === 'PAUSED') {{
-            resumeVoiceSession();
+        }} else if (sessionState === STATE_WAKE_WORD_STANDBY) {{
+            // Manual click when in standby -> trigger direct active listening
+            startVoiceSession();
         }}
     }};
 
     // Backward-compatibility alias
     window.AURA_TOGGLE_MIC = window.togglePersistentVoiceSession;
+
+    // EXPORT useDashboardVoice() controller
+    window.useDashboardVoice = function() {{
+        return {{
+            type: 'dashboard_voice',
+            getState: function() {{ return sessionState; }},
+            startListening: function() {{ window.startVoiceSession(); }},
+            stopListening: function() {{ window.endVoiceSession(); }},
+            speak: function(text, onDone) {{ speakJarvis(text, onDone); }},
+            setWakeWordEnabled: function(val) {{ voiceConfig.wakeWordEnabled = !!val; }},
+            isWakeWordStandby: function() {{ return sessionState === STATE_WAKE_WORD_STANDBY; }},
+            isAudioLocked: function() {{
+                try {{ return localStorage.getItem('aura_active_speaker') === 'chatbot'; }} catch(e) {{ return false; }}
+            }}
+        }};
+    }};
 
     window.highlightOrbitalBeam = function(beamId, active) {{
         try {{
@@ -2075,7 +2466,7 @@ function stopOngoingSpeech() {{
             }}
         }} catch(e) {{}}
         stopOngoingSpeech();
-        setSessionState('PROCESSING', 'Executing: ' + phrase);
+        setSessionState(STATE_PROCESSING, 'Executing: ' + phrase);
         handleRecognizedVoiceCommand(phrase);
     }};
 
@@ -2117,108 +2508,82 @@ function stopOngoingSpeech() {{
         return false;
     }}
 
-    // Real-Time Command Intent & Dynamic Destination Voice Feedback
-    function handleRecognizedVoiceCommand(cmdText) {{
-        isProcessing = true;
-        setSessionState('PROCESSING', 'YOU: "' + cmdText + '"');
-
-        var lower = cmdText.toLowerCase().trim();
-        var spokenResponse = "";
-
-        // Check for specific Navigation Destination queries
-        // Example: "Navigate to Vijayawada" -> "Of course, Boss. Finding the best routes to Vijayawada."
-        var navMatch = lower.match(/(?:navigate|route|drive|go|directions?)\\s+(?:to|towards)\\s+([a-zA-Z\\s]+)/i);
-        if (navMatch && navMatch[1]) {{
-            var destCity = navMatch[1].trim();
-            destCity = destCity.charAt(0).toUpperCase() + destCity.slice(1);
-            spokenResponse = "Of course, Boss. Finding the best routes to " + destCity + ".";
-        }} else if (lower.indexOf("navigation") !== -1 || lower.indexOf("nav") !== -1 || lower.indexOf("map") !== -1) {{
-            spokenResponse = "Opening navigation.";
-        }} else if (lower.indexOf("booking") !== -1 || lower.indexOf("reservation") !== -1) {{
-            spokenResponse = "Opening your bookings.";
-        }} else if (lower.indexOf("trip") !== -1 || lower.indexOf("copilot") !== -1 || lower.indexOf("itinerar") !== -1) {{
-            spokenResponse = "Here are your trips.";
-        }} else if (lower.indexOf("hotel") !== -1 || lower.indexOf("lodg") !== -1) {{
-            spokenResponse = "Let's find hotels.";
-        }} else if (lower.indexOf("flight") !== -1 || lower.indexOf("airplane") !== -1) {{
-            spokenResponse = "Opening flight planner.";
-        }} else if (lower.indexOf("restaurant") !== -1 || lower.indexOf("food") !== -1 || lower.indexOf("cafe") !== -1) {{
-            spokenResponse = "Finding nearby restaurants.";
-        }} else if (lower.indexOf("setting") !== -1 || lower.indexOf("preference") !== -1) {{
-            spokenResponse = "Opening settings.";
-        }} else if (lower.indexOf("profile") !== -1 || lower.indexOf("account") !== -1) {{
-            spokenResponse = "Opening your profile.";
-        }} else if (lower.indexOf("back") !== -1 || lower.indexOf("previous") !== -1) {{
-            spokenResponse = "Going back.";
-        }} else if (lower.indexOf("home") !== -1 || lower.indexOf("dashboard") !== -1) {{
-            spokenResponse = "Returning to home dashboard.";
-        }} else if (lower.indexOf("place") !== -1 || lower.indexOf("saved") !== -1 || lower.indexOf("sight") !== -1) {{
-            spokenResponse = "Opening saved places.";
-        }} else if (lower.indexOf("guide") !== -1) {{
-            spokenResponse = "Opening virtual guide.";
-        }} else if (lower.indexOf("chat") !== -1 || lower.indexOf("aura") !== -1) {{
-            spokenResponse = "AURA chatbot is ready.";
-        }} else if (lower.indexOf("satellite") !== -1) {{
-            spokenResponse = "Switched to satellite view.";
-        }} else if (lower.indexOf("hospital") !== -1) {{
-            spokenResponse = "Locating hospitals and medical centers.";
-        }} else if (lower.indexOf("petrol") !== -1 || lower.indexOf("fuel") !== -1) {{
-            spokenResponse = "Locating fuel stations.";
-        }} else if (lower.indexOf("where am i") !== -1 || lower.indexOf("location") !== -1) {{
-            spokenResponse = "Locating your current coordinates.";
-        }} else if (lower.indexOf("alternative") !== -1 || lower.indexOf("routes") !== -1) {{
-            spokenResponse = "Showing alternative routes, Boss.";
-        }} else if (lower.indexOf("bicycle") !== -1 || lower.indexOf("bike") !== -1 || lower.indexOf("car") !== -1) {{
-            spokenResponse = "Updating transportation mode, Boss.";
-        }} else {{
-            spokenResponse = "Processing: " + cmdText.substring(0, 28);
+    // Real-Time Command Intent & Dynamic Spoken Voice Feedback
+    function handleRecognizedVoiceCommand(rawCmd) {{
+        var cmd = (rawCmd || '').trim();
+        if (!cmd) {{
+            setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
+            return;
         }}
 
-        var cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        var cmdId = 'aura_vcmd_' + Date.now();
+        var lower = cmd.toLowerCase();
 
-        // 1. Speak response aloud immediately (and auto return to listening on end)
+        var spokenResponse = "Processing command.";
+        if (/navigation|navigate|route|map|directions/i.test(lower)) {{
+            spokenResponse = "Opening navigation.";
+        }} else if (/hotel|stay|resort|accommodation/i.test(lower)) {{
+            spokenResponse = "Let's find hotels.";
+        }} else if (/flight|airline|fly|airport/i.test(lower)) {{
+            spokenResponse = "Opening flight planner.";
+        }} else if (/restaurant|food|dining|eat|cafe/i.test(lower)) {{
+            spokenResponse = "Finding nearby restaurants.";
+        }} else if (/profile|account|my account/i.test(lower)) {{
+            spokenResponse = "Opening your profile.";
+        }} else if (/booking|bookings|reservation/i.test(lower)) {{
+            spokenResponse = "Opening your bookings.";
+        }} else if (/trips|itinerary/i.test(lower)) {{
+            spokenResponse = "Here are your trips.";
+        }} else if (/back|previous/i.test(lower)) {{
+            spokenResponse = "Going back.";
+        }} else if (/home|dashboard|main/i.test(lower)) {{
+            spokenResponse = "Returning to home dashboard.";
+        }} else if (/settings|config|preferences/i.test(lower)) {{
+            spokenResponse = "Opening settings.";
+        }}
+
+        var dispatched = sendCommandToStreamlit(cmd, cmdId);
+
         speakJarvis(spokenResponse, function() {{
-            isProcessing = false;
+            setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
+            setTimeout(startVoiceListening, 400);
         }});
-
-        // 2. Simultaneously dispatch to Streamlit without reloading the page
-        sendCommandToStreamlit(cmdText, cmdId);
     }}
 
     // -------------------------------------------------------------------------
-    // Automatic Startup Greeting & Autoplay Fallback
+    // Automatic Startup Greeting with Autoplay Recovery
     // -------------------------------------------------------------------------
     var greetingTriggered = false;
     var greetingActuallySpoken = false;
 
     function triggerStartupGreeting() {{
         if (greetingTriggered) return;
-
-        var sessionKey = 'aura_session_greeted_' + activeLang;
+        var sessionKey = 'aura_greeted_' + activeLang;
         try {{
             if (sessionStorage.getItem(sessionKey) === 'true') {{
                 greetingTriggered = true;
-                setSessionState('IDLE', txtIdlePrompt);
+                setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
+                setTimeout(startVoiceListening, 300);
                 return;
             }}
         }} catch(e) {{}}
 
         if (!shouldAutoSpeak) {{
             greetingTriggered = true;
-            setSessionState('IDLE', txtIdlePrompt);
+            setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
+            setTimeout(startVoiceListening, 300);
             return;
         }}
 
         greetingTriggered = true;
         try {{ sessionStorage.setItem(sessionKey, 'true'); }} catch(e) {{}}
 
-        setSessionState('GREETING', clientGreeting);
+        setSessionState(STATE_GREETING, clientGreeting);
 
-        // Speak the local time greeting:
         speakJarvis(clientGreeting, function() {{
             greetingActuallySpoken = true;
-            // After greeting finishes, automatically wait for user's voice command
-            setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+            // After greeting finishes, automatically enter Wake-Word Standby Loop
+            setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
             setTimeout(startVoiceListening, 350);
         }});
     }}
@@ -2230,12 +2595,12 @@ function stopOngoingSpeech() {{
         }}
         if (!greetingActuallySpoken && shouldAutoSpeak) {{
             greetingActuallySpoken = true;
-            setSessionState('GREETING', clientGreeting);
+            setSessionState(STATE_GREETING, clientGreeting);
             speakJarvis(clientGreeting, function() {{
-                setSessionState('LISTENING', 'Listening, Boss... Speak your command.');
+                setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
                 setTimeout(startVoiceListening, 350);
             }});
-        }} else if (sessionState === 'LISTENING' && !isListening && !isSpeaking) {{
+        }} else if (sessionState === STATE_WAKE_WORD_STANDBY && !isListening && !isSpeaking) {{
             startVoiceListening();
         }}
 

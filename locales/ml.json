@@ -827,5 +827,22 @@
   "map.measure_tool": "അളക്കുക",
   "map.type_heading": "മാപ്പ് തരം",
   "map.type_default": "ഡിഫോൾട്ട്",
-  "map.type_hybrid": "ഹൈബ്രിഡ്"
+  "map.type_hybrid": "ഹൈബ്രിഡ്",
+  "aura.state_initializing": "● ആരംഭിക്കുന്നു",
+  "aura.state_greeting": "● സ്വാഗതം",
+  "aura.state_wake_standby": "● വേക്ക്-വേഡ് സ്റ്റാൻഡ്ബൈ",
+  "aura.state_listening": "● കേൾക്കുന്നു...",
+  "aura.state_silence_detected": "● നിശബ്ദത കണ്ടെത്തി",
+  "aura.state_processing": "● പ്രോസസ്സ് ചെയ്യുന്നു...",
+  "aura.state_speaking": "● സംസാരിക്കുന്നു...",
+  "aura.state_error": "● പിശക്",
+  "aura.state_stopped": "● നിർത്തി",
+  "aura.mic_active": "🎙️ മൈക്ക്: സജീവം",
+  "aura.mic_standby": "🎙️ മൈക്ക്: സ്റ്റാൻഡ്ബൈ",
+  "aura.mic_muted": "🔇 മൈക്ക്: നിശബ്ദമാക്കി",
+  "aura.mic_denied": "⚠️ മൈക്ക്: നിരസിച്ചു",
+  "aura.prompt_wake_standby": "\"ഹേ ഓറ\" എന്ന് പറയുക അല്ലെങ്കിൽ സംസാരിക്കാൻ ക്ലിക്ക് ചെയ്യുക...",
+  "aura.prompt_listening": "കേൾക്കുന്നു ബോസ്... നിങ്ങളുടെ കൽപ്പന പറയൂ.",
+  "aura.prompt_silence": "നിശബ്ദത കണ്ടെത്തി. കൽപ്പന അന്തിമമാക്കുന്നു...",
+  "aura.wake_word_ack": "പറയൂ ബോസ്?"
 }

@@ -17,12 +17,12 @@ from src.aura_command_dispatcher import (
 
 class TestAuraWelcomeScreen:
     def test_startup_greeting_exact_format(self):
-        # English greeting should match exact time-based pattern:
-        # "{Good morning/afternoon/evening}, Boss! Welcome to NextRoute. How can I help you?"
-        # or Night: "Hello, Boss! Welcome back to NextRoute. How can I assist you tonight?"
+        # English greeting should match time-based pattern:
+        # "{Good morning/afternoon/evening}, Boss! Welcome to NextRoute. I'm AURA, your autonomous travel assistant. How can I help you?"
+        # or Night: "Hello, Boss! Welcome back to NextRoute. I'm AURA, your autonomous travel assistant. How can I assist you tonight?"
         en_greet = get_aura_startup_greeting("en", user_name="Boss")
-        assert ("Boss! Welcome to NextRoute. How can I help you?" in en_greet or
-                "Boss! Welcome back to NextRoute. How can I assist you tonight?" in en_greet)
+        assert ("Boss! Welcome to NextRoute" in en_greet or "Boss! Welcome back to NextRoute" in en_greet)
+        assert ("How can I help you?" in en_greet or "What can I do for you?" in en_greet or "How can I assist you tonight?" in en_greet)
         assert any(t in en_greet for t in ["Good morning", "Good afternoon", "Good evening", "Hello"])
         # No extra sentences
         assert "\n" not in en_greet

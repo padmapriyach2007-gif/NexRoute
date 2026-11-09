@@ -130,3 +130,4 @@ class TestGoogleMapsMobileHeaderFlow:
         assert ".gmap-compass-container" in html
         assert ".gmap-layers-drawer" in html
         assert ".gmap-place-drawer" in html
+

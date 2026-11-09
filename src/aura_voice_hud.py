@@ -437,12 +437,17 @@ canvas#auraWaveformCanvas {{
             }});
             if (matchedVoice) currentUtterance.voice = matchedVoice;
 
+            currentUtterance.onstart = function() {{
+                try {{ localStorage.setItem('aura_active_speaker', 'chatbot'); }} catch(e) {{}}
+            }};
             currentUtterance.onend = function() {{
+                try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
                 isSpeaking = false;
                 setAssistantState('idle');
                 if (onEndCallback) onEndCallback();
             }};
             currentUtterance.onerror = function() {{
+                try {{ localStorage.setItem('aura_active_speaker', 'none'); }} catch(e) {{}}
                 isSpeaking = false;
                 setAssistantState('idle');
                 if (onEndCallback) onEndCallback();
@@ -530,6 +535,11 @@ canvas#auraWaveformCanvas {{
 
             recognition.onresult = function(event) {{
                 isListening = false;
+                try {{
+                    if (localStorage.getItem('aura_active_speaker') === 'dashboard') {{
+                        return; // Dashboard voice assistant is currently speaking
+                    }}
+                }} catch(e) {{}}
                 var transcript = event.results[0][0].transcript;
                 if (transcript) {{
                     setAssistantState('processing', 'Heard: "' + transcript + '"');
@@ -557,6 +567,21 @@ canvas#auraWaveformCanvas {{
     window.toggleContinuousMode = function() {{
         continuousMode = !continuousMode;
         window.togglePersistentVoiceSession();
+    }};
+
+    // EXPORT useChatbotVoice() controller for chatbot voice isolation
+    window.useChatbotVoice = function() {{
+        return {{
+            type: 'chatbot_voice',
+            getState: function() {{ return currentState; }},
+            startListening: function() {{ window.toggleListening(); }},
+            stopListening: function() {{ window.silenceAssistant(); }},
+            speak: function(text, onDone) {{ window.speakAssistant(text, onDone); }},
+            bridgeId: 'AURA_CHAT_PROMPT_BRIDGE',
+            isAudioLocked: function() {{
+                try {{ return localStorage.getItem('aura_active_speaker') === 'dashboard'; }} catch(e) {{ return false; }}
+            }}
+        }};
     }};
 
     // Open Chatbot
@@ -1577,6 +1602,20 @@ def render_jarvis_chatbot_hud_html(
 
     // Backward-compatibility alias
     window.toggleJarvisVoiceRecognition = window.togglePersistentVoiceSession;
+
+    // EXPORT useChatbotVoice() controller for chatbot voice isolation
+    window.useChatbotVoice = function() {{
+        return {{
+            type: 'chatbot_voice',
+            getState: function() {{ return sessionState; }},
+            startListening: function() {{ window.startVoiceSession(); }},
+            stopListening: function() {{ window.pauseVoiceSession(); }},
+            speak: function(text, onDone) {{ window.speakJarvis(text, onDone); }},
+            isAudioLocked: function() {{
+                try {{ return localStorage.getItem('aura_active_speaker') === 'dashboard'; }} catch(e) {{ return false; }}
+            }}
+        }};
+    }};
 
     // Zero-Reload WebSocket Bridge to NextRoute Chatbot Agent
     window.submitVoiceToExistingAgent = function(transcript) {{

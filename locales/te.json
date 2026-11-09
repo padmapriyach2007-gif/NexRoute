@@ -827,5 +827,22 @@
   "map.measure_tool": "కొలత",
   "map.type_heading": "మ్యాప్ రకం",
   "map.type_default": "డిఫాల్ట్",
-  "map.type_hybrid": "హైబ్రిడ్"
+  "map.type_hybrid": "హైబ్రిడ్",
+  "aura.state_initializing": "● ప్రారంభిస్తోంది",
+  "aura.state_greeting": "● స్వాగతం పలుకుతోంది",
+  "aura.state_wake_standby": "● వేక్-వర్డ్ సిద్ధం",
+  "aura.state_listening": "● వింటోంది...",
+  "aura.state_silence_detected": "● నిశ్శబ్దం గుర్తించబడింది",
+  "aura.state_processing": "● ప్రాసెస్ చేస్తోంది...",
+  "aura.state_speaking": "● మాట్లాడుతోంది...",
+  "aura.state_error": "● లోపం",
+  "aura.state_stopped": "● ఆపివేయబడింది",
+  "aura.mic_active": "🎙️ మైక్: సక్రియం",
+  "aura.mic_standby": "🎙️ మైక్: సిద్ధం",
+  "aura.mic_muted": "🔇 మైక్: మ్యూట్",
+  "aura.mic_denied": "⚠️ మైక్: నిరాకరించబడింది",
+  "aura.prompt_wake_standby": "\"హే ఆరా\" అని చెప్పండి లేదా మాట్లాడటానికి క్లిక్ చేయండి...",
+  "aura.prompt_listening": "వింటున్నాను బాస్... మీ ఆదేశాన్ని చెప్పండి.",
+  "aura.prompt_silence": "నిశ్శబ్దం గుర్తించబడింది. ఆదేశాన్ని ఖరారు చేస్తోంది...",
+  "aura.wake_word_ack": "చెప్పండి బాస్?"
 }

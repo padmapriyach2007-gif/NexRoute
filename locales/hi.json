@@ -827,5 +827,22 @@
   "map.measure_tool": "दूरी मापें",
   "map.type_heading": "मानचित्र प्रकार",
   "map.type_default": "डिफ़ॉल्ट",
-  "map.type_hybrid": "हाइब्रिड"
+  "map.type_hybrid": "हाइब्रिड",
+  "aura.state_initializing": "● प्रारंभ हो रहा है",
+  "aura.state_greeting": "● अभिवादन",
+  "aura.state_wake_standby": "● वेक-वर्ड स्टैंडबाय",
+  "aura.state_listening": "● सुन रहा है...",
+  "aura.state_silence_detected": "● मौन पहचाना गया",
+  "aura.state_processing": "● संसाधित कर रहा है...",
+  "aura.state_speaking": "● बोल रहा है...",
+  "aura.state_error": "● त्रुटि",
+  "aura.state_stopped": "● रुका हुआ",
+  "aura.mic_active": "🎙️ माइक: सक्रिय",
+  "aura.mic_standby": "🎙️ माइक: स्टैंडबाय",
+  "aura.mic_muted": "🔇 माइक: म्यूट",
+  "aura.mic_denied": "⚠️ माइक: अस्वीकृत",
+  "aura.prompt_wake_standby": "\"हे ऑरा\" कहें या बोलने के लिए अवतार पर क्लिक करें...",
+  "aura.prompt_listening": "सुन रहा हूँ बॉस... अपना आदेश दें।",
+  "aura.prompt_silence": "मौन पहचाना गया। आदेश को अंतिम रूप दिया जा रहा है...",
+  "aura.wake_word_ack": "हाँ, बॉस?"
 }

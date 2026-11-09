@@ -827,5 +827,22 @@
   "map.measure_tool": "Measure",
   "map.type_heading": "Map type",
   "map.type_default": "Default",
-  "map.type_hybrid": "Hybrid"
+  "map.type_hybrid": "Hybrid",
+  "aura.state_initializing": "● INITIALIZING",
+  "aura.state_greeting": "● GREETING",
+  "aura.state_wake_standby": "● WAKE-WORD STANDBY",
+  "aura.state_listening": "● LISTENING...",
+  "aura.state_silence_detected": "● SILENCE DETECTED",
+  "aura.state_processing": "● PROCESSING...",
+  "aura.state_speaking": "● SPEAKING...",
+  "aura.state_error": "● ERROR",
+  "aura.state_stopped": "● STOPPED",
+  "aura.mic_active": "🎙️ MIC: ACTIVE",
+  "aura.mic_standby": "🎙️ MIC: STANDBY",
+  "aura.mic_muted": "🔇 MIC: MUTED",
+  "aura.mic_denied": "⚠️ MIC: DENIED",
+  "aura.prompt_wake_standby": "Say \"Hey AURA\" or click avatar to speak...",
+  "aura.prompt_listening": "Listening, Boss... Speak your command.",
+  "aura.prompt_silence": "Silence detected. Finalizing command...",
+  "aura.wake_word_ack": "Yes, Boss?"
 }

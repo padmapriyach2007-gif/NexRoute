@@ -827,5 +827,22 @@
   "map.measure_tool": "அளவிடு",
   "map.type_heading": "வரைபட வகை",
   "map.type_default": "இயல்புநிலை",
-  "map.type_hybrid": "ஹைப்ரிட்"
+  "map.type_hybrid": "ஹைப்ரிட்",
+  "aura.state_initializing": "● தொடங்குகிறது",
+  "aura.state_greeting": "● வாழ்த்து",
+  "aura.state_wake_standby": "● வேக்-வேர்ட் காத்திருப்பு",
+  "aura.state_listening": "● கேட்கிறது...",
+  "aura.state_silence_detected": "● அமைதி கண்டறியப்பட்டது",
+  "aura.state_processing": "● செயலாக்குகிறது...",
+  "aura.state_speaking": "● பேசுகிறது...",
+  "aura.state_error": "● பிழை",
+  "aura.state_stopped": "● நிறுத்தப்பட்டது",
+  "aura.mic_active": "🎙️ மைக்: செயலில்",
+  "aura.mic_standby": "🎙️ மைக்: காத்திருப்பு",
+  "aura.mic_muted": "🔇 மைக்: முடக்கப்பட்டது",
+  "aura.mic_denied": "⚠️ மைக்: மறுக்கப்பட்டது",
+  "aura.prompt_wake_standby": "\"ஹே ஆரா\" என்று சொல்லுங்கள் அல்லது பேச கிளிக் செய்யவும்...",
+  "aura.prompt_listening": "கேட்கிறேன் பாஸ்... உங்கள் கட்டளையைச் சொல்லுங்கள்.",
+  "aura.prompt_silence": "அமைதி கண்டறியப்பட்டது. கட்டளையை இறுதி செய்கிறது...",
+  "aura.wake_word_ack": "சொல்லுங்கள் பாஸ்?"
 }

@@ -827,5 +827,22 @@
   "map.measure_tool": "ಅಳತೆ ಮಾಡಿ",
   "map.type_heading": "ನಕ್ಷೆಯ ಪ್ರಕಾರ",
   "map.type_default": "ಡೀಫಾಲ್ಟ್",
-  "map.type_hybrid": "ಹೈಬ್ರಿಡ್"
+  "map.type_hybrid": "ಹೈಬ್ರಿಡ್",
+  "aura.state_initializing": "● ಪ್ರಾರಂಭಿಸಲಾಗುತ್ತಿದೆ",
+  "aura.state_greeting": "● ಶುಭಾಶಯ",
+  "aura.state_wake_standby": "● ವೇಕ್-ವರ್ಡ್ ಸ್ಟ್ಯಾಂಡ್‌ಬೈ",
+  "aura.state_listening": "● ಆಲಿಸುತ್ತಿದೆ...",
+  "aura.state_silence_detected": "● ಮೌನ ಪತ್ತೆಯಾಗಿದೆ",
+  "aura.state_processing": "● ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲಾಗುತ್ತಿದೆ...",
+  "aura.state_speaking": "● ಮಾತನಾಡುತ್ತಿದೆ...",
+  "aura.state_error": "● ದೋಷ",
+  "aura.state_stopped": "● ನಿಲ್ಲಿಸಲಾಗಿದೆ",
+  "aura.mic_active": "🎙️ ಮೈಕ್: ಸಕ್ರಿಯ",
+  "aura.mic_standby": "🎙️ ಮೈಕ್: ಸಿದ್ಧ",
+  "aura.mic_muted": "🔇 ಮೈಕ್: ಮ್ಯೂಟ್",
+  "aura.mic_denied": "⚠️ ಮೈಕ್: ನಿರಾಕರಿಸಲಾಗಿದೆ",
+  "aura.prompt_wake_standby": "\"ಹೇ ಔರಾ\" ಎಂದು ಹೇಳಿ ಅಥವಾ ಮಾತನಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ...",
+  "aura.prompt_listening": "ಆಲಿಸುತ್ತಿದ್ದೇನೆ ಬಾಸ್... ನಿಮ್ಮ ಆಜ್ಞೆಯನ್ನು ತಿಳಿಸಿ.",
+  "aura.prompt_silence": "ಮೌನ ಪತ್ತೆಯಾಗಿದೆ. ಆಜ್ಞೆಯನ್ನು ಅಂತಿಮಗೊಳಿಸಲಾಗುತ್ತಿದೆ...",
+  "aura.wake_word_ack": "ಹೇಳಿ ಬಾಸ್?"
 }

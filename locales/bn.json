@@ -827,5 +827,22 @@
   "map.measure_tool": "পরিমাপ করুন",
   "map.type_heading": "মানচিত্রের ধরন",
   "map.type_default": "ডিফল্ট",
-  "map.type_hybrid": "হাইব্রিড"
+  "map.type_hybrid": "হাইব্রিড",
+  "aura.state_initializing": "● শুরু হচ্ছে",
+  "aura.state_greeting": "● অভিবাদন",
+  "aura.state_wake_standby": "● ওয়েক-ওয়ার্ড স্ট্যান্ডবাই",
+  "aura.state_listening": "● শুনছে...",
+  "aura.state_silence_detected": "● নীরবতা শনাক্ত হয়েছে",
+  "aura.state_processing": "● প্রক্রিয়া করা হচ্ছে...",
+  "aura.state_speaking": "● বলছে...",
+  "aura.state_error": "● ত্রুটি",
+  "aura.state_stopped": "● থামানো হয়েছে",
+  "aura.mic_active": "🎙️ মাইক: সক্রিয়",
+  "aura.mic_standby": "🎙️ মাইক: প্রস্তুত",
+  "aura.mic_muted": "🔇 মাইক: নিঃশব্দ",
+  "aura.mic_denied": "⚠️ মাইক: প্রত্যাখ্যাত",
+  "aura.prompt_wake_standby": "\"হে অরা\" বলুন বা কথা বলতে অবতারে ক্লিক করুন...",
+  "aura.prompt_listening": "শুনছি বস... আপনার আদেশ দিন।",
+  "aura.prompt_silence": "নীরবতা শনাক্ত হয়েছে। আদেশ চূড়ান্ত করা হচ্ছে...",
+  "aura.wake_word_ack": "বলুন বস?"
 }

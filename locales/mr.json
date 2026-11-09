@@ -827,5 +827,22 @@
   "map.measure_tool": "अंतर मोजा",
   "map.type_heading": "नकाशा प्रकार",
   "map.type_default": "डीफॉल्ट",
-  "map.type_hybrid": "हायब्रिड"
+  "map.type_hybrid": "हायब्रिड",
+  "aura.state_initializing": "● सुरू होत आहे",
+  "aura.state_greeting": "● स्वागत",
+  "aura.state_wake_standby": "● वेक-वर्ड स्टँडबाय",
+  "aura.state_listening": "● ऐकत आहे...",
+  "aura.state_silence_detected": "● शांतता ओळखली",
+  "aura.state_processing": "● प्रक्रिया करत आहे...",
+  "aura.state_speaking": "● बोलत आहे...",
+  "aura.state_error": "● त्रुटी",
+  "aura.state_stopped": "● थांबवले",
+  "aura.mic_active": "🎙️ माइक: सक्रिय",
+  "aura.mic_standby": "🎙️ माइक: सज्ज",
+  "aura.mic_muted": "🔇 माइक: म्यूट",
+  "aura.mic_denied": "⚠️ माइक: नाकारला",
+  "aura.prompt_wake_standby": "\"हे ऑरा\" म्हणा किंवा बोलण्यासाठी अवतारवर क्लिक करा...",
+  "aura.prompt_listening": "ऐकत आहे बॉस... आपली आज्ञा द्या.",
+  "aura.prompt_silence": "शांतता ओळखली. आज्ञा अंतिम केली जात आहे...",
+  "aura.wake_word_ack": "बोला बॉस?"
 }
