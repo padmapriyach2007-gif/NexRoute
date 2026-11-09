@@ -2005,13 +2005,47 @@ def build_google_maps_javascript_html(
         }}
 
         @media (max-width: 768px) {{
+            .gmap-toolbar {{
+                top: 8px;
+                left: 8px;
+                right: 8px;
+                gap: 5px;
+                flex-wrap: wrap;
+            }}
+            .gmap-search-wrapper {{
+                width: 100%;
+                flex: 1 1 100%;
+            }}
+            .gmap-search-input {{
+                font-size: 14px;
+                padding: 8px 10px 8px 34px;
+            }}
+            .gmap-btn {{
+                padding: 6px 9px;
+                font-size: 0.72rem;
+                flex: 1 1 auto;
+                justify-content: center;
+                min-height: 38px;
+            }}
+            .gmap-filter-bar {{
+                top: 92px;
+                left: 8px;
+                right: 8px;
+                max-width: calc(100% - 16px);
+                padding: 4px 8px;
+                gap: 5px;
+            }}
+            .gmap-filter-pill {{
+                padding: 4px 10px;
+                font-size: 0.72rem;
+            }}
             .gmap-compass-container {{
-                top: 105px;
-                right: 10px;
+                top: 135px;
+                right: 8px;
             }}
             .gmap-compass-rose {{
-                width: 42px;
-                height: 42px;
+                width: 40px;
+                height: 40px;
             }}
             .gmap-compass-controls {{
                 flex-direction: row;

@@ -4685,11 +4685,22 @@ st.markdown("""
        TIER 3 & 2: Mobile Devices (481px - 767px & 376px - 480px / <= 768px)
        ------------------------------------------------------------- */
     @media (max-width: 768px) {
+        /* Prevent root horizontal overflow on all mobile screens */
+        html, body, .stApp {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+        }
+
+        /* Prevent iOS Safari 16px auto-zoom on input focus */
+        input, select, textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
+            font-size: 16px !important;
+        }
+
         /* Mobile Safe Area Padding */
         .main .block-container,
         div[data-testid="stAppViewBlockContainer"] {
             padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)) !important;
-            padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
+            padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
             padding-left: calc(0.6rem + env(safe-area-inset-left, 0px)) !important;
             padding-right: calc(0.6rem + env(safe-area-inset-right, 0px)) !important;
             max-width: 100vw !important;
@@ -4803,11 +4814,11 @@ st.markdown("""
             min-height: 40px !important;
         }
 
-        /* Floating Aura Chatbot FAB & Tooltips on Mobile */
+        /* Floating Aura Chatbot FAB & Tooltips on Mobile (Positioned safely above Bottom Nav) */
         [data-testid="stElementContainer"]:has([data-testid="stPopover"]),
         div[data-testid="stPopover"],
         .floating-aura-logo-overlay {
-            bottom: 16px !important;
+            bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
             right: 14px !important;
             width: 50px !important;
             height: 50px !important;
@@ -4822,16 +4833,16 @@ st.markdown("""
             min-height: 50px !important;
         }
         .floating-aura-holo-disc {
-            bottom: 10px !important;
+            bottom: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
             right: 11px !important;
             width: 56px !important;
             height: 12px !important;
         }
 
-        /* Button 1 (Quick Tour FAB) on Mobile */
+        /* Button 1 (Quick Tour FAB) on Mobile (Positioned above Aura FAB) */
         #pathfinder-tour-fab-trigger,
         .pathfinder-tour-fab-trigger {
-            bottom: 148px !important;
+            bottom: calc(134px + env(safe-area-inset-bottom, 0px)) !important;
             right: 14px !important;
             width: 50px !important;
             height: 50px !important;
@@ -4847,7 +4858,7 @@ st.markdown("""
         .floating-tour-welcome-tooltip,
         .floating-aura-welcome-tooltip {
             right: 70px !important;
-            bottom: 150px !important;
+            bottom: calc(136px + env(safe-area-inset-bottom, 0px)) !important;
             padding: 5px 12px !important;
         }
         .floating-tour-welcome-tooltip .aura-tooltip-main,
@@ -4860,12 +4871,12 @@ st.markdown("""
             padding: 1px 6px !important;
         }
 
-        /* Chatbot Popover Modal on Mobile */
+        /* Chatbot Popover Modal on Mobile (Positioned above Bottom Nav) */
         div[data-testid="stPopoverBody"] {
             width: calc(100vw - 24px) !important;
             max-width: 420px !important;
             max-height: 80vh !important;
-            bottom: 74px !important;
+            bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
             right: 12px !important;
             left: 12px !important;
             margin: 0 auto !important;
@@ -4903,7 +4914,7 @@ st.markdown("""
         .main .block-container,
         div[data-testid="stAppViewBlockContainer"] {
             padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
-            padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
+            padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
             padding-left: calc(0.45rem + env(safe-area-inset-left, 0px)) !important;
             padding-right: calc(0.45rem + env(safe-area-inset-right, 0px)) !important;
         }
@@ -4922,7 +4933,7 @@ st.markdown("""
             max-width: calc(100vw - 18px) !important;
             left: 9px !important;
             right: 9px !important;
-            bottom: 72px !important;
+            bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
         }
     }
 
@@ -4935,6 +4946,7 @@ st.markdown("""
             padding-left: 6px !important;
             padding-right: 6px !important;
             padding-top: 6px !important;
+            padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
         }
         .st-key-fleet_deck_container div[data-testid="stHorizontalBlock"] {
             grid-template-columns: repeat(2, 1fr) !important;
@@ -4971,7 +4983,7 @@ st.markdown("""
             max-width: calc(100vw - 12px) !important;
             left: 6px !important;
             right: 6px !important;
-            bottom: 70px !important;
+            bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
             padding: 10px !important;
         }
     }
@@ -30445,6 +30457,18 @@ if st.session_state.get("launch_quick_tour", False) or "tour" in st.query_params
 
 
 
+        pass
+
+    # -------------------------------------------------------------
+    # Mobile Bottom Navigation Bar (Persistent across all 5 views)
+    # Active on Mobile screens (<= 768px), strictly hidden on Desktop
+    # -------------------------------------------------------------
+    try:
+        from src.mobile_bottom_nav import render_mobile_bottom_navigation_bar
+        _cur_v = st.session_state.get("current_view", "dashboard")
+        _cur_l = st.session_state.get("app_language", "en")
+        st.markdown(render_mobile_bottom_navigation_bar(current_view=_cur_v, lang=_cur_l), unsafe_allow_html=True)
+    except Exception as _mob_nav_err:
         pass
 
 
