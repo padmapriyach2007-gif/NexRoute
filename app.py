@@ -6219,7 +6219,8 @@ def render_app_info_dialog():
 
     col_c1, col_c2 = st.columns([3, 1])
     with col_c2:
-        if st.button("✕ Close", key="btn_app_info_dialog_close", use_container_width=True):
+        cur_l = st.session_state.get("app_language", "en")
+        if st.button(t("action.close", default="✕ Close", lang=cur_l), key="btn_app_info_dialog_close", use_container_width=True):
             st.session_state.show_info_modal = False
             st.rerun()
 
@@ -6715,7 +6716,8 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                     if st.session_state.get("aura_renaming_id") == cid:
                         r_col_in, r_col_save, r_col_cancel = st.columns([2.2, 0.9, 0.9])
                         with r_col_in:
-                            new_t = st.text_input("New title", value=title, key=f"in_ren_{cid}_{key_prefix}", label_visibility="collapsed")
+                            cur_l = st.session_state.get("app_language", "en")
+                            new_t = st.text_input(t("title.new", default="New title", lang=cur_l), value=title, key=f"in_ren_{cid}_{key_prefix}", label_visibility="collapsed")
                         with r_col_save:
                             if _safe_chat_btn("Save", key=f"btn_save_ren_{cid}_{key_prefix}", use_container_width=True):
                                 if new_t and new_t.strip():
@@ -8433,7 +8435,7 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.session_state.cached_candidate_routes = None
                 if st.session_state.get("user_live_coords"):
                     st.session_state.routes_generated = True
-                st.toast(f"🏁 Destination set to: {p_name}", icon="🏁")
+                st.toast(f"🏁 {t('nav.destination', default='Destination', lang=c_lang_hud)} set to: {p_name}", icon="🏁")
 
             st.session_state.map_picking_mode = None
             st.session_state._prev_route_sig = None
@@ -11949,7 +11951,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
 
                 btn_c1, btn_c2 = st.columns([1, 1])
                 with btn_c1:
-                    if st.button("👁️ View on Map", key=f"btn_view_poi_{p_idx}_{key_suffix}", use_container_width=True):
+                    if st.button(f"👁️ {t('places.view_map', default='View on Map', lang=cur_sb_l)}", key=f"btn_view_poi_{p_idx}_{key_suffix}", use_container_width=True):
                         st.session_state.map_center_override = (p["latitude"], p["longitude"])
                         st.session_state.map_zoom = 17
                         st.session_state.auto_fit_bounds = False
@@ -11958,7 +11960,7 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
                         st.rerun()
 
                 with btn_c2:
-                    if st.button("➕ Add as Stop", key=f"btn_add_poi_{p_idx}_{key_suffix}", use_container_width=True):
+                    if st.button(f"➕ {t('guide.add_stop', default='Add as Stop', lang=cur_sb_l)}", key=f"btn_add_poi_{p_idx}_{key_suffix}", use_container_width=True):
                         # 1. Validation: Starting point & destination must both exist
                         c_o = coords_orig
                         c_d = coords_dest
@@ -14899,7 +14901,8 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-                if st.button("🔍 Resolve Address", key="btn_modal_resolve_addr", use_container_width=True, help="Geocode address to exact coordinates"):
+                cur_l = st.session_state.get("app_language", "en")
+                if st.button(f"🔍 {t('action.resolve_address', default='Resolve Address', lang=cur_l)}", key="btn_modal_resolve_addr", use_container_width=True, help="Geocode address to exact coordinates"):
 
 
 
@@ -14983,7 +14986,8 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-                if st.button("🗺️ Pick on Map", key="btn_modal_pick_on_map", use_container_width=True, help="Select this point directly on the interactive map"):
+                cur_l = st.session_state.get("app_language", "en")
+                if st.button(f"🗺️ {t('nav.pick_on_map', default='Pick on Map', lang=cur_l)}", key="btn_modal_pick_on_map", use_container_width=True, help="Select this point directly on the interactive map"):
 
 
 
@@ -15011,7 +15015,8 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-                if st.button("✅ Confirm Location", key="btn_modal_confirm_loc", use_container_width=True, help="Confirm coordinates and update route"):
+                cur_l = st.session_state.get("app_language", "en")
+                if st.button(f"✅ {t('action.confirm_location', default='Confirm Location', lang=cur_l)}", key="btn_modal_confirm_loc", use_container_width=True, help="Confirm coordinates and update route"):
 
 
 
@@ -15137,7 +15142,8 @@ if st.session_state.get("current_view") == "map_nav":
 
 
 
-                if st.button("✕ Cancel", key="btn_modal_cancel", use_container_width=True):
+                cur_l = st.session_state.get("app_language", "en")
+                if st.button(f"✕ {t('action.cancel', default='Cancel', lang=cur_l)}", key="btn_modal_cancel", use_container_width=True):
 
 
 
@@ -20601,15 +20607,18 @@ body {{
             with st.container(key="mobile_bottom_sheet_toggle_container"):
                 col_sh_t1, col_sh_t2, col_sh_t3 = st.columns(3)
                 with col_sh_t1:
-                    if st.button("📱 Summary", key="btn_sh_collapsed", type="primary" if cur_sheet == "collapsed" else "secondary", use_container_width=True, help="Collapsed mode: keeps satellite map maximized with quick route summary"):
+                    cur_l = st.session_state.get("app_language", "en")
+                    if st.button(f"📱 {t('hud.summary', default='Summary', lang=cur_l)}", key="btn_sh_collapsed", type="primary" if cur_sheet == "collapsed" else "secondary", use_container_width=True, help="Collapsed mode: keeps satellite map maximized with quick route summary"):
                         st.session_state.mobile_bottom_sheet_state = "collapsed"
                         st.rerun()
                 with col_sh_t2:
-                    if st.button("⚡ Choices", key="btn_sh_half", type="primary" if cur_sheet == "half" else "secondary", use_container_width=True, help="Half mode: shows route alternatives and quick actions"):
+                    cur_l = st.session_state.get("app_language", "en")
+                    if st.button(f"⚡ {t('hud.choices', default='Choices', lang=cur_l)}", key="btn_sh_half", type="primary" if cur_sheet == "half" else "secondary", use_container_width=True, help="Half mode: shows route alternatives and quick actions"):
                         st.session_state.mobile_bottom_sheet_state = "half"
                         st.rerun()
                 with col_sh_t3:
-                    if st.button("⚙️ Full", key="btn_sh_expanded", type="primary" if cur_sheet == "expanded" else "secondary", use_container_width=True, help="Expanded mode: full access to all inputs, GPS, and custom search"):
+                    cur_l = st.session_state.get("app_language", "en")
+                    if st.button(f"⚙️ {t('hud.full', default='Full', lang=cur_l)}", key="btn_sh_expanded", type="primary" if cur_sheet == "expanded" else "secondary", use_container_width=True, help="Expanded mode: full access to all inputs, GPS, and custom search"):
                         st.session_state.mobile_bottom_sheet_state = "expanded"
                         st.rerun()
 
@@ -20812,7 +20821,7 @@ body {{
                             🧭 {lbl_endpoints}
                         </span>
                         <div style='font-size: 0.72rem; color: #94a3b8; margin-top: 2px;'>
-                            Choose where to start and where to go.
+                            {t('nav.choose_endpoints_sub', default='Choose where to start and where to go.', lang=c_lang_hud)}
                         </div>
                     </div>
                     <span style='font-size: 0.68rem; font-weight: 800; background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 2px 8px; border-radius: 12px;'>
@@ -20896,7 +20905,7 @@ body {{
 
 
 
-                motion_badge = "<span style='background: rgba(16, 185, 129, 0.22); color: #10b981; font-size: 0.64rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.45);'>📌 Custom Pin</span>"
+                motion_badge = f"<span style='background: rgba(16, 185, 129, 0.22); color: #10b981; font-size: 0.64rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.45);'>📌 {t('nav.custom_pin', default='Custom Pin', lang=c_lang_hud)}</span>"
 
 
 
@@ -20932,7 +20941,7 @@ body {{
 
 
 
-                    motion_badge = "<span style='background: rgba(56, 189, 248, 0.18); color: #38bdf8; font-size: 0.64rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35);'>📡 Live Location Active</span>"
+                    motion_badge = f"<span style='background: rgba(56, 189, 248, 0.18); color: #38bdf8; font-size: 0.64rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35);'>📡 {t('nav.live_active', default='Live Location Active', lang=c_lang_hud)}</span>"
 
 
 
@@ -20960,7 +20969,7 @@ body {{
 
 
 
-                        🟢 Starting Point {motion_badge}
+                        🟢 {t('nav.starting_point', default='Starting Point', lang=c_lang_hud)} {motion_badge}
 
 
 
@@ -21012,7 +21021,7 @@ body {{
 
 
 
-                placeholder="Enter your starting location",
+                placeholder=t("nav.enter_start_placeholder", default="Enter your starting location", lang=c_lang_hud),
 
 
 
@@ -21665,7 +21674,7 @@ body {{
                             st.rerun()
 
                 if len(act_stops) > 1:
-                    if st.button("🗑️ Clear All Intermediate Stops", key="btn_clear_all_stops", use_container_width=True):
+                    if st.button(f"🗑️ {t('nav.clear_all_stops', default='Clear All Intermediate Stops', lang=c_lang_hud)}", key="btn_clear_all_stops", use_container_width=True):
                         st.session_state.intermediate_stops = []
                         st.session_state._prev_route_sig = None
                         st.session_state._prev_endpoint_sig = None
@@ -21689,7 +21698,7 @@ body {{
 
 
 
-            dest_txt_disp = dest_lbl if dest_lbl else "Not set — Select on map or search above"
+            dest_txt_disp = dest_lbl if dest_lbl else t("nav.dest_not_set", default="Not set — Select on map or search above", lang=c_lang_hud)
 
 
 
@@ -21769,7 +21778,7 @@ body {{
 
 
 
-                placeholder="Enter your destination",
+                placeholder=t("nav.enter_dest_placeholder", default="Enter your destination", lang=c_lang_hud),
 
 
 
@@ -22162,11 +22171,11 @@ body {{
 # ➕ Highly Visible "ADD A STOP TO YOUR ROUTE" Section (Requirement 6)
             st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
             with st.expander(t("nav.add_stop_expander", default="➕ ADD A STOP TO YOUR ROUTE", lang=c_lang_hud), expanded=False):
-                st.markdown("<div style='font-size: 0.74rem; color: #94a3b8; margin-bottom: 8px;'>✨ <i>Add places to visit along your journey.</i></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 0.74rem; color: #94a3b8; margin-bottom: 8px;'>✨ <i>{t('nav.add_stop_sub', default='Add places to visit along your journey.', lang=c_lang_hud)}</i></div>", unsafe_allow_html=True)
                 if not coords_orig or not coords_dest:
-                    st.info("⚠️ Please select your starting location and destination before adding stops.")
+                    st.info(f"⚠️ {t('nav.select_start_dest_first', default='Please select your starting location and destination before adding stops.', lang=c_lang_hud)}")
                 else:
-                    st.caption("Add an intermediate stop along your route:")
+                    st.caption(t("nav.add_intermediate_stop", default="Add an intermediate stop along your route:", lang=c_lang_hud))
                     c_st_cat1, c_st_cat2, c_st_cat3 = st.columns(3)
                     with c_st_cat1:
                         if st.button(t("cat.dining", default="🍽️ Dining", lang=c_lang_hud), key="btn_quick_stop_food", use_container_width=True):
@@ -22191,13 +22200,13 @@ body {{
 
                     stop_search_input = st.text_input(
                         "Search stop location:",
-                        placeholder="Search landmark, restaurant, petrol pump...",
+                        placeholder=t("nav.search_stop_placeholder", default="Search landmark, restaurant, petrol pump...", lang=c_lang_hud),
                         key="txt_custom_stop_search",
                         label_visibility="collapsed"
                     )
                     c_add_txt, c_add_map = st.columns([1.2, 1.0])
                     with c_add_txt:
-                        if st.button("➕ Add Search Stop", key="btn_confirm_add_txt_stop", use_container_width=True, disabled=not bool(stop_search_input)):
+                        if st.button(f"➕ {t('nav.add_search_stop', default='Add Search Stop', lang=c_lang_hud)}", key="btn_confirm_add_txt_stop", use_container_width=True, disabled=not bool(stop_search_input)):
                             cands = st.session_state.real_map_service.geocode_candidates(stop_search_input, limit=3)
                             if cands:
                                 b_stop = cands[0]
@@ -22219,7 +22228,7 @@ body {{
                             else:
                                 st.toast("Could not find coordinates for this stop name.", icon="⚠️")
                     with c_add_map:
-                        if st.button("🗺️ Pick on Map", key="btn_pick_stop_on_map_exp", use_container_width=True):
+                        if st.button(f"🗺️ {t('nav.pick_on_map', default='Pick on Map', lang=c_lang_hud)}", key="btn_pick_stop_on_map_exp", use_container_width=True):
                             st.session_state.map_picking_mode = "stop"
                             st.session_state.scroll_to_app_map = True
                             st.toast("Click anywhere on the map to add an intermediate stop", icon="🟣")
@@ -22230,7 +22239,7 @@ body {{
             with col_act_calc:
                 is_route_btn_disabled = not bool(coords_orig and coords_dest and coords_orig != coords_dest)
                 has_endpoints = bool(coords_orig and coords_dest and coords_orig != coords_dest)
-                btn_lbl = "🔄 RECALCULATE ROUTES" if has_endpoints else "🚀 GENERATE ROUTES"
+                btn_lbl = f"🔄 {t('nav.recalculate_routes', default='RECALCULATE ROUTES', lang=c_lang_hud)}" if has_endpoints else f"🚀 {t('nav.generate_routes', default='GENERATE ROUTES', lang=c_lang_hud)}"
                 if st.button(btn_lbl, key="btn_side_calc_routes_action", use_container_width=True, type="primary" if has_endpoints else "secondary", disabled=not has_endpoints, help="Recalculate multiple optimal corridors connecting Start and Destination"):
                     st.session_state.routes_generated = True
                     st.session_state._prev_route_sig = None
@@ -22274,11 +22283,11 @@ body {{
 
 
 
-                        <span style='font-size: 0.75rem; font-weight: 800; color: #38bdf8;'>⚡ {len(ranked_routes)} MULTIPLE ROUTES FOUND</span>
+                        <span style='font-size: 0.75rem; font-weight: 800; color: #38bdf8;'>⚡ {len(ranked_routes)} {t('nav.routes_found', default='MULTIPLE ROUTES FOUND', lang=c_lang_hud)}</span>
 
 
 
-                        <span style='font-size: 0.64rem; color: #34d399; font-weight: 700;'>LIVE GPS CORRIDORS</span>
+                        <span style='font-size: 0.64rem; color: #34d399; font-weight: 700;'>{t('nav.live_gps_corridors', default='LIVE GPS CORRIDORS', lang=c_lang_hud)}</span>
 
 
 
@@ -22428,7 +22437,7 @@ body {{
                         </div>
                         <div>
                             <span style='font-size: 0.65rem; color: #94a3b8; display: block;'>{lbl_mode}</span>
-                            <span style='font-size: 0.82rem; font-weight: 800; color: #4ade80;'>🚗 Drive</span>
+                            <span style='font-size: 0.82rem; font-weight: 800; color: #4ade80;'>🚗 {t('nav.mode_drive', default='Drive', lang=c_lang)}</span>
                         </div>
                     </div>
                 </div>
@@ -22456,7 +22465,7 @@ body {{
 
 
 
-            st.caption("🧭 *Map Compass & North-up controls located on map top-right.*")
+            st.caption(f"🧭 *{t('nav.compass_hint', default='Map Compass & North-up controls located on map top-right.', lang=c_lang_hud)}*")
 
 
 
@@ -22504,7 +22513,7 @@ body {{
 
 
 
-                            🗺️ Map Picking Mode Active — Setting: {tgt_name}
+                            🗺️ {t('nav.map_picking_mode_active', default='Map Picking Mode Active — Setting:', lang=c_lang_hud)} {tgt_name}
 
 
 
@@ -22516,7 +22525,7 @@ body {{
 
 
 
-                            Click or tap anywhere directly on the interactive map below. A confirmation popup will resolve the location and pin your coordinates.
+                            {t('nav.map_picking_desc', default='Click or tap anywhere directly on the interactive map below. A confirmation popup will resolve the location and pin your coordinates.', lang=c_lang_hud)}
 
 
 
@@ -22698,7 +22707,8 @@ body {{
 
                     auto_fit_bounds=st.session_state.get("auto_fit_bounds", True),
                     intermediate_stops=st.session_state.get("intermediate_stops", []),
-                    pending_click_coords=st.session_state.get("pending_click_coords")
+                    pending_click_coords=st.session_state.get("pending_click_coords"),
+                    lang=st.session_state.get("app_language", "en")
                 )
 
 
@@ -22817,7 +22827,8 @@ body {{
                 col_qm_route, col_qm_focus, col_qm_info = st.columns([1, 1, 1])
 
                 with col_qm_route:
-                    if st.button("🧭 Route", key="btn_main_quick_route", type="primary", use_container_width=True, help="Display or manage the currently selected route on the map"):
+                    cur_l = st.session_state.get("app_language", "en")
+                    if st.button(f"🧭 {t('btn.route', default='Route', lang=cur_l)}", key="btn_main_quick_route", type="primary", use_container_width=True, help="Display or manage the currently selected route on the map"):
                         active_routes = st.session_state.get("active_ranked_routes") or []
                         if active_routes or st.session_state.get("primary_route_poly"):
                             st.session_state.auto_fit_bounds = True
@@ -22834,7 +22845,8 @@ body {{
                             st.rerun()
 
                 with col_qm_focus:
-                    if st.button("📍 Focus", key="btn_main_quick_focus", use_container_width=True, help="Center map on current GPS navigation, route corridor, or marker"):
+                    cur_l = st.session_state.get("app_language", "en")
+                    if st.button(f"📍 {t('btn.focus', default='Focus', lang=cur_l)}", key="btn_main_quick_focus", use_container_width=True, help="Center map on current GPS navigation, route corridor, or marker"):
                         # Priority 1: Active GPS navigation
                         if st.session_state.get("is_in_transit") and st.session_state.get("user_live_coords"):
                             u_coords = st.session_state.user_live_coords
@@ -22880,7 +22892,8 @@ body {{
                             st.toast("Nothing to focus on yet.", icon="📍")
 
                 with col_qm_info:
-                    if st.button("ℹ️ Info", key="btn_main_quick_info", use_container_width=True, help="Open journey and location details dialog"):
+                    cur_l = st.session_state.get("app_language", "en")
+                    if st.button(f"ℹ️ {t('btn.info', default='Info', lang=cur_l)}", key="btn_main_quick_info", use_container_width=True, help="Open journey and location details dialog"):
                         st.session_state.show_info_modal = True
                         st.rerun()
 
@@ -22972,7 +22985,8 @@ body {{
 
                     btn_c1, btn_c2 = st.columns(2)
                     with btn_c1:
-                        if st.button("✅ CONFIRM THIS LOCATION", key="btn_confirm_pending_loc", use_container_width=True):
+                        cur_l = st.session_state.get("app_language", "en")
+                        if st.button(f"✅ {t('action.confirm_location_upper', default='CONFIRM THIS LOCATION', lang=cur_l)}", key="btn_confirm_pending_loc", use_container_width=True):
                             if p_mode == "Set Start Point":
                                 st.session_state.user_live_coords = (p_lat, p_lon)
                                 pin_orig = f"{p_name} ({p_lat:.4f}, {p_lon:.4f})"
@@ -22999,7 +23013,8 @@ body {{
                             st.session_state.pending_click_coords = None
                             st.rerun()
                     with btn_c2:
-                        if st.button("🔄 SELECT AGAIN", key="btn_cancel_pending_loc", use_container_width=True):
+                        cur_l = st.session_state.get("app_language", "en")
+                        if st.button(f"🔄 {t('action.select_again', default='SELECT AGAIN', lang=cur_l)}", key="btn_cancel_pending_loc", use_container_width=True):
                             st.session_state.pending_location_confirmation = None
                             st.session_state.pending_click_coords = None
                             st.toast("Selection cleared. Click anywhere on the map to select a point.", icon="🔄")
@@ -26435,7 +26450,8 @@ body {{
 
                     with btn_col1:
 
-                        if st.button("🗺️ View Route", key=f"btn_card_view_{r_item.route.route_id}_{idx}", use_container_width=True, help="Center and highlight this route on the map"):
+                        cur_l = st.session_state.get("app_language", "en")
+                        if st.button(f"🗺️ {t('places.view_route', default='View Route', lang=cur_l)}", key=f"btn_card_view_{r_item.route.route_id}_{idx}", use_container_width=True, help="Center and highlight this route on the map"):
 
                             st.session_state.focused_route_id = r_item.route.route_id
 
@@ -26451,7 +26467,8 @@ body {{
 
                     with btn_col2:
 
-                        if st.button("🚀 Start Nav", key=f"btn_card_start_{r_item.route.route_id}_{idx}", use_container_width=True, help="Begin guided journey with this route"):
+                        cur_l = st.session_state.get("app_language", "en")
+                        if st.button(f"🚀 {t('nav.start_nav', default='Start Nav', lang=cur_l)}", key=f"btn_card_start_{r_item.route.route_id}_{idx}", use_container_width=True, help="Begin guided journey with this route"):
 
                             st.session_state.focused_route_id = r_item.route.route_id
 
@@ -27710,7 +27727,8 @@ body {{
 
 
 
-            if st.button("🚀 Enter Aura 3D Virtual Guide & Cockpit", key="btn_nav_to_virtual_guide_deck", type="primary", use_container_width=True):
+            cur_l = st.session_state.get("app_language", "en")
+            if st.button(f"🚀 {t('companion.enter_guide', default='Enter Aura 3D Virtual Guide & Cockpit', lang=cur_l)}", key="btn_nav_to_virtual_guide_deck", type="primary", use_container_width=True):
 
 
 
@@ -28747,7 +28765,8 @@ body {{
 
 
 
-                        if st.button("🧭 Route on App Map", key=f"btn_sos_app_route_{fac_sos['facility_id']}", use_container_width=True, type="primary"):
+                        cur_l = st.session_state.get("app_language", "en")
+                        if st.button(f"🧭 {t('nav.route_on_app_map', default='Route on App Map', lang=cur_l)}", key=f"btn_sos_app_route_{fac_sos['facility_id']}", use_container_width=True, type="primary"):
 
 
 
@@ -28859,7 +28878,8 @@ body {{
 
 
 
-                        if st.button("❌ Dismiss SOS", key="btn_dismiss_sos", use_container_width=True):
+                        cur_l = st.session_state.get("app_language", "en")
+                        if st.button(f"❌ {t('action.dismiss_sos', default='Dismiss SOS', lang=cur_l)}", key="btn_dismiss_sos", use_container_width=True):
 
 
 
@@ -28923,7 +28943,8 @@ body {{
 
 
 
-                if st.button("🔍 Search & Route", key="btn_main_search_custom", use_container_width=True, type="primary"):
+                cur_l = st.session_state.get("app_language", "en")
+                if st.button(f"🔍 {t('places.search_and_route', default='Search & Route', lang=cur_l)}", key="btn_main_search_custom", use_container_width=True, type="primary"):
 
 
 
@@ -30128,7 +30149,8 @@ if st.session_state.get("current_view") == "places":
                             st.toast(f"🧭 Calculating route to {place['name']}...", icon="🛣️")
                             st.rerun()
                     with col_pb3:
-                        if st.button("➕ Stop", key=f"btn_add_stop_sug_{place['place_id']}", use_container_width=True, help="Add as intermediate route stop"):
+                        cur_l = st.session_state.get("app_language", "en")
+                        if st.button(f"➕ {t('guide.add_stop_short', default='Stop', lang=cur_l)}", key=f"btn_add_stop_sug_{place['place_id']}", use_container_width=True, help="Add as intermediate route stop"):
                             c_o = coords_orig
                             c_d = coords_dest
                             if not c_o or not c_d:
@@ -30282,7 +30304,8 @@ if st.session_state.get("current_view") == "places":
                                 st.session_state.show_info_modal = True
                                 st.rerun()
                         with col_sp4:
-                            if st.button("🗑️ Remove", key=f"btn_del_saved_{s_place.get('place_id', s_idx)}_{s_idx}", use_container_width=True):
+                            cur_l = st.session_state.get("app_language", "en")
+                            if st.button(f"🗑️ {t('places.remove', default='Remove', lang=cur_l)}", key=f"btn_del_saved_{s_place.get('place_id', s_idx)}_{s_idx}", use_container_width=True):
                                 st.session_state.saved_locations = [x for x in st.session_state.saved_locations if x.get("name") != s_place.get("name")]
                                 st.session_state.custom_saved_places = [x for x in st.session_state.custom_saved_places if x.get("name") != s_place.get("name")]
                                 save_user_custom_saved_places(st.session_state.custom_saved_places)

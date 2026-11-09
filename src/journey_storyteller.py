@@ -604,11 +604,25 @@ def generate_friendly_virtual_guide_turns(
     Supports complete multilingual localization across Telugu, Hindi, Tamil,
     Kannada, Malayalam, Bengali, Marathi, and English.
     """
-    clean_orig = re.sub(r'[📍🏁🧭🚗●🛰️]', '', origin).strip().split(",")[0].strip() or "Departure Point"
-    if clean_orig.lower() in ["current location", "starting point", "live satellite"]:
-        clean_orig = "Your Starting Point"
+    try:
+        from src.i18n import t
+    except Exception:
+        def t(k, **kw): return kw.get("default", k)
 
-    clean_dest = re.sub(r'[📍🏁🧭🚗●🛰️]', '', destination).strip().split(",")[0].strip() or "Destination"
+    clean_orig_raw = re.sub(r'[📍🏁🧭🚗●🛰️]', '', origin).strip().split(",")[0].strip()
+    if not clean_orig_raw or clean_orig_raw.lower() in [
+        "departure point", "your starting point", "current location", "starting point", 
+        "live satellite", "dynamic live location", "dynamic live location (device gps track)"
+    ]:
+        clean_orig = t("nav.starting_point", default="Starting Point", lang=language)
+    else:
+        clean_orig = clean_orig_raw
+
+    clean_dest_raw = re.sub(r'[📍🏁🧭🚗●🛰️]', '', destination).strip().split(",")[0].strip()
+    if not clean_dest_raw or clean_dest_raw.lower() in ["destination", "target destination"]:
+        clean_dest = t("nav.destination", default="Destination", lang=language)
+    else:
+        clean_dest = clean_dest_raw
 
     mode_lower = travel_mode.lower()
     mode_action = "walk" if "walk" in mode_lower else ("ride" if "bike" in mode_lower or "cycle" in mode_lower else "drive")

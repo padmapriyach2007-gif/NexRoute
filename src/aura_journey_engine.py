@@ -305,19 +305,63 @@ class ManeuverSequenceBuilder:
         language: Optional[str] = "en"
     ) -> List[AuraManeuverStep]:
         curr_l = (language or "en").lower().split("-")[0]
-        clean_orig = origin_label.split(",")[0].strip() or "Departure Point"
-        clean_dest = dest_label.split(",")[0].strip() or "Destination"
+        try:
+            from src.i18n import t
+        except Exception:
+            def t(k, **kw): return kw.get("default", k)
+
+        clean_orig_raw = origin_label.split(",")[0].strip()
+        if not clean_orig_raw or clean_orig_raw.lower() in [
+            "departure point", "your starting point", "current location", "starting point", 
+            "live satellite", "dynamic live location", "dynamic live location (device gps track)"
+        ]:
+            clean_orig = t("nav.starting_point", default="Starting Point", lang=curr_l)
+        else:
+            clean_orig = clean_orig_raw
+
+        clean_dest_raw = dest_label.split(",")[0].strip()
+        if not clean_dest_raw or clean_dest_raw.lower() in ["destination", "target destination"]:
+            clean_dest = t("nav.destination", default="Destination", lang=curr_l)
+        else:
+            clean_dest = clean_dest_raw
 
         if not steps or len(steps) < 2:
             # Fallback when provider returns empty steps list
-            try:
-                from src.i18n import t
-            except ImportError:
-                def t(k, **kw): return kw.get("default", k)
+            dep_tmpl = {
+                "te": f"{clean_orig} నుండి ప్రారంభించండి",
+                "hi": f"{clean_orig} से प्रस्थान करें",
+                "ta": f"{clean_orig} இலிருந்து தொடங்கவும்",
+                "kn": f"{clean_orig} ನಿಂದ ಪ್ರಾರಂಭಿಸಿ",
+                "ml": f"{clean_orig} ൽ നിന്ന് ആരംഭിക്കുക",
+                "bn": f"{clean_orig} থেকে যাত্রা শুরু করুন",
+                "mr": f"{clean_orig} येथून प्रस्थान करा",
+                "en": f"Depart from {clean_orig}"
+            }
+            h1 = dep_tmpl.get(curr_l, dep_tmpl["en"])
 
-            h1 = f"{clean_orig} నుండి ప్రారంభించండి" if curr_l == "te" else (f"{clean_orig} से प्रस्थान करें" if curr_l == "hi" else f"Depart from {clean_orig}")
-            h2 = "కనెక్టింగ్ హైవే వెంట కొనసాగండి" if curr_l == "te" else ("कनेक्टिंग हाईवे पर आगे बढ़ें" if curr_l == "hi" else "Continue along Connecting Highway")
-            h3 = f"{clean_dest} వద్దకు సురక్షితంగా చేరుకోండి" if curr_l == "te" else (f"{clean_dest} पर सुरक्षित पहुंचे" if curr_l == "hi" else f"Arrive safely at {clean_dest}")
+            hwy_tmpl = {
+                "te": "కనెక్టింగ్ హైవే వెంట కొనసాగండి",
+                "hi": "कनेक्टिंग हाईवे पर आगे बढ़ें",
+                "ta": "இணைக்கும் நெடுஞ்சாலையில் தொடரவும்",
+                "kn": "ಸಂಪರ್ಕಿಸುವ ಹೆದ್ದಾರಿಯಲ್ಲಿ ಮುಂದುವರಿಯಿರಿ",
+                "ml": "കണക്റ്റിംഗ് ഹൈവേയിലൂടെ മുന്നോട്ട് പോകുക",
+                "bn": "সংযোগকারী হাইওয়ে ধরে এগিয়ে যান",
+                "mr": "कनेक्टिंग महामार्गावर पुढे जा",
+                "en": "Continue along Connecting Highway"
+            }
+            h2 = hwy_tmpl.get(curr_l, hwy_tmpl["en"])
+
+            arr_tmpl = {
+                "te": f"{clean_dest} వద్దకు సురక్షితంగా చేరుకోండి",
+                "hi": f"{clean_dest} पर सुरक्षित पहुंचे",
+                "ta": f"{clean_dest} இல் பாதுகாப்பாக வந்து சேருங்கள்",
+                "kn": f"{clean_dest} ತಲುಪಿ",
+                "ml": f"{clean_dest} ൽ സുരക്ഷിതമായി എത്തിച്ചേരുക",
+                "bn": f"{clean_dest} এ নিরাপদে পৌঁছান",
+                "mr": f"{clean_dest} येथे सुरक्षित पोहोचा",
+                "en": f"Arrive safely at {clean_dest}"
+            }
+            h3 = arr_tmpl.get(curr_l, arr_tmpl["en"])
 
             return [
                 AuraManeuverStep(

@@ -156,3 +156,43 @@ class TestMobileBottomNavMultilingual:
         labels = MOBILE_NAV_TRANSLATIONS[lang_code]
         for key in ["home", "map", "trips", "places", "guide"]:
             assert labels[key] in html
+
+
+class TestGoogleMapsPlatformAndJourneyMultilingual:
+    @pytest.mark.parametrize("lang_code", EXACT_8_LANGUAGES)
+    def test_embedded_map_localized_across_all_languages(self, lang_code):
+        from src.google_maps_platform import build_google_maps_javascript_html
+        html = build_google_maps_javascript_html(16.5, 80.6, lang=lang_code)
+        # Check that localized keys exist in html
+        assert t("map.details", lang=lang_code) in html
+        assert t("map.cat_hospitals", lang=lang_code) in html
+        assert t("map.instruction_select_endpoints", lang=lang_code) in html
+        assert t("map.layer_traffic", lang=lang_code) in html
+
+    @pytest.mark.parametrize("lang_code", EXACT_8_LANGUAGES)
+    def test_journey_clean_origin_no_raw_english_leak(self, lang_code):
+        from src.journey_storyteller import generate_friendly_virtual_guide_turns
+        from src.aura_journey_engine import ManeuverSequenceBuilder
+        
+        # When given generic "Departure Point" as origin
+        steps_js = generate_friendly_virtual_guide_turns(
+            origin="Departure Point",
+            destination="Destination",
+            steps=[],
+            language=lang_code
+        )
+        assert len(steps_js) > 0
+        if lang_code != "en":
+            assert "Departure Point" not in steps_js[0].action_headline
+
+        steps_aje = ManeuverSequenceBuilder.build_sequence(
+            steps=[],
+            total_distance_m=5000,
+            origin_label="Departure Point",
+            dest_label="Destination",
+            language=lang_code
+        )
+        assert len(steps_aje) > 0
+        if lang_code != "en":
+            assert "Departure Point" not in steps_aje[0].headline
+

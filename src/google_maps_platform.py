@@ -308,6 +308,7 @@ def build_google_maps_javascript_html(
     ai_road_report: Optional[Dict[str, Any]] = None,
     fleet_members: Optional[List[Dict[str, Any]]] = None,
     intermediate_stops: Optional[List[Dict[str, Any]]] = None,
+    lang: str = "en",
     **kwargs
 ) -> str:
     """
@@ -322,6 +323,69 @@ def build_google_maps_javascript_html(
     - Full bidirectional interaction (Map click sets points, InfoWindows provide actions)
     - Live fallback preview if API key is not yet configured
     """
+    cur_l = (lang or kwargs.get("language") or "en").lower().split("-")[0]
+    if cur_l not in ["en", "te", "hi", "ta", "kn", "ml", "bn", "mr"]:
+        cur_l = "en"
+    try:
+        from src.i18n import t
+    except Exception:
+        def t(k, **kw): return kw.get("default", k)
+
+    txt_clean_instruction = t("map.instruction_select_endpoints", default="Select your starting point and destination to begin your journey.", lang=cur_l)
+    txt_search_placeholder = t("map.search_placeholder", default="Search places, landmarks, saved rooms or coordinates...", lang=cur_l)
+    txt_my_location = f"📍 {t('nav.my_location', default='My Location', lang=cur_l)}"
+    txt_fit_bounds = f"🎯 {t('map.fit_bounds', default='Fit Bounds', lang=cur_l)}"
+    txt_full_screen = f"⛶ {t('map.full_screen', default='Full Screen', lang=cur_l)}"
+    txt_map_details = f"🥞 {t('map.details', default='Map Details', lang=cur_l)}"
+
+    txt_cat_hospitals = f"🏥 {t('map.cat_hospitals', default='Hospitals & Clinics', lang=cur_l)}"
+    txt_cat_supermarkets = f"🛒 {t('map.cat_supermarkets', default='Supermarkets', lang=cur_l)}"
+    txt_cat_fuel = f"⛽ {t('map.cat_fuel', default='Fuel/Charging', lang=cur_l)}"
+    txt_cat_restaurants = f"🍽️ {t('map.cat_restaurants', default='Restaurants', lang=cur_l)}"
+    txt_cat_atms = f"🏧 {t('map.cat_atms', default='ATM / Banking', lang=cur_l)}"
+    txt_cat_police = f"👮 {t('map.cat_police', default='Police/Rescue', lang=cur_l)}"
+    txt_cat_hotels = f"🏨 {t('map.cat_hotels', default='Hotels', lang=cur_l)}"
+    txt_cat_shelters = f"⛺ {t('map.cat_shelters', default='Shelters', lang=cur_l)}"
+    txt_cat_malls = f"🛍️ {t('map.cat_malls', default='Shopping Malls', lang=cur_l)}"
+
+    txt_nearby_places = t("map.nearby_places", default="Nearby Places", lang=cur_l)
+    txt_scanning_area = t("map.scanning_area", default="Scanning area...", lang=cur_l)
+    txt_clear_cat = t("action.close", default="✕ Clear", lang=cur_l)
+
+    txt_picking_active = t("map.picking_active", default="MAP-PICKING MODE ACTIVE", lang=cur_l)
+    txt_picking_desc = t("map.picking_tap_desc", default="Tap anywhere on the map to set location", lang=cur_l)
+    txt_cancel = t("action.cancel", default="✕ Cancel", lang=cur_l)
+    txt_confirm_loc = t("action.confirm_location_upper", default="CONFIRM LOCATION", lang=cur_l)
+    txt_confirm_btn = f"✅ {t('action.confirm_location', default='Confirm Location', lang=cur_l)}"
+
+    txt_loc_details = f"📍 {t('map.location_details', default='LOCATION DETAILS', lang=cur_l)}"
+    txt_selected_loc = t("map.selected_location", default="Selected Location", lang=cur_l)
+    txt_selected_loc_sub = t("map.selected_location_sub", default="Point of Interest • Surveyed Corridor", lang=cur_l)
+    txt_open_now = f"🟢 {t('map.open_now', default='Open Now', lang=cur_l)}"
+    txt_locating_address = t("map.locating_address", default="Locating place address...", lang=cur_l)
+    txt_distance_calc = t("map.distance_calculating", default="Distance: Calculating...", lang=cur_l)
+    txt_hazard_free = t("map.hazard_free", default="Satellite Verified Hazard-Free Passage", lang=cur_l)
+    txt_set_start = f"🟢 {t('map.set_as_start', default='Set as Start', lang=cur_l)}"
+    txt_set_dest = f"🏁 {t('map.set_as_dest', default='Set as Dest', lang=cur_l)}"
+    txt_save_fav = t("map.save_favourites", default="Save to Favourites", lang=cur_l)
+    txt_zoom_in = f"🔍 {t('map.zoom_in', default='Zoom In', lang=cur_l)}"
+    txt_view_gmaps = f"🌐 {t('map.view_gmaps', default='View on G-Maps', lang=cur_l)}"
+
+    txt_layer_transit = t("map.layer_transit", default="Transit", lang=cur_l)
+    txt_layer_traffic = t("map.layer_traffic", default="Traffic", lang=cur_l)
+    txt_layer_biking = t("map.layer_biking", default="Biking", lang=cur_l)
+    txt_layer_terrain = t("map.layer_terrain", default="Terrain", lang=cur_l)
+    txt_layer_streetview = t("map.layer_streetview", default="NexRoute View", lang=cur_l)
+    txt_layer_hazards = t("map.layer_hazards", default="Wildfires", lang=cur_l)
+    txt_layer_airquality = t("map.layer_airquality", default="Air Quality", lang=cur_l)
+    txt_layer_ai_intel = t("map.layer_ai_intel", default="AI Intel", lang=cur_l)
+    txt_tools_heading = t("map.tools_heading", default="Map tools", lang=cur_l)
+    txt_tool_traveltime = t("map.travel_time_tool", default="Travel time", lang=cur_l)
+    txt_tool_measure = t("map.measure_tool", default="Measure", lang=cur_l)
+    txt_type_heading = t("map.type_heading", default="Map type", lang=cur_l)
+    txt_type_default = t("map.type_default", default="Default", lang=cur_l)
+    txt_type_hybrid = t("map.type_hybrid", default="Hybrid", lang=cur_l)
+
     key = api_key or get_google_maps_api_key()
     has_live_key = bool(key and len(key) >= 20 and key.startswith("AIza") and not key.startswith("YOUR_"))
 
@@ -2058,27 +2122,27 @@ def build_google_maps_javascript_html(
         <!-- Subtle Clean Map Instruction Overlay (Requirement 3) -->
         <div id="gmap-clean-instruction-overlay" style="position: absolute; top: 68px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid rgba(56, 189, 248, 0.55); border-radius: 999px; padding: 9px 24px; z-index: 1000; color: #f8fafc; font-size: 13px; font-weight: 700; box-shadow: 0 8px 30px rgba(0,0,0,0.7); pointer-events: none; display: {'none' if (origin_coords or dest_coords) else 'flex'}; align-items: center; gap: 9px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.01em;">
             <span style="font-size: 16px;">🗺️</span>
-            <span>Select your starting point and destination to begin your journey.</span>
+            <span>{txt_clean_instruction}</span>
         </div>
 
         <!-- Floating Controls -->
         <div class="gmap-toolbar">
             <div class="gmap-search-wrapper">
                 <span class="gmap-search-icon">🔍</span>
-                <input id="pac-input" class="gmap-search-input" type="text" placeholder="Search places, landmarks, saved rooms or coordinates..." autocomplete="off" />
+                <input id="pac-input" class="gmap-search-input" type="text" placeholder="{txt_search_placeholder}" autocomplete="off" />
                 <div id="pac-autocomplete-dropdown" class="pac-autocomplete-dropdown"></div>
             </div>
             <button class="gmap-btn" id="btn-geolocation" onclick="window.locateUserGps()" title="Center map at your real GPS location">
-                📍 My Location
+                {txt_my_location}
             </button>
             <button class="gmap-btn" id="btn-fit-all" onclick="window.fitAllMapBounds()" title="Fit all route alternatives and markers">
-                🎯 Fit Bounds
+                {txt_fit_bounds}
             </button>
             <button class="gmap-btn" id="btn-fullscreen" onclick="window.toggleFullScreen()" title="Toggle full screen view">
-                ⛶ Full Screen
+                {txt_full_screen}
             </button>
             <button class="gmap-btn" id="btn-open-layers" onclick="window.toggleLayersDrawer()" title="Map Details & Layers (Traffic, Transit, Satellite, Wildfires)">
-                🥞 Map Details
+                {txt_map_details}
             </button>
         </div>
 
@@ -2086,15 +2150,15 @@ def build_google_maps_javascript_html(
         <div class="gmap-filter-bar">
             <span class="gmap-filter-pill" data-filter="SAVED" id="pill-filter-saved" style="display:none;" title="Saved Places"></span>
             <button class="gmap-filter-save-btn" id="btn-quick-save-place" style="display:none;" onclick="window.savePlacePromptFromFilter()"></button>
-            <span class="gmap-filter-pill" data-filter="HOSPITALS" onclick="window.triggerCategorySearch('HOSPITALS')">🏥 Hospitals & Clinics</span>
-            <span class="gmap-filter-pill" data-filter="SUPERMARKETS" onclick="window.triggerCategorySearch('SUPERMARKETS')">🛒 Supermarkets</span>
-            <span class="gmap-filter-pill" data-filter="FUEL" onclick="window.triggerCategorySearch('FUEL')">⛽ Fuel/Charging</span>
-            <span class="gmap-filter-pill" data-filter="RESTAURANTS" onclick="window.triggerCategorySearch('RESTAURANTS')">🍽️ Restaurants</span>
-            <span class="gmap-filter-pill" data-filter="ATMS" onclick="window.triggerCategorySearch('ATMS')">🏧 ATM / Banking</span>
-            <span class="gmap-filter-pill" data-filter="POLICE" onclick="window.triggerCategorySearch('POLICE')">👮 Police/Rescue</span>
-            <span class="gmap-filter-pill" data-filter="HOTELS" onclick="window.triggerCategorySearch('HOTELS')">🏨 Hotels</span>
-            <span class="gmap-filter-pill" data-filter="SHELTERS" onclick="window.triggerCategorySearch('SHELTERS')">⛺ Shelters</span>
-            <span class="gmap-filter-pill" data-filter="MALLS" onclick="window.triggerCategorySearch('MALLS')">🛍️ Shopping Malls</span>
+            <span class="gmap-filter-pill" data-filter="HOSPITALS" onclick="window.triggerCategorySearch('HOSPITALS')">{txt_cat_hospitals}</span>
+            <span class="gmap-filter-pill" data-filter="SUPERMARKETS" onclick="window.triggerCategorySearch('SUPERMARKETS')">{txt_cat_supermarkets}</span>
+            <span class="gmap-filter-pill" data-filter="FUEL" onclick="window.triggerCategorySearch('FUEL')">{txt_cat_fuel}</span>
+            <span class="gmap-filter-pill" data-filter="RESTAURANTS" onclick="window.triggerCategorySearch('RESTAURANTS')">{txt_cat_restaurants}</span>
+            <span class="gmap-filter-pill" data-filter="ATMS" onclick="window.triggerCategorySearch('ATMS')">{txt_cat_atms}</span>
+            <span class="gmap-filter-pill" data-filter="POLICE" onclick="window.triggerCategorySearch('POLICE')">{txt_cat_police}</span>
+            <span class="gmap-filter-pill" data-filter="HOTELS" onclick="window.triggerCategorySearch('HOTELS')">{txt_cat_hotels}</span>
+            <span class="gmap-filter-pill" data-filter="SHELTERS" onclick="window.triggerCategorySearch('SHELTERS')">{txt_cat_shelters}</span>
+            <span class="gmap-filter-pill" data-filter="MALLS" onclick="window.triggerCategorySearch('MALLS')">{txt_cat_malls}</span>
         </div>
 
         <!-- Nearby-Place Category Results Panel -->
@@ -2103,11 +2167,11 @@ def build_google_maps_javascript_html(
                 <div class="category-panel-title-wrap">
                     <span id="cat-panel-icon" class="cat-panel-icon">🏥</span>
                     <div>
-                        <div id="cat-panel-title" class="cat-panel-title">Nearby Places</div>
-                        <div id="cat-panel-count" class="cat-panel-count">Scanning area...</div>
+                        <div id="cat-panel-title" class="cat-panel-title">{txt_nearby_places}</div>
+                        <div id="cat-panel-count" class="cat-panel-count">{txt_scanning_area}</div>
                     </div>
                 </div>
-                <button class="cat-panel-clear-btn" onclick="window.clearActiveCategory()" title="Remove category markers and clear panel">✕ Clear</button>
+                <button class="cat-panel-clear-btn" onclick="window.clearActiveCategory()" title="Remove category markers and clear panel">{txt_clear_cat}</button>
             </div>
             <div id="cat-panel-subfilters" class="cat-panel-subfilters" style="display:none;"></div>
             <div id="cat-panel-body" class="cat-panel-body"></div>
@@ -2141,23 +2205,23 @@ def build_google_maps_javascript_html(
         <div id="map-picking-hud" style="display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 99999; background: linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(30,58,138,0.96) 100%); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(56,189,248,0.35); align-items: center; gap: 14px; pointer-events: auto;">
             <span style="font-size: 22px;" id="map-picking-hud-icon">📍</span>
             <div>
-                <div style="font-weight: 800; font-size: 13px; color: #38bdf8;" id="map-picking-hud-title">MAP-PICKING MODE ACTIVE</div>
-                <div style="font-size: 11px; color: #cbd5e1;" id="map-picking-hud-desc">Tap anywhere on the map to set location</div>
+                <div style="font-weight: 800; font-size: 13px; color: #38bdf8;" id="map-picking-hud-title">{txt_picking_active}</div>
+                <div style="font-size: 11px; color: #cbd5e1;" id="map-picking-hud-desc">{txt_picking_desc}</div>
             </div>
-            <button onclick="window.cancelMapPickingMode()" style="background: rgba(239,68,68,0.25); border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;">✕ Cancel</button>
+            <button onclick="window.cancelMapPickingMode()" style="background: rgba(239,68,68,0.25); border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;">{txt_cancel}</button>
         </div>
 
         <!-- Map-Picking Confirmation Card (Hidden to prevent blocking user) -->
         <div id="map-picking-card" style="display: none !important; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; width: min(90vw, 440px); background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(20,35,65,0.96) 100%); border: 2px solid #38bdf8; border-radius: 14px; padding: 14px 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.7), 0 0 24px rgba(56,189,248,0.3); pointer-events: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-size: 13px; font-weight: 800; color: #38bdf8;" id="map-pick-confirm-badge">🎯 CONFIRM LOCATION</span>
+                <span style="font-size: 13px; font-weight: 800; color: #38bdf8;" id="map-pick-confirm-badge">{txt_confirm_loc}</span>
                 <span style="font-size: 11px; color: #94a3b8;" id="map-pick-coords-text">16.2335, 80.5505</span>
             </div>
             <div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 4px;" id="map-pick-name-text">Selected Place Name</div>
             <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 12px; line-height: 1.3;" id="map-pick-addr-text">Address details...</div>
             <div style="display: flex; gap: 8px;">
                 <button onclick="window.confirmPickedLocation()" id="map-pick-confirm-btn" style="flex: 1.2; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: 1.5px solid #34d399; color: #ffffff; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 800; cursor: pointer;">
-                    ✅ Confirm Location
+                    {txt_confirm_btn}
                 </button>
                 <button onclick="window.cancelMapPickingMode()" style="flex: 0.8; background: rgba(239,68,68,0.2); border: 1.5px solid #ef4444; color: #fca5a5; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">
                     ✕ Cancel
@@ -2253,43 +2317,43 @@ def build_google_maps_javascript_html(
             <div class="place-drawer-banner">
                 <img id="place-drawer-img" src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=600&auto=format&fit=crop&q=80" alt="Location View" />
                 <button class="place-drawer-close" onclick="window.closePlaceDrawer()" title="Close details">✕</button>
-                <div id="place-drawer-tag" class="place-drawer-tag">📍 LOCATION DETAILS</div>
+                <div id="place-drawer-tag" class="place-drawer-tag">{txt_loc_details}</div>
             </div>
             <div class="place-drawer-body">
                 <div>
-                    <div id="place-drawer-title" class="place-drawer-title">Selected Location</div>
-                    <div id="place-drawer-subtitle" class="place-drawer-subtitle">Point of Interest • Surveyed Corridor</div>
+                    <div id="place-drawer-title" class="place-drawer-title">{txt_selected_loc}</div>
+                    <div id="place-drawer-subtitle" class="place-drawer-subtitle">{txt_selected_loc_sub}</div>
                 </div>
                 <div class="place-drawer-meta">
                     <span id="place-drawer-rating" class="place-rating-badge">★ 4.8</span>
                     <span id="place-drawer-reviews" class="place-reviews-count">(520 reviews)</span>
                     <span>•</span>
-                    <span id="place-drawer-status" class="place-open-status">🟢 Open Now</span>
+                    <span id="place-drawer-status" class="place-open-status">{txt_open_now}</span>
                 </div>
                 <div class="place-details-table">
-                    <div class="place-details-row"><span>📍</span><span id="place-drawer-address">Locating place address...</span></div>
-                    <div class="place-details-row"><span>🧭</span><span id="place-drawer-distance">Distance: Calculating...</span></div>
+                    <div class="place-details-row"><span>📍</span><span id="place-drawer-address">{txt_locating_address}</span></div>
+                    <div class="place-details-row"><span>🧭</span><span id="place-drawer-distance">{txt_distance_calc}</span></div>
                     <div class="place-details-row"><span>📞</span><span id="place-drawer-phone">+91 800 108 000 (Local Service)</span></div>
-                    <div class="place-details-row"><span>🛡️</span><span id="place-drawer-safety">Satellite Verified Hazard-Free Passage</span></div>
+                    <div class="place-details-row"><span>🛡️</span><span id="place-drawer-safety">{txt_hazard_free}</span></div>
                 </div>
                 <div class="place-action-btns">
                     <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px;">
                         <button id="place-btn-start" class="place-btn-secondary" onclick="window.setClickedPlaceAsStart()" style="flex: 1; background: rgba(16, 185, 129, 0.2); border: 1.5px solid #10b981; color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 8px; cursor: pointer;">
-                            🟢 Set as Start
+                            {txt_set_start}
                         </button>
                         <button id="place-btn-dest" class="place-btn-primary" onclick="window.setClickedPlaceAsDest()" style="flex: 1; padding: 10px; border-radius: 8px; cursor: pointer;">
-                            🏁 Set as Dest
+                            {txt_set_dest}
                         </button>
                     </div>
                     <button id="place-btn-save-fav" class="place-btn-secondary" onclick="window.saveInspectedPlaceToFavourites()" style="background: rgba(245, 158, 11, 0.2); border: 1.5px solid #f59e0b; color: #fbbf24; font-weight: 800; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span id="place-btn-save-icon">⭐</span> <span id="place-btn-save-text">Save to Favourites</span>
+                        <span id="place-btn-save-icon">⭐</span> <span id="place-btn-save-text">{txt_save_fav}</span>
                     </button>
                     <div class="place-btn-row">
                         <button class="place-btn-secondary" onclick="window.zoomToClickedPlace()">
-                            🔍 Zoom In
+                            {txt_zoom_in}
                         </button>
                         <a id="place-link-gmaps" class="place-btn-secondary" href="#" target="_blank">
-                            🌐 View on G-Maps
+                            {txt_view_gmaps}
                         </a>
                     </div>
                 </div>
@@ -2299,7 +2363,7 @@ def build_google_maps_javascript_html(
         <!-- Google Maps "Map details" Flyout Drawer (Image 3) -->
         <div id="gmap-layers-drawer" class="gmap-layers-drawer">
             <div class="layers-drawer-header">
-                <span class="layers-drawer-title">Map details</span>
+                <span class="layers-drawer-title">{txt_map_details}</span>
                 <button class="layers-drawer-close" onclick="window.toggleLayersDrawer(false)" title="Close panel">✕</button>
             </div>
 
@@ -2312,7 +2376,7 @@ def build_google_maps_javascript_html(
                             <path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-4-4-8-4zm-3.5 14a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm7 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1.5-6H7V6h10v4z"/>
                         </svg>
                     </div>
-                    <span class="layer-item-label">Transit</span>
+                    <span class="layer-item-label">{txt_layer_transit}</span>
                 </button>
 
                 <!-- Traffic -->
@@ -2324,7 +2388,7 @@ def build_google_maps_javascript_html(
                             <circle cx="12" cy="12" r="3" fill="#eab308"></circle>
                         </svg>
                     </div>
-                    <span class="layer-item-label">Traffic</span>
+                    <span class="layer-item-label">{txt_layer_traffic}</span>
                 </button>
 
                 <!-- Biking -->
@@ -2335,7 +2399,7 @@ def build_google_maps_javascript_html(
                             <path d="M5 20.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm14 0a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm-8.2-9.3l-2.4-4.8H5v2h2.2l1.5 3-2.6 4.3 1.7 1 2.5-4.2 3.1 3.2H18v-2h-3.6l-2.6-2.5 1.5-2.5c.6.9 1.6 1.5 2.7 1.5v-2c-1.1 0-2.1-.6-2.6-1.5z"/>
                         </svg>
                     </div>
-                    <span class="layer-item-label">Biking</span>
+                    <span class="layer-item-label">{txt_layer_biking}</span>
                 </button>
 
                 <!-- Terrain -->
@@ -2345,7 +2409,7 @@ def build_google_maps_javascript_html(
                             <path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2L7 10l-6 8h22L14 6z"/>
                         </svg>
                     </div>
-                    <span class="layer-item-label">Terrain</span>
+                    <span class="layer-item-label">{txt_layer_terrain}</span>
                 </button>
 
                 <!-- NexRoute Maps View (360° Panorama) -->
@@ -2353,7 +2417,7 @@ def build_google_maps_javascript_html(
                     <div class="layer-icon-circle bg-streetview">
                         <span style="font-size: 20px;">🚶</span>
                     </div>
-                    <span class="layer-item-label">NexRoute View</span>
+                    <span class="layer-item-label">{txt_layer_streetview}</span>
                 </button>
 
                 <!-- Wildfires & Hazards -->
@@ -2363,7 +2427,7 @@ def build_google_maps_javascript_html(
                             <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.784 1.401 8.169-7.335-3.856-7.335 3.856 1.401-8.169-5.934-5.784 8.2-1.192zm0 5.702l-1.995 4.042-4.46.649 3.227 3.146-.762 4.443 3.99-2.097 3.99 2.097-.762-4.443 3.227-3.146-4.46-.649z"/>
                         </svg>
                     </div>
-                    <span class="layer-item-label">Wildfires</span>
+                    <span class="layer-item-label">{txt_layer_hazards}</span>
                 </button>
 
                 <!-- Air Quality -->
@@ -2373,7 +2437,7 @@ def build_google_maps_javascript_html(
                             <path d="M14.5 17c0 1.65-1.35 3-3 3s-3-1.35-3-3h2c0 .55.45 1 1 1s1-.45 1-1-.45-1-1-1H2v-2h9.5c1.65 0 3 1.35 3 3zm4.5-6c0 1.65-1.35 3-3 3H2v-2h14c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1h-2c0-1.65 1.35-3 3-3s3 1.35 3 3zm-3-6c0-1.65-1.35-3-3-3H2v2h11c.55 0 1 .45 1 1s-.45 1-1 1h-2c0 1.65 1.35 3 3 3s3-1.35 3-3z"/>
                         </svg>
                     </div>
-                    <span class="layer-item-label">Air Quality</span>
+                    <span class="layer-item-label">{txt_layer_airquality}</span>
                 </button>
 
                 <!-- AI Road Intelligence Overlay -->
@@ -2381,29 +2445,29 @@ def build_google_maps_javascript_html(
                     <div class="layer-icon-circle" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
                         <span style="font-size: 18px;">🛰️</span>
                     </div>
-                    <span class="layer-item-label">AI Intel</span>
+                    <span class="layer-item-label">{txt_layer_ai_intel}</span>
                 </button>
             </div>
 
             <div class="layers-divider"></div>
 
             <!-- Section 2: Map tools -->
-            <div class="layers-section-heading">Map tools</div>
+            <div class="layers-section-heading">{txt_tools_heading}</div>
             <div class="layers-tools-row">
                 <button class="layer-tool-btn" id="tool-btn-traveltime" onclick="window.toggleMapTool('traveltime')" title="Dynamic Departure Clock & Transit Kinematics">
                     <span class="layer-tool-icon">⏱️</span>
-                    <span class="layer-tool-label">Travel time</span>
+                    <span class="layer-tool-label">{txt_tool_traveltime}</span>
                 </button>
                 <button class="layer-tool-btn" id="tool-btn-measure" onclick="window.toggleMapTool('measure')" title="Measure Distance between Points">
                     <span class="layer-tool-icon">📏</span>
-                    <span class="layer-tool-label">Measure</span>
+                    <span class="layer-tool-label">{txt_tool_measure}</span>
                 </button>
             </div>
 
             <div class="layers-divider"></div>
 
             <!-- Section 3: Map type -->
-            <div class="layers-section-heading">Map type</div>
+            <div class="layers-section-heading">{txt_type_heading}</div>
             <div class="layers-types-row">
                 <div class="layer-type-card {cls_card_road}" id="maptype-card-default" onclick="window.switchMapType('roadmap')" title="Google Maps Standard Roadmap">
                     <div class="layer-type-preview type-roadmap-preview">
@@ -2411,13 +2475,13 @@ def build_google_maps_javascript_html(
                         <div class="type-roadmap-road-v"></div>
                         <div class="type-roadmap-park"></div>
                     </div>
-                    <span class="layer-type-name">Default</span>
+                    <span class="layer-type-name">{txt_type_default}</span>
                 </div>
                 <div class="layer-type-card {cls_card_hybrid}" id="maptype-card-hybrid" onclick="window.switchMapType('hybrid')" title="Google Maps Hybrid Satellite with Labels">
                     <div class="layer-type-preview type-satellite-preview" style="position: relative;">
                         <span style="position: absolute; bottom: 2px; right: 3px; font-size: 9px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));">🏷️</span>
                     </div>
-                    <span class="layer-type-name">Hybrid</span>
+                    <span class="layer-type-name">{txt_type_hybrid}</span>
                 </div>
                 <div class="layer-type-card {cls_card_sat}" id="maptype-card-satellite" onclick="window.switchMapType('satellite')" title="Pure Photorealistic Satellite Imagery">
                     <div class="layer-type-preview type-satellite-preview"></div>
