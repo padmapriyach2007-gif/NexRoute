@@ -146,6 +146,44 @@ class TestVoiceSeparationAndIsolation:
         assert "type: 'chatbot_voice'" in chat_html
         assert "AURA_CHAT_PROMPT_BRIDGE" in chat_html
 
+    def test_dashboard_independent_states_and_handlers(self):
+        html = render_aura_welcome_hud(current_lang="en")
+        # Separate states
+        assert "dashboardIsListening" in html
+        assert "dashboardTranscript" in html
+        assert "dashboardVoiceActive" in html
+        assert "dashboardRecognition" in html
+        assert "dashboardSpeechOutput" in html
+        # Separate handlers
+        assert "startDashboardVoice" in html
+        assert "stopDashboardVoice" in html
+        assert "handleDashboardTranscript" in html
+        assert "handleDashboardVoiceError" in html
+        assert "speakDashboardVoice" in html
+
+    def test_chatbot_independent_states_and_handlers(self):
+        from src.aura_voice_hud import render_jarvis_chatbot_hud_html
+        chat_html = render_jarvis_chatbot_hud_html(current_lang="en")
+        # Separate states
+        assert "chatbotIsListening" in chat_html
+        assert "chatbotTranscript" in chat_html
+        assert "chatbotVoiceActive" in chat_html
+        assert "chatbotRecognition" in chat_html
+        assert "chatbotSpeechOutput" in chat_html
+        # Separate handlers
+        assert "startChatbotVoice" in chat_html
+        assert "stopChatbotVoice" in chat_html
+        assert "handleChatbotTranscript" in chat_html
+        assert "handleChatbotVoiceError" in chat_html
+        assert "speakChatbotVoice" in chat_html
+
+    def test_dashboard_command_dispatcher_never_delegates_to_chat_turn(self):
+        from src.aura_command_dispatcher import AuraGlobalCommandDispatcher
+        # Any arbitrary query on the dashboard should not push to chatbot message handler
+        res = AuraGlobalCommandDispatcher.parse_and_dispatch("Tell me about Vijayawada", {})
+        assert "pending_chat_prompt" not in res.ui_updates
+        assert "delegate_to_chat_turn" != res.action_name
+
     def test_mutual_exclusion_audio_lock_present(self):
         dash_html = render_aura_welcome_hud(current_lang="en")
         chat_html = render_aura_jarvis_hud_html(current_lang="en")
@@ -153,6 +191,13 @@ class TestVoiceSeparationAndIsolation:
         assert "aura_active_speaker" in dash_html
         # Chatbot checks if dashboard is speaking
         assert "aura_active_speaker" in chat_html
+
+    def test_cleanup_listeners_registered_in_both_interfaces(self):
+        dash_html = render_aura_welcome_hud(current_lang="en")
+        from src.aura_voice_hud import render_jarvis_chatbot_hud_html
+        chat_html = render_jarvis_chatbot_hud_html(current_lang="en")
+        assert "beforeunload" in dash_html and "pagehide" in dash_html
+        assert "beforeunload" in chat_html and "pagehide" in chat_html
 
 
 class TestAutoplayAndVisibilityRecovery:
@@ -163,3 +208,4 @@ class TestAutoplayAndVisibilityRecovery:
     def test_tab_visibility_change_handled(self):
         html = render_aura_welcome_hud(current_lang="en")
         assert "visibilitychange" in html
+

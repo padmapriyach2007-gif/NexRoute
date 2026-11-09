@@ -1645,14 +1645,15 @@ class AuraGlobalCommandDispatcher:
             )
 
         # ---------------------------------------------------------------------
-        # 12. FALLBACK: DELEGATE TO CHATBOT TRAVEL ADVICE
+        # 12. FALLBACK: DIRECT DASHBOARD TRAVEL ASSISTANCE (STRICTLY ISOLATED)
+        # Dashboard voice commands must NEVER be delegated to chatbot message turns.
         # ---------------------------------------------------------------------
         return AuraExecutionResult(
             command_type=AuraCommandType.GENERAL_TRAVEL_QUESTION,
-            spoken_response=f"Checking with AURA travel assistant regarding: {q[:35]}...",
-            text_response=f"💬 Asking AURA Travel Copilot: *\"{q}\"*",
-            action_name="delegate_to_chat_turn",
-            ui_updates={"pending_chat_prompt": q}
+            spoken_response=f"I have received your travel query regarding: {q[:45]}. Standing by on Dashboard telemetry, Boss.",
+            text_response=f"🧭 AURA Dashboard: *\"{q}\"*",
+            action_name="dashboard_direct_response",
+            ui_updates={"aura_dashboard_last_voice_query": q}
         )
 
     # -------------------------------------------------------------------------

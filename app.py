@@ -7549,6 +7549,9 @@ if raw_voice_cmd:
         }
         c_lang = st.session_state.get("app_language", "en")
         cmd_result = AuraGlobalCommandDispatcher.parse_and_dispatch(raw_voice_cmd, context=active_ctx, lang=c_lang)
+        # Strict Isolation: Dashboard voice commands must NEVER enter chatbot prompt or conversation history
+        if "pending_chat_prompt" in cmd_result.ui_updates:
+            del cmd_result.ui_updates["pending_chat_prompt"]
         AuraGlobalCommandDispatcher.apply_execution_result(cmd_result, st.session_state)
         st.session_state.aura_last_command_result = cmd_result.to_dict()
         st.toast(cmd_result.text_response, icon="⚡")

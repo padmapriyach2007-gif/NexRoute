@@ -1764,6 +1764,13 @@ def _build_jarvis_controller_script(
         sessionState = STATE_WAKE_WORD_STANDBY;
     }}
 
+    // Explicit Independent Dashboard Voice States
+    var dashboardIsListening = false;
+    var dashboardTranscript = '';
+    var dashboardVoiceActive = false;
+    var dashboardRecognition = null;
+    var dashboardSpeechOutput = null;
+
     var isListening = false;
     var isSpeaking = false;
     var isProcessing = false;
@@ -2191,6 +2198,8 @@ def _build_jarvis_controller_script(
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.maxAlternatives = 1;
+            dashboardRecognition = recognition;
+            dashboardSpeechOutput = synthesis;
 
             recognition.onstart = function() {{
                 setMicStatus(sessionState === STATE_LISTENING ? 'ACTIVE' : 'STANDBY');
@@ -2380,12 +2389,68 @@ def _build_jarvis_controller_script(
     }});
 
     // -------------------------------------------------------------------------
-    // PERSISTENT SESSION CONTROLS: START, PAUSE, RESUME, END
+    // INDEPENDENT DASHBOARD VOICE EVENT HANDLERS
     // -------------------------------------------------------------------------
-    window.startVoiceSession = function() {{
+    function startDashboardVoice() {{
+        dashboardVoiceActive = true;
+        dashboardIsListening = true;
+        isListening = true;
         setSessionState(STATE_LISTENING, txtListening);
         startVoiceListening();
+    }}
+
+    function stopDashboardVoice() {{
+        dashboardVoiceActive = false;
+        dashboardIsListening = false;
+        isListening = false;
+        setSessionState(STATE_STOPPED, 'Voice session paused. Click RESUME or speak to continue.');
+        stopOngoingSpeech();
+        if (dashboardRecognition) {{
+            try {{ dashboardRecognition.abort(); }} catch(e) {{}}
+        }}
+        if (silenceTimer) clearTimeout(silenceTimer);
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+        currentSpeechBuffer = '';
+    }}
+
+    function handleDashboardTranscript(rawTranscript) {{
+        dashboardTranscript = rawTranscript;
+        var tBox = document.getElementById('transcriptBox');
+        if (tBox && rawTranscript) tBox.innerText = '🎙️ "' + rawTranscript + '"';
+    }}
+
+    function handleDashboardVoiceError(error) {{
+        dashboardIsListening = false;
+        isListening = false;
+        if (error && (error.error === 'not-allowed' || error === 'not-allowed')) {{
+            setMicStatus('DENIED');
+            setSessionState(STATE_ERROR, 'Microphone permission required. Please allow mic in address bar.');
+            stopDashboardVoice();
+        }} else if (error && error.error === 'no-speech') {{
+            if (sessionState === STATE_LISTENING) {{
+                setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
+            }}
+        }}
+    }}
+
+    function speakDashboardVoice(textToSpeak, onDone) {{
+        speakJarvis(textToSpeak, onDone);
+    }}
+
+    // Backward-compatible global controls
+    window.startDashboardVoice = startDashboardVoice;
+    window.stopDashboardVoice = stopDashboardVoice;
+    window.handleDashboardTranscript = handleDashboardTranscript;
+    window.handleDashboardVoiceError = handleDashboardVoiceError;
+    window.speakDashboardVoice = speakDashboardVoice;
+
+    window.startVoiceSession = startDashboardVoice;
+    window.pauseVoiceSession = stopDashboardVoice;
+    window.resumeVoiceSession = function() {{
+        setSessionState(STATE_WAKE_WORD_STANDBY, txtPromptWake);
+        startVoiceListening();
     }};
+    window.endVoiceSession = stopDashboardVoice;
 
     window.pauseVoiceSession = function() {{
         setSessionState(STATE_STOPPED, 'Voice session paused. Click RESUME or speak to continue.');
@@ -2429,14 +2494,29 @@ def _build_jarvis_controller_script(
     // Backward-compatibility alias
     window.AURA_TOGGLE_MIC = window.togglePersistentVoiceSession;
 
-    // EXPORT useDashboardVoice() controller
+    // EXPORT useDashboardVoice() independent module / custom hook
     window.useDashboardVoice = function() {{
         return {{
             type: 'dashboard_voice',
+            dashboardIsListening: dashboardIsListening,
+            dashboardTranscript: dashboardTranscript,
+            dashboardVoiceActive: dashboardVoiceActive,
+            dashboardRecognition: dashboardRecognition,
+            dashboardSpeechOutput: dashboardSpeechOutput,
+            isListening: function() {{ return dashboardIsListening; }},
+            getTranscript: function() {{ return dashboardTranscript; }},
+            isVoiceActive: function() {{ return dashboardVoiceActive; }},
+            getRecognition: function() {{ return dashboardRecognition; }},
+            getSpeechOutput: function() {{ return dashboardSpeechOutput; }},
             getState: function() {{ return sessionState; }},
-            startListening: function() {{ window.startVoiceSession(); }},
-            stopListening: function() {{ window.endVoiceSession(); }},
-            speak: function(text, onDone) {{ speakJarvis(text, onDone); }},
+            startDashboardVoice: startDashboardVoice,
+            stopDashboardVoice: stopDashboardVoice,
+            handleDashboardTranscript: handleDashboardTranscript,
+            handleDashboardVoiceError: handleDashboardVoiceError,
+            speakDashboardVoice: speakDashboardVoice,
+            startListening: startDashboardVoice,
+            stopListening: stopDashboardVoice,
+            speak: speakDashboardVoice,
             setWakeWordEnabled: function(val) {{ voiceConfig.wakeWordEnabled = !!val; }},
             isWakeWordStandby: function() {{ return sessionState === STATE_WAKE_WORD_STANDBY; }},
             isAudioLocked: function() {{
@@ -2444,6 +2524,10 @@ def _build_jarvis_controller_script(
             }}
         }};
     }};
+
+    // Cleanup and lifecycle on unmount
+    window.addEventListener('beforeunload', function() {{ stopDashboardVoice(); }});
+    window.addEventListener('pagehide', function() {{ stopDashboardVoice(); }});
 
     window.highlightOrbitalBeam = function(beamId, active) {{
         try {{

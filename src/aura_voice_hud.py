@@ -1090,11 +1090,18 @@ def render_jarvis_chatbot_hud_html(
     // 'INACTIVE', 'INITIALIZING', 'GREETING', 'IDLE', 'LISTENING', 'PROCESSING', 'SPEAKING', 'PAUSED', 'STOPPED'
     var sessionState = 'IDLE';
 
+    // Explicit Independent Chatbot Voice States
+    var chatbotIsListening = false;
+    var chatbotTranscript = '';
+    var chatbotVoiceActive = false;
+    var chatbotRecognition = null;
+    var chatbotSpeechOutput = window.speechSynthesis;
+
     var isListening = false;
     var isSpeaking = false;
     var isThinking = false;
     var recognition = null;
-    var synthesis = window.speechSynthesis;
+    var synthesis = chatbotSpeechOutput;
     var canvas = document.getElementById('auraJarvisWaveform');
     var ctx = canvas ? canvas.getContext('2d') : null;
 
@@ -1431,6 +1438,8 @@ def render_jarvis_chatbot_hud_html(
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.maxAlternatives = 1;
+            chatbotRecognition = recognition;
+            chatbotSpeechOutput = synthesis;
 
             recognition.onstart = function() {{
                 setSessionState('LISTENING');
@@ -1555,12 +1564,63 @@ def render_jarvis_chatbot_hud_html(
     }}
 
     // -------------------------------------------------------------------------
-    // PERSISTENT SESSION CONTROLS: START, PAUSE, RESUME, END
+    // INDEPENDENT CHATBOT VOICE EVENT HANDLERS
     // -------------------------------------------------------------------------
-    window.startVoiceSession = function() {{
+    function startChatbotVoice() {{
+        chatbotVoiceActive = true;
+        chatbotIsListening = true;
+        isListening = true;
+        setSessionState('LISTENING');
+        startListening();
+    }}
+
+    function stopChatbotVoice() {{
+        chatbotVoiceActive = false;
+        chatbotIsListening = false;
+        isListening = false;
+        setSessionState('PAUSED');
+        window.stopJarvisSpeech();
+        if (chatbotRecognition) {{
+            try {{ chatbotRecognition.abort(); }} catch(e) {{}}
+        }}
+        if (silenceTimer) clearTimeout(silenceTimer);
+        if (extendedSilenceTimer) clearTimeout(extendedSilenceTimer);
+        currentSpeechBuffer = '';
+    }}
+
+    function handleChatbotTranscript(transcript) {{
+        chatbotTranscript = transcript;
+        var tElem = document.getElementById('auraTranscriptOutput');
+        if (tElem && transcript) tElem.innerText = transcript;
+    }}
+
+    function handleChatbotVoiceError(error) {{
+        chatbotIsListening = false;
+        isListening = false;
+        if (error && (error.error === 'not-allowed' || error === 'not-allowed')) {{
+            alert('Microphone access was denied. Please allow microphone permissions in address bar.');
+            stopChatbotVoice();
+        }}
+    }}
+
+    function speakChatbotVoice(text, onDone) {{
+        window.speakJarvis(text);
+        if (onDone) setTimeout(onDone, Math.max(1500, (text || '').length * 75));
+    }}
+
+    window.startChatbotVoice = startChatbotVoice;
+    window.stopChatbotVoice = stopChatbotVoice;
+    window.handleChatbotTranscript = handleChatbotTranscript;
+    window.handleChatbotVoiceError = handleChatbotVoiceError;
+    window.speakChatbotVoice = speakChatbotVoice;
+
+    window.startVoiceSession = startChatbotVoice;
+    window.pauseVoiceSession = stopChatbotVoice;
+    window.resumeVoiceSession = function() {{
         setSessionState('LISTENING');
         startListening();
     }};
+    window.endVoiceSession = stopChatbotVoice;
 
     window.pauseVoiceSession = function() {{
         setSessionState('PAUSED');
@@ -1603,19 +1663,39 @@ def render_jarvis_chatbot_hud_html(
     // Backward-compatibility alias
     window.toggleJarvisVoiceRecognition = window.togglePersistentVoiceSession;
 
-    // EXPORT useChatbotVoice() controller for chatbot voice isolation
+    // EXPORT useChatbotVoice() independent module / custom hook
     window.useChatbotVoice = function() {{
         return {{
             type: 'chatbot_voice',
+            chatbotIsListening: chatbotIsListening,
+            chatbotTranscript: chatbotTranscript,
+            chatbotVoiceActive: chatbotVoiceActive,
+            chatbotRecognition: chatbotRecognition,
+            chatbotSpeechOutput: chatbotSpeechOutput,
+            isListening: function() {{ return chatbotIsListening; }},
+            getTranscript: function() {{ return chatbotTranscript; }},
+            isVoiceActive: function() {{ return chatbotVoiceActive; }},
+            getRecognition: function() {{ return chatbotRecognition; }},
+            getSpeechOutput: function() {{ return chatbotSpeechOutput; }},
             getState: function() {{ return sessionState; }},
-            startListening: function() {{ window.startVoiceSession(); }},
-            stopListening: function() {{ window.pauseVoiceSession(); }},
-            speak: function(text, onDone) {{ window.speakJarvis(text, onDone); }},
+            startChatbotVoice: startChatbotVoice,
+            stopChatbotVoice: stopChatbotVoice,
+            handleChatbotTranscript: handleChatbotTranscript,
+            handleChatbotVoiceError: handleChatbotVoiceError,
+            speakChatbotVoice: speakChatbotVoice,
+            startListening: startChatbotVoice,
+            stopListening: stopChatbotVoice,
+            speak: speakChatbotVoice,
+            bridgeId: 'AURA_CHAT_PROMPT_BRIDGE',
             isAudioLocked: function() {{
                 try {{ return localStorage.getItem('aura_active_speaker') === 'dashboard'; }} catch(e) {{ return false; }}
             }}
         }};
     }};
+
+    // Cleanup and lifecycle on unmount
+    window.addEventListener('beforeunload', function() {{ stopChatbotVoice(); }});
+    window.addEventListener('pagehide', function() {{ stopChatbotVoice(); }});
 
     // Zero-Reload WebSocket Bridge to NextRoute Chatbot Agent
     window.submitVoiceToExistingAgent = function(transcript) {{
