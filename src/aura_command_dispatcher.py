@@ -658,6 +658,18 @@ class AuraGlobalCommandDispatcher:
             return multi_action_result
 
         # ---------------------------------------------------------------------
+        # 1.5 GREETING / WELCOME
+        # ---------------------------------------------------------------------
+        if re.search(r"\b(hello|hi|hey|good\s+morning|good\s+evening|good\s+afternoon|namaste|నమస్కారం|नमस्ते|வணக்கம்|ನಮಸ್ಕಾರ|നമസ്കാരം|নমস্কার|नमस्कार)\b", q_lower) and not re.search(r"\b(navigate|route|hotel|flight|find|go\s+to|set\s+dest|clear)\b", q_lower):
+            return AuraExecutionResult(
+                command_type=AuraCommandType.APPLICATION_HELP,
+                spoken_response=resp_bundle["welcome"],
+                text_response=f"⚡ {resp_bundle['welcome']}",
+                action_name="greet_user",
+                success=True
+            )
+
+        # ---------------------------------------------------------------------
         # 2. APPLICATION HELP & DISCOVERY
         # ---------------------------------------------------------------------
         if re.search(r"\b(how\s+do\s+i\s+use|how\s+to\s+use|features?\s+available|what\s+can\s+you\s+do|voice\s+commands?|help\s+me|help\s+menu|సహాయం|मदद)\b", q_lower):

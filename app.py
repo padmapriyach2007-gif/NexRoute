@@ -834,6 +834,22 @@ components.html(f"""
 
         }}
 
+        try {{
+
+            var savedLang = localStorage.getItem('pathfinder_user_lang');
+
+            var pWin = window.parent || window;
+
+            if (savedLang && pWin.location && !pWin.location.search.includes('lang=') && curr === 'en' && savedLang !== 'en') {{
+
+                var sep = pWin.location.search ? '&' : '?';
+
+                pWin.location.search = pWin.location.search + sep + 'lang=' + encodeURIComponent(savedLang);
+
+            }}
+
+        }} catch(e) {{}}
+
 
 
         var pDoc = window.parent.document || document;

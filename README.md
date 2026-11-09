@@ -33,9 +33,9 @@ Highlights
 - Route alternatives: Compare valid alternatives when supported by the routing service.
 - Points of interest: Explore categories such as hospitals, restaurants, hotels, fuel stations, banks, and attractions where data is available.
 - AI travel assistance: A travel-copilot concept for itinerary planning, budget calculations, and travel questions.
-- AURA virtual guide: A visual assistant concept for onboarding and navigation guidance.
-- Multilingual direction: Planned language support includes English, Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, and Marathi.
-- Responsive interface: Designed to adapt to desktop, tablet, and mobile screen sizes.
+- AURA virtual guide: Complete AI Voice Operating System for voice navigation, application control, and guidance.
+- Complete Multilingual Support: 8 fully supported languages — English, Telugu (తెలుగు), Hindi (हिन्दी), Tamil (தமிழ்), Kannada (ಕನ್ನಡ), Malayalam (മലയാളം), Bengali (বাংলা), and Marathi (मराठी) with instant dynamic switching, persistent storage, localized UI, multilingual AI responses, and spoken turn-by-turn voice navigation.
+- Responsive interface: Designed to adapt to desktop, tablet, and mobile screen sizes with persistent mobile navigation dock.
 How It Works
 A typical route-planning workflow is:
 1. Enter a starting location or use the device's current location.
@@ -164,6 +164,28 @@ The AI travel copilot is intended to support tasks such as:
 If Ollama is used, install and run it separately, download a compatible model, and configure the application to use the correct endpoint and model name. The exact setup depends on the model and the project's integration.
 
 AI-generated travel information should be checked against reliable data when it concerns current prices, opening hours, transportation availability, safety, or other time-sensitive details.
+
+### Complete 8-Language Multilingual Architecture
+
+NexRoute features an enterprise-grade internationalization (i18n) engine supporting 8 major languages:
+
+| Language | Native Script | Code | Voice BCP-47 | Locales Dictionary |
+|---|---|---|---|---|
+| English | English | `en` | `en-IN` | `locales/en.json` |
+| Telugu | తెలుగు | `te` | `te-IN` | `locales/te.json` |
+| Hindi | हिन्दी | `hi` | `hi-IN` | `locales/hi.json` |
+| Tamil | தமிழ் | `ta` | `ta-IN` | `locales/ta.json` |
+| Kannada | ಕನ್ನಡ | `kn` | `kn-IN` | `locales/kn.json` |
+| Malayalam | മലയാളം | `ml` | `ml-IN` | `locales/ml.json` |
+| Bengali | বাংলা | `bn` | `bn-IN` | `locales/bn.json` |
+| Marathi | मराठी | `mr` | `mr-IN` | `locales/mr.json` |
+
+Key Multilingual Capabilities:
+1. **Dynamic Language Switcher**: Persistent language bar on desktop and mobile (`English | తెలుగు | हिन्दी | தமிழ் | ಕನ್ನಡ | മലയാളം | বাংলা | मराठी`) with zero-reload instantaneous application-wide text re-rendering and browser `localStorage` persistence across sessions.
+2. **AI Travel Copilot & AURA Voice OS**: Language instruction injection into AI prompts and AURA voice command execution results ensuring natural conversational replies in the chosen language.
+3. **Turn-by-Turn Voice Navigation**: Browser Web Speech API integration synthesizing spoken maneuver announcements with language-matched BCP-47 voice packages.
+4. **Resilient Fallback Chains**: Every string falls back gracefully to English and caller defaults, preventing missing labels or UI errors.
+
 AURA Virtual Guide
 AURA is NexRoute's virtual-guide concept for onboarding and contextual navigation assistance. A fully animated 3D character may require a separate modeling, rigging, animation, and rendering pipeline. A generated image alone is not a production-ready animated 3D model.
 Operating Modes
