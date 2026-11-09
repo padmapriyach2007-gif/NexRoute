@@ -4331,6 +4331,121 @@ st.markdown("""
         box-shadow: 0 0 22px rgba(0, 240, 255, 0.85) !important;
     }
 
+    /* =========================================================================
+       AURA CHATBOT: SUGGESTED QUESTIONS & CLEAN TOOLBAR
+       ========================================================================= */
+    div[class*="st-key-aura_quick_chips_deck"] {
+        margin-top: 10px !important;
+        padding: 8px 10px !important;
+        background: rgba(10, 20, 38, 0.72) !important;
+        border: 1px solid rgba(56, 189, 248, 0.24) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(14px) !important;
+        -webkit-backdrop-filter: blur(14px) !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .aura-suggested-title-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        color: #38bdf8 !important;
+        margin-bottom: 2px !important;
+        user-select: none !important;
+    }
+
+    /* Discreet, elegant Clear Chat button in the header row */
+    div[class*="st-key-chip_clear"] button {
+        min-height: 28px !important;
+        height: 28px !important;
+        padding: 2px 10px !important;
+        font-size: 0.70rem !important;
+        font-weight: 600 !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #94a3b8 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+    }
+    div[class*="st-key-chip_clear"] button:hover {
+        background: rgba(239, 68, 68, 0.2) !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+        color: #fca5a5 !important;
+    }
+
+    /* 3 Clean Text Buttons with Lucide Icons */
+    div[class*="st-key-btn_sq_"] button {
+        min-height: 38px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        line-height: 1.25 !important;
+        padding: 6px 10px !important;
+        background: rgba(15, 23, 42, 0.75) !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+        border-radius: 8px !important;
+        color: #e2e8f0 !important;
+        text-align: left !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    div[class*="st-key-btn_sq_"] button:hover {
+        background: rgba(56, 189, 248, 0.16) !important;
+        border-color: #38bdf8 !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3) !important;
+    }
+    div[class*="st-key-btn_sq_"] button:active {
+        transform: translateY(0px) scale(0.99) !important;
+    }
+
+    /* Lucide Icon: Route / Navigation */
+    div[class*="st-key-btn_sq_route"] button::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 15px !important;
+        height: 15px !important;
+        min-width: 15px !important;
+        margin-right: 8px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='3 11 22 2 13 21 11 13 3 11'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Lucide Icon: Fuel / Cost / Stops */
+    div[class*="st-key-btn_sq_cost"] button::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 15px !important;
+        height: 15px !important;
+        min-width: 15px !important;
+        margin-right: 8px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='1' x2='12' y2='23'/%3E%3Cpath d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Lucide Icon: Sights / Sights & Places */
+    div[class*="st-key-btn_sq_places"] button::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 15px !important;
+        height: 15px !important;
+        min-width: 15px !important;
+        margin-right: 8px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        flex-shrink: 0 !important;
+    }
+
     /* Plus and Mic Popover Buttons in Composer */
     div[class*="st-key-popover_composer_plus"] button,
     div[class*="st-key-popover_composer_mic"] button,
@@ -4824,11 +4939,95 @@ st.markdown("""
             width: auto !important;
         }
 
-        /* Mobile Tabs navigation */
-        div[data-testid="stTabs"] [role="tab"] {
-            padding: 7px 12px !important;
+        /* Mobile Universal Text Flow & Overflow Prevention */
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+        }
+        p, span, label, div, h1, h2, h3, h4, h5, h6 {
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        h1, .qr-hero-heading {
+            font-size: clamp(1.35rem, 5vw, 1.85rem) !important;
+            line-height: 1.25 !important;
+            letter-spacing: -0.01em !important;
+        }
+        h2 {
+            font-size: clamp(1.15rem, 4vw, 1.45rem) !important;
+            line-height: 1.3 !important;
+        }
+        h3 {
+            font-size: clamp(0.98rem, 3.5vw, 1.2rem) !important;
+            line-height: 1.35 !important;
+        }
+
+        /* Mobile Button Text Wrapping & Touch Optimization */
+        .stButton > button {
+            white-space: normal !important;
+            line-height: 1.25 !important;
+            min-height: 44px !important;
+            padding: 7px 10px !important;
+            border-radius: 10px !important;
             font-size: 0.82rem !important;
-            min-height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        /* Mobile Tabs Ribbon - Swipeable Horizontal Flow without Overlapping */
+        div[data-testid="stTabs"] [role="tablist"] {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+            border-bottom: 1.5px solid rgba(56, 189, 248, 0.25) !important;
+            gap: 4px !important;
+            padding-bottom: 2px !important;
+            max-width: 100% !important;
+        }
+        div[data-testid="stTabs"] [role="tablist"]::-webkit-scrollbar {
+            display: none !important;
+        }
+        div[data-testid="stTabs"] [role="tab"] {
+            flex: 0 0 auto !important;
+            white-space: nowrap !important;
+            min-height: 44px !important;
+            padding: 8px 14px !important;
+            font-size: 0.82rem !important;
+            font-weight: 700 !important;
+            color: #94a3b8 !important;
+            border-radius: 8px 8px 0 0 !important;
+            transition: all 0.2s ease !important;
+            touch-action: manipulation !important;
+        }
+        div[data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+            color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.12) !important;
+            border-bottom: 2px solid #38bdf8 !important;
+        }
+
+        /* Mobile Form Controls & Touch Targets */
+        div[data-testid="stTextInput"] input,
+        div[data-testid="stNumberInput"] input,
+        div[data-testid="stSelectbox"] select,
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+            min-height: 44px !important;
+            border-radius: 10px !important;
+            font-size: 16px !important;
+        }
+        div[data-testid="stTable"] {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            max-width: 100% !important;
+        }
+        div[data-testid="stColumn"] {
+            min-width: 0 !important;
         }
 
         /* Floating Aura Chatbot FAB & Tooltips on Mobile (Positioned safely above Bottom Nav) */
@@ -6985,6 +7184,48 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
         _safe_chat_btn("↑", key=f"chat_send_btn_{key_prefix}", help="Send to Aura", on_click=_submit_chat_input)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # -------------------------------------------------------------
+    # Aura Suggested Questions Quick Chips Deck (Mobile & Desktop)
+    # -------------------------------------------------------------
+    with st.container(key=f"aura_quick_chips_deck_{key_prefix}"):
+        qc_cur_l = st.session_state.get("app_language", "en")
+        
+        # Section Header: "Suggested Questions" on left, subtle "Clear Chat" on right
+        hdr_col_title, hdr_col_clear = st.columns([3.2, 1.3])
+        with hdr_col_title:
+            st.markdown(f"""
+            <div class="aura-suggested-title-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+                <span>{t("aura.suggested_title", default="Suggested Questions", lang=qc_cur_l)}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with hdr_col_clear:
+            if st.button(t("aura.clear_chat", default="Clear", lang=qc_cur_l), key=f"chip_clear_{key_prefix}", use_container_width=True):
+                st.session_state.aura_chat_history = [get_aura_welcome_message(qc_cur_l)]
+                if "pathfinder_bot" in st.session_state:
+                    st.session_state.pathfinder_bot.reset_conversation()
+                st.rerun()
+
+        # 3 Clean Text Suggestions with Consistent Lucide Icons
+        sq_col1, sq_col2, sq_col3 = st.columns(3)
+        with sq_col1:
+            lbl_r = t("aura.suggest_route", default="Fastest route & avoid traffic", lang=qc_cur_l)
+            if st.button(lbl_r, key=f"btn_sq_route_{key_prefix}", use_container_width=True):
+                _execute_chat_turn(t("aura.prompt_route", default="Find the fastest route and avoid live traffic", lang=qc_cur_l))
+                st.rerun()
+        with sq_col2:
+            lbl_c = t("aura.suggest_cost", default="Estimate fuel cost & rest stops", lang=qc_cur_l)
+            if st.button(lbl_c, key=f"btn_sq_cost_{key_prefix}", use_container_width=True):
+                _execute_chat_turn(t("aura.prompt_cost", default="Estimate my fuel cost and rest stops for this journey", lang=qc_cur_l))
+                st.rerun()
+        with sq_col3:
+            lbl_p = t("aura.suggest_places", default="Discover top sights & places nearby", lang=qc_cur_l)
+            if st.button(lbl_p, key=f"btn_sq_places_{key_prefix}", use_container_width=True):
+                _execute_chat_turn(t("aura.prompt_places", default="Discover top sights and places to visit along the corridor", lang=qc_cur_l))
+                st.rerun()
 
 # Initialize Default Multi-Objective Navigation & Facilities States (No Sidebar)
 

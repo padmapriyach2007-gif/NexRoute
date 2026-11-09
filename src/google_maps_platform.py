@@ -562,17 +562,30 @@ def build_google_maps_javascript_html(
             width: 100%;
             height: 100%;
         }}
-        /* Floating Top Controls & Places Search */
-        .gmap-toolbar {{
+        /* Floating Top Controls Header (Container for Toolbar & Categories) */
+        .gmap-floating-header {{
             position: absolute;
             top: 12px;
             left: 12px;
             right: 12px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            max-width: calc(100% - 24px);
+        }}
+        .gmap-toolbar {{
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 10;
             display: flex;
             gap: 8px;
             align-items: center;
             pointer-events: none;
+            width: 100%;
         }}
         .gmap-search-wrapper {{
             flex: 1;
@@ -631,18 +644,19 @@ def build_google_maps_javascript_html(
             border-color: #38bdf8;
             color: #ffffff;
         }}
-        /* Category Pills Floating Bar & Map Controls (Aligned at Top beneath Search Bar) */
+        /* Category Pills Floating Bar & Map Controls (Aligned beneath Search Bar) */
         .gmap-filter-bar {{
-            position: absolute;
-            top: 56px;
-            left: 12px;
-            right: 12px;
-            z-index: 1000;
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9;
             display: flex;
             align-items: center;
             gap: 8px;
             overflow-x: auto;
-            max-width: calc(100% - 24px);
+            width: 100%;
+            max-width: 100%;
             padding: 6px 12px;
             background: rgba(10, 15, 30, 0.88);
             backdrop-filter: blur(14px);
@@ -652,6 +666,7 @@ def build_google_maps_javascript_html(
             box-shadow: 0 4px 22px rgba(0, 0, 0, 0.7);
             pointer-events: auto;
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }}
         .gmap-filter-bar::-webkit-scrollbar {{
             display: none;
@@ -2069,10 +2084,17 @@ def build_google_maps_javascript_html(
         }}
 
         @media (max-width: 768px) {{
-            .gmap-toolbar {{
+            .gmap-floating-header {{
                 top: 8px;
                 left: 8px;
                 right: 8px;
+                gap: 6px;
+                max-width: calc(100% - 16px);
+            }}
+            .gmap-toolbar {{
+                top: 0;
+                left: 0;
+                right: 0;
                 gap: 5px;
                 flex-wrap: wrap;
             }}
@@ -2085,17 +2107,17 @@ def build_google_maps_javascript_html(
                 padding: 8px 10px 8px 34px;
             }}
             .gmap-btn {{
-                padding: 6px 9px;
+                padding: 6px 8px;
                 font-size: 0.72rem;
                 flex: 1 1 auto;
                 justify-content: center;
                 min-height: 38px;
             }}
             .gmap-filter-bar {{
-                top: 92px;
-                left: 8px;
-                right: 8px;
-                max-width: calc(100% - 16px);
+                top: 0;
+                left: 0;
+                right: 0;
+                max-width: 100%;
                 padding: 4px 8px;
                 gap: 5px;
             }}
@@ -2104,15 +2126,39 @@ def build_google_maps_javascript_html(
                 font-size: 0.72rem;
             }}
             .gmap-compass-container {{
-                top: 135px;
-                right: 8px;
+                top: auto;
+                bottom: 84px;
+                right: 12px;
             }}
             .gmap-compass-rose {{
-                width: 40px;
-                height: 40px;
+                width: 42px;
+                height: 42px;
             }}
             .gmap-compass-controls {{
                 flex-direction: row;
+            }}
+            .gmap-layers-drawer {{
+                width: calc(100vw - 32px);
+                max-width: 320px;
+                max-height: 65vh;
+                left: 12px;
+                bottom: 80px;
+            }}
+            .gmap-category-panel {{
+                width: calc(100vw - 24px);
+                max-width: 380px;
+                max-height: 55vh;
+                left: 12px;
+                bottom: 20px;
+            }}
+            .gmap-place-drawer {{
+                left: 8px;
+                right: 8px;
+                width: calc(100% - 16px);
+                max-width: calc(100% - 16px);
+                bottom: 12px;
+                top: auto;
+                max-height: 65vh;
             }}
         }}
     </style>
@@ -2125,29 +2171,30 @@ def build_google_maps_javascript_html(
             <span>{txt_clean_instruction}</span>
         </div>
 
-        <!-- Floating Controls -->
-        <div class="gmap-toolbar">
-            <div class="gmap-search-wrapper">
-                <span class="gmap-search-icon">🔍</span>
-                <input id="pac-input" class="gmap-search-input" type="text" placeholder="{txt_search_placeholder}" autocomplete="off" />
-                <div id="pac-autocomplete-dropdown" class="pac-autocomplete-dropdown"></div>
+        <!-- Floating Controls Header (Toolbar + Category Pills) -->
+        <div class="gmap-floating-header">
+            <div class="gmap-toolbar">
+                <div class="gmap-search-wrapper">
+                    <span class="gmap-search-icon">🔍</span>
+                    <input id="pac-input" class="gmap-search-input" type="text" placeholder="{txt_search_placeholder}" autocomplete="off" />
+                    <div id="pac-autocomplete-dropdown" class="pac-autocomplete-dropdown"></div>
+                </div>
+                <button class="gmap-btn" id="btn-geolocation" onclick="window.locateUserGps()" title="Center map at your real GPS location">
+                    {txt_my_location}
+                </button>
+                <button class="gmap-btn" id="btn-fit-all" onclick="window.fitAllMapBounds()" title="Fit all route alternatives and markers">
+                    {txt_fit_bounds}
+                </button>
+                <button class="gmap-btn" id="btn-fullscreen" onclick="window.toggleFullScreen()" title="Toggle full screen view">
+                    {txt_full_screen}
+                </button>
+                <button class="gmap-btn" id="btn-open-layers" onclick="window.toggleLayersDrawer()" title="Map Details & Layers (Traffic, Transit, Satellite, Wildfires)">
+                    {txt_map_details}
+                </button>
             </div>
-            <button class="gmap-btn" id="btn-geolocation" onclick="window.locateUserGps()" title="Center map at your real GPS location">
-                {txt_my_location}
-            </button>
-            <button class="gmap-btn" id="btn-fit-all" onclick="window.fitAllMapBounds()" title="Fit all route alternatives and markers">
-                {txt_fit_bounds}
-            </button>
-            <button class="gmap-btn" id="btn-fullscreen" onclick="window.toggleFullScreen()" title="Toggle full screen view">
-                {txt_full_screen}
-            </button>
-            <button class="gmap-btn" id="btn-open-layers" onclick="window.toggleLayersDrawer()" title="Map Details & Layers (Traffic, Transit, Satellite, Wildfires)">
-                {txt_map_details}
-            </button>
-        </div>
 
-        <!-- Category Filter Pills (On-Demand Category Popover) -->
-        <div class="gmap-filter-bar">
+            <!-- Category Filter Pills (On-Demand Category Popover) -->
+            <div class="gmap-filter-bar">
             <span class="gmap-filter-pill" data-filter="SAVED" id="pill-filter-saved" style="display:none;" title="Saved Places"></span>
             <button class="gmap-filter-save-btn" id="btn-quick-save-place" style="display:none;" onclick="window.savePlacePromptFromFilter()"></button>
             <span class="gmap-filter-pill" data-filter="HOSPITALS" onclick="window.triggerCategorySearch('HOSPITALS')">{txt_cat_hospitals}</span>
@@ -2160,6 +2207,7 @@ def build_google_maps_javascript_html(
             <span class="gmap-filter-pill" data-filter="SHELTERS" onclick="window.triggerCategorySearch('SHELTERS')">{txt_cat_shelters}</span>
             <span class="gmap-filter-pill" data-filter="MALLS" onclick="window.triggerCategorySearch('MALLS')">{txt_cat_malls}</span>
         </div>
+    </div>
 
         <!-- Nearby-Place Category Results Panel -->
         <div id="gmap-category-panel" class="gmap-category-panel">

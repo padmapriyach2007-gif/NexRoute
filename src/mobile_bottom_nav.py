@@ -194,7 +194,7 @@ def render_mobile_bottom_navigation_bar(current_view: str = "dashboard", lang: s
             text-overflow: ellipsis !important;
             max-width: 100% !important;
             line-height: 1.15 !important;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+            font-family: 'Plus Jakarta Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Kannada', 'Noto Sans Malayalam', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
         }}
 
         .mobile-nav-item.active {{
