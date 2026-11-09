@@ -1708,33 +1708,57 @@ def _build_jarvis_controller_script(
     // -------------------------------------------------------------------------
     // Multilingual Wake-Word Detector across all 8 supported languages:
     // English, Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, Marathi
+    // Robust against single-word "aura", phonetic variants (ora, aora, oura),
+    // punctuation suffixes (aura.), and regional language transcriptions
     // -------------------------------------------------------------------------
     function isWakeWordPhrase(text, lang) {{
         if (!text) return false;
-        var clean = text.toLowerCase().trim();
-        if (/\b(hey\s+aura|wake\s+up\s+aura|ok\s+aura|aura|hi\s+aura)\b/i.test(clean)) return true;
-        if (/(హే\s*ఆరా|ఆరా|మేల్కొను\s*ఆరా|నమస్తే\s*ఆరా)/.test(clean)) return true;
-        if (/(हे\s*ऑरा|ऑरा|जागो\s*ऑरा|नमस्ते\s*ऑरा)/.test(clean)) return true;
-        if (/(ஹே\s*ஆரா|ஆரா|எழுந்திரு\s*ஆரா)/.test(clean)) return true;
-        if (/(ಹೇ\s*ಔರಾ|ಔರಾ|ಎಚ್ಚರಾಗು\s*ಔರಾ)/.test(clean)) return true;
-        if (/(ഹേ\s*ഓറ|ഓറ|ഉണരുക\s*ഓറ)/.test(clean)) return true;
-        if (/(হে\s*অরা|অরা|জেগে\s*ওঠো\s*অরা)/.test(clean)) return true;
-        if (/(हे\s*ऑरा|ऑरा|जागृत\s*व्हा\s*ऑरा)/.test(clean)) return true;
+        var clean = text.toLowerCase()
+            .replace(/[.,\\/#!$%\\^&\\*;:{{}}=\\-_`~()?\"'’]/g, ' ')
+            .replace(/\\s+/g, ' ')
+            .trim();
+        if (!clean) return false;
+
+        // 1. English + universal phonetic transcriptions of "Aura"
+        if (/(^|\\s)(hey\\s+aura|hi\\s+aura|hello\\s+aura|ok\\s+aura|okay\\s+aura|wake\\s+up\\s+aura|aura\\s+wake\\s+up|aura|ora|aora|oura|aurah|aurora|arua|ahura)($|\\s)/i.test(clean)) return true;
+
+        // 2. Telugu (ఆరా, ఔరా, ఓరా, ఆర, హే ఆరా, మేల్కొను ఆరా, నమస్తే ఆరా)
+        if (/(హే\\s*ఆరా|ఆరా|ఔరా|ఓరా|ఆర|మేల్కొను\\s*ఆరా|నమస్తే\\s*ఆరా)/.test(clean)) return true;
+
+        // 3. Hindi (हे ऑरा, ऑरा, आरा, ओरा, और, जागो ऑरा, नमस्ते ऑरा)
+        if (/(हे\\s*ऑरा|ऑरा|आरा|ओरा|और|जागो\\s*ऑरा|नमस्ते\\s*ऑरा)/.test(clean)) return true;
+
+        // 4. Tamil (ஹே ஆரா, ஆரா, ஒரா, ஔரா, எழுந்திரு ஆரா, வணக்கம் ஆரா)
+        if (/(ஹே\\s*ஆரா|ஆரா|ஒரா|ஔரா|எழுந்திரு\\s*ஆரா|வணக்கம்\\s*ஆரா)/.test(clean)) return true;
+
+        // 5. Kannada (ಹೇ ಔರಾ, ಔರಾ, ಆರಾ, ಒರಾ, ಎಚ್ಚರಾಗು ಔರಾ, ನಮಸ್ಕಾರ ಔರಾ)
+        if (/(ಹೇ\\s*ಔರಾ|ಔರಾ|ಆರಾ|ಒರಾ|ಎಚ್ಚರಾಗು\\s*ಔರಾ|ನಮಸ್ಕಾರ\\s*ಔರಾ)/.test(clean)) return true;
+
+        // 6. Malayalam (ഹേ ഓറ, ഓറ, ആറ, ഒറ, ഉണരുക ഓറ, നമസ്കാരം ഓറ)
+        if (/(ഹേ\\s*ഓറ|ഓറ|ആറ|ഒറ|ഉണരുക\\s*ഓറ|നമസ്കാരം\\s*ഓറ)/.test(clean)) return true;
+
+        // 7. Bengali (হে অরা, অরা, আরা, জেগে ওঠো অরা, নমস্কার অরা)
+        if (/(হে\\s*অরা|অরা|আরা|জেগে\\s*ওঠো\\s*অরা|নমস্কার\\s*অরা)/.test(clean)) return true;
+
+        // 8. Marathi (हे ऑरा, ऑरा, आरा, जागृत व्हा ऑरा, नमस्कार ऑरा)
+        if (/(हे\\s*ऑरा|ऑरा|आरा|जागृत\\s*व्हा\\s*ऑरा|नमस्कार\\s*ऑरा)/.test(clean)) return true;
+
         return false;
     }}
 
     function extractCommandAfterWakeWord(text) {{
         if (!text) return '';
         var replaced = text
-            .replace(/^(hey\s+aura|wake\s+up\s+aura|ok\s+aura|aura|hi\s+aura)[,\s:]*/i, '')
-            .replace(/^(హే\s*ఆరా|ఆరా|మేల్కొను\s*ఆరా|నమస్తే\s*ఆరా)[,\s:]*/, '')
-            .replace(/^(हे\s*ऑरा|ऑरा|जागो\s*ऑरा|नमस्ते\s*ऑरा)[,\s:]*/, '')
-            .replace(/^(ஹே\s*ஆரா|ஆரா|எழுந்திரு\s*ஆரா)[,\s:]*/, '')
-            .replace(/^(ಹೇ\s*ಔರಾ|ಔರಾ|ಎಚ್ಚರಾಗು\s*ಔರಾ)[,\s:]*/, '')
-            .replace(/^(ഹേ\s*ഓറ|ഓറ|ഉണരുക\s*ഓറ)[,\s:]*/, '')
-            .replace(/^(হে\s*অরা|অরা|জেগে\s*ওঠো\s*অরা)[,\s:]*/, '')
-            .replace(/^(हे\s*ऑरा|ऑरा|जागृत\s*व्हा\s*ऑरा)[,\s:]*/, '');
-        return replaced.trim();
+            .replace(/^[.,\\/#!$%\\^&\\*;:{{}}=\\-_`~()?\"'’\\s]+/g, '')
+            .replace(/^(hey\\s+aura|hi\\s+aura|hello\\s+aura|ok\\s+aura|okay\\s+aura|wake\\s+up\\s+aura|aura\\s+wake\\s+up|aura|ora|aora|oura|aurah|aurora|arua|ahura)[,\\s:]*/i, '')
+            .replace(/^(హే\\s*ఆరా|ఆరా|ఔరా|ఓరా|ఆర|మేల్కొను\\s*ఆరా|నమస్తే\\s*ఆరా)[,\\s:]*/, '')
+            .replace(/^(हे\\s*ऑरा|ऑरा|आरा|ओरा|और|जागो\\s*ऑरा|नमस्ते\\s*ऑरा)[,\\s:]*/, '')
+            .replace(/^(ஹே\\s*ஆரா|ஆரா|ஒரா|ஔரா|எழுந்திரு\\s*ஆரா|வணக்கம்\\s*ஆரா)[,\\s:]*/, '')
+            .replace(/^(ಹೇ\\s*ಔರಾ|ಔರಾ|ಆರಾ|ಒರಾ|ಎಚ್ಚರಾಗು\\s*ಔರಾ|ನಮಸ್ಕಾರ\\s*ಔರಾ)[,\\s:]*/, '')
+            .replace(/^(ഹേ\\s*ഓറ|ഓറ|ആറ|ഒറ|ഉണരുക\\s*ഓറ|നമസ്കാരം\\s*ഓറ)[,\\s:]*/, '')
+            .replace(/^(হে\\s*অরা|অরা|আরা|জেগে\\s*ওঠো\\s*অরা|নমস্কার\\s*অরা)[,\\s:]*/, '')
+            .replace(/^(हे\\s*ऑरा|ऑरा|आरा|जागृत\\s*व्हा\\s*ऑरा|नमस्कार\\s*ऑरा)[,\\s:]*/, '');
+        return replaced.replace(/^[.,\\/#!$%\\^&\\*;:{{}}=\\-_`~()?\"'’\\s]+/g, '').trim();
     }}
 
     // -------------------------------------------------------------------------
@@ -2296,11 +2320,11 @@ def _build_jarvis_controller_script(
                             currentSpeechBuffer = finalCmd;
 
                             // Immediate local handling of Voice Session control commands
-                            if (/^(pause(\s+the)?(\s+voice)?(\s+assistant)?|pause\s+listening|hold\s+on)$/i.test(finalCmd.toLowerCase())) {{
+                            if (/^(pause(\\\\s+the)?(\\\\s+voice)?(\\\\s+assistant)?|pause\\\\s+listening|hold\\\\s+on)$/i.test(finalCmd.toLowerCase())) {{
                                 pauseVoiceSession();
                                 return;
                             }}
-                            if (/^(stop(\s+the)?(\s+voice)?(\s+assistant)?|end\s+session|aura\s+offline|close\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
+                            if (/^(stop(\\\\s+the)?(\\\\s+voice)?(\\\\s+assistant)?|end\\\\s+session|aura\\\\s+offline|close\\\\s+assistant)$/i.test(finalCmd.toLowerCase())) {{
                                 endVoiceSession();
                                 return;
                             }}
@@ -2362,7 +2386,11 @@ def _build_jarvis_controller_script(
                     if (restartDebounceTimer) clearTimeout(restartDebounceTimer);
                     restartDebounceTimer = setTimeout(function() {{
                         if (sessionState === STATE_LISTENING || sessionState === STATE_WAKE_WORD_STANDBY) {{
-                            try {{ recognition.start(); }} catch(e) {{}}
+                            try {{
+                                recognition.start();
+                            }} catch(e) {{
+                                startVoiceListening();
+                            }}
                         }}
                     }}, 250);
                 }}

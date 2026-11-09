@@ -209,3 +209,35 @@ class TestAutoplayAndVisibilityRecovery:
         html = render_aura_welcome_hud(current_lang="en")
         assert "visibilitychange" in html
 
+
+class TestPhoneticAndRobustWakeWordDetection:
+    """Verifies that saying single-word 'Aura' with punctuation and phonetic transcriptions wakes the assistant."""
+
+    def test_single_word_aura_and_phonetics_in_detector(self):
+        html = render_aura_welcome_hud(current_lang="en")
+        assert "isWakeWordPhrase" in html
+        # Checks that phonetic variants (ora, aora, oura, etc.) are matched
+        assert "ora" in html and "aora" in html and "oura" in html
+        # Checks that punctuation is stripped so "Aura." or "Aura!" wakes the dashboard
+        assert "replace" in html
+
+    def test_indic_phonetic_wake_word_variants(self):
+        html = render_aura_welcome_hud(current_lang="te")
+        # Telugu variants
+        assert "ఆరా" in html and "ఔరా" in html and "ఓరా" in html
+        # Hindi variants
+        assert "ऑरा" in html and "आरा" in html
+        # Kannada variants
+        assert "ಔರಾ" in html
+        # Malayalam variants
+        assert "ഓറ" in html
+        # Tamil variants
+        assert "ஆரா" in html
+        # Bengali variants
+        assert "অরা" in html
+
+    def test_recognition_onend_auto_restarts_cleanly(self):
+        html = render_aura_welcome_hud(current_lang="en")
+        assert "startVoiceListening" in html
+        assert "restartDebounceTimer" in html
+

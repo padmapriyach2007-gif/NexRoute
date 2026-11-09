@@ -8679,7 +8679,8 @@ if "picked_target" in st.query_params and "picked_lat" in st.query_params and "p
                 st.session_state.cached_candidate_routes = None
                 if st.session_state.get("user_live_coords"):
                     st.session_state.routes_generated = True
-                st.toast(f"🏁 {t('nav.destination', default='Destination', lang=c_lang_hud)} set to: {p_name}", icon="🏁")
+                _pick_lang = st.session_state.get("app_language", "en")
+                st.toast(f"🏁 {t('nav.destination', default='Destination', lang=_pick_lang)} set to: {p_name}", icon="🏁")
 
             st.session_state.map_picking_mode = None
             st.session_state._prev_route_sig = None
