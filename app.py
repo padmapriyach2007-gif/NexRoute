@@ -788,6 +788,7 @@ if "app_language" not in st.session_state or st.session_state.app_language not i
 
 
 set_current_language(st.session_state.app_language)
+cur_l = st.session_state.get("app_language", "en")
 
 
 
@@ -27794,6 +27795,7 @@ body {{
 
 
         cur_cat_name = st.session_state.get("selected_sidebar_category", "🌐 All Facilities")
+        cur_l = st.session_state.get("app_language", "en")
 
 
 
@@ -29038,18 +29040,12 @@ body {{
 
 
         else:
-
-
-
+            cur_l = st.session_state.get("app_language", "en")
             grid_cols = st.columns(min(3, len(active_category_facilities)))
 
-
-
             for idx, fac in enumerate(active_category_facilities[:9]):
-
-
-
                 with grid_cols[idx % 3]:
+                    cur_l = st.session_state.get("app_language", "en")
 
 
 
@@ -29097,7 +29093,7 @@ body {{
 
 
 
-                        f_rating_display = f"<span style='color: #94a3b8; font-style: italic;'>{t('fac.rating_unavailable', 'Rating unavailable')}</span>"
+                        f_rating_display = f"<span style='color: #94a3b8; font-style: italic;'>{t('fac.rating_unavailable', 'Rating unavailable', lang=cur_l)}</span>"
 
 
 
@@ -29186,7 +29182,7 @@ body {{
 
 
 
-                        hours_disp = f"{t('fac.hours_not_published', 'Hours not published')} • {t('fac.contact_directly', 'Contact directly')}"
+                        hours_disp = f"{t('fac.hours_not_published', 'Hours not published', lang=cur_l)} • {t('fac.contact_directly', 'Contact directly', lang=cur_l)}"
 
 
 
@@ -29266,7 +29262,7 @@ body {{
 
 
 
-                        f"<b>{t('fac.corridor_distance', 'Corridor:')}</b> {dist_corridor:.1f} km • <span style='color: #38bdf8; font-weight: 700;'>🚗 ~{road_dist:.1f} km ({eta_mins:.0f} {mins_label})</span>"
+                        f"<b>{t('fac.corridor_distance', 'Corridor:', lang=cur_l)}</b> {dist_corridor:.1f} km • <span style='color: #38bdf8; font-weight: 700;'>🚗 ~{road_dist:.1f} km ({eta_mins:.0f} {mins_label})</span>"
 
 
 
@@ -29278,7 +29274,7 @@ body {{
 
 
 
-                        f"<b>{t('fac.hours', 'Hours')}:</b> <span style='color: #a7f3d0;'>{hours_disp}</span>"
+                        f"<b>{t('fac.hours', 'Hours', lang=cur_l)}:</b> <span style='color: #a7f3d0;'>{hours_disp}</span>"
 
 
 
@@ -29290,7 +29286,7 @@ body {{
 
 
 
-                        f"<b>{t('fac.rating', 'Rating')}:</b> {f_rating_display}"
+                        f"<b>{t('fac.rating', 'Rating', lang=cur_l)}:</b> {f_rating_display}"
 
 
 
@@ -29341,7 +29337,7 @@ body {{
                     col_act1, col_act2, col_act3 = st.columns([1, 1, 1])
 
                     with col_act1:
-                        if st.button(f"🧭 {t('btn.route', 'Route')}", key=f"btn_cat_route_{fac.get('facility_id', idx)}", use_container_width=True, type="primary"):
+                        if st.button(f"🧭 {t('btn.route', 'Route', lang=cur_l)}", key=f"btn_cat_route_{fac.get('facility_id', idx)}", use_container_width=True, type="primary"):
                             st.session_state.selected_dest_coords = (fac["latitude"], fac["longitude"])
                             st.session_state.selected_dest_label = fac["name"]
                             st.session_state.pending_dest = fac["name"]
