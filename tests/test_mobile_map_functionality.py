@@ -95,3 +95,4 @@ class TestMobileMapFunctionality:
         assert "btn_mobile_nav_prev" in code
         assert "btn_mobile_nav_next" in code
         assert "btn_mobile_nav_stop" in code
+

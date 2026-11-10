@@ -4871,11 +4871,65 @@ st.markdown("""
             border: 1px solid rgba(56, 189, 248, 0.3) !important;
         }
 
-        /* Hero Container & Route Endpoints Mobile Stacking */
+        /* Hero Container & AURA Voice Assistant Mobile Stacking */
+        div[class*="st-key-quantum_hero_side_by_side_deck"] div[data-testid="stHorizontalBlock"],
+        div[data-testid="stHorizontalBlock"]:has(.qr-hero-card-side),
+        div[data-testid="stHorizontalBlock"]:has(.qr-hero-wrapper),
         div[data-testid="stHorizontalBlock"]:has(.quantum-hero-container),
         div[data-testid="stHorizontalBlock"]:has(.route-endpoints-card) {
+            display: flex !important;
             flex-direction: column !important;
-            gap: 12px !important;
+            gap: 14px !important;
+        }
+
+        div[class*="st-key-quantum_hero_side_by_side_deck"] div[data-testid="stColumn"],
+        div[data-testid="stHorizontalBlock"]:has(.qr-hero-card-side) div[data-testid="stColumn"],
+        div[data-testid="stHorizontalBlock"]:has(.qr-hero-wrapper) div[data-testid="stColumn"] {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+
+        .qr-hero-card-side {
+            height: auto !important;
+            min-height: auto !important;
+            padding: 16px 14px 10px 14px !important;
+            margin-bottom: 0 !important;
+        }
+
+        .qr-hero-heading,
+        .qr-hero-card-side .qr-hero-heading {
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+            font-size: clamp(1.6rem, 7vw, 2.35rem) !important;
+            line-height: 1.15 !important;
+        }
+
+        .qr-hero-subtag,
+        .qr-hero-card-side .qr-hero-subtag {
+            font-size: clamp(0.65rem, 2.5vw, 0.72rem) !important;
+            letter-spacing: 0.12em !important;
+            margin-bottom: 6px !important;
+        }
+
+        .qr-hero-tagline,
+        .qr-hero-card-side .qr-hero-tagline {
+            font-size: clamp(0.80rem, 3.2vw, 0.88rem) !important;
+            line-height: 1.45 !important;
+            max-width: 96% !important;
+            margin: 0 auto !important;
+        }
+
+        div[class*="st-key-quantum_hero_side_by_side_deck"] div[data-testid="stCustomComponentV1"] {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        div[class*="st-key-quantum_hero_side_by_side_deck"] div[data-testid="stCustomComponentV1"] iframe {
+            width: 100% !important;
+            min-width: 100% !important;
+            height: 450px !important;
         }
 
         /* Sub-view navigation header responsive stacking */
@@ -7737,11 +7791,12 @@ if st.session_state.current_view == "dashboard":
             bot_logo_uri=aura_logo_uri,
             user_name="Boss"
         )
-        col_hero, col_aura = st.columns([1, 1.35], gap="medium")
-        with col_hero:
-            render_quantum_hero_title_card(side_by_side=True)
-        with col_aura:
-            components.html(welcome_hud_html, height=435, scrolling=False)
+        with st.container(key="quantum_hero_side_by_side_deck"):
+            col_hero, col_aura = st.columns([1, 1.35], gap="medium")
+            with col_hero:
+                render_quantum_hero_title_card(side_by_side=True)
+            with col_aura:
+                components.html(welcome_hud_html, height=435, scrolling=False)
 
         # Multilingual Interface Selection Bar and 4 Workspace Cards below
         render_quantum_hero_section(include_title=False)

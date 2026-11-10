@@ -207,6 +207,50 @@ button[data-testid="baseButton-header"] {
     display: none !important;
 }
 
+@media (max-width: 768px) {
+    div[class*="st-key-quantum_hero_side_by_side_deck"] div[data-testid="stHorizontalBlock"],
+    div[data-testid="stHorizontalBlock"]:has(.qr-hero-card-side),
+    div[data-testid="stHorizontalBlock"]:has(.qr-hero-wrapper) {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+    }
+    div[class*="st-key-quantum_hero_side_by_side_deck"] div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.qr-hero-card-side) div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.qr-hero-wrapper) div[data-testid="stColumn"] {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+    .qr-hero-card-side {
+        height: auto !important;
+        min-height: auto !important;
+        padding: 16px 14px 10px 14px !important;
+        margin-bottom: 0 !important;
+    }
+    .qr-hero-heading,
+    .qr-hero-card-side .qr-hero-heading {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        font-size: clamp(1.6rem, 7vw, 2.35rem) !important;
+        line-height: 1.15 !important;
+    }
+    .qr-hero-subtag,
+    .qr-hero-card-side .qr-hero-subtag {
+        font-size: 0.68rem !important;
+        letter-spacing: 0.12em !important;
+        margin-bottom: 6px !important;
+    }
+    .qr-hero-tagline,
+    .qr-hero-card-side .qr-hero-tagline {
+        font-size: 0.85rem !important;
+        line-height: 1.45 !important;
+        max-width: 96% !important;
+        margin: 0 auto !important;
+    }
+}
+
 .qr-hero-card-side .qr-hero-heading {
     font-size: clamp(1.75rem, 2.5vw, 2.35rem) !important;
     margin: 0 0 6px 0 !important;

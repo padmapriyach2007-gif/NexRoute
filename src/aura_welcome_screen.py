@@ -653,7 +653,9 @@ def render_aura_welcome_hud(
     .top-right-controls {{
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }}
 
     .btn-session-main {{
@@ -1256,6 +1258,21 @@ def render_aura_welcome_hud(
         }}
         .holo-node-title {{
             font-size: 0.74rem !important;
+        }}
+        .top-right-controls {{
+            gap: 4px !important;
+        }}
+        .btn-session-main {{
+            font-size: 0.60rem !important;
+            padding: 2px 8px !important;
+        }}
+        .btn-session-end {{
+            font-size: 0.60rem !important;
+            padding: 2px 7px !important;
+        }}
+        .status-badge {{
+            font-size: 0.58rem !important;
+            padding: 2px 7px !important;
         }}
         .holo-node-sub {{
             font-size: 0.50rem !important;
