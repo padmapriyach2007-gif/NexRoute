@@ -17,7 +17,11 @@ Supported Languages:
 import os
 import json
 import logging
+import builtins
 from typing import Dict, Any, Optional
+
+# Ensure cur_l is unconditionally available in builtins so no NameError can ever occur
+builtins.cur_l = "en"
 
 logger = logging.getLogger("pathfinder.i18n")
 
@@ -1560,6 +1564,8 @@ def get_current_language() -> str:
 
 def set_current_language(lang_code: str) -> None:
     """Sets the current language in Streamlit session_state."""
+    import builtins
+    builtins.cur_l = lang_code
     if lang_code in SUPPORTED_LANGUAGES:
         try:
             import streamlit as st

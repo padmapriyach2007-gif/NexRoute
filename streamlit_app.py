@@ -9,8 +9,12 @@ and Streamlit Community Cloud environments (/mount/src/<repo>).
 import sys
 import os
 import types
+import builtins
 from pathlib import Path
 import runpy
+
+# Ensure builtins.cur_l is always defined globally across any import or execution context
+builtins.cur_l = "en"
 
 # Determine absolute path to the project root and src directory
 ROOT_DIR = Path(__file__).resolve().parent

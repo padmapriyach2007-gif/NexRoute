@@ -4,9 +4,14 @@ import re
 import types
 import logging
 import base64
+import builtins
 from io import BytesIO
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Union, Tuple
+
+# Ensure cur_l is unconditionally available across all scopes, imports, and callbacks
+builtins.cur_l = "en"
+cur_l = "en"
 
 logger = logging.getLogger("nexroute")
 
@@ -789,6 +794,7 @@ if "app_language" not in st.session_state or st.session_state.app_language not i
 
 set_current_language(st.session_state.app_language)
 cur_l = st.session_state.get("app_language", "en")
+builtins.cur_l = cur_l
 
 
 
@@ -4137,6 +4143,10 @@ st.markdown("""
     }
 
     @media (max-width: 640px) {
+        div[data-testid="stCustomComponentV1"] iframe[title*="st.iframe"] {
+            height: 440px !important;
+            max-height: 62vh !important;
+        }
         div[data-testid="stPopoverBody"] {
             width: 96vw !important;
             max-width: 96vw !important;
@@ -4727,6 +4737,10 @@ st.markdown("""
         .qr-workspace-card {
             min-height: 210px !important;
         }
+        div[data-testid="stCustomComponentV1"] iframe[title*="st.iframe"] {
+            height: 440px !important;
+            max-height: 62vh !important;
+        }
         div[data-testid="stPopoverBody"] {
             width: 380px !important;
             max-width: 90vw !important;
@@ -4836,6 +4850,28 @@ st.markdown("""
             padding-left: calc(0.6rem + env(safe-area-inset-left, 0px)) !important;
             padding-right: calc(0.6rem + env(safe-area-inset-right, 0px)) !important;
             max-width: 100vw !important;
+        }
+
+        /* Mobile Interactive Map Container & Responsive Iframe */
+        div[data-testid="stCustomComponentV1"]:has(iframe[title*="st.iframe"]) {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        div[data-testid="stCustomComponentV1"] iframe[title*="st.iframe"] {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100vw !important;
+            height: 485px !important;
+            max-height: 68vh !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(56, 189, 248, 0.3) !important;
+        }
+
+        /* Hero Container & Route Endpoints Mobile Stacking */
+        div[data-testid="stHorizontalBlock"]:has(.quantum-hero-container),
+        div[data-testid="stHorizontalBlock"]:has(.route-endpoints-card) {
+            flex-direction: column !important;
+            gap: 12px !important;
         }
 
         /* Sub-view navigation header responsive stacking */
@@ -5088,6 +5124,10 @@ st.markdown("""
         }
 
         /* Chatbot Popover Modal on Mobile (Positioned above Bottom Nav) */
+        div[data-testid="stCustomComponentV1"] iframe[title*="st.iframe"] {
+            height: 440px !important;
+            max-height: 62vh !important;
+        }
         div[data-testid="stPopoverBody"] {
             width: calc(100vw - 24px) !important;
             max-width: 420px !important;
@@ -5144,6 +5184,10 @@ st.markdown("""
             padding: 4px 2px !important;
             letter-spacing: 0 !important;
         }
+        div[data-testid="stCustomComponentV1"] iframe[title*="st.iframe"] {
+            height: 440px !important;
+            max-height: 62vh !important;
+        }
         div[data-testid="stPopoverBody"] {
             width: calc(100vw - 18px) !important;
             max-width: calc(100vw - 18px) !important;
@@ -5194,6 +5238,10 @@ st.markdown("""
         .stButton > button {
             font-size: 0.76rem !important;
         }
+        div[data-testid="stCustomComponentV1"] iframe[title*="st.iframe"] {
+            height: 440px !important;
+            max-height: 62vh !important;
+        }
         div[data-testid="stPopoverBody"] {
             width: calc(100vw - 12px) !important;
             max-width: calc(100vw - 12px) !important;
@@ -5201,6 +5249,14 @@ st.markdown("""
             right: 6px !important;
             bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
             padding: 10px !important;
+        }
+    }
+
+    /* Mobile Landscape Interactive Map Height Optimization */
+    @media (max-width: 900px) and (orientation: landscape) {
+        div[data-testid="stCustomComponentV1"] iframe[title*="st.iframe"] {
+            height: 360px !important;
+            max-height: 75vh !important;
         }
     }
 
@@ -22813,6 +22869,79 @@ body {{
             # or Leaflet fallback engine
 
 
+
+            # Mobile & Interactive Turn-by-Turn Navigation HUD (Active when Start Nav is clicked)
+            if st.session_state.get("is_in_transit", False):
+                _hud_lang = st.session_state.get("app_language", "en")
+                _active_rt = st.session_state.get("selected_route_object")
+                if not _active_rt and st.session_state.get("active_route_item"):
+                    _active_rt = st.session_state.active_route_item.route
+                _raw_steps = getattr(_active_rt, "steps", None) if _active_rt else None
+                _orig_l = st.session_state.get("user_live_label") or st.session_state.get("txt_orig") or "Current Location"
+                _dest_l = st.session_state.get("selected_dest_label") or st.session_state.get("txt_dest") or "Destination"
+                _t_mode = st.session_state.get("selected_travel_mode", "CAR")
+
+                from src.journey_storyteller import generate_friendly_virtual_guide_turns
+                _t_turns = generate_friendly_virtual_guide_turns(
+                    steps=_raw_steps or [],
+                    origin=_orig_l,
+                    destination=_dest_l,
+                    travel_mode=_t_mode,
+                    language=_hud_lang
+                )
+                if _t_turns:
+                    _cur_s_idx = st.session_state.get("journey_step_idx", 0)
+                    _cur_s_idx = max(0, min(_cur_s_idx, len(_t_turns) - 1))
+                    _s_turn = _t_turns[_cur_s_idx]
+                    _t_km = getattr(_active_rt, "total_distance_km", 0.0) if _active_rt else 0.0
+                    _t_mins = getattr(_active_rt, "total_duration_minutes", 0.0) if _active_rt else 0.0
+
+                    _hud_box = f"""
+                    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.98));
+                                border: 1.5px solid #38bdf8; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+                                box-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.6rem; line-height: 1;">{_s_turn.icon}</span>
+                                <div>
+                                    <div style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                                        {t('nav.step', default='Step', lang=_hud_lang)} {_s_turn.step_num} of {_s_turn.total_steps} • {_s_turn.distance_human}
+                                    </div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; line-height: 1.25;">
+                                        {_s_turn.action_headline}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 0.88rem; font-weight: 800; color: #10b981;">
+                                    ~{_t_mins:.0f} {t('nav.mins', default='mins', lang=_hud_lang)}
+                                </div>
+                                <div style="font-size: 0.72rem; color: #94a3b8;">
+                                    {_t_km:.1f} km {t('nav.total', default='total', lang=_hud_lang)}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.35; padding: 6px 8px; background: rgba(56, 189, 248, 0.08); border-radius: 8px; border-left: 3px solid #38bdf8;">
+                            🗣️ {_s_turn.virtual_guide_speech}
+                        </div>
+                    </div>
+                    """
+                    st.markdown(_hud_box, unsafe_allow_html=True)
+
+                    _c_h1, _c_h2, _c_h3 = st.columns([1, 1, 1])
+                    with _c_h1:
+                        if st.button(f"⏮️ {t('action.prev_step', default='Prev', lang=_hud_lang)}", key="btn_mobile_nav_prev", use_container_width=True, disabled=(_cur_s_idx <= 0)):
+                            st.session_state.journey_step_idx = max(0, _cur_s_idx - 1)
+                            st.rerun()
+                    with _c_h2:
+                        if st.button(f"⏭️ {t('action.next_step', default='Next', lang=_hud_lang)}", key="btn_mobile_nav_next", use_container_width=True, disabled=(_cur_s_idx >= len(_t_turns) - 1), type="primary"):
+                            st.session_state.journey_step_idx = min(len(_t_turns) - 1, _cur_s_idx + 1)
+                            st.rerun()
+                    with _c_h3:
+                        if st.button(f"🛑 {t('action.end_nav', default='End Nav', lang=_hud_lang)}", key="btn_mobile_nav_stop", use_container_width=True):
+                            st.session_state.is_in_transit = False
+                            st.session_state.journey_step_idx = 0
+                            st.rerun()
 
             eng = st.session_state.get("map_display_engine", "tactical_satellite")
 

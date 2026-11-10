@@ -2083,6 +2083,13 @@ def build_google_maps_javascript_html(
             box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
         }}
 
+        .gmap-btn-text-short {{
+            display: none;
+        }}
+        .gmap-btn-text-full {{
+            display: inline;
+        }}
+
         @media (max-width: 768px) {{
             .gmap-floating-header {{
                 top: 8px;
@@ -2105,25 +2112,31 @@ def build_google_maps_javascript_html(
             .gmap-search-input {{
                 font-size: 14px;
                 padding: 8px 10px 8px 34px;
+                min-height: 42px;
             }}
             .gmap-btn {{
                 padding: 6px 8px;
-                font-size: 0.72rem;
+                font-size: 0.74rem;
                 flex: 1 1 auto;
                 justify-content: center;
-                min-height: 38px;
+                min-height: 42px;
+                touch-action: manipulation;
             }}
             .gmap-filter-bar {{
                 top: 0;
                 left: 0;
                 right: 0;
                 max-width: 100%;
-                padding: 4px 8px;
-                gap: 5px;
+                padding: 5px 8px;
+                gap: 6px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }}
             .gmap-filter-pill {{
-                padding: 4px 10px;
-                font-size: 0.72rem;
+                padding: 6px 12px;
+                font-size: 0.74rem;
+                min-height: 36px;
+                touch-action: manipulation;
             }}
             .gmap-compass-container {{
                 top: auto;
@@ -2131,25 +2144,25 @@ def build_google_maps_javascript_html(
                 right: 12px;
             }}
             .gmap-compass-rose {{
-                width: 42px;
-                height: 42px;
+                width: 44px;
+                height: 44px;
             }}
             .gmap-compass-controls {{
                 flex-direction: row;
             }}
             .gmap-layers-drawer {{
-                width: calc(100vw - 32px);
+                width: calc(100vw - 24px);
                 max-width: 320px;
-                max-height: 65vh;
+                max-height: 60vh;
                 left: 12px;
                 bottom: 80px;
             }}
             .gmap-category-panel {{
-                width: calc(100vw - 24px);
+                width: calc(100vw - 20px);
                 max-width: 380px;
                 max-height: 55vh;
-                left: 12px;
-                bottom: 20px;
+                left: 10px;
+                bottom: 16px;
             }}
             .gmap-place-drawer {{
                 left: 8px;
@@ -2158,7 +2171,76 @@ def build_google_maps_javascript_html(
                 max-width: calc(100% - 16px);
                 bottom: 12px;
                 top: auto;
-                max-height: 65vh;
+                max-height: 60vh;
+            }}
+            .leaflet-control-zoom {{
+                border-radius: 8px !important;
+                overflow: hidden !important;
+                margin-right: 12px !important;
+                margin-bottom: 14px !important;
+            }}
+            .leaflet-control-zoom a {{
+                width: 44px !important;
+                height: 44px !important;
+                line-height: 44px !important;
+                font-size: 20px !important;
+                background: rgba(15, 23, 42, 0.94) !important;
+                color: #38bdf8 !important;
+                border-color: rgba(56, 189, 248, 0.4) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }}
+            .leaflet-popup-content-wrapper {{
+                max-width: min(290px, 86vw) !important;
+            }}
+            .leaflet-popup-content {{
+                margin: 8px 10px !important;
+                font-size: 0.82rem !important;
+                max-width: 100% !important;
+                word-wrap: break-word !important;
+            }}
+            .iw-btn {{
+                min-height: 40px !important;
+                padding: 8px 10px !important;
+                font-size: 0.78rem !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                touch-action: manipulation !important;
+            }}
+        }}
+
+        @media (max-width: 480px) {{
+            .gmap-floating-header {{
+                top: 6px;
+                left: 6px;
+                right: 6px;
+                gap: 5px;
+                max-width: calc(100% - 12px);
+            }}
+            .gmap-btn {{
+                font-size: 0.70rem;
+                padding: 5px 6px;
+                min-height: 40px;
+                gap: 4px;
+            }}
+            .gmap-btn-text-full {{
+                display: none !important;
+            }}
+            .gmap-btn-text-short {{
+                display: inline !important;
+            }}
+            .gmap-filter-pill {{
+                padding: 5px 10px;
+                font-size: 0.70rem;
+                min-height: 34px;
+            }}
+            .gmap-category-panel,
+            .gmap-layers-drawer {{
+                width: calc(100vw - 16px);
+                left: 8px;
+                max-height: 52vh;
             }}
         }}
     </style>
@@ -2180,16 +2262,20 @@ def build_google_maps_javascript_html(
                     <div id="pac-autocomplete-dropdown" class="pac-autocomplete-dropdown"></div>
                 </div>
                 <button class="gmap-btn" id="btn-geolocation" onclick="window.locateUserGps()" title="Center map at your real GPS location">
-                    {txt_my_location}
+                    <span class="gmap-btn-text-full">{txt_my_location}</span>
+                    <span class="gmap-btn-text-short">📍 GPS</span>
                 </button>
                 <button class="gmap-btn" id="btn-fit-all" onclick="window.fitAllMapBounds()" title="Fit all route alternatives and markers">
-                    {txt_fit_bounds}
+                    <span class="gmap-btn-text-full">{txt_fit_bounds}</span>
+                    <span class="gmap-btn-text-short">🎯 Fit</span>
                 </button>
                 <button class="gmap-btn" id="btn-fullscreen" onclick="window.toggleFullScreen()" title="Toggle full screen view">
-                    {txt_full_screen}
+                    <span class="gmap-btn-text-full">{txt_full_screen}</span>
+                    <span class="gmap-btn-text-short">⛶ Full</span>
                 </button>
                 <button class="gmap-btn" id="btn-open-layers" onclick="window.toggleLayersDrawer()" title="Map Details & Layers (Traffic, Transit, Satellite, Wildfires)">
-                    {txt_map_details}
+                    <span class="gmap-btn-text-full">{txt_map_details}</span>
+                    <span class="gmap-btn-text-short">🥞 Layers</span>
                 </button>
             </div>
 
@@ -4301,7 +4387,13 @@ def build_google_maps_javascript_html(
                 return;
             }}
 
-            if (geoBtn) geoBtn.innerHTML = '⌛ Locating...';
+            if (geoBtn) {{
+                var fullSpan = geoBtn.querySelector('.gmap-btn-text-full');
+                var shortSpan = geoBtn.querySelector('.gmap-btn-text-short');
+                if (fullSpan) fullSpan.innerText = '⌛ Locating...';
+                if (shortSpan) shortSpan.innerText = '⌛ GPS...';
+                if (!fullSpan && !shortSpan) geoBtn.innerHTML = '⌛ Locating...';
+            }}
             window.showMapToast("Requesting device GPS coordinates...", "🛰️");
 
             geo.getCurrentPosition(async function(pos) {{
@@ -4321,7 +4413,13 @@ def build_google_maps_javascript_html(
                 var cleanGpsName = String(locName || 'My Real-Time Location').replace(/^[📍🏁🛰️🚶]+\\s*/, '').trim();
                 var gpsWithCoords = cleanGpsName + " (" + Number(uLat).toFixed(5) + ", " + Number(uLng).toFixed(5) + ")";
 
-                if (geoBtn) geoBtn.innerHTML = '📍 My Location';
+                if (geoBtn) {{
+                    var fullSpan = geoBtn.querySelector('.gmap-btn-text-full');
+                    var shortSpan = geoBtn.querySelector('.gmap-btn-text-short');
+                    if (fullSpan) fullSpan.innerText = '{txt_my_location}';
+                    if (shortSpan) shortSpan.innerText = '📍 GPS';
+                    if (!fullSpan && !shortSpan) geoBtn.innerHTML = '📍 My Location';
+                }}
                 window.showMapToast("Located: " + uLat.toFixed(4) + ", " + uLng.toFixed(4) + " (±" + Math.round(acc) + "m)", "🎯");
 
                 // Update Leaflet map
@@ -4424,13 +4522,19 @@ def build_google_maps_javascript_html(
                     }}
                 }} catch(e) {{}}
             }}, function(err) {{
-                if (geoBtn) geoBtn.innerHTML = '📍 My Location';
+                if (geoBtn) {{
+                    var fullSpan = geoBtn.querySelector('.gmap-btn-text-full');
+                    var shortSpan = geoBtn.querySelector('.gmap-btn-text-short');
+                    if (fullSpan) fullSpan.innerText = '{txt_my_location}';
+                    if (shortSpan) shortSpan.innerText = '📍 GPS';
+                    if (!fullSpan && !shortSpan) geoBtn.innerHTML = '📍 My Location';
+                }}
                 var errMsg = "Location permission denied or GPS unavailable.";
-                if (err && err.code === 1) errMsg = "Location access was denied. Please allow location permissions in your browser.";
-                else if (err && err.code === 2) errMsg = "Position unavailable. Device GPS could not be resolved.";
-                else if (err && err.code === 3) errMsg = "GPS request timed out. Please try again.";
+                if (err && err.code === 1) errMsg = "Location access was denied. Please allow location permissions in your mobile browser settings.";
+                else if (err && err.code === 2) errMsg = "Position unavailable. Device GPS could not be resolved. Please enable GPS.";
+                else if (err && err.code === 3) errMsg = "GPS request timed out. Please try again with clear sky view.";
                 window.showMapToast(errMsg, "⚠️");
-            }}, {{ enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 }});
+            }}, {{ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }});
         }};
 
         window.fitAllMapBounds = function() {{
@@ -5959,10 +6063,18 @@ def build_google_maps_javascript_html(
             var defLng = data.center.lng;
             var defZoom = data.zoom;
 
-                // Initialize interactive Leaflet Map
+                // Initialize interactive Leaflet Map with full mobile touch, drag, and pinch-to-zoom support
                 var lMap = L.map('map', {{
                     zoomControl: false,
-                    attributionControl: false
+                    attributionControl: false,
+                    tap: true,
+                    tapTolerance: 15,
+                    touchZoom: true,
+                    doubleClickZoom: true,
+                    dragging: true,
+                    zoomAnimation: true,
+                    scrollWheelZoom: true,
+                    bounceAtZoomLimits: false
                 }}).setView([defLat, defLng], defZoom);
 
                 window.lMapInstance = lMap;
@@ -6075,6 +6187,18 @@ def build_google_maps_javascript_html(
                 setTimeout(function() {{ lMap.invalidateSize(); }}, 600);
                 setTimeout(function() {{ lMap.invalidateSize(); }}, 1200);
                 window.addEventListener('resize', function() {{ lMap.invalidateSize(); }});
+                window.addEventListener('orientationchange', function() {{
+                    setTimeout(function() {{ lMap.invalidateSize(); }}, 250);
+                }});
+                if (window.ResizeObserver) {{
+                    try {{
+                        var ro = new ResizeObserver(function() {{
+                            if (window.lMapInstance) window.lMapInstance.invalidateSize();
+                        }});
+                        var mapEl = document.getElementById('map');
+                        if (mapEl) ro.observe(mapEl);
+                    }} catch(eRo) {{}}
+                }}
 
                 var leafletMarkers = [];
                 var allFitBounds = L.latLngBounds();
