@@ -2487,11 +2487,13 @@ def render_travel_copilot_studio():
 
             itin = st.session_state.get("active_itinerary")
             if itin:
+                from localization.dynamic_translator import translate_content
+                itin_title = translate_content(itin.get('itinerary_title', 'Curated Itinerary'), target_language=cur_lang)
                 st.markdown(f"""
                 <div class="qr-glass-panel" style="margin-top: 14px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                         <span style="font-size: 1.15rem; font-weight: 800; color: #f8fafc;">
-                            📋 {itin.get('itinerary_title', 'Curated Itinerary')}
+                            📋 {itin_title}
                         </span>
                         <span style="font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 9999px; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8;">
                             {cd['verified_badge']}
@@ -2512,23 +2514,28 @@ def render_travel_copilot_studio():
 
                 w = itin.get("weather_forecast", {})
                 if w and w.get("temperature_celsius") is not None:
-                    st.info(f"🌤️ **Destination Forecast**: {w.get('conditions', 'Clear')} • {w.get('temperature_celsius')}°C. {w.get('hazard_warning') or 'Ideal road travel conditions.'}")
+                    w_cond = translate_content(w.get('conditions', 'Clear'), target_language=cur_lang)
+                    w_haz = translate_content(w.get('hazard_warning') or 'Ideal road travel conditions.', target_language=cur_lang)
+                    st.info(f"🌤️ **Destination Forecast**: {w_cond} • {w.get('temperature_celsius')}°C. {w_haz}")
 
                 st.markdown(f"<div style='margin-top: 12px; font-size: 0.88rem; font-weight: 700; color: #38bdf8;'>{cd['stop_seq']}</div>", unsafe_allow_html=True)
                 for stp in itin.get("stops", []):
+                    stp_name = translate_content(stp.get('place_name', 'Attraction'), target_language=cur_lang)
+                    stp_cat = translate_content(stp.get('category', 'DESTINATION'), target_language=cur_lang)
+                    stp_reason = translate_content(stp.get('match_reason', 'Matches your travel preference'), target_language=cur_lang)
                     st.markdown(f"""
                     <div class="qr-stop-card">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 800; color: #f8fafc;">#{stp.get('stop_number', 1)} • {stp.get('place_name', 'Attraction')}</span>
+                            <span style="font-weight: 800; color: #f8fafc;">#{stp.get('stop_number', 1)} • {stp_name}</span>
                             <span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-family: monospace;">
-                                {stp.get('category', 'DESTINATION')}
+                                {stp_cat}
                             </span>
                         </div>
                         <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">
                             ⏱️ Recommended Visit: {stp.get('recommended_visit_duration_minutes', 60)} min • Leg Distance: {stp.get('travel_distance_km', 0)} km
                         </div>
                         <div style="font-size: 0.76rem; color: #cbd5e1; margin-top: 3px; font-style: italic;">
-                            "{stp.get('match_reason', 'Matches your travel preference')}"
+                            "{stp_reason}"
                         </div>
                     </div>
                     """, unsafe_allow_html=True)

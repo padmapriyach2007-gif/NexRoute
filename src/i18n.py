@@ -2755,3 +2755,12 @@ try:
     _load_locale_overrides()
 except Exception:
     pass
+
+# Re-export modern localization features for complete backward and forward compatibility
+try:
+    from localization.dynamic_translator import translate_content, translate_dict_descriptions
+    from localization.font_manager import get_font_injection_html
+    from localization.language_config import PROTECTED_ENTITIES
+    from localization.language_manager import get_selected_language, set_selected_language
+except Exception:
+    pass

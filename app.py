@@ -796,6 +796,10 @@ set_current_language(st.session_state.app_language)
 cur_l = st.session_state.get("app_language", "en")
 builtins.cur_l = cur_l
 
+# Inject Indian Language Fonts & Typography Optimization for all 8 Languages
+from localization.font_manager import get_font_injection_html
+st.markdown(get_font_injection_html(cur_l), unsafe_allow_html=True)
+
 
 
 
@@ -6528,14 +6532,23 @@ def render_aura_chat_box(key_prefix: str = "main", height: int = 340):
                 "badge": "🤖 AURA TRAVEL COPILOT"
             }
 
+        active_lang = chat_ctx.get("language", "en")
+        raw_resp = ans.get("response", "Response unavailable.")
+        if active_lang != "en":
+            from localization.dynamic_translator import translate_content
+            raw_resp = translate_content(raw_resp, target_language=active_lang)
+
         st.session_state.aura_chat_history.append({
             "role": "assistant",
-            "content": ans.get("response", "Response unavailable."),
+            "content": raw_resp,
             "badge": ans.get("badge", "🤖 AURA TRAVEL COPILOT")
         })
 
         # Set last response to speak aloud via SpeechSynthesis in Chatbot audio engine
-        raw_to_speak = ans.get("spoken_response") or ans.get("response", "")
+        raw_to_speak = ans.get("spoken_response") or raw_resp
+        if active_lang != "en":
+            from localization.dynamic_translator import translate_content
+            raw_to_speak = translate_content(raw_to_speak, target_language=active_lang)
         clean_speech = _sanitize_speech_text(raw_to_speak, 280)
         st.session_state.aura_last_response_to_speak = clean_speech
 
@@ -12040,12 +12053,19 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             return joined[:max_chars].rstrip() + "..."
         return joined
 
-    culture_summary = _to_1_2_sentences(getattr(chapter, "cultural_heritage", ""))
-    nature_summary = _to_1_2_sentences(getattr(chapter, "geography_nature", ""))
-    photo_summary = _to_1_2_sentences(getattr(chapter, "scenic_highlight", "Panoramic vistas of rural agricultural waterways."))
-    food_summary = _to_1_2_sentences(getattr(chapter, "culinary_highlight", "Authentic regional highway tiffins, fresh chai, and sweets."))
-
+    from localization.dynamic_translator import translate_content
     cur_sb_l = st.session_state.get("app_language", "en")
+    culture_summary = translate_content(_to_1_2_sentences(getattr(chapter, "cultural_heritage", "")), target_language=cur_sb_l)
+    nature_summary = translate_content(_to_1_2_sentences(getattr(chapter, "geography_nature", "")), target_language=cur_sb_l)
+    photo_summary = translate_content(_to_1_2_sentences(getattr(chapter, "scenic_highlight", "Panoramic vistas of rural agricultural waterways.")), target_language=cur_sb_l)
+    food_summary = translate_content(_to_1_2_sentences(getattr(chapter, "culinary_highlight", "Authentic regional highway tiffins, fresh chai, and sweets.")), target_language=cur_sb_l)
+
+    sb_lore_translated = translate_content(chapter.historical_lore, target_language=cur_sb_l)
+    sb_intel_translated = translate_content(getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow."), target_language=cur_sb_l)
+    sb_gem_translated = translate_content(getattr(chapter, "hidden_gem", "Historic wayside monument."), target_language=cur_sb_l)
+    sb_look_translated = translate_content(chapter.what_to_look_for, target_language=cur_sb_l)
+    sb_tip_translated = translate_content(chapter.travel_tip, target_language=cur_sb_l)
+
     sb_header_txt = t("storybook.header", default="CORRIDOR STORYBOOK", lang=cur_sb_l)
     sb_leg_txt = t("storybook.leg_of", default=f"Leg {chapter.chapter_num} of {chapter.total_chapters}", cur=chapter.chapter_num, total=chapter.total_chapters, lang=cur_sb_l)
     sb_culture_txt = t("storybook.culture", default="CULTURE", lang=cur_sb_l)
@@ -12139,24 +12159,24 @@ def render_virtual_guide_experience(active_route_item=None, key_suffix=""):
             </summary>
             <div style='margin-top: 10px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.55; padding: 10px 12px; background: rgba(15, 23, 42, 0.90); border-radius: 8px; border-left: 3px solid #38bdf8;'>
                 <div style='font-weight: 800; color: #f8fafc; margin-bottom: 4px;'>🏛️ {sb_heritage_records_txt}</div>
-                {chapter.historical_lore}
+                {sb_lore_translated}
             </div>
             <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; margin-top: 10px;'>
                 <div style='background: rgba(30, 27, 75, 0.55); border-left: 3px solid #818cf8; border-radius: 8px; padding: 7px 12px;'>
                     <span style='font-size: 0.68rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;'>💡 {sb_ai_intel_txt}</span>
-                    <div style='font-size: 0.78rem; color: #e0e7ff; margin-top: 2px;'>{getattr(chapter, "creative_suggestion", "Optimized corridor routing for comfort and scenic flow.")}</div>
+                    <div style='font-size: 0.78rem; color: #e0e7ff; margin-top: 2px;'>{sb_intel_translated}</div>
                 </div>
                 <div style='background: rgba(49, 10, 100, 0.45); border-left: 3px solid #c084fc; border-radius: 8px; padding: 7px 12px;'>
                     <span style='font-size: 0.68rem; font-weight: 800; color: #e9d5ff; text-transform: uppercase;'>💎 {sb_hidden_gem_txt}</span>
-                    <div style='font-size: 0.78rem; color: #f3e8ff; margin-top: 2px;'>{getattr(chapter, "hidden_gem", "Historic wayside monument.")}</div>
+                    <div style='font-size: 0.78rem; color: #f3e8ff; margin-top: 2px;'>{sb_gem_translated}</div>
                 </div>
                 <div style='background: rgba(8, 47, 73, 0.55); border-left: 3px solid #38bdf8; border-radius: 8px; padding: 7px 12px;'>
                     <span style='font-size: 0.68rem; font-weight: 800; color: #7dd3fc; text-transform: uppercase;'>👀 {sb_what_to_look_txt}</span>
-                    <div style='font-size: 0.78rem; color: #e0f2fe; margin-top: 2px;'>{chapter.what_to_look_for}</div>
+                    <div style='font-size: 0.78rem; color: #e0f2fe; margin-top: 2px;'>{sb_look_translated}</div>
                 </div>
                 <div style='background: rgba(6, 78, 59, 0.45); border-left: 3px solid #34d399; border-radius: 8px; padding: 7px 12px;'>
                     <span style='font-size: 0.68rem; font-weight: 800; color: #6ee7b7; text-transform: uppercase;'>🧭 {sb_travel_tip_txt}</span>
-                    <div style='font-size: 0.78rem; color: #ecfdf5; margin-top: 2px;'>{chapter.travel_tip}</div>
+                    <div style='font-size: 0.78rem; color: #ecfdf5; margin-top: 2px;'>{sb_tip_translated}</div>
                 </div>
             </div>
         </details>
@@ -30397,7 +30417,7 @@ if st.session_state.get("current_view") == "places":
                         </span>
                     </div>
                     <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;'>
-                        {''.join([f"<div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; padding: 8px 12px;'><div style='font-weight: 800; font-size: 0.88rem; color: #f8fafc;'>{fp['icon']} {fp['name']}</div><div style='font-size: 0.72rem; color: #a78bfa; margin-top: 2px;'>{fp['category']} • {fp['locality_badge']}</div><div style='font-size: 0.73rem; color: #94a3b8; margin-top: 4px;'>{fp['description']}</div></div>" for fp in top_famous])}
+                        {''.join([f"<div style='background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; padding: 8px 12px;'><div style='font-weight: 800; font-size: 0.88rem; color: #f8fafc;'>{fp['icon']} {fp['name']}</div><div style='font-size: 0.72rem; color: #a78bfa; margin-top: 2px;'>{translate_content(fp['category'], cur_l)} • {translate_content(fp['locality_badge'], cur_l)}</div><div style='font-size: 0.73rem; color: #94a3b8; margin-top: 4px;'>{translate_content(fp['description'], cur_l)}</div></div>" for fp in top_famous])}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)

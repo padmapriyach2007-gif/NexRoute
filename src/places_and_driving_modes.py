@@ -303,6 +303,12 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
         actual_lang = lang or "en"
         def t(k, default="", lang=None): return default
 
+    try:
+        from localization.dynamic_translator import translate_content
+        desc_disp = translate_content(desc, target_language=actual_lang)
+    except Exception:
+        desc_disp = desc
+
     # Localize tag, badge, and category
     def localize_tag(t_raw: str) -> str:
         t_up = str(t_raw).upper().strip()
@@ -413,7 +419,7 @@ def render_place_details_card_html(place: Dict[str, Any], lang: Optional[str] = 
 </div>
 </div>
 </div>
-<div style='font-size: 0.76rem; color: #94a3b8; line-height: 1.45; margin-bottom: 10px;'>{desc}</div>
+<div style='font-size: 0.76rem; color: #94a3b8; line-height: 1.45; margin-bottom: 10px;'>{desc_disp}</div>
 <div style='display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;'>{highlights_html}</div>
 <div style='background: rgba(0,0,0,0.25); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 0.73rem; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;'>
 <div>📍 <b>{addr_label}</b> {addr}</div>
